@@ -108,6 +108,14 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
       economicResourceTypePrecision: economic?.resourceTypePrecision ?? null,
       economicDepositName: economic?.depositName ?? null,
       economicDepositDescription: economic?.depositDescription ?? null,
+      mineralClassifications:
+        body.extensions?.geology?.mineralogy?.map(
+          ({ id, mindatId, abundance }) => ({
+            strunzId: id,
+            mindatId: mindatId ?? null,
+            abundance: abundance ?? null,
+          }),
+        ) ?? [],
       manualGroupIds: body.manualGroups?.map((group) => group.id) ?? [],
     },
   };

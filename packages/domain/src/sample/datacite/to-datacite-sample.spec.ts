@@ -7,7 +7,10 @@ import {
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
-import { TEAM_SAMPLE } from "../core/core-sample-variant-fixture.ts";
+import {
+  MINERAL_RESOURCE_SAMPLE,
+  TEAM_SAMPLE,
+} from "../core/core-sample-variant-fixture.ts";
 import { toDataCiteSample } from "./to-datacite-sample.ts";
 
 const PROJECTED_CORE_PATHS = [
@@ -23,6 +26,7 @@ const PROJECTED_CORE_PATHS = [
   "responsibility.agent",
   "responsibility.roles",
   "extensions.experiment",
+  "extensions.geology",
   "publication.publisher",
   "publication.publicationYear",
   "production.collection_date_start",
@@ -69,7 +73,6 @@ const DROPPED_CORE_PATHS = [
   "rightsAndAccess.metadataVisibility",
   "manualGroups.id",
   "manualGroups.name",
-  "extensions.geology",
   "extensions.safety",
   "extensions.fieldwork",
 ];
@@ -345,6 +348,36 @@ describe("a Core record mapped to DataCite", () => {
       descriptions: [],
       schemaVersion: SCHEMA_VERSION,
     });
+  });
+});
+
+describe("the Strunz-Mindat subjects of a DataCite record", () => {
+  it("should carry one subject per mineral classification, naming a mineral by its Mindat entry", () => {
+    expect(
+      toDataCiteSample(core(MINERAL_RESOURCE_SAMPLE)).subjects.filter(
+        ({ subjectScheme }) => subjectScheme === "Strunz-Mindat (2026)",
+      ),
+    ).toEqual([
+      {
+        subject: "9",
+        subjectScheme: "Strunz-Mindat (2026)",
+        schemeUri: "https://www.mindat.org",
+        classificationCode: "9",
+      },
+      {
+        subject: "2.B-E",
+        subjectScheme: "Strunz-Mindat (2026)",
+        schemeUri: "https://www.mindat.org",
+        classificationCode: "2.B-E",
+      },
+      {
+        subject: "Muscovite",
+        subjectScheme: "Strunz-Mindat (2026)",
+        schemeUri: "https://www.mindat.org",
+        valueUri: "https://www.mindat.org/min-2815.html",
+        classificationCode: "9.E.161",
+      },
+    ]);
   });
 });
 

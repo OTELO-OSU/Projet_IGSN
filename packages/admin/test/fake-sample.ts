@@ -21,6 +21,7 @@ export const fakeSample = {
   availabilityStatus: null,
   age: null,
   relations: [],
+  mineralClassifications: [],
   attachments: [],
   publicationYear: null,
   resourceType: null,

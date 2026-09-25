@@ -1,5 +1,6 @@
 import type { AdditionalRole } from "@projet-igsn/domain/sample/additional-role/role";
 import type { DatePrecision } from "@projet-igsn/domain/sample/date-range";
+import type { MineralAbundance } from "@projet-igsn/domain/sample/mineral/model";
 import type { ProcessStepKind } from "@projet-igsn/domain/sample/process-step/kind";
 import type { IdentifierType } from "@projet-igsn/domain/sample/relation/identifier-type";
 import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/relation/target-resource-type";
@@ -11,6 +12,11 @@ import {
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { allowsSpecificName } from "@projet-igsn/domain/sample/material/allows-specific-name";
 import { MATERIAL_ROOTS } from "@projet-igsn/domain/sample/material/classification";
+import { allowsMineralClassifications } from "@projet-igsn/domain/sample/mineral/allows-mineral-classifications";
+import {
+  fromMineralPath,
+  toMineralPath,
+} from "@projet-igsn/domain/sample/mineral/mineral-hierarchy";
 import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
   hasMetadataScheme,
@@ -136,6 +142,12 @@ export const EMPTY_PROCESS_STEP_DRAFT: Omit<ProcessStepDraft, "key" | "kind"> =
     description: "",
   };
 
+export type MineralClassificationDraft = {
+  key: string;
+  path: string[];
+  abundance: MineralAbundance | undefined;
+};
+
 export type SampleDraft = {
   name: string | undefined;
   localId: string | null | undefined;
@@ -163,6 +175,7 @@ export type SampleDraft = {
   age: AgeFormValues;
   relations: RelationDraft[];
   processSteps: ProcessStepDraft[];
+  mineralClassifications: MineralClassificationDraft[];
   manualGroupIds: string[];
   parentIds: string[];
 } & EconomicInterestDraft;
@@ -227,6 +240,11 @@ export const toSampleDraft = (
       description: step.description ?? "",
     };
   }),
+  mineralClassifications: (value?.mineralClassifications ?? []).map((row) => ({
+    key: crypto.randomUUID(),
+    path: toHierarchyPath(toMineralPath(row)),
+    abundance: row.abundance ?? undefined,
+  })),
   manualGroupIds: value?.manualGroupIds ?? [],
   parentIds: value?.parentIds ?? [],
   ...toEconomicInterestDraft(value),
@@ -261,6 +279,17 @@ export const composeProcessSteps = (steps: ProcessStepDraft[]) =>
     description: step.description.trim() || undefined,
   }));
 
+const composeMineralClassifications = (
+  rows: MineralClassificationDraft[],
+  material: string | null,
+) =>
+  allowsMineralClassifications(material)
+    ? rows.map(({ path, abundance }) => {
+        const value = composeHierarchyValue(path);
+        return { ...(value === null ? {} : fromMineralPath(value)), abundance };
+      })
+    : [];
+
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
   const locationAllowed = allowsLocation(material);
@@ -270,6 +299,10 @@ const composeCreateSample = (draft: SampleDraft) => {
   const repository = composeRepository(draft.repository);
   const relations = composeRelations(draft.relations);
   const processSteps = composeProcessSteps(draft.processSteps);
+  const mineralClassifications = composeMineralClassifications(
+    draft.mineralClassifications,
+    material,
+  );
   const economic = composeEconomicInterest(draft, material);
   const syntheticDetails = composeSyntheticDetails(
     draft.syntheticDetails,
@@ -320,6 +353,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(age ? { age } : {}),
     ...(relations.length > 0 ? { relations } : {}),
     ...(processSteps.length > 0 ? { processSteps } : {}),
+    ...(mineralClassifications.length > 0 ? { mineralClassifications } : {}),
     manualGroupIds: draft.manualGroupIds,
     ...(draft.parentIds.length > 0 ? { parentIds: draft.parentIds } : {}),
     ...economic,

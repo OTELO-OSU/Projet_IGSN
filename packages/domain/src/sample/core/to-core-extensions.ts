@@ -2,6 +2,7 @@ import type { Sample } from "../sample.ts";
 import type { CoreExtensions } from "./core-extensions-schema.ts";
 
 import { organizationLabel } from "../../institutional-group/label.ts";
+import { mineralOf } from "../mineral/mineral-hierarchy.ts";
 import { toConcept } from "./concept.ts";
 import {
   coreNumericAgeEra,
@@ -102,6 +103,20 @@ export function toCoreExtensions(sample: Sample): CoreExtensions | undefined {
       ? undefined
       : chronostratigraphy,
     economic: isEmpty(economic) ? undefined : economic,
+    mineralogy:
+      sample.mineralClassifications.length === 0
+        ? undefined
+        : sample.mineralClassifications.map(
+            ({ strunzId, mindatId, abundance }) => ({
+              ...toConcept(
+                "strunz-mindat",
+                strunzId,
+                mineralOf(mindatId)?.strunzCode,
+              ),
+              mindatId: mindatId ?? undefined,
+              abundance: abundance ?? undefined,
+            }),
+          ),
   };
   const extensions = {
     geology: isEmpty(geology) ? undefined : geology,

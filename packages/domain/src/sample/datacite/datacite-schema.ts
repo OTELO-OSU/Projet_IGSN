@@ -210,13 +210,27 @@ export const dataCiteSampleSchema = z
             .meta({ description: "Value of the classification entry." }),
           subjectScheme: z
             .string()
-            .meta({ description: "OTELo vocabulary it belongs to." }),
+            .meta({ description: "Vocabulary it belongs to." }),
           schemeUri: z
             .string()
-            .meta({ description: "URN naming that vocabulary." }),
+            .meta({ description: "URI naming that vocabulary." }),
+          valueUri: z
+            .string()
+            .meta({ description: "Mindat page of a mineral entry." })
+            .optional(),
+          classificationCode: z
+            .string()
+            .meta({
+              description:
+                "Strunz code of a Strunz-Mindat entry, the mineral's own when a mineral is set.",
+            })
+            .optional(),
         }),
       )
-      .meta({ description: "Scientific context of the sample." }),
+      .meta({
+        description:
+          "Scientific context of the sample, then its Strunz-Mindat (2026) classifications.",
+      }),
     dates: z
       .array(
         z.object({

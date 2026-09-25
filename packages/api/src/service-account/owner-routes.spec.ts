@@ -30,7 +30,10 @@ const ORGANIZATION = "04vfs2w97";
 const OSU = "OTELo";
 const LABORATORY = "UMR7358";
 const OSU_LABORATORIES = ["UAR3562", "UMR7358", "UMR7359", "UMR7360"];
-const GROUP = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "OZCAR-RI" };
+const GROUP = {
+  id: "01890a5d-ac96-774b-81b9-b302099a9001",
+  name: "OZCAR-RI 1b9",
+};
 const NAME = "GeoPortal harvester";
 const REASON = "To harvest our OZCAR samples nightly";
 const CREATE_LINK = `${ADMIN_URL}service-accounts/create?request=`;
@@ -101,8 +104,8 @@ describe("service account owner routes", () => {
     async ({ db }) => {
       // Arrange
       await db.insertInto("manual_group").values(GROUP).execute();
-      await insertUser(db, "root@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "boss@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "root-1b9@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "boss-1b9@univ-lorraine.fr", { superAdmin: true });
       const requester = await insertRequester(db);
       await moderateManualGroup(db, requester.id, [GROUP.id]);
       await moderateInstitution(db, requester.id, { kind: "osu", code: OSU });
@@ -119,7 +122,7 @@ describe("service account owner routes", () => {
       await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
       const sent = sendMail.mock.lastCall![0];
       expect({ to: sent.to, audience: sent.audience }).toEqual({
-        to: ["boss@univ-lorraine.fr", "root@univ-lorraine.fr"],
+        to: ["boss-1b9@univ-lorraine.fr", "root-1b9@univ-lorraine.fr"],
         audience: "admin",
       });
       expect(sent.text).toContain("Test User");
@@ -248,7 +251,7 @@ describe("service account owner routes", () => {
     async ({ db }) => {
       // Arrange
       const owner = await insertRequester(db);
-      const other = await insertUser(db, "other@univ-lorraine.fr");
+      const other = await insertUser(db, "other-1b9@univ-lorraine.fr");
       const mine = await insertServiceAccount(db, "Mine", owner.id);
       await insertServiceAccount(db, "Theirs", other.id);
       const { client } = arrangeApp(db);
@@ -296,7 +299,7 @@ describe("service account owner routes", () => {
     async ({ db }) => {
       // Arrange
       await insertRequester(db);
-      const other = await insertUser(db, "other@univ-lorraine.fr");
+      const other = await insertUser(db, "other-1b9@univ-lorraine.fr");
       const account = await insertServiceAccount(db, "Theirs", other.id);
       const { client } = arrangeApp(db);
       // Act

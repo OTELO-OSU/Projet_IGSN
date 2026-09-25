@@ -79,7 +79,7 @@ const validClaims = () => ({
   sub: "user-1",
   preferred_username: "marie",
   name: "Marie Dupont",
-  email: "marie.dupont@univ-lorraine.fr",
+  email: "marie.dupont-b5c@univ-lorraine.fr",
   identity_provider: "satosa",
 });
 
@@ -111,7 +111,7 @@ describe("requireAuth", () => {
         sub: "user-1",
         username: "marie",
         name: "Marie Dupont",
-        email: "marie.dupont@univ-lorraine.fr",
+        email: "marie.dupont-b5c@univ-lorraine.fr",
         orcid: null,
         status: "pending",
         superAdmin: false,

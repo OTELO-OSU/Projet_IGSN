@@ -194,6 +194,14 @@ type SampleProcessStepTable = {
   description: string | null;
 };
 
+type MineralClassificationTable = {
+  id: string;
+  sample_id: string;
+  strunz_id: string;
+  mindat_id: number | null;
+  abundance: string | null;
+};
+
 type SampleAdditionalRoleTable = {
   id: string;
   sample_id: string;
@@ -297,6 +305,7 @@ export type DB = {
   sample_relation: SampleRelationTable;
   sample_process_step: SampleProcessStepTable;
   sample_additional_role: SampleAdditionalRoleTable;
+  mineral_classification: MineralClassificationTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;
   service_account: ServiceAccountTable;

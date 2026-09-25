@@ -24,6 +24,8 @@ const DATE_RANGE_SUFFIXES: Record<string, string> = {
 
 const RELATION_PATH = /^relations\.(\d+)\.(\w+)$/;
 
+const MINERAL_CLASSIFICATION_PATH = /^mineralClassifications\.(\d+)(\.\w+)?$/;
+
 const RELATION_REQUIRED_CODES = ["invalid_type", "invalid_value", "too_small"];
 
 const VERTICAL_PREFIX = "location.position.vertical.";
@@ -48,6 +50,8 @@ const HIERARCHY_PATHS = {
 } as const;
 
 const draftFieldName = (issuePath: string): string => {
+  const mineral = MINERAL_CLASSIFICATION_PATH.exec(issuePath);
+  if (mineral) return `mineralClassifications[${mineral[1]}].path`;
   const path = issuePath.replace(ARRAY_INDEX, "[$1].");
   if (path.startsWith(VERTICAL_PREFIX)) {
     const leaf = path.slice(VERTICAL_PREFIX.length);
@@ -118,6 +122,9 @@ function issueMessage(path: string, issue: DraftIssue): string {
     RELATION_PATH.test(path) &&
     RELATION_REQUIRED_CODES.includes(issue.code ?? "")
   ) {
+    return m.field_relation_required();
+  }
+  if (MINERAL_CLASSIFICATION_PATH.test(path) && issue.code === "invalid_type") {
     return m.field_relation_required();
   }
   if (issue.code === "too_small" && path.startsWith(VERTICAL_PREFIX)) {

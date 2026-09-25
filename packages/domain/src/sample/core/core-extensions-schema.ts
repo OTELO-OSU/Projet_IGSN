@@ -10,6 +10,8 @@ import { pressureUnitSchema } from "../condition/pressure-unit.ts";
 import { temperatureUnitSchema } from "../condition/temperature-unit.ts";
 import { elementSchema } from "../element/vocabulary.ts";
 import { freeTextSchema } from "../free-text.ts";
+import { strunzPathSchema } from "../mineral/mineral-hierarchy.ts";
+import { mineralAbundanceSchema } from "../mineral/model.ts";
 import { platformTypeSchema } from "../scientific-context/platform-type.ts";
 import { experimentDurationUnitSchema } from "../synthetic-details/experiment-duration-unit.ts";
 import { experimentTypeSchema } from "../synthetic-details/experiment-type.ts";
@@ -122,6 +124,31 @@ export const coreExtensionsSchema = z.strictObject({
             .optional(),
         })
         .meta({ description: "Economic interest of the sample." })
+        .optional(),
+      mineralogy: z
+        .array(
+          conceptSchema("strunz-mindat", strunzPathSchema).extend({
+            mindatId: z
+              .number()
+              .int()
+              .meta({
+                description:
+                  "Mindat id of the mineral, sitting directly under the Strunz class the id names, absent for a row stopping at that class.",
+              })
+              .optional(),
+            abundance: mineralAbundanceSchema
+              .meta({
+                description:
+                  "How abundant that mineral or class is in the sample.",
+              })
+              .optional(),
+          }),
+        )
+        .min(1)
+        .meta({
+          description:
+            "Strunz-Mindat (2026) classifications of a mineral sample, the notation being the mineral's Strunz code when a mineral is set.",
+        })
         .optional(),
     })
     .meta({ description: "Geological metadata of the sample." })

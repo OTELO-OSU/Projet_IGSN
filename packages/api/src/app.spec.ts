@@ -12,6 +12,7 @@ import {
 import { insertSample } from "./sample/service/insert-sample.ts";
 import { insertUser } from "./tests/insert-user.ts";
 import { pgTest } from "./tests/pg-test.ts";
+import { tokenEmail } from "./tests/provision-user.ts";
 import { insertSampleOwner } from "./user-sample/insert-sample-owner.ts";
 
 const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9999";
@@ -29,7 +30,7 @@ describe("app", () => {
 
   describe("GET /admin/currentUser", () => {
     const authHeader = { Authorization: "Bearer test-token" };
-    const callerEmail = "test-token@example.com";
+    const callerEmail = tokenEmail("test-token");
 
     pgTest("rejects a request with no bearer token", async ({ db }) => {
       const client = testClient(createApp(db).app);
@@ -68,7 +69,7 @@ describe("app", () => {
 
   describe("a rejected caller", () => {
     const authHeader = { Authorization: "Bearer test-token" };
-    const rejectedEmail = "test-token@example.com";
+    const rejectedEmail = tokenEmail("test-token");
 
     pgTest("should be refused on a read and on a write", async ({ db }) => {
       // Arrange

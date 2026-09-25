@@ -71,9 +71,9 @@ const ADMIN_URL = "http://localhost:3001/admin/";
 
 const IN_REACH = "UMR7358";
 const OUT_OF_REACH = "UMR5275";
-const FOREIGN_GROUP_ID = "01890a5d-ac96-774b-bcce-b302099a9003";
+const FOREIGN_GROUP_ID = "01890a5d-ac96-774b-8fb4-b302099a9003";
 const FOREIGN_GROUP_NAME = "Alpine Campaign 2026";
-const ACCOUNT_ID = "01890a5d-ac96-774b-bcce-b302099a9004";
+const ACCOUNT_ID = "01890a5d-ac96-774b-8fb4-b302099a9004";
 
 const OWNER = { firstname: "Jean", name: "Martin" };
 
@@ -92,7 +92,7 @@ const archivedSample = {
 } satisfies CreateSample;
 
 async function arrangeAccount(db: Kysely<DB>) {
-  const owner = await insertUser(db, "jean.martin@univ-lorraine.fr", OWNER);
+  const owner = await insertUser(db, "jean.martin-fb4@univ-lorraine.fr", OWNER);
   const account = await insertServiceAccount(
     db,
     "Harvester",
@@ -257,6 +257,18 @@ const PROCESS_STEPS_ON_ROOT = {
     },
   ],
 };
+
+const MINERAL_CLASSIFICATIONS = [
+  { strunzId: "2.B-E", mindatId: null, abundance: "minor" as const },
+  { strunzId: "9", mindatId: null, abundance: null },
+  { strunzId: "9.E", mindatId: 2815, abundance: "major" as const },
+];
+
+const MINERAL_BODY = core({
+  ...COLLECTION_SPECIMEN,
+  material: "rock_and_sediment.mineral",
+  mineralClassifications: MINERAL_CLASSIFICATIONS,
+});
 
 const SYNTHETIC_BODY = core(SYNTHETIC_SAMPLE);
 
@@ -498,6 +510,19 @@ describe("GET /service/samples", () => {
           numericAgeMax: 2,
           numericAgeUnit: "ma",
         }),
+      },
+    },
+    {
+      rule: "a Strunz class, keeping the minerals under it",
+      param: "mineralogy",
+      value: "9",
+      matching: {
+        material: "rock_and_sediment.mineral",
+        mineralClassifications: [{ strunzId: "9.E", mindatId: 2815 }],
+      },
+      other: {
+        material: "rock_and_sediment.mineral",
+        mineralClassifications: [{ strunzId: "2.F" }],
       },
     },
     {
@@ -960,6 +985,53 @@ describe("POST /service/samples", () => {
   );
 
   pgTest(
+    "should emit back the mineral classifications a mineral sample was posted with",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const posted = await postSample(app, MINERAL_BODY);
+      const igsn = coreSampleSchema.parse(await posted.json()).identification
+        .sampleIdentifier;
+      const res = await getSample(app, igsn);
+      // Assert
+      expect(posted.status).toBe(201);
+      expect(
+        coreSampleSchema.parse(await res.json()).extensions?.geology
+          ?.mineralogy,
+      ).toEqual(MINERAL_BODY.extensions?.geology?.mineralogy);
+    },
+  );
+
+  pgTest(
+    "should refuse mineral classifications on a non-mineral sample at their Core path",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(
+        app,
+        core({
+          ...COLLECTION_SPECIMEN,
+          mineralClassifications: MINERAL_CLASSIFICATIONS,
+        }),
+      );
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "extensions.geology.mineralogy",
+            code: "custom",
+            message: expect.any(String),
+          },
+        ],
+      });
+    },
+  );
+
+  pgTest(
     "should list every publication blocker at its Core path and write no sample when the body is incomplete",
     async ({ db }) => {
       // Arrange
@@ -1319,7 +1391,7 @@ describe("POST /service/samples", () => {
       // Arrange
       const sendMail = vi.fn().mockResolvedValue(undefined);
       await arrangeAccount(db);
-      const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
+      const colleague = await insertUser(db, "colleague-fb4@univ-lorraine.fr");
       const parent = await ownedParent(db, colleague.id);
       const app = createApp(db, {
         mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
@@ -1330,7 +1402,7 @@ describe("POST /service/samples", () => {
       expect(res.status).toBe(201);
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
-          expect.objectContaining({ to: ["colleague@univ-lorraine.fr"] }),
+          expect.objectContaining({ to: ["colleague-fb4@univ-lorraine.fr"] }),
         ),
       );
     },
@@ -1483,7 +1555,7 @@ describe("the /service mount", () => {
     "should answer 403 to $method /service/samples$path with $rule",
     async ({ headers, status, method, path }, { db }) => {
       // Arrange
-      const owner = await insertUser(db, "jean.martin@univ-lorraine.fr", {
+      const owner = await insertUser(db, "jean.martin-fb4@univ-lorraine.fr", {
         status,
       });
       await insertServiceAccount(db, "Harvester", owner.id, hashApiKey(KEY));
@@ -1679,7 +1751,7 @@ describe("PUT /service/samples/:igsn", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const linked = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      const linked = await insertUser(db, "marie.curie-fb4@univ-lorraine.fr", {
         firstname: "Marie",
         name: "Curie",
       });
@@ -1718,7 +1790,7 @@ describe("PUT /service/samples/:igsn", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const linked = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      const linked = await insertUser(db, "marie.curie-fb4@univ-lorraine.fr", {
         firstname: "Marie",
         name: "Curie",
       });
@@ -1854,7 +1926,7 @@ describe("PUT /service/samples/:igsn", () => {
       // Arrange
       const sendMail = vi.fn().mockResolvedValue(undefined);
       await arrangeAccount(db);
-      const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
+      const colleague = await insertUser(db, "colleague-fb4@univ-lorraine.fr");
       const created = await publishedInReach(db);
       await insertSampleOwner(db, created.id, colleague.id);
       const app = createApp(db, {
@@ -1870,7 +1942,7 @@ describe("PUT /service/samples/:igsn", () => {
       expect(res.status).toBe(200);
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
-          expect.objectContaining({ to: ["colleague@univ-lorraine.fr"] }),
+          expect.objectContaining({ to: ["colleague-fb4@univ-lorraine.fr"] }),
         ),
       );
     },

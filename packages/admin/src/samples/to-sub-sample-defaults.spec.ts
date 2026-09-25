@@ -8,6 +8,12 @@ const PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const GRANDPARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3300";
 const SECOND_PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3302";
 
+const mineralClassification = {
+  strunzId: "9.E",
+  mindatId: 2815,
+  abundance: "major" as const,
+};
+
 const parent: Sample = {
   id: PARENT_ID,
   name: "Basalte du Massif Central",
@@ -55,6 +61,7 @@ const parent: Sample = {
     },
   ],
   processSteps: [{ kind: "preparation", description: "Powdered" }],
+  mineralClassifications: [mineralClassification],
   attachments: [
     {
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
@@ -102,6 +109,7 @@ it("should inherit every block of the parent but its identity, its collections a
     parentIds: [PARENT_ID],
     relations: [],
     processSteps: [],
+    mineralClassifications: [mineralClassification],
     attachments: [],
     manualGroupIds: [],
     type: "dredge",

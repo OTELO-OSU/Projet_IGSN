@@ -50,7 +50,7 @@ describe("currentUser routes", () => {
       superAdmin: false,
       managedLaboratories: [],
       managedManualGroups: [],
-      email: "test-token@example.com",
+      email: tokenEmail("test-token"),
       orcid: null,
       institutionalOrganization: null,
       institutionalOsu: null,
@@ -63,23 +63,23 @@ describe("currentUser routes", () => {
     const client = testClient(createApp(db).app);
     // Act
     const res = await client.admin.currentUser.orcid.$put(
-      { json: { orcid: "0000-0002-1825-0097" } },
+      { json: { orcid: "0000-0002-2012-0099" } },
       { headers: authHeader },
     );
     // Assert
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ orcid: "0000-0002-1825-0097" });
+    expect(await res.json()).toEqual({ orcid: "0000-0002-2012-0099" });
     const me = await client.admin.currentUser.$get(undefined, {
       headers: authHeader,
     });
-    expect(await me.json()).toMatchObject({ orcid: "0000-0002-1825-0097" });
+    expect(await me.json()).toMatchObject({ orcid: "0000-0002-2012-0099" });
   });
 
   pgTest("should clear the caller's orcid with null", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db).app);
     await client.admin.currentUser.orcid.$put(
-      { json: { orcid: "0000-0002-1825-0097" } },
+      { json: { orcid: "0000-0002-2012-0099" } },
       { headers: authHeader },
     );
     // Act
@@ -96,14 +96,14 @@ describe("currentUser routes", () => {
     "should answer 409 when another user holds the orcid",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "holder@univ-lorraine.fr", {
-        orcid: "0000-0002-1825-0097",
+      await insertUser(db, "holder-7dc@univ-lorraine.fr", {
+        orcid: "0000-0002-2012-0099",
       });
       // Act
       const res = await testClient(
         createApp(db).app,
       ).admin.currentUser.orcid.$put(
-        { json: { orcid: "0000-0002-1825-0097" } },
+        { json: { orcid: "0000-0002-2012-0099" } },
         { headers: authHeader },
       );
       // Assert
@@ -119,7 +119,7 @@ describe("currentUser routes", () => {
     { case: "a missing orcid field", body: {} },
     {
       case: "an unknown extra field",
-      body: { orcid: "0000-0002-1825-0097", admin: true },
+      body: { orcid: "0000-0002-2012-0099", admin: true },
     },
   ])("should answer 400 on $case", async ({ body }, { db }) => {
     // Act
@@ -303,10 +303,10 @@ describe("currentUser routes", () => {
       const groupId = crypto.randomUUID();
       await db
         .insertInto("manual_group")
-        .values({ id: groupId, name: "Massif central" })
+        .values({ id: groupId, name: "Massif central 7dc" })
         .execute();
       await moderateManualGroup(db, caller.id, [groupId]);
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "admin-7dc@univ-lorraine.fr", { superAdmin: true });
       const sendMail = vi.fn().mockResolvedValue(undefined);
       const client = testClient(
         createApp(db, {
@@ -322,7 +322,7 @@ describe("currentUser routes", () => {
       expect(res.status).toBe(204);
       await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
       expect(sendMail.mock.calls[0]?.[0].to).toEqual([
-        "admin@univ-lorraine.fr",
+        "admin-7dc@univ-lorraine.fr",
       ]);
       expect(sendMail.mock.calls[0]?.[0].text).toContain(
         `/manual-groups/${groupId}`,
@@ -341,7 +341,7 @@ describe("currentUser routes", () => {
       const res = await testClient(
         createApp(db).app,
       ).admin.currentUser.orcid.$put(
-        { json: { orcid: "0000-0002-1825-0097" } },
+        { json: { orcid: "0000-0002-2012-0099" } },
         { headers: authHeader },
       );
       // Assert
@@ -400,7 +400,10 @@ describe("currentUser managed groups", () => {
   pgTest("should name the manual groups a caller manages", async ({ db }) => {
     // Arrange
     const caller = await insertUser(db, callerEmail);
-    const group = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "Alpes" };
+    const group = {
+      id: "01890a5d-ac96-774b-87dc-b302099a9001",
+      name: "Alpes 7dc",
+    };
     await db.insertInto("manual_group").values(group).execute();
     await moderateManualGroup(db, caller.id, [group.id]);
     // Act
@@ -416,14 +419,17 @@ describe("currentUser managed groups", () => {
 });
 
 describe("the caller's attachable manual groups", () => {
-  const ALPES = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "Alpes" };
+  const ALPES = {
+    id: "01890a5d-ac96-774b-87dc-b302099a9001",
+    name: "Alpes 7dc",
+  };
   const BRETAGNE = {
-    id: "01890a5d-ac96-774b-bcce-b302099a9002",
+    id: "01890a5d-ac96-774b-87dc-b302099a9002",
     name: "Bretagne",
   };
   const MASSIF = {
-    id: "01890a5d-ac96-774b-bcce-b302099a9003",
-    name: "Massif central",
+    id: "01890a5d-ac96-774b-87dc-b302099a9003",
+    name: "Massif central 7dc",
   };
 
   const arrangeCaller = async (db: Kysely<DB>) => {

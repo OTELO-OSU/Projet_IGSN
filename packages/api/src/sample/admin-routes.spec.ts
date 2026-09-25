@@ -21,7 +21,7 @@ import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { pgTest } from "../tests/pg-test.ts";
-import { provisionUser } from "../tests/provision-user.ts";
+import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 import { readSample } from "../tests/read-sample.ts";
 import {
   attachGroup,
@@ -38,7 +38,7 @@ import { setSampleStatus } from "./service/set-sample-status.ts";
 const attachmentsDir = join(import.meta.dirname, "..", "..", "attachments");
 
 const authHeader = { Authorization: "Bearer test-token" };
-const authenticatedCallerEmail = "test-token@example.com";
+const authenticatedCallerEmail = tokenEmail("test-token");
 
 const publishable = {
   ...publishableSample,
@@ -386,7 +386,7 @@ describe("admin sample routes", () => {
   pgTest("should answer 404 for an unknown sample id", async ({ db }) => {
     // Act
     const res = await testClient(createApp(db).app).admin.samples[":id"].$get(
-      { param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" } },
+      { param: { id: "01890a5d-ac96-774b-8d00-b302099a8057" } },
       { headers: authHeader },
     );
     // Assert
@@ -575,7 +575,7 @@ describe("admin sample routes", () => {
       db: Parameters<typeof createApp>[0],
       sampleId: string,
     ) {
-      const pierre = await insertUser(db, "pierre@univ-lorraine.fr", {
+      const pierre = await insertUser(db, "pierre-d00@univ-lorraine.fr", {
         name: "Pierre Martin",
       });
       await acquireEditLock(db, sampleId, pierre.id);
@@ -633,7 +633,7 @@ describe("admin sample routes", () => {
         // Act
         const released = await deleteLock(app, sample.id);
         // Assert
-        const marie = await insertUser(db, "marie@univ-lorraine.fr");
+        const marie = await insertUser(db, "marie-d00@univ-lorraine.fr");
         expect(claimed.status).toBe(200);
         expect(released.status).toBe(204);
         expect(await acquireEditLock(db, sample.id, marie.id)).toMatchObject({
@@ -704,7 +704,7 @@ describe("admin sample routes", () => {
       // Act
       const res = await putLock(
         createApp(db).app,
-        "01890a5d-ac96-774b-bcce-b302099a8057",
+        "01890a5d-ac96-774b-8d00-b302099a8057",
       );
       // Assert
       expect(res.status).toBe(404);
@@ -714,7 +714,7 @@ describe("admin sample routes", () => {
       "should answer 403 to a user with no role on the sample",
       async ({ db }) => {
         // Arrange
-        const other = await insertUser(db, "other@univ-lorraine.fr");
+        const other = await insertUser(db, "other-d00@univ-lorraine.fr");
         const sample = await insertSample(db, draftSample);
         await insertSampleOwner(db, sample.id, other.id);
         const app = createApp(db).app;
@@ -982,7 +982,7 @@ describe("admin sample routes", () => {
     // Act
     const res = await testClient(createApp(db).app).admin.samples[":id"].$put(
       {
-        param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" },
+        param: { id: "01890a5d-ac96-774b-8d00-b302099a8057" },
         json: {
           name: "Grès",
           nature: "powder",
@@ -1316,7 +1316,7 @@ describe("admin sample routes", () => {
       const res = await testClient(createApp(db).app).admin.samples[
         ":id"
       ].publish.$post(
-        { param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" } },
+        { param: { id: "01890a5d-ac96-774b-8d00-b302099a8057" } },
         { headers: authHeader },
       );
       // Assert
@@ -1399,7 +1399,7 @@ describe("admin sample routes", () => {
       // Act
       const res = await setStatus(
         client,
-        "01890a5d-ac96-774b-bcce-b302099a8057",
+        "01890a5d-ac96-774b-8d00-b302099a8057",
         "withdrawn",
       );
       // Assert
@@ -1569,7 +1569,7 @@ describe("admin sample routes", () => {
 
     pgTest("should reject an invalid update body with 400", async ({ db }) => {
       const res = await createApp(db).app.request(
-        "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057",
+        "/admin/samples/01890a5d-ac96-774b-8d00-b302099a8057",
         {
           method: "PUT",
           headers: { "content-type": "application/json", ...authHeader },
@@ -1588,16 +1588,16 @@ describe("admin sample routes", () => {
 
     pgTest.for([
       ["list", "/admin/samples", {}],
-      ["get", "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057", {}],
+      ["get", "/admin/samples/01890a5d-ac96-774b-8d00-b302099a8057", {}],
       ["create", "/admin/samples", { method: "POST", ...jsonBody }],
       [
         "update",
-        "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057",
+        "/admin/samples/01890a5d-ac96-774b-8d00-b302099a8057",
         { method: "PUT", ...jsonBody },
       ],
       [
         "publish",
-        "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057/publish",
+        "/admin/samples/01890a5d-ac96-774b-8d00-b302099a8057/publish",
         { method: "POST" },
       ],
     ] as const)(
@@ -1613,7 +1613,7 @@ describe("admin sample routes", () => {
     async function insertOtherResearcherSample(
       db: Parameters<typeof createApp>[0],
     ) {
-      const other = await insertUser(db, "other@univ-lorraine.fr");
+      const other = await insertUser(db, "other-d00@univ-lorraine.fr");
       const sample = await insertSample(db, {
         name: "Granite de Pierre",
         nature: "powder",
@@ -1756,7 +1756,10 @@ describe("admin sample routes", () => {
           superAdmin: true,
         });
         const sample = await insertOtherResearcherSample(db);
-        const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
+        const colleague = await insertUser(
+          db,
+          "colleague-d00@univ-lorraine.fr",
+        );
         const client = testClient(createApp(db).app);
         // Act
         const added = await client.admin.samples[":id"].collaborators.$post(
@@ -1778,8 +1781,8 @@ describe("admin sample routes", () => {
             .map(({ email, role }) => ({ email, role }))
             .sort((a, b) => a.email.localeCompare(b.email)),
         ).toEqual([
-          { email: "colleague@univ-lorraine.fr", role: "contributor" },
-          { email: "other@univ-lorraine.fr", role: "owner" },
+          { email: "colleague-d00@univ-lorraine.fr", role: "contributor" },
+          { email: "other-d00@univ-lorraine.fr", role: "owner" },
         ]);
       },
     );
@@ -1793,7 +1796,10 @@ describe("admin sample routes", () => {
           superAdmin: true,
         });
         const sample = await insertOtherResearcherSample(db);
-        const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
+        const colleague = await insertUser(
+          db,
+          "colleague-d00@univ-lorraine.fr",
+        );
         const client = testClient(createApp(db).app);
         await client.admin.samples[":id"].collaborators.$post(
           {
@@ -1817,7 +1823,7 @@ describe("admin sample routes", () => {
         );
         const { data } = (await listed.json()) as SampleCollaboratorsResponse;
         expect(data.map(({ email, role }) => ({ email, role }))).toEqual([
-          { email: "other@univ-lorraine.fr", role: "owner" },
+          { email: "other-d00@univ-lorraine.fr", role: "owner" },
         ]);
       },
     );
@@ -1929,7 +1935,7 @@ describe("admin sample routes", () => {
       db: Parameters<typeof createApp>[0],
       { status }: { status: SampleStatus } = { status: "draft" },
     ) {
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-d00@univ-lorraine.fr");
       const caller = await insertUser(db, authenticatedCallerEmail);
       const sample = await insertSample(db, draft);
       await insertSampleOwner(db, sample.id, owner.id);
@@ -2061,7 +2067,7 @@ describe("admin sample routes", () => {
       async ({ db }) => {
         const client = testClient(createApp(db).app);
         const sample = await shareWithCaller(db, { status: "published" });
-        const pierre = await insertUser(db, "pierre@univ-lorraine.fr");
+        const pierre = await insertUser(db, "pierre-d00@univ-lorraine.fr");
         await acquireEditLock(db, sample.id, pierre.id);
 
         const res = await client.admin.samples[":id"].$put(
@@ -2176,7 +2182,7 @@ describe("admin sample routes", () => {
         status?: SampleStatus;
       } = {},
     ) {
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-d00@univ-lorraine.fr");
       const caller = await insertUser(db, authenticatedCallerEmail);
       const sample = await insertSample(db, json);
       await insertSampleOwner(db, sample.id, owner.id);
@@ -2216,7 +2222,7 @@ describe("admin sample routes", () => {
       async ({ db }) => {
         const client = testClient(createApp(db).app);
         const sample = await shareWithCallerAsEditor(db);
-        const colleague = await insertUser(db, "colleague@example.com");
+        const colleague = await insertUser(db, tokenEmail("colleague"));
 
         const added = await client.admin.samples[":id"].collaborators.$post(
           {
@@ -2240,7 +2246,7 @@ describe("admin sample routes", () => {
       async ({ db }) => {
         const client = testClient(createApp(db).app);
         const sample = await shareWithCallerAsEditor(db);
-        const colleague = await insertUser(db, "colleague@example.com");
+        const colleague = await insertUser(db, tokenEmail("colleague"));
         await client.admin.samples[":id"].collaborators.$post(
           {
             param: { id: sample.id },
@@ -2312,7 +2318,7 @@ describe("admin sample routes", () => {
       async ({ db }) => {
         const client = testClient(createApp(db).app);
         const sample = await shareWithCallerAsEditor(db);
-        const colleague = await insertUser(db, "colleague@example.com");
+        const colleague = await insertUser(db, tokenEmail("colleague"));
         await client.admin.samples[":id"].collaborators.$post(
           {
             param: { id: sample.id },
@@ -2354,7 +2360,7 @@ describe("admin sample routes", () => {
           { json: draft },
           { headers: authHeader },
         );
-        const other = await insertUser(db, "other@univ-lorraine.fr");
+        const other = await insertUser(db, "other-d00@univ-lorraine.fr");
         const foreign = await insertSample(db, {
           name: "Foreign granite",
           nature: "powder",
@@ -2410,7 +2416,7 @@ describe("admin sample routes", () => {
     pgTest(
       "should list a shared sample once, with its owner",
       async ({ db }) => {
-        const owner = await insertUser(db, "owner@univ-lorraine.fr");
+        const owner = await insertUser(db, "owner-d00@univ-lorraine.fr");
         await db
           .updateTable("user")
           .set({ name: "Curie", firstname: "Marie" })
@@ -2465,7 +2471,7 @@ describe("admin sample routes", () => {
     pgTest(
       "should carry the contributor role of the caller",
       async ({ db }) => {
-        const owner = await insertUser(db, "owner@univ-lorraine.fr");
+        const owner = await insertUser(db, "owner-d00@univ-lorraine.fr");
         const caller = await insertUser(db, authenticatedCallerEmail);
         const sample = await insertSample(db, draft);
         await insertSampleOwner(db, sample.id, owner.id);
@@ -2506,7 +2512,7 @@ describe("admin sample routes", () => {
     ) {
       const app = createApp(db, { mail }).app;
       const owner = await insertUser(db, authenticatedCallerEmail);
-      const colleague = await insertUser(db, "colleague@example.com");
+      const colleague = await insertUser(db, tokenEmail("colleague"));
       const created = await testClient(app).admin.samples.$post(
         { json: draft },
         { headers: authHeader },
@@ -2547,7 +2553,7 @@ describe("admin sample routes", () => {
             },
             {
               id: colleague.id,
-              email: "colleague@example.com",
+              email: tokenEmail("colleague"),
               name: null,
               firstname: null,
               orcid: null,
@@ -2850,7 +2856,7 @@ describe("admin sample routes", () => {
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
           expect.objectContaining({
-            to: ["colleague@example.com"],
+            to: [tokenEmail("colleague")],
             subject:
               "You have been designated as a contributor for a new sample",
           }),
@@ -2890,7 +2896,7 @@ describe("admin sample routes", () => {
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
           expect.objectContaining({
-            to: ["colleague@example.com"],
+            to: [tokenEmail("colleague")],
             subject:
               'Test User removed you from the sample "Basalte à partager"',
           }),
@@ -3044,7 +3050,7 @@ describe("admin sample routes", () => {
           adminUrl: ADMIN_URL,
           frontendUrl: FRONTEND_URL,
         });
-        const invitee = await insertUser(db, "invitee@example.com", {
+        const invitee = await insertUser(db, tokenEmail("invitee"), {
           status: "rejected",
         });
 
@@ -3077,7 +3083,7 @@ describe("admin sample routes", () => {
         {
           param: { id: sample.id },
           json: {
-            userId: "01890a5d-ac96-774b-bcce-b302099a8057",
+            userId: "01890a5d-ac96-774b-8d00-b302099a8057",
             role: "contributor",
           },
         },
@@ -3154,7 +3160,7 @@ describe("admin sample routes", () => {
           },
           { headers: authHeader },
         );
-        const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
+        const stranger = await insertUser(db, "stranger-d00@univ-lorraine.fr");
 
         const res = await client.admin.samples[":id"].collaborators.$post(
           {
@@ -3272,8 +3278,8 @@ describe("admin sample routes", () => {
     const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a8060";
     const IN_REACH = "UMR7358";
     const GROUP = {
-      id: "01890a5d-ac96-774b-bcce-b302099a9001",
-      name: "Massif Central 2026",
+      id: "01890a5d-ac96-774b-8d00-b302099a9001",
+      name: "Massif Central 2026 d00",
     };
 
     async function arrangeDeletableSample(
@@ -3290,7 +3296,7 @@ describe("admin sample routes", () => {
       const owner =
         role === "owner"
           ? caller
-          : await insertUser(db, "owner@univ-lorraine.fr");
+          : await insertUser(db, "owner-d00@univ-lorraine.fr");
       const sample = await insertSample(db, draft, {
         institutionalOrganization: null,
         institutionalOsu: null,
@@ -3467,7 +3473,7 @@ describe("admin sample routes", () => {
       "should answer 409 when another collaborator holds the edit lock",
       async ({ db }) => {
         const { sample } = await arrangeDeletableSample(db);
-        const pierre = await insertUser(db, "pierre@univ-lorraine.fr");
+        const pierre = await insertUser(db, "pierre-d00@univ-lorraine.fr");
         await acquireEditLock(db, sample.id, pierre.id);
 
         const res = await deleteSample(createApp(db).app, sample.id);

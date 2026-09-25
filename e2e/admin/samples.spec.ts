@@ -4,6 +4,7 @@ import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { sampleNamed, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
+import { sampleListPage as publicSampleListPage } from "../support/frontend/sample-list.page";
 
 test.describe("samples", () => {
   test("a researcher browses the samples they declared", async ({
@@ -219,6 +220,38 @@ test.describe("samples", () => {
     const detail = sampleDetailPage(page);
     await detail.goto(igsn);
     await detail.expectInternalId(internalId);
+  });
+
+  test("a researcher classifies a mineral sample that readers find by its Strunz class", async ({
+    page,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    await list.goToCreate();
+
+    const create = sampleCreatePage(page);
+    const name = `Muscovite schist ${Date.now()}`;
+    await create.fillName(name);
+    await create.selectNature("Thin section");
+    await create.fillPublishableFields({ material: "Mineral" });
+    await create.addMineralBySearch(
+      "Muscovite",
+      "Silicates > Phyllosilicates > Muscovite",
+      "Major",
+    );
+    await create.addStrunzClass(["Silicates"]);
+    await create.publish();
+    await list.expectVisible();
+
+    await list.openSample(name);
+    const igsn = await sampleEditPage(page).publicPageIgsn();
+    const detail = sampleDetailPage(page);
+    await detail.goto(igsn);
+    await detail.expectMineralClassification("Muscovite");
+
+    const search = publicSampleListPage(page);
+    await search.gotoWithSearch("mineralClassification=9.E");
+    await search.expectSampleLink(name, igsn);
   });
 
   test("the create form rejects a sample without a name", async ({ page }) => {

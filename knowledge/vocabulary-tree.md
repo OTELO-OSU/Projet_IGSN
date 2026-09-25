@@ -32,3 +32,4 @@ Mechanics:
 - `resolvePathNode` resolves a path by longest-matching-suffix, which is how a dotted context override works.
 - Each vocabulary exports its bundle (`MATERIAL_HIERARCHY`, `SAMPLE_TYPE_HIERARCHY`, `COLLECTION_METHOD_HIERARCHY`), so the stop policy is stated once per source of truth: collection method marks its non-leaves `optional: true`, material marks its 14 niveau-1 nodes ([[material-levels-editable]]), and type marks nothing.
 - Adding a value is pure data: one tree node plus its key in a parent's `choices`, no migration and no UI change. Use the `add-sample-vocabulary` skill.
+- The Strunz-Mindat mineral classification (`sample/mineral/`) was generated once from a Mindat export and a geologist's spreadsheet, with no sync script, and is hand-edited since, split like material into one `strunz-classification/*-subtree.ts` per category, each class node listing its own minerals; see ADR [0050](../docs/adr/0050-strunz-mindat-mineral-classification.md).

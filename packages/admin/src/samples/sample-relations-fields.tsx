@@ -1,6 +1,10 @@
 import type { IdentifierType } from "@projet-igsn/domain/sample/relation/identifier-type";
 
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
+import {
+  FieldListItem,
+  FieldListRemoveButton,
+} from "@projet-igsn/design-system/components/form/field-list-item";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
@@ -19,7 +23,7 @@ import {
   RELATION_TYPES,
 } from "@projet-igsn/domain/sample/relation/relation-type";
 import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relation/target-resource-type";
-import { ChevronDownIcon, Trash2 } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { EMPTY_RELATION_DRAFT } from "#/samples/sample-draft-schema.ts";
@@ -50,41 +54,31 @@ export function SampleRelationsFields() {
       <form.Subscribe selector={(state) => state.values.relations}>
         {(relations) =>
           relations.map((relation, index) => (
-            <fieldset
+            <FieldListItem
               key={relation.key}
-              className="grid gap-2 rounded-lg border p-4"
-            >
-              <legend className="px-1 text-sm font-medium">
-                {m.legend_relation({
-                  index: index + 1,
-                  type: identifierTypeLabel[relation.identifierType],
-                })}
-              </legend>
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <form.AppField name={`relations[${index}].identifier`}>
-                    {(field) => (
-                      <field.TextField
-                        label={identifierTypeLabel[relation.identifierType]}
-                        requiredToPublish
-                        placeholder={IDENTIFIER_PLACEHOLDER[
-                          relation.identifierType
-                        ]?.()}
-                      />
-                    )}
-                  </form.AppField>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
+              legend={m.legend_relation({
+                index: index + 1,
+                type: identifierTypeLabel[relation.identifierType],
+              })}
+              actions={
+                <FieldListRemoveButton
+                  label={m.action_remove_relation({ index: index + 1 })}
                   disabled={isDisabled}
-                  aria-label={m.action_remove_relation({ index: index + 1 })}
                   onClick={() => form.removeFieldValue("relations", index)}
-                >
-                  <Trash2 aria-hidden />
-                </Button>
-              </div>
+                />
+              }
+            >
+              <form.AppField name={`relations[${index}].identifier`}>
+                {(field) => (
+                  <field.TextField
+                    label={identifierTypeLabel[relation.identifierType]}
+                    requiredToPublish
+                    placeholder={IDENTIFIER_PLACEHOLDER[
+                      relation.identifierType
+                    ]?.()}
+                  />
+                )}
+              </form.AppField>
               <form.AppField name={`relations[${index}].targetTitle`}>
                 {(field) => (
                   <field.TextField label={m.field_relation_target_title()} />
@@ -157,7 +151,7 @@ export function SampleRelationsFields() {
                   />
                 )}
               </form.AppField>
-            </fieldset>
+            </FieldListItem>
           ))
         }
       </form.Subscribe>

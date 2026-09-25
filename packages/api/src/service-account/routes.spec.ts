@@ -21,12 +21,15 @@ const LABORATORY = "UMR7358";
 const OTHER_ORGANIZATION = "014zrew76";
 const OTHER_OSU = "OSUC";
 const OTHER_LABORATORY = "UMR7327";
-const GROUP = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "OZCAR-RI" };
-const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9099";
+const GROUP = {
+  id: "01890a5d-ac96-774b-8db1-b302099a9001",
+  name: "OZCAR-RI db1",
+};
+const UNKNOWN_ID = "01890a5d-ac96-774b-8db1-b302099a9099";
 const PENDING_ID = "01890a5d-ac96-774b-bcce-b302099a9098";
 const OWNER = {
-  id: "01890a5d-ac96-774b-bcce-b302099a9002",
-  email: "jean.martin@univ-lorraine.fr",
+  id: "01890a5d-ac96-774b-8db1-b302099a9002",
+  email: "jean.martin-db1@univ-lorraine.fr",
   name: "Martin",
   firstname: "Jean",
   orcid: null,
@@ -272,7 +275,7 @@ describe("admin service account routes", () => {
   ])("should answer 404 to $rule", async ({ ownerId }, { db }) => {
     // Arrange
     const client = await asSuperAdmin(db);
-    await insertUser(db, "pending@univ-lorraine.fr", {
+    await insertUser(db, "pending-db1@univ-lorraine.fr", {
       id: PENDING_ID,
       status: "pending",
     });

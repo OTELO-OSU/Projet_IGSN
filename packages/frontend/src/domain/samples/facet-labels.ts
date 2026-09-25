@@ -7,6 +7,7 @@ import {
 import {
   collectionMethodLabel,
   materialPathLabel,
+  mineralClassificationLabel,
   natureLabel,
   textureLabel,
   typeLabel,
@@ -16,6 +17,7 @@ import { m } from "#/paraglide/messages.js";
 const FACET_LABEL: Record<string, () => string> = {
   type: m.sample_field_type,
   material: m.sample_field_material,
+  mineralClassification: m.sample_section_mineral_classifications,
   collectionMethod: m.sample_field_collection_method,
   nature: m.sample_field_nature,
   texture: m.sample_field_texture,
@@ -37,6 +39,7 @@ export const facetLabel = (key: string): string => FACET_LABEL[key]?.() ?? key;
 const FACET_VALUE_LABEL: Record<string, (code: string) => string> = {
   type: typeLabel,
   material: materialPathLabel,
+  mineralClassification: mineralClassificationLabel,
   collectionMethod: collectionMethodLabel,
   nature: natureLabel as (code: string) => string,
   texture: textureLabel as (code: string) => string,

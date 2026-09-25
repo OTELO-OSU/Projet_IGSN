@@ -36,6 +36,17 @@ export function sampleProcessStepsQuery(eb: ExpressionBuilder<DB, "sample">) {
   ).as("processSteps");
 }
 
+export function sampleMineralClassificationsQuery(
+  eb: ExpressionBuilder<DB, "sample">,
+) {
+  return jsonArrayFrom(
+    eb
+      .selectFrom("mineral_classification")
+      .selectAll("mineral_classification")
+      .whereRef("mineral_classification.sample_id", "=", "sample.id"),
+  ).as("mineralClassifications");
+}
+
 export function sampleAdditionalRolesQuery(
   eb: ExpressionBuilder<DB, "sample">,
 ) {

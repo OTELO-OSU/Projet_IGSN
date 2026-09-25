@@ -23,15 +23,15 @@ describe("sendPendingUsersDigest", () => {
   pgTest(
     "should mail the pending accounts digest to every super admin",
     async ({ db }) => {
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "boss@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "marie.dupont@univ-lorraine.fr", {
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "boss-c91@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "marie.dupont-c91@univ-lorraine.fr", {
         name: "Dupont",
         firstname: "Marie",
         status: "pending",
         createdAt: new Date("2026-08-05T09:00:00Z"),
       });
-      await insertUser(db, "jean.martin@univ-lorraine.fr", {
+      await insertUser(db, "jean.martin-c91@univ-lorraine.fr", {
         name: "Martin",
         firstname: "Jean",
         status: "pending",
@@ -43,7 +43,7 @@ describe("sendPendingUsersDigest", () => {
 
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
-          to: ["admin@univ-lorraine.fr", "boss@univ-lorraine.fr"],
+          to: ["admin-c91@univ-lorraine.fr", "boss-c91@univ-lorraine.fr"],
           subject: "2 users are waiting for activation",
         }),
       );
@@ -53,8 +53,8 @@ describe("sendPendingUsersDigest", () => {
   pgTest(
     "should send nothing when nothing is pending and no group is orphan",
     async ({ db }) => {
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "researcher@univ-lorraine.fr", {});
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "researcher-c91@univ-lorraine.fr", {});
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
       await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
@@ -66,7 +66,7 @@ describe("sendPendingUsersDigest", () => {
   pgTest(
     "should send nothing when no super admin can be reached",
     async ({ db }) => {
-      await insertUser(db, "jean.martin@univ-lorraine.fr", {
+      await insertUser(db, "jean.martin-c91@univ-lorraine.fr", {
         status: "pending",
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
@@ -80,8 +80,8 @@ describe("sendPendingUsersDigest", () => {
   pgTest(
     "should log a refused send rather than crash the api",
     async ({ db }) => {
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "jean.martin@univ-lorraine.fr", {
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "jean.martin-c91@univ-lorraine.fr", {
         status: "pending",
       });
       const logged = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -128,25 +128,25 @@ describe("sendPendingUsersDigest", () => {
     "should mail an institution manager only the pending users of its laboratories",
     async ({ db }) => {
       // Arrange
-      const admin = await insertUser(db, "admin@univ-lorraine.fr", {
+      const admin = await insertUser(db, "admin-c91@univ-lorraine.fr", {
         superAdmin: true,
       });
       await moderateInstitution(db, admin.id, {
         kind: "laboratory",
         code: "UMR7358",
       });
-      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      const manager = await insertUser(db, "manager-c91@univ-lorraine.fr");
       await moderateInstitution(db, manager.id, {
         kind: "laboratory",
         code: "UMR7358",
       });
-      await insertUser(db, "inside@univ-lorraine.fr", {
+      await insertUser(db, "inside-c91@univ-lorraine.fr", {
         name: "Inside",
         firstname: "Ines",
         status: "pending",
         institutionalLaboratory: "UMR7358",
       });
-      await insertUser(db, "outside@univ-lorraine.fr", {
+      await insertUser(db, "outside-c91@univ-lorraine.fr", {
         name: "Outside",
         firstname: "Oscar",
         status: "pending",
@@ -159,34 +159,34 @@ describe("sendPendingUsersDigest", () => {
       expect(sendMail).toHaveBeenCalledTimes(2);
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
-          to: ["admin@univ-lorraine.fr"],
+          to: ["admin-c91@univ-lorraine.fr"],
           subject: "2 users are waiting for activation",
         }),
       );
       expect(sendMail).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
-          to: ["manager@univ-lorraine.fr"],
+          to: ["manager-c91@univ-lorraine.fr"],
           subject: "1 user is waiting for activation",
         }),
       );
       const scoped = sendMail.mock.calls[1]?.[0].text;
-      expect(scoped).toContain("inside@univ-lorraine.fr");
-      expect(scoped).not.toContain("outside@univ-lorraine.fr");
+      expect(scoped).toContain("inside-c91@univ-lorraine.fr");
+      expect(scoped).not.toContain("outside-c91@univ-lorraine.fr");
     },
   );
 
   pgTest("should mail no manual group manager", async ({ db }) => {
     // Arrange
-    await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+    await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
     const groupId = crypto.randomUUID();
     await db
       .insertInto("manual_group")
-      .values({ id: groupId, name: "Massif central" })
+      .values({ id: groupId, name: "Massif central c91" })
       .execute();
-    const manager = await insertUser(db, "manager@univ-lorraine.fr");
+    const manager = await insertUser(db, "manager-c91@univ-lorraine.fr");
     await moderateManualGroup(db, manager.id, [groupId]);
-    const member = await insertUser(db, "member@univ-lorraine.fr", {
+    const member = await insertUser(db, "member-c91@univ-lorraine.fr", {
       status: "pending",
     });
     await db
@@ -199,7 +199,7 @@ describe("sendPendingUsersDigest", () => {
     // Assert
     expect(sendMail).toHaveBeenCalledTimes(1);
     expect(sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: ["admin@univ-lorraine.fr"] }),
+      expect.objectContaining({ to: ["admin-c91@univ-lorraine.fr"] }),
     );
   });
 
@@ -207,13 +207,13 @@ describe("sendPendingUsersDigest", () => {
     "should mail no manager when no pending user sits in its laboratories",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      const manager = await insertUser(db, "manager-c91@univ-lorraine.fr");
       await moderateInstitution(db, manager.id, {
         kind: "laboratory",
         code: "UMR7358",
       });
-      await insertUser(db, "waiting@univ-lorraine.fr", {
+      await insertUser(db, "waiting-c91@univ-lorraine.fr", {
         status: "pending",
         institutionalLaboratory: "UMR5275",
       });
@@ -223,7 +223,7 @@ describe("sendPendingUsersDigest", () => {
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(1);
       expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: ["admin@univ-lorraine.fr"] }),
+        expect.objectContaining({ to: ["admin-c91@univ-lorraine.fr"] }),
       );
     },
   );
@@ -232,13 +232,13 @@ describe("sendPendingUsersDigest", () => {
     "should mail the super admins the orphan groups when nothing is pending",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
       const groupId = crypto.randomUUID();
       await db
         .insertInto("manual_group")
-        .values({ id: groupId, name: "Massif central" })
+        .values({ id: groupId, name: "Massif central c91" })
         .execute();
-      await insertUser(db, "member@univ-lorraine.fr", {
+      await insertUser(db, "member-c91@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
@@ -247,7 +247,7 @@ describe("sendPendingUsersDigest", () => {
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(1);
       const mail = sendMail.mock.calls[0]?.[0];
-      expect(mail.to).toEqual(["admin@univ-lorraine.fr"]);
+      expect(mail.to).toEqual(["admin-c91@univ-lorraine.fr"]);
       expect(mail.subject).toBe("2 groups have no active manager");
       expect(mail.text).toContain(`/manual-groups/${groupId}`);
       expect(mail.text).toContain("/institutional-groups/laboratories/UMR7358");
@@ -258,8 +258,8 @@ describe("sendPendingUsersDigest", () => {
     "should list an institutional group only when a user row records it",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "member@univ-lorraine.fr", {
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member-c91@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
@@ -295,9 +295,9 @@ describe("sendPendingUsersDigest", () => {
     "should recap a $kind whose only manager is not accepted",
     async ({ kind, code, member, path }, { db }) => {
       // Arrange
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "member@univ-lorraine.fr", member);
-      const manager = await insertUser(db, "manager@univ-lorraine.fr", {
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member-c91@univ-lorraine.fr", member);
+      const manager = await insertUser(db, "manager-c91@univ-lorraine.fr", {
         status: "rejected",
       });
       await moderateInstitution(db, manager.id, { kind, code });
@@ -313,11 +313,11 @@ describe("sendPendingUsersDigest", () => {
     "should keep a group with an accepted manager out of the recap",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "member@univ-lorraine.fr", {
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member-c91@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
-      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      const manager = await insertUser(db, "manager-c91@univ-lorraine.fr");
       await moderateInstitution(db, manager.id, {
         kind: "laboratory",
         code: "UMR7358",
@@ -334,31 +334,33 @@ describe("sendPendingUsersDigest", () => {
     "should keep the orphan groups out of a space manager's digest",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      const manager = await insertUser(db, "manager-c91@univ-lorraine.fr");
       await moderateInstitution(db, manager.id, {
         kind: "laboratory",
         code: "UMR7358",
       });
-      await insertUser(db, "waiting@univ-lorraine.fr", {
+      await insertUser(db, "waiting-c91@univ-lorraine.fr", {
         status: "pending",
         institutionalLaboratory: "UMR7358",
       });
       const groupId = crypto.randomUUID();
       await db
         .insertInto("manual_group")
-        .values({ id: groupId, name: "Massif central" })
+        .values({ id: groupId, name: "Massif central c91" })
         .execute();
       const sendMail = vi.fn().mockResolvedValue(undefined);
       // Act
       await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(2);
-      expect(sendMail.mock.calls[0]?.[0].text).toContain("Massif central");
+      expect(sendMail.mock.calls[0]?.[0].text).toContain("Massif central c91");
       expect(sendMail.mock.calls[1]?.[0].to).toEqual([
-        "manager@univ-lorraine.fr",
+        "manager-c91@univ-lorraine.fr",
       ]);
-      expect(sendMail.mock.calls[1]?.[0].text).not.toContain("Massif central");
+      expect(sendMail.mock.calls[1]?.[0].text).not.toContain(
+        "Massif central c91",
+      );
     },
   );
 });

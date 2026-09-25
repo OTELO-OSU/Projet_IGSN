@@ -8,6 +8,10 @@ import {
 } from "../core/core-sample-schema.ts";
 import { operatorAgentRoles } from "../core/operator-agent-roles.ts";
 import {
+  mineralClassificationText,
+  toMindatUri,
+} from "../mineral/mineral-hierarchy.ts";
+import {
   DATACITE_SCHEMA_VERSION,
   RESOURCE_TYPE_GENERAL,
   ROR_SCHEME_URI,
@@ -69,11 +73,22 @@ export function toDataCiteSample(core: CoreSample): DataCiteSample {
       resourceType: classification.materialCategories[0]?.label,
       resourceTypeGeneral: RESOURCE_TYPE_GENERAL,
     },
-    subjects: classification.contextCategories.map((concept) => ({
-      subject: concept.label,
-      subjectScheme: concept.schemeName,
-      schemeUri: concept.schemeURI,
-    })),
+    subjects: [
+      ...classification.contextCategories.map((concept) => ({
+        subject: concept.label,
+        subjectScheme: concept.schemeName,
+        schemeUri: concept.schemeURI,
+      })),
+      ...(core.extensions?.geology?.mineralogy ?? []).map(
+        ({ id, mindatId, notation }) => ({
+          subject: mineralClassificationText({ strunzId: id, mindatId }),
+          subjectScheme: "Strunz-Mindat (2026)",
+          schemeUri: "https://www.mindat.org",
+          valueUri: mindatId == null ? undefined : toMindatUri(mindatId),
+          classificationCode: notation ?? id,
+        }),
+      ),
+    ],
     dates: toDataCiteDates(core),
     language: core.record.metadataLanguage[0] ?? "en",
     alternateIdentifiers: [

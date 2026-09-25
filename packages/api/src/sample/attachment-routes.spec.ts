@@ -249,7 +249,7 @@ describe("admin attachment routes", () => {
     const client = await createTestApp(db);
     const res = await uploadAttachment(
       client,
-      "00000000-0000-7000-8000-000000000000",
+      "00000000-0000-7000-8e9e-000000000000",
     );
     expect(res.status).toBe(404);
   });
@@ -320,7 +320,7 @@ describe("admin attachment routes", () => {
       {
         param: {
           id: sample.id,
-          attachmentId: "00000000-0000-7000-8000-000000000000",
+          attachmentId: "00000000-0000-7000-8e9e-000000000000",
         },
       },
       { headers: authHeader },
@@ -335,7 +335,7 @@ describe("admin attachment routes", () => {
     ].$delete(
       {
         param: {
-          id: "00000000-0000-7000-8000-000000000000",
+          id: "00000000-0000-7000-8e9e-000000000000",
           attachmentId: "00000000-0000-7000-8000-000000000001",
         },
       },
@@ -614,7 +614,7 @@ describe("public attachment download", () => {
     const { igsn } = await publishedSampleWithFile(client);
     const res = await client.samples[":igsn"].attachments[":attachmentId"].$get(
       {
-        param: { igsn, attachmentId: "00000000-0000-7000-8000-000000000000" },
+        param: { igsn, attachmentId: "00000000-0000-7000-8e9e-000000000000" },
       },
     );
     expect(res.status).toBe(404);

@@ -58,6 +58,7 @@ const base: Sample = {
   economicResourceTypePrecision: null,
   economicDepositName: null,
   economicDepositDescription: null,
+  mineralClassifications: [],
   igsn: null,
   doiPrefix: null,
   internalNumber: null,

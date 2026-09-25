@@ -20,6 +20,7 @@ import {
   sampleAttachmentsQuery,
   sampleLocationQuery,
   sampleManualGroupsQuery,
+  sampleMineralClassificationsQuery,
   sampleOwnerQuery,
   sampleParentsQuery,
   samplePersonAccountsQuery,
@@ -110,6 +111,7 @@ async function listSamplesWhere(
       .select(sampleLocationQuery)
       .select(sampleRelationsQuery)
       .select(sampleProcessStepsQuery)
+      .select(sampleMineralClassificationsQuery)
       .select(sampleAdditionalRolesQuery)
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)

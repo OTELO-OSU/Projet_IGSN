@@ -18,7 +18,7 @@ describe("getSample", () => {
     "should return a persisted sample with its reader's owner role",
     async ({ db }) => {
       // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-6e8@univ-lorraine.fr");
       const created = await insertSample(db, draft);
       await insertSampleOwner(db, created.id, owner.id);
       // Act
@@ -32,8 +32,11 @@ describe("getSample", () => {
   );
 
   pgTest("should return its reader's contributor role", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
-    const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-6e8@univ-lorraine.fr");
+    const contributor = await insertUser(
+      db,
+      "contributor-6e8@univ-lorraine.fr",
+    );
     const created = await insertSample(db, draft);
     await insertSampleOwner(db, created.id, owner.id);
     await db
@@ -57,8 +60,8 @@ describe("getSample", () => {
     "should return another researcher's sample with no role",
     async ({ db }) => {
       // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
-      const other = await insertUser(db, "other@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-6e8@univ-lorraine.fr");
+      const other = await insertUser(db, "other-6e8@univ-lorraine.fr");
       const created = await insertSample(db, draft);
       await insertSampleOwner(db, created.id, owner.id);
       // Act
@@ -89,7 +92,7 @@ describe("getSample", () => {
       // Act
       const found = await getSample(
         db,
-        "01890a5d-ac96-774b-bcce-b302099a8057",
+        "01890a5d-ac96-774b-86e8-b302099a8057",
         user.id,
       );
       // Assert

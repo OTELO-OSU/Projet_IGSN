@@ -118,6 +118,7 @@ describe("SampleView", () => {
       "Repository",
       "Synthetic details",
       "Process steps",
+      "Strunz-Mindat (2026) Classifications",
       "Institution",
       "Groups",
       "Lineage",
@@ -453,6 +454,27 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("Split with a rock saw"))
       .toBeInTheDocument();
+  });
+
+  it("should show the mineral classifications as their own section", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          material: "rock_and_sediment.mineral",
+          mineralClassifications: [{ strunzId: "9.E", mindatId: 2815 }],
+        })}
+      />,
+    );
+
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          level: 2,
+          name: "Strunz-Mindat (2026) Classifications",
+        }),
+      )
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("Muscovite")).toBeInTheDocument();
   });
 
   it("should show the security as its own section with its hazards", async () => {

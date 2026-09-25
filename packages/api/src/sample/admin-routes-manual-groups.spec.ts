@@ -25,11 +25,11 @@ type Db = Kysely<DB>;
 
 const authHeader = { Authorization: "Bearer test-token" };
 
-const MASSIF = "01890a5d-ac96-774b-bcce-b302099a9001";
-const ALPES = "01890a5d-ac96-774b-bcce-b302099a9002";
+const MASSIF = "01890a5d-ac96-774b-82d4-b302099a9001";
+const ALPES = "01890a5d-ac96-774b-82d4-b302099a9002";
 
-const MASSIF_GROUP = { id: MASSIF, name: "Massif Central 2026" };
-const ALPES_GROUP = { id: ALPES, name: "Alpes 2026" };
+const MASSIF_GROUP = { id: MASSIF, name: "Massif Central 2026 2d4" };
+const ALPES_GROUP = { id: ALPES, name: "Alpes 2026 2d4" };
 
 const insertGroups = (db: Db) =>
   db.insertInto("manual_group").values([MASSIF_GROUP, ALPES_GROUP]).execute();
@@ -259,7 +259,7 @@ describe("a sample's manual groups", () => {
     "should keep the stored groups when a contributor $case",
     async ({ manualGroupIds }, { db }) => {
       // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2d4@univ-lorraine.fr");
       const caller = await provisionUser(db, "test-token", {
         status: "accepted",
       });
@@ -294,7 +294,7 @@ describe("a sample's manual groups", () => {
     "should answer 403 when a contributor changes the groups",
     async ({ db }) => {
       // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2d4@univ-lorraine.fr");
       const caller = await provisionUser(db, "test-token", {
         status: "accepted",
       });
@@ -364,7 +364,7 @@ describe("a sample's manual groups", () => {
     "should offer the sample owner's groups as options, never the caller's",
     async ({ db }) => {
       // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2d4@univ-lorraine.fr");
       const superAdmin = await provisionUser(db, "test-token", {
         status: "accepted",
         superAdmin: true,
@@ -385,7 +385,7 @@ describe("a sample's manual groups", () => {
     "should validate a super admin's update against the sample owner's groups",
     async ({ db }) => {
       // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2d4@univ-lorraine.fr");
       const superAdmin = await provisionUser(db, "test-token", {
         status: "accepted",
         superAdmin: true,
@@ -422,7 +422,7 @@ describe("a sample's manual groups", () => {
     "should offer no option to a collaborator who does not own the sample",
     async ({ db }) => {
       // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2d4@univ-lorraine.fr");
       const caller = await provisionUser(db, "test-token", {
         status: "accepted",
       });

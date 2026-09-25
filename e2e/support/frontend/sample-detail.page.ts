@@ -97,6 +97,13 @@ export function sampleDetailPage(page: Page) {
       expect(
         page.getByRole("region", { name: "Groups" }).getByText(name),
       ).toBeVisible(),
+    expectMineralClassification: (name: string) =>
+      expect(
+        page
+          .getByRole("region", { name: "Strunz-Mindat (2026) Classifications" })
+          .getByText(name, { exact: true })
+          .first(),
+      ).toBeVisible(),
     expectParent: (name: string, igsn: string) =>
       expect(lineageLink(name, "Parent sample")).toHaveAttribute(
         "href",

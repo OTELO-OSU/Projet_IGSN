@@ -6,6 +6,7 @@ import type { Mail } from "../mail/send-mail.ts";
 
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
+import { tokenEmail } from "../tests/provision-user.ts";
 import { draft } from "../tests/sample-fixtures.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { createUserSampleRepository } from "../user-sample/repository.ts";
@@ -16,14 +17,14 @@ const ADMIN_URL = "https://admin.example.test/admin/";
 
 describe("notifySampleModerated", () => {
   pgTest.for([
-    ["accepted", ["owner@example.com"]],
+    ["accepted", [tokenEmail("owner")]],
     ["rejected", []],
   ] as [UserStatus, string[]][])(
     "should mail the fields changed to an owner whose account is %s",
     async ([status, expected], { db }) => {
       // Arrange
       const sendMail = vi.fn<(mail: Mail) => Promise<void>>();
-      const owner = await insertUser(db, "owner@example.com", { status });
+      const owner = await insertUser(db, tokenEmail("owner"), { status });
       const sample = await insertSample(db, draft);
       await insertSampleOwner(db, sample.id, owner.id);
       // Act

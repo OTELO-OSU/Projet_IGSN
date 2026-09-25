@@ -46,6 +46,7 @@ describe("coreFilterFields", () => {
 
   it.each([
     ["materialCategory", "definitely_not_a_material"],
+    ["mineralogy", "2.C"],
     ["natureOfSample", "not_a_nature"],
     ["affiliationOrganization", "not-a-ror"],
   ])("should reject an invalid %s value", (key, value) => {
@@ -65,6 +66,7 @@ describe("toListSamplesQuery", () => {
         search: "granite",
         sampleObjectType: "core.section",
         materialCategory: "rock_and_sediment.rock",
+        mineralogy: "9.E",
         projectName: "Alpes",
         hostingInstitution: "02feahw73",
         numericAgeMin: 10,
@@ -78,6 +80,7 @@ describe("toListSamplesQuery", () => {
       search: "granite",
       type: "core.section",
       material: "rock_and_sediment.rock",
+      mineralClassification: "9.E",
       researchProgramName: "Alpes",
       hostInstitution: "02feahw73",
       ageMin: 10,

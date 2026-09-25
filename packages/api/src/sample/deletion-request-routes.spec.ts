@@ -23,7 +23,7 @@ const ADMIN_URL = "http://localhost:3001/admin/";
 const FRONTEND_URL = "http://localhost:3000";
 
 const authHeader = { Authorization: "Bearer test-token" };
-const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9999";
+const UNKNOWN_ID = "01890a5d-ac96-774b-829e-b302099a9999";
 const REASON = "The sample was destroyed during a failed analysis.";
 
 function arrangeApp(db: Db) {
@@ -41,8 +41,8 @@ function arrangeApp(db: Db) {
 
 const insertSuperAdmins = (db: Db) =>
   Promise.all([
-    insertUser(db, "root@univ-lorraine.fr", { superAdmin: true }),
-    insertUser(db, "boss@univ-lorraine.fr", { superAdmin: true }),
+    insertUser(db, "root-29e@univ-lorraine.fr", { superAdmin: true }),
+    insertUser(db, "boss-29e@univ-lorraine.fr", { superAdmin: true }),
   ]);
 
 async function arrangeOwnedSample(
@@ -61,7 +61,7 @@ async function arrangeOwnedSample(
   if (callerRole === "owner") {
     await insertSampleOwner(db, created.id, caller.id);
   } else {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-29e@univ-lorraine.fr");
     await insertSampleOwner(db, created.id, owner.id);
     if (callerRole) {
       await db
@@ -92,8 +92,8 @@ describe("POST /admin/samples/:id/deletion-request", () => {
       await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
       const sent = sendMail.mock.lastCall![0];
       expect(sent.to).toEqual([
-        "boss@univ-lorraine.fr",
-        "root@univ-lorraine.fr",
+        "boss-29e@univ-lorraine.fr",
+        "root-29e@univ-lorraine.fr",
       ]);
       expect(sent.audience).toBe("admin");
       expect(sent.text).toContain(sample.igsn);

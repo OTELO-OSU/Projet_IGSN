@@ -2,6 +2,7 @@ import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { DateRange } from "@projet-igsn/domain/sample/date-range";
 import type { Selectable } from "kysely";
 
+import { compareMineralClassifications } from "@projet-igsn/domain/sample/mineral/compare-mineral-classifications";
 import { compareProcessSteps } from "@projet-igsn/domain/sample/process-step/compare-process-steps";
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
 import { scientificContextSchema } from "@projet-igsn/domain/sample/scientific-context/model";
@@ -253,6 +254,7 @@ type SampleRow = Selectable<DB["sample"]> & {
   location?: LocationRow | null;
   relations?: Selectable<DB["sample_relation"]>[];
   processSteps?: Selectable<DB["sample_process_step"]>[];
+  mineralClassifications?: Selectable<DB["mineral_classification"]>[];
   additionalRoles?: (Selectable<DB["sample_additional_role"]> & {
     account?: ContactAccount | null;
   })[];
@@ -331,6 +333,13 @@ export function toSample(row: SampleRow): Sample {
       }),
       description: step.description,
     })),
+    mineralClassifications: (row.mineralClassifications ?? [])
+      .map((classification) => ({
+        strunzId: classification.strunz_id,
+        mindatId: classification.mindat_id,
+        abundance: classification.abundance,
+      }))
+      .toSorted(compareMineralClassifications),
     attachments: (row.attachments ?? []).map((attachment) => ({
       id: attachment.id,
       name: attachment.name,

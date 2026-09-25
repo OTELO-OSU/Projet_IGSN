@@ -33,8 +33,10 @@ describe("admin user search routes", () => {
   const authHeader = { Authorization: "Bearer test-token" };
 
   pgTest("should search researchers by name", async ({ db }) => {
-    await insertUser(db, "marie.curie@univ-lorraine.fr", { name: "Curie" });
-    await insertUser(db, "pierre.dupont@univ-lorraine.fr", { name: "Dupont" });
+    await insertUser(db, "marie.curie-eb4@univ-lorraine.fr", { name: "Curie" });
+    await insertUser(db, "pierre.dupont-eb4@univ-lorraine.fr", {
+      name: "Dupont",
+    });
 
     const res = await testClient(createApp(db).app).admin.users.search.$get(
       { query: { search: "curie" } },
@@ -49,10 +51,10 @@ describe("admin user search routes", () => {
   pgTest(
     "should ignore the exclusion when the caller is not on that sample",
     async ({ db }) => {
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      const curie = await insertUser(db, "marie.curie-eb4@univ-lorraine.fr", {
         name: "Curie",
       });
-      await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+      await insertUser(db, "pierre.dupont-eb4@univ-lorraine.fr", {
         name: "Dupont",
       });
       const sample = await insertSample(db, {
@@ -77,16 +79,16 @@ describe("admin user search routes", () => {
   pgTest(
     "should exclude the researchers already in the group",
     async ({ db }) => {
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      const curie = await insertUser(db, "marie.curie-eb4@univ-lorraine.fr", {
         name: "Curie",
       });
-      await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+      await insertUser(db, "pierre.dupont-eb4@univ-lorraine.fr", {
         name: "Dupont",
       });
       const groupId = "0198f3a0-0000-7000-8000-000000000001";
       await db
         .insertInto("manual_group")
-        .values({ id: groupId, name: "Alpes" })
+        .values({ id: groupId, name: "Alpes eb4" })
         .execute();
       await db
         .insertInto("manual_group_member")
@@ -109,22 +111,22 @@ describe("admin user search routes", () => {
       case: "only the requested identities",
       query: (ids: Record<string, string>) => `ids=${ids.curie},${ids.dupont}`,
       emails: [
-        "marie.curie@univ-lorraine.fr",
-        "pierre.dupont@univ-lorraine.fr",
+        "marie.curie-eb4@univ-lorraine.fr",
+        "pierre.dupont-eb4@univ-lorraine.fr",
       ],
     },
     {
       case: "the caller among the requested identities",
       query: (ids: Record<string, string>) => `ids=${ids.caller},${ids.curie}`,
-      emails: ["marie.curie@univ-lorraine.fr", tokenEmail("test-token")],
+      emails: ["marie.curie-eb4@univ-lorraine.fr", tokenEmail("test-token")],
     },
     {
       case: "the caller when includeSelf is set",
       query: () => "includeSelf=true",
       emails: [
-        "jean.martin@univ-lorraine.fr",
-        "marie.curie@univ-lorraine.fr",
-        "pierre.dupont@univ-lorraine.fr",
+        "jean.martin-eb4@univ-lorraine.fr",
+        "marie.curie-eb4@univ-lorraine.fr",
+        "pierre.dupont-eb4@univ-lorraine.fr",
         tokenEmail("test-token"),
       ],
     },
@@ -133,20 +135,22 @@ describe("admin user search routes", () => {
       query: () => "selfFirst=true",
       emails: [
         tokenEmail("test-token"),
-        "jean.martin@univ-lorraine.fr",
-        "marie.curie@univ-lorraine.fr",
-        "pierre.dupont@univ-lorraine.fr",
+        "jean.martin-eb4@univ-lorraine.fr",
+        "marie.curie-eb4@univ-lorraine.fr",
+        "pierre.dupont-eb4@univ-lorraine.fr",
       ],
     },
   ])("should return $case", async ({ query, emails }, { db }) => {
     const caller = await provisionUser(db, "test-token");
-    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+    const curie = await insertUser(db, "marie.curie-eb4@univ-lorraine.fr", {
       name: "Curie",
     });
-    const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+    const dupont = await insertUser(db, "pierre.dupont-eb4@univ-lorraine.fr", {
       name: "Dupont",
     });
-    await insertUser(db, "jean.martin@univ-lorraine.fr", { name: "Martin" });
+    await insertUser(db, "jean.martin-eb4@univ-lorraine.fr", {
+      name: "Martin",
+    });
 
     const res = await createApp(db).app.request(
       `/admin/users/search?${query({
@@ -236,12 +240,14 @@ describe("admin user search routes", () => {
   pgTest(
     "should omit a rejected account from the search results",
     async ({ db }) => {
-      await insertUser(db, "marie.curie@univ-lorraine.fr", { name: "Curie" });
-      await insertUser(db, "eve.curie@univ-lorraine.fr", {
+      await insertUser(db, "marie.curie-eb4@univ-lorraine.fr", {
+        name: "Curie",
+      });
+      await insertUser(db, "eve.curie-eb4@univ-lorraine.fr", {
         name: "Curie-Joliot",
         status: "rejected",
       });
-      await insertUser(db, "irene.curie@univ-lorraine.fr", {
+      await insertUser(db, "irene.curie-eb4@univ-lorraine.fr", {
         name: "Curie-Pending",
         status: "pending",
       });
@@ -253,8 +259,8 @@ describe("admin user search routes", () => {
 
       const body = userIdentitiesResponseSchema.parse(await res.json());
       expect(body.data.map((user) => user.email)).toEqual([
-        "marie.curie@univ-lorraine.fr",
-        "irene.curie@univ-lorraine.fr",
+        "marie.curie-eb4@univ-lorraine.fr",
+        "irene.curie-eb4@univ-lorraine.fr",
       ]);
     },
   );
@@ -262,7 +268,7 @@ describe("admin user search routes", () => {
   pgTest(
     "should resolve a rejected account looked up by id, so a stored link keeps its name",
     async ({ db }) => {
-      const rejected = await insertUser(db, "eve.curie@univ-lorraine.fr", {
+      const rejected = await insertUser(db, "eve.curie-eb4@univ-lorraine.fr", {
         name: "Curie-Joliot",
         status: "rejected",
       });
@@ -275,7 +281,7 @@ describe("admin user search routes", () => {
       expect(res.status).toBe(200);
       const body = userIdentitiesResponseSchema.parse(await res.json());
       expect(body.data.map((user) => user.email)).toEqual([
-        "eve.curie@univ-lorraine.fr",
+        "eve.curie-eb4@univ-lorraine.fr",
       ]);
     },
   );
@@ -283,8 +289,10 @@ describe("admin user search routes", () => {
   pgTest(
     "should keep only the accepted accounts when status is accepted",
     async ({ db }) => {
-      await insertUser(db, "marie.curie@univ-lorraine.fr", { name: "Curie" });
-      await insertUser(db, "irene.curie@univ-lorraine.fr", {
+      await insertUser(db, "marie.curie-eb4@univ-lorraine.fr", {
+        name: "Curie",
+      });
+      await insertUser(db, "irene.curie-eb4@univ-lorraine.fr", {
         name: "Curie-Pending",
         status: "pending",
       });
@@ -297,7 +305,7 @@ describe("admin user search routes", () => {
       expect(res.status).toBe(200);
       const body = userIdentitiesResponseSchema.parse(await res.json());
       expect(body.data.map((user) => user.email)).toEqual([
-        "marie.curie@univ-lorraine.fr",
+        "marie.curie-eb4@univ-lorraine.fr",
       ]);
     },
   );
@@ -319,11 +327,11 @@ const NO_GROUPS = {
 
 const authHeader = { Authorization: "Bearer moderator" };
 
-const MASSIF = "01890a5d-ac96-774b-bcce-b302099a9001";
-const ALPES = "01890a5d-ac96-774b-bcce-b302099a9002";
+const MASSIF = "01890a5d-ac96-774b-8eb4-b302099a9001";
+const ALPES = "01890a5d-ac96-774b-8eb4-b302099a9002";
 
-const PENDING_ID = "01890a5d-ac96-774b-bcce-b302099a8061";
-const ACCEPTED_ID = "01890a5d-ac96-774b-bcce-b302099a8062";
+const PENDING_ID = "01890a5d-ac96-774b-8eb4-b302099a8061";
+const ACCEPTED_ID = "01890a5d-ac96-774b-8eb4-b302099a8062";
 
 type Institution = {
   [K in
@@ -386,13 +394,13 @@ const insertResearchers = (db: Parameters<typeof createApp>[0]) =>
     .values([
       {
         id: PENDING_ID,
-        email: "pending@univ-lorraine.fr",
+        email: "pending-eb4@univ-lorraine.fr",
         name: "Pending",
         firstname: "Paul",
       },
       {
         id: ACCEPTED_ID,
-        email: "accepted@univ-lorraine.fr",
+        email: "accepted-eb4@univ-lorraine.fr",
         name: "Accepted",
         firstname: "Anne",
         status: "accepted",
@@ -423,7 +431,7 @@ describe("admin user routes", () => {
     const body = listUsersResponseSchema.parse(await res.json());
     expect(body.meta.total).toBe(3);
     expect(body.data.map((user) => user.email)).toContain(
-      "pending@univ-lorraine.fr",
+      "pending-eb4@univ-lorraine.fr",
     );
   });
 
@@ -440,7 +448,7 @@ describe("admin user routes", () => {
     const body = listUsersResponseSchema.parse(await res.json());
     expect(body.meta.total).toBe(1);
     expect(body.data.map((user) => user.email)).toEqual([
-      "pending@univ-lorraine.fr",
+      "pending-eb4@univ-lorraine.fr",
     ]);
   });
 
@@ -481,7 +489,7 @@ describe("admin user routes", () => {
     expect(res.status).toBe(200);
     expect(adminUserResponseSchema.parse(await res.json()).data).toEqual({
       id: PENDING_ID,
-      email: "pending@univ-lorraine.fr",
+      email: "pending-eb4@univ-lorraine.fr",
       name: "Pending",
       firstname: "Paul",
       orcid: null,
@@ -497,10 +505,10 @@ describe("admin user routes", () => {
     "should carry each user's manual groups, name-ordered",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      await insertGroup(db, ALPES, "Pyrénées 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-      await insertUser(db, "pierre.dupont@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      await insertGroup(db, ALPES, "Pyrénées 2026 eb4");
+      const curie = await insertUser(db, "marie.curie-eb4@univ-lorraine.fr");
+      await insertUser(db, "pierre.dupont-eb4@univ-lorraine.fr");
       await insertMember(db, MASSIF, curie.id);
       await insertMember(db, ALPES, curie.id);
       const client = await asSuperAdmin(db);
@@ -517,19 +525,22 @@ describe("admin user routes", () => {
           user.manualGroups.map((group) => group.name),
         ]),
       ).toEqual([
-        ["marie.curie@univ-lorraine.fr", ["Pyrénées 2026", "Vosges 2026"]],
-        ["moderator@example.com", []],
-        ["pierre.dupont@univ-lorraine.fr", []],
+        [
+          "marie.curie-eb4@univ-lorraine.fr",
+          ["Pyrénées 2026 eb4", "Vosges 2026 eb4"],
+        ],
+        [tokenEmail("moderator"), []],
+        ["pierre.dupont-eb4@univ-lorraine.fr", []],
       ]);
     },
   );
 
   pgTest("should read one user's own manual groups", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Vosges 2026");
-    await insertGroup(db, ALPES, "Pyrénées 2026");
-    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-    const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr");
+    await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+    await insertGroup(db, ALPES, "Pyrénées 2026 eb4");
+    const curie = await insertUser(db, "marie.curie-eb4@univ-lorraine.fr");
+    const dupont = await insertUser(db, "pierre.dupont-eb4@univ-lorraine.fr");
     await insertMember(db, MASSIF, curie.id);
     await insertMember(db, ALPES, dupont.id);
     const client = await asSuperAdmin(db);
@@ -542,16 +553,16 @@ describe("admin user routes", () => {
     expect(res.status).toBe(200);
     expect(
       adminUserResponseSchema.parse(await res.json()).data.manualGroups,
-    ).toEqual([{ id: MASSIF, name: "Vosges 2026", canDetach: true }]);
+    ).toEqual([{ id: MASSIF, name: "Vosges 2026 eb4", canDetach: true }]);
   });
 
   pgTest(
     "should mark a membership backing a published sample undetachable",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      await insertGroup(db, ALPES, "Pyrénées 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      await insertGroup(db, ALPES, "Pyrénées 2026 eb4");
+      const curie = await insertUser(db, "marie.curie-eb4@univ-lorraine.fr");
       await insertMember(db, MASSIF, curie.id);
       await insertMember(db, ALPES, curie.id);
       const sample = await insertSample(db, {
@@ -580,8 +591,8 @@ describe("admin user routes", () => {
       expect(
         adminUserResponseSchema.parse(await res.json()).data.manualGroups,
       ).toEqual([
-        { id: ALPES, name: "Pyrénées 2026", canDetach: true },
-        { id: MASSIF, name: "Vosges 2026", canDetach: false },
+        { id: ALPES, name: "Pyrénées 2026 eb4", canDetach: true },
+        { id: MASSIF, name: "Vosges 2026 eb4", canDetach: false },
       ]);
     },
   );
@@ -590,7 +601,7 @@ describe("admin user routes", () => {
     "should set the status, the institution and the groups in one request",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
       const target = await insertUser(db, "crpg@univ-lorraine.fr", {
         status: "accepted",
         ...TRIO_A,
@@ -615,7 +626,9 @@ describe("admin user routes", () => {
         ...TRIO_B,
         status: "accepted",
         superAdmin: false,
-        manualGroups: [{ id: MASSIF, name: "Vosges 2026", canDetach: true }],
+        manualGroups: [
+          { id: MASSIF, name: "Vosges 2026 eb4", canDetach: true },
+        ],
         managedGroups: NO_MANAGED_GROUPS,
       });
       await expect(readGroups(db, target.id)).resolves.toEqual({
@@ -627,8 +640,8 @@ describe("admin user routes", () => {
 
   pgTest("should detach the groups left out of the request", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Vosges 2026");
-    await insertGroup(db, ALPES, "Pyrénées 2026");
+    await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+    await insertGroup(db, ALPES, "Pyrénées 2026 eb4");
     const target = await insertUser(db, "crpg@univ-lorraine.fr", {
       status: "accepted",
       ...TRIO_A,
@@ -648,7 +661,7 @@ describe("admin user routes", () => {
     expect(res.status).toBe(200);
     expect(
       adminUserResponseSchema.parse(await res.json()).data.manualGroups,
-    ).toEqual([{ id: ALPES, name: "Pyrénées 2026", canDetach: true }]);
+    ).toEqual([{ id: ALPES, name: "Pyrénées 2026 eb4", canDetach: true }]);
   });
 
   pgTest("should keep an unmoderated account pending", async ({ db }) => {
@@ -698,7 +711,7 @@ describe("admin user routes", () => {
     "should answer 422 when attaching a group to an account it does not accept",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
       await insertResearchers(db);
       const client = await asSuperAdmin(db);
       // Act
@@ -793,7 +806,7 @@ describe("admin user routes", () => {
     const client = await asSuperAdmin(db);
     // Act
     const res = await client.admin.users[":id"].$put(
-      { param: { id: "01890a5d-ac96-774b-bcce-b302099a8099" }, json: update() },
+      { param: { id: "01890a5d-ac96-774b-8eb4-b302099a8099" }, json: update() },
       { headers: authHeader },
     );
     // Assert
@@ -878,7 +891,7 @@ describe("admin user routes", () => {
       await asSuperAdmin(db);
       // Act
       const res = await createApp(db).app.request(
-        "/admin/users/01890a5d-ac96-774b-bcce-b302099a8099/institutional-groups",
+        "/admin/users/01890a5d-ac96-774b-8eb4-b302099a8099/institutional-groups",
         { method: "DELETE", headers: authHeader },
       );
       // Assert
@@ -892,7 +905,7 @@ describe("admin user routes", () => {
     const client = await asSuperAdmin(db);
     // Act
     const res = await client.admin.users[":id"].$get(
-      { param: { id: "01890a5d-ac96-774b-bcce-b302099a8099" } },
+      { param: { id: "01890a5d-ac96-774b-8eb4-b302099a8099" } },
       { headers: authHeader },
     );
     // Assert
@@ -912,7 +925,7 @@ describe("admin user routes", () => {
 
   pgTest.for([
     ["pending", PENDING_ID, "pending"],
-    ["rejected", "01890a5d-ac96-774b-bcce-b302099a8063", "rejected"],
+    ["rejected", "01890a5d-ac96-774b-8eb4-b302099a8063", "rejected"],
   ] as const)(
     "should notify the user accepted from %s",
     async ([, id, mailbox], { db }) => {
@@ -921,8 +934,8 @@ describe("admin user routes", () => {
       await db
         .insertInto("user")
         .values({
-          id: "01890a5d-ac96-774b-bcce-b302099a8063",
-          email: "rejected@univ-lorraine.fr",
+          id: "01890a5d-ac96-774b-8eb4-b302099a8063",
+          email: "rejected-eb4@univ-lorraine.fr",
           name: "Rejected",
           firstname: "Rose",
           status: "rejected",
@@ -948,7 +961,7 @@ describe("admin user routes", () => {
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
           expect.objectContaining({
-            to: [`${mailbox}@univ-lorraine.fr`],
+            to: [`${mailbox}-eb4@univ-lorraine.fr`],
             subject: "Your account has been activated",
           }),
         ),
@@ -984,7 +997,7 @@ describe("admin user routes", () => {
 
   pgTest("should invite the user to a group it joins", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Vosges 2026");
+    await insertGroup(db, MASSIF, "Vosges 2026 eb4");
     await insertResearchers(db);
     await provisionUser(db, "moderator", {
       status: "accepted",
@@ -1008,7 +1021,7 @@ describe("admin user routes", () => {
     expect(res.status).toBe(200);
     await vi.waitFor(() =>
       expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: ["accepted@univ-lorraine.fr"] }),
+        expect.objectContaining({ to: ["accepted-eb4@univ-lorraine.fr"] }),
       ),
     );
   });
@@ -1072,7 +1085,7 @@ describe("admin user routes", () => {
     "should trace a membership the account leaves with ids only",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
       await insertResearchers(db);
       await insertMember(db, MASSIF, ACCEPTED_ID);
       const moderator = await provisionUser(db, "moderator", {
@@ -1101,7 +1114,7 @@ describe("admin user routes", () => {
     "should answer 409 detaching a member owning a published sample of the group",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
       await insertResearchers(db);
       await insertMember(db, MASSIF, ACCEPTED_ID);
       const sample = await insertSample(db, {
@@ -1212,7 +1225,7 @@ describe("admin user routes", () => {
       "should mail every super admin once per group the rejection orphans",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Vosges 2026");
+        await insertGroup(db, MASSIF, "Vosges 2026 eb4");
         await insertResearchers(db);
         await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
         await moderateInstitution(db, ACCEPTED_ID, {
@@ -1232,8 +1245,8 @@ describe("admin user routes", () => {
         expect(res.status).toBe(200);
         await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(2));
         expect(sendMail.mock.calls.map(([sent]) => sent.to)).toEqual([
-          ["moderator@example.com"],
-          ["moderator@example.com"],
+          [tokenEmail("moderator")],
+          [tokenEmail("moderator")],
         ]);
         const sent = sendMail.mock.calls.map(([mail]) => mail.text).join("\n");
         expect(sent).toContain(`/manual-groups/${MASSIF}`);
@@ -1245,14 +1258,14 @@ describe("admin user routes", () => {
       "should send nothing when another accepted manager remains",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Vosges 2026");
+        await insertGroup(db, MASSIF, "Vosges 2026 eb4");
         await insertResearchers(db);
         await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
         await moderateInstitution(db, ACCEPTED_ID, {
           kind: "laboratory",
           code: "UMR7358",
         });
-        const peer = await insertUser(db, "peer@univ-lorraine.fr");
+        const peer = await insertUser(db, "peer-eb4@univ-lorraine.fr");
         await moderateManualGroup(db, peer.id, [MASSIF]);
         await moderateInstitution(db, peer.id, {
           kind: "laboratory",
@@ -1277,7 +1290,7 @@ describe("admin user routes", () => {
       "should send nothing when the status stays accepted",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Vosges 2026");
+        await insertGroup(db, MASSIF, "Vosges 2026 eb4");
         await insertResearchers(db);
         await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
         const { client, sendMail } = await asSuperAdminWithMail(db);
@@ -1299,8 +1312,8 @@ describe("admin user routes", () => {
       "should mail the orphaned groups when clearing the institutions re-pends the account",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Vosges 2026");
-        const manager = await insertUser(db, "manager@univ-lorraine.fr", {
+        await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+        const manager = await insertUser(db, "manager-eb4@univ-lorraine.fr", {
           status: "accepted",
           ...TRIO_A,
         });
@@ -1430,7 +1443,7 @@ describe("space manager moderation", () => {
     "should list only the users the institutional scope covers",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "inside@univ-lorraine.fr", {
+      await insertUser(db, "inside-eb4@univ-lorraine.fr", {
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
         institutionalLaboratory: "UMR7358",
@@ -1450,7 +1463,7 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(200);
       const body = listUsersResponseSchema.parse(await res.json());
       expect(body.data.map((user) => user.email)).toEqual([
-        "inside@univ-lorraine.fr",
+        "inside-eb4@univ-lorraine.fr",
       ]);
       expect(body.meta.total).toBe(1);
     },
@@ -1460,8 +1473,8 @@ describe("space manager moderation", () => {
     "should answer 403 when a manual group manager tries to %s a user",
     async (route, { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      const member = await insertUser(db, "member@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      const member = await insertUser(db, "member-eb4@univ-lorraine.fr");
       await insertMember(db, MASSIF, member.id);
       const { client } = await asGroupManager(db, [MASSIF]);
       // Act
@@ -1494,10 +1507,10 @@ describe("space manager moderation", () => {
     "should hide the caller and any super admin from the list",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "peer@univ-lorraine.fr", {
+      await insertUser(db, "peer-eb4@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
-      await insertUser(db, "boss@univ-lorraine.fr", {
+      await insertUser(db, "boss-eb4@univ-lorraine.fr", {
         superAdmin: true,
         institutionalLaboratory: "UMR7358",
       });
@@ -1514,7 +1527,7 @@ describe("space manager moderation", () => {
       // Assert
       const body = listUsersResponseSchema.parse(await res.json());
       expect(body.data.map((user) => user.email)).toEqual([
-        "peer@univ-lorraine.fr",
+        "peer-eb4@univ-lorraine.fr",
       ]);
     },
   );
@@ -1550,7 +1563,7 @@ describe("space manager moderation", () => {
     "should answer 403 to a manager whose account is not accepted",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "inside@univ-lorraine.fr", {
+      await insertUser(db, "inside-eb4@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
       const { client } = await asManager(
@@ -1587,7 +1600,7 @@ describe("space manager moderation", () => {
     "should set the status and the institution of an in-scope user",
     async ({ db }) => {
       // Arrange
-      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+      const target = await insertUser(db, "inside-eb4@univ-lorraine.fr", {
         status: "pending",
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
@@ -1606,7 +1619,7 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(200);
       expect(adminUserResponseSchema.parse(await res.json()).data).toEqual({
         id: target.id,
-        email: "inside@univ-lorraine.fr",
+        email: "inside-eb4@univ-lorraine.fr",
         name: null,
         firstname: null,
         orcid: null,
@@ -1623,9 +1636,9 @@ describe("space manager moderation", () => {
     "should keep the managed groups and the memberships of an in-scope user",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      await insertGroup(db, ALPES, "Pyrénées 2026");
-      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      await insertGroup(db, ALPES, "Pyrénées 2026 eb4");
+      const target = await insertUser(db, "inside-eb4@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
       await insertMember(db, MASSIF, target.id);
@@ -1649,7 +1662,7 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(200);
       const { data } = adminUserResponseSchema.parse(await res.json());
       expect(data.manualGroups).toEqual([
-        { id: MASSIF, name: "Vosges 2026", canDetach: true },
+        { id: MASSIF, name: "Vosges 2026 eb4", canDetach: true },
       ]);
       expect(data.managedGroups).toEqual({
         ...NO_MANAGED_GROUPS,
@@ -1665,8 +1678,8 @@ describe("space manager moderation", () => {
     "should drop %s a manager may not alter and apply the rest",
     async ([, managedGroups, manualGroupIds], { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      const target = await insertUser(db, "inside-eb4@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
       const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
@@ -1694,7 +1707,7 @@ describe("space manager moderation", () => {
     "should strip the institution of an in-scope user and re-pend it",
     async ({ db }) => {
       // Arrange
-      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+      const target = await insertUser(db, "inside-eb4@univ-lorraine.fr", {
         status: "accepted",
         ...TRIO_A,
       });
@@ -1741,7 +1754,7 @@ describe("space manager moderation", () => {
       const outside = await insertUser(db, "outside@univ-grenoble.fr", {
         institutionalLaboratory: "UMR5275",
       });
-      const boss = await insertUser(db, "boss@univ-lorraine.fr", {
+      const boss = await insertUser(db, "boss-eb4@univ-lorraine.fr", {
         superAdmin: true,
         institutionalLaboratory: "UMR7358",
       });
@@ -1769,8 +1782,8 @@ describe("space manager moderation", () => {
     "should let a super admin set a scope that round-trips",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      const target = await insertUser(db, "inside-eb4@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
       const client = await asSuperAdmin(db);
@@ -1801,7 +1814,7 @@ describe("space manager moderation", () => {
     "should move a user to an institution the manager does not manage",
     async ({ db }) => {
       // Arrange
-      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+      const target = await insertUser(db, "inside-eb4@univ-lorraine.fr", {
         ...TRIO_A,
       });
       const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
@@ -1823,8 +1836,8 @@ describe("space manager moderation", () => {
     "should let a dual manager attach and detach the groups it manages",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      await insertGroup(db, ALPES, "Pyrénées 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      await insertGroup(db, ALPES, "Pyrénées 2026 eb4");
       const target = await insertUser(db, "member@univ-grenoble.fr", {
         ...TRIO_B,
       });
@@ -1842,7 +1855,7 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(200);
       expect(
         adminUserResponseSchema.parse(await res.json()).data.manualGroups,
-      ).toEqual([{ id: ALPES, name: "Pyrénées 2026", canDetach: true }]);
+      ).toEqual([{ id: ALPES, name: "Pyrénées 2026 eb4", canDetach: true }]);
     },
   );
 
@@ -1850,8 +1863,8 @@ describe("space manager moderation", () => {
     "should drop a group it does not manage from a dual manager",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      await insertGroup(db, ALPES, "Pyrénées 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      await insertGroup(db, ALPES, "Pyrénées 2026 eb4");
       const target = await insertUser(db, "member@univ-grenoble.fr", {
         ...TRIO_B,
       });
@@ -1869,7 +1882,7 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(200);
       expect(
         adminUserResponseSchema.parse(await res.json()).data.manualGroups,
-      ).toEqual([{ id: MASSIF, name: "Vosges 2026", canDetach: true }]);
+      ).toEqual([{ id: MASSIF, name: "Vosges 2026 eb4", canDetach: true }]);
     },
   );
 
@@ -1880,8 +1893,8 @@ describe("space manager moderation", () => {
     "should refuse to %s a user a dual manager only reaches by a manual group",
     async ([route, status], { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      const member = await insertUser(db, "member@univ-lorraine.fr", {
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      const member = await insertUser(db, "member-eb4@univ-lorraine.fr", {
         ...TRIO_A,
       });
       await insertMember(db, MASSIF, member.id);
@@ -1897,8 +1910,8 @@ describe("space manager moderation", () => {
     "should list for a dual manager only the users its institutional scope covers",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Vosges 2026");
-      const member = await insertUser(db, "member@univ-lorraine.fr", {
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      const member = await insertUser(db, "member-eb4@univ-lorraine.fr", {
         ...TRIO_A,
       });
       await insertMember(db, MASSIF, member.id);
@@ -1921,7 +1934,7 @@ describe("space manager moderation", () => {
     "should answer 404 setting an unknown managed manual group",
     async ({ db }) => {
       // Arrange
-      const target = await insertUser(db, "inside@univ-lorraine.fr");
+      const target = await insertUser(db, "inside-eb4@univ-lorraine.fr");
       const client = await asSuperAdmin(db);
       // Act
       const res = await client.admin.users[":id"].$put(
@@ -1947,12 +1960,12 @@ describe("admin institutional counts route", () => {
     "should count the users per organisme, OSU and laboratory",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "alice@univ-lorraine.fr", {
+      await insertUser(db, "alice-eb4@univ-lorraine.fr", {
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
         institutionalLaboratory: "UMR7358",
       });
-      await insertUser(db, "bruno@univ-lorraine.fr", {
+      await insertUser(db, "bruno-eb4@univ-lorraine.fr", {
         institutionalOrganization: "04vfs2w97",
         institutionalLaboratory: "UMR7358",
       });

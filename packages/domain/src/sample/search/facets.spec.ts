@@ -26,6 +26,7 @@ describe("facetQueryFields", () => {
     ["type", "core.section"],
     ["material", "rock_and_sediment.rock.igneous.plutonic"],
     ["collectionMethod", "coring"],
+    ["mineralClassification", "2.B-E"],
     ["nature", "powder"],
     ["texture", "aphanitic"],
     ["collectorName", "Marie Curie"],
@@ -41,6 +42,7 @@ describe("facetQueryFields", () => {
   it.each([
     ["type", "not.a.path"],
     ["material", "definitely_not_a_material"],
+    ["mineralClassification", "2.C"],
     ["nature", "not_a_nature"],
     ["texture", "not_a_texture"],
     ["institutionalOrganization", "not-a-ror"],

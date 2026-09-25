@@ -9,6 +9,7 @@ import type { Transactional } from "../../transaction.ts";
 
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
+import { tokenEmail } from "../../tests/provision-user.ts";
 import { findDuplicateSamples } from "./find-duplicate-samples.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
@@ -131,7 +132,7 @@ describe("findDuplicateSamples", () => {
     "should match two linked collectors carrying the same account",
     async ({ db }) => {
       // Arrange
-      const account = await insertUser(db, "inge@example.com", COLLECTOR);
+      const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
       const existing = await publish(db, {
         scientificContext: fieldSample({ collectorUserId: account.id }),
       });
@@ -149,8 +150,8 @@ describe("findDuplicateSamples", () => {
     "should not match two linked collectors carrying different accounts, even with equal names",
     async ({ db }) => {
       // Arrange
-      const account = await insertUser(db, "inge@example.com", COLLECTOR);
-      const other = await insertUser(db, "inge.other@example.com", COLLECTOR);
+      const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
+      const other = await insertUser(db, tokenEmail("inge.other"), COLLECTOR);
       await publish(db, {
         scientificContext: fieldSample({ collectorUserId: account.id }),
       });
@@ -168,7 +169,7 @@ describe("findDuplicateSamples", () => {
     "should match a typed subject against a linked candidate on the account's resolved names",
     async ({ db }) => {
       // Arrange
-      const account = await insertUser(db, "inge@example.com", COLLECTOR);
+      const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
       const existing = await publish(db, {
         scientificContext: fieldSample({ collectorUserId: account.id }),
       });
@@ -183,7 +184,7 @@ describe("findDuplicateSamples", () => {
     "should match a linked subject against a typed candidate on the account's resolved names",
     async ({ db }) => {
       // Arrange
-      const account = await insertUser(db, "inge@example.com", COLLECTOR);
+      const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
       const existing = await publish(db);
       // Act
       const duplicates = await findDuplicateSamples(
@@ -228,7 +229,7 @@ describe("findDuplicateSamples", () => {
     "should never report a candidate carrying no collector against %s one",
     async ([, linked], { db }) => {
       // Arrange
-      const account = await insertUser(db, "inge@example.com", COLLECTOR);
+      const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
       await publish(db, { scientificContext: fieldSample({}) });
       // Act
       const duplicates = await findDuplicateSamples(

@@ -50,7 +50,7 @@ const OTHER_MATERIAL_SAMPLE: Sample = {
   texture: null,
 };
 
-const MINERAL_RESOURCE_SAMPLE: Sample = {
+export const MINERAL_RESOURCE_SAMPLE: Sample = {
   ...FIELD_SAMPLE,
   name: "Gold bearing ore",
   material: "rock_and_sediment.mineral",
@@ -62,6 +62,11 @@ const MINERAL_RESOURCE_SAMPLE: Sample = {
   economicResourceTypePrecision: "Shear zone hosted lodes",
   economicDepositName: "Salsigne",
   economicDepositDescription: "A set of orogenic gold lodes",
+  mineralClassifications: [
+    { strunzId: "9", mindatId: null, abundance: null },
+    { strunzId: "2.B-E", mindatId: null, abundance: "minor" },
+    { strunzId: "9.E", mindatId: 2815, abundance: null },
+  ],
 };
 
 const ELEVATION_SAMPLE = pointSample("Summit outcrop", {

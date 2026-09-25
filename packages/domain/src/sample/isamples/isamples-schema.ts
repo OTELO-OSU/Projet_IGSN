@@ -180,7 +180,8 @@ export const iSamplesSampleSchema = z
       .array(z.string())
       .meta({ description: "Other identifiers the sample carries." }),
     keywords: z.array(identifiedConceptSchema).meta({
-      description: "Elements the sample is of economic interest for.",
+      description:
+        "Elements the sample is of economic interest for, then its Strunz-Mindat (2026) classifications.",
     }),
     dc_rights: z
       .string()

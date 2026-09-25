@@ -25,9 +25,9 @@ import { provisionUser } from "../tests/provision-user.ts";
 const ADMIN_URL = "http://localhost:3001/";
 const FRONTEND_URL = "http://localhost:3000";
 
-const MASSIF = "01890a5d-ac96-774b-bcce-b302099a9001";
-const ALPES = "01890a5d-ac96-774b-bcce-b302099a9002";
-const UNKNOWN = "01890a5d-ac96-774b-bcce-b302099a9099";
+const MASSIF = "01890a5d-ac96-774b-894c-b302099a9001";
+const ALPES = "01890a5d-ac96-774b-894c-b302099a9002";
+const UNKNOWN = "01890a5d-ac96-774b-894c-b302099a9099";
 
 const authHeader = { Authorization: "Bearer moderator" };
 const managerHeader = { Authorization: "Bearer manager" };
@@ -153,10 +153,10 @@ describe("admin manual group routes", () => {
     "should page and search the groups in SQL, member count and total included",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-      const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      await insertGroup(db, ALPES, "Alpes 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
+      const dupont = await insertUser(db, "pierre.dupont-94c@univ-lorraine.fr");
       await insertMember(db, MASSIF, curie.id);
       await insertMember(db, MASSIF, dupont.id);
       const client = await asSuperAdmin(db);
@@ -171,7 +171,7 @@ describe("admin manual group routes", () => {
         data: [
           {
             id: MASSIF,
-            name: "Massif Central 2026",
+            name: "Massif Central 2026 94c",
             memberCount: 2,
             managerCount: 0,
           },
@@ -186,15 +186,15 @@ describe("admin manual group routes", () => {
     const client = await asSuperAdmin(db);
     // Act
     const res = await client.admin["manual-groups"].$post(
-      { json: { name: "Massif Central 2026", managerIds: [] } },
+      { json: { name: "Massif Central 2026 94c", managerIds: [] } },
       { headers: authHeader },
     );
     // Assert
     expect(res.status).toBe(201);
     const { data } = manualGroupResponseSchema.parse(await res.json());
-    expect(data.name).toBe("Massif Central 2026");
+    expect(data.name).toBe("Massif Central 2026 94c");
     await expect(groupName(db, data.id)).resolves.toEqual({
-      name: "Massif Central 2026",
+      name: "Massif Central 2026 94c",
     });
   });
 
@@ -202,11 +202,11 @@ describe("admin manual group routes", () => {
     "should answer 409 when the name is taken, differing case included",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
       const client = await asSuperAdmin(db);
       // Act
       const res = await client.admin["manual-groups"].$post(
-        { json: { name: "massif central 2026", managerIds: [] } },
+        { json: { name: "massif central 2026 94c", managerIds: [] } },
         { headers: authHeader },
       );
       // Assert
@@ -225,7 +225,7 @@ describe("admin manual group routes", () => {
       const client = await asSuperAdmin(db);
       // Act
       const res = await client.admin["manual-groups"].$post(
-        { json: { name: "Massif Central 2026", managerIds: [curie.id] } },
+        { json: { name: "Massif Central 2026 94c", managerIds: [curie.id] } },
         { headers: authHeader },
       );
       // Assert
@@ -240,7 +240,7 @@ describe("admin manual group routes", () => {
           data: [
             {
               id: data.id,
-              name: "Massif Central 2026",
+              name: "Massif Central 2026 94c",
               memberCount: 0,
               managerCount: 1,
             },
@@ -259,12 +259,13 @@ describe("admin manual group routes", () => {
     async ([, status, expected], { db }) => {
       // Arrange
       const managerId = status
-        ? (await insertUser(db, "marie.curie@univ-lorraine.fr", { status })).id
+        ? (await insertUser(db, "marie.curie-94c@univ-lorraine.fr", { status }))
+            .id
         : UNKNOWN;
       const client = await asSuperAdmin(db);
       // Act
       const res = await client.admin["manual-groups"].$post(
-        { json: { name: "Massif Central 2026", managerIds: [managerId] } },
+        { json: { name: "Massif Central 2026 94c", managerIds: [managerId] } },
         { headers: authHeader },
       );
       // Assert
@@ -280,7 +281,7 @@ describe("admin manual group routes", () => {
     );
     // Act
     const res = await client.admin["manual-groups"].$post(
-      { json: { name: "Massif Central 2026", managerIds: [] } },
+      { json: { name: "Massif Central 2026 94c", managerIds: [] } },
       { headers: authHeader },
     );
     // Assert
@@ -292,7 +293,7 @@ describe("admin manual group routes", () => {
 
   pgTest("should read one group", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
+    await insertGroup(db, MASSIF, "Massif Central 2026 94c");
     const client = await asSuperAdmin(db);
     // Act
     const res = await client.admin["manual-groups"][":id"].$get(
@@ -302,13 +303,13 @@ describe("admin manual group routes", () => {
     // Assert
     expect(res.status).toBe(200);
     expect(manualGroupResponseSchema.parse(await res.json())).toEqual({
-      data: { id: MASSIF, name: "Massif Central 2026" },
+      data: { id: MASSIF, name: "Massif Central 2026 94c" },
     });
   });
 
   pgTest("should rename a group", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
+    await insertGroup(db, MASSIF, "Massif Central 2026 94c");
     const client = await asSuperAdmin(db);
     // Act
     const res = await client.admin["manual-groups"][":id"].$put(
@@ -326,18 +327,18 @@ describe("admin manual group routes", () => {
     "should answer 409 when a rename takes another name, differing case included",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      await insertGroup(db, ALPES, "Alpes 2026 94c");
       const client = await asSuperAdmin(db);
       // Act
       const res = await client.admin["manual-groups"][":id"].$put(
-        { param: { id: ALPES }, json: { name: "MASSIF CENTRAL 2026" } },
+        { param: { id: ALPES }, json: { name: "MASSIF CENTRAL 2026 94C" } },
         { headers: authHeader },
       );
       // Assert
       expect(res.status).toBe(409);
       await expect(groupName(db, ALPES)).resolves.toEqual({
-        name: "Alpes 2026",
+        name: "Alpes 2026 94c",
       });
     },
   );
@@ -346,8 +347,8 @@ describe("admin manual group routes", () => {
     "should delete a group, dropping its memberships and keeping the users",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       await insertMember(db, MASSIF, curie.id);
       const client = await asSuperAdmin(db);
       // Act
@@ -364,7 +365,7 @@ describe("admin manual group routes", () => {
           .select("email")
           .where("id", "=", curie.id)
           .executeTakeFirstOrThrow(),
-      ).resolves.toEqual({ email: "marie.curie@univ-lorraine.fr" });
+      ).resolves.toEqual({ email: "marie.curie-94c@univ-lorraine.fr" });
     },
   );
 
@@ -372,8 +373,8 @@ describe("admin manual group routes", () => {
     "should delete a group attached to a draft sample, detaching it and keeping the sample",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       const sample = await insertSampleInGroup(db, curie.id, MASSIF);
       const client = await asSuperAdmin(db);
       // Act
@@ -398,8 +399,8 @@ describe("admin manual group routes", () => {
     "should answer 409 when deleting a group a %s sample is attached to",
     async (status, { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       const sample = await insertSampleInGroup(db, curie.id, MASSIF);
       await publishSample(db, sample);
       if (status === "withdrawn") {
@@ -414,7 +415,7 @@ describe("admin manual group routes", () => {
       // Assert
       expect(res.status).toBe(409);
       await expect(groupName(db, MASSIF)).resolves.toEqual({
-        name: "Massif Central 2026",
+        name: "Massif Central 2026 94c",
       });
     },
   );
@@ -423,8 +424,8 @@ describe("admin manual group routes", () => {
     "should list the members with their account status",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr", {
         name: "Curie",
         firstname: "Marie",
         status: "pending",
@@ -442,7 +443,7 @@ describe("admin manual group routes", () => {
         data: [
           {
             id: curie.id,
-            email: "marie.curie@univ-lorraine.fr",
+            email: "marie.curie-94c@univ-lorraine.fr",
             name: "Curie",
             firstname: "Marie",
             orcid: null,
@@ -458,9 +459,9 @@ describe("admin manual group routes", () => {
     "should mark a member owning a published sample of the group undetachable",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-      const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
+      const dupont = await insertUser(db, "pierre.dupont-94c@univ-lorraine.fr");
       await insertMember(db, MASSIF, curie.id);
       await insertMember(db, MASSIF, dupont.id);
       await publishSample(db, await insertSampleInGroup(db, curie.id, MASSIF));
@@ -477,16 +478,16 @@ describe("admin manual group routes", () => {
           .parse(await res.json())
           .data.map(({ email, canDetach }) => [email, canDetach]),
       ).toEqual([
-        ["marie.curie@univ-lorraine.fr", false],
-        ["pierre.dupont@univ-lorraine.fr", true],
+        ["marie.curie-94c@univ-lorraine.fr", false],
+        ["pierre.dupont-94c@univ-lorraine.fr", true],
       ]);
     },
   );
 
   pgTest("should associate an accepted user and mail them", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
-    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+    await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+    const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr", {
       name: "Curie",
       firstname: "Marie",
     });
@@ -499,8 +500,8 @@ describe("admin manual group routes", () => {
     await vi.waitFor(() =>
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
-          to: ["marie.curie@univ-lorraine.fr"],
-          subject: expect.stringContaining("Massif Central 2026"),
+          to: ["marie.curie-94c@univ-lorraine.fr"],
+          subject: expect.stringContaining("Massif Central 2026 94c"),
         }),
       ),
     );
@@ -510,8 +511,8 @@ describe("admin manual group routes", () => {
     "should keep one membership and mail once when the same user is added twice",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       const { client, sendMail } = await asSuperAdminWithMail(db);
       await addMember(client, MASSIF, curie.id);
       // Act
@@ -527,8 +528,8 @@ describe("admin manual group routes", () => {
     "should keep the membership when the notification mail fails",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       const logged = vi.spyOn(console, "error").mockImplementation(() => {});
       const { client, sendMail } = await asSuperAdminWithMail(db);
       sendMail.mockRejectedValue(new Error("SMTP down"));
@@ -546,8 +547,8 @@ describe("admin manual group routes", () => {
     "should answer 422 when associating a %s account",
     async (status, { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr", {
         status,
       });
       const client = await asSuperAdmin(db);
@@ -563,8 +564,8 @@ describe("admin manual group routes", () => {
     "should keep the membership of a member rejected after joining",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr", {
         status: "rejected",
       });
       await insertMember(db, MASSIF, curie.id);
@@ -581,7 +582,7 @@ describe("admin manual group routes", () => {
     "should answer 404 when associating an unknown user",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
       const client = await asSuperAdmin(db);
       // Act
       const res = await addMember(client, MASSIF, UNKNOWN);
@@ -592,8 +593,8 @@ describe("admin manual group routes", () => {
 
   pgTest("should remove a member", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
-    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+    await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+    const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
     await insertMember(db, MASSIF, curie.id);
     const client = await asSuperAdmin(db);
     // Act
@@ -612,8 +613,8 @@ describe("admin manual group routes", () => {
     "should trace a membership change with ids only, no email",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       const moderator = await provisionSuperAdmin(db);
       const info = vi.spyOn(console, "info").mockImplementation(() => {});
       // Act
@@ -631,7 +632,7 @@ describe("admin manual group routes", () => {
   describe("unknown group", () => {
     pgTest("should answer 404 on every group route", async ({ db }) => {
       // Arrange
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       const client = await asSuperAdmin(db);
       const param = { id: UNKNOWN };
       // Act
@@ -641,7 +642,7 @@ describe("admin manual group routes", () => {
           { headers: authHeader },
         ),
         client.admin["manual-groups"][":id"].$put(
-          { param, json: { name: "Alpes 2026" } },
+          { param, json: { name: "Alpes 2026 94c" } },
           { headers: authHeader },
         ),
         client.admin["manual-groups"][":id"].$delete(
@@ -681,7 +682,7 @@ describe("admin manual group routes", () => {
     },
   ])("should answer 400 on $case", async ({ path, body }, { db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
+    await insertGroup(db, MASSIF, "Massif Central 2026 94c");
     await asSuperAdmin(db);
     // Act
     const res = await createApp(db).app.request(`/admin/manual-groups${path}`, {
@@ -709,8 +710,8 @@ describe("admin manual group routes", () => {
     "should answer 409 detaching a member owning a published sample of the group",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       await insertMember(db, MASSIF, curie.id);
       await publishSample(db, await insertSampleInGroup(db, curie.id, MASSIF));
       const client = await asSuperAdmin(db);
@@ -731,8 +732,8 @@ describe("admin manual group routes", () => {
   describe("a manual group manager", () => {
     pgTest("should list only the groups it manages", async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      await insertGroup(db, ALPES, "Alpes 2026 94c");
       const client = await asGroupManager(db, [MASSIF]);
       // Act
       const res = await client.admin["manual-groups"].$get(
@@ -745,7 +746,7 @@ describe("admin manual group routes", () => {
         data: [
           {
             id: MASSIF,
-            name: "Massif Central 2026",
+            name: "Massif Central 2026 94c",
             memberCount: 0,
             managerCount: 1,
           },
@@ -758,7 +759,7 @@ describe("admin manual group routes", () => {
       "should lose the role when the only managed group is deleted",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
         const client = await asGroupManager(db, [MASSIF]);
         // Act
         await db.deleteFrom("manual_group").where("id", "=", MASSIF).execute();
@@ -775,8 +776,8 @@ describe("admin manual group routes", () => {
       "should read, associate and detach the members of a group it manages",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
-        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+        const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
         const client = await asGroupManager(db, [MASSIF]);
         // Act
         const added = await client.admin["manual-groups"][":id"].members.$post(
@@ -801,7 +802,7 @@ describe("admin manual group routes", () => {
           manualGroupMembersResponseSchema
             .parse(await members.json())
             .data.map(({ email }) => email),
-        ).toEqual(["marie.curie@univ-lorraine.fr"]);
+        ).toEqual(["marie.curie-94c@univ-lorraine.fr"]);
         expect(await countMembers(db, MASSIF)).toBe(0);
       },
     );
@@ -810,9 +811,9 @@ describe("admin manual group routes", () => {
       "should answer 403 on a group it does not manage",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
-        await insertGroup(db, ALPES, "Alpes 2026");
-        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+        await insertGroup(db, ALPES, "Alpes 2026 94c");
+        const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
         await insertMember(db, ALPES, curie.id);
         const client = await asGroupManager(db, [MASSIF]);
         const param = { id: ALPES };
@@ -847,16 +848,16 @@ describe("admin manual group routes", () => {
       "should answer 403 creating, renaming or deleting a group",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
         const client = await asGroupManager(db, [MASSIF]);
         // Act
         const responses = await Promise.all([
           client.admin["manual-groups"].$post(
-            { json: { name: "Alpes 2026", managerIds: [] } },
+            { json: { name: "Alpes 2026 94c", managerIds: [] } },
             { headers: managerHeader },
           ),
           client.admin["manual-groups"][":id"].$put(
-            { param: { id: MASSIF }, json: { name: "Alpes 2026" } },
+            { param: { id: MASSIF }, json: { name: "Alpes 2026 94c" } },
             { headers: managerHeader },
           ),
           client.admin["manual-groups"][":id"].$delete(
@@ -867,7 +868,7 @@ describe("admin manual group routes", () => {
         // Assert
         expect(responses.map(({ status }) => status)).toEqual([403, 403, 403]);
         await expect(groupName(db, MASSIF)).resolves.toEqual({
-          name: "Massif Central 2026",
+          name: "Massif Central 2026 94c",
         });
       },
     );
@@ -876,11 +877,15 @@ describe("admin manual group routes", () => {
   describe("managers", () => {
     pgTest("should list the managers with their status", async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-      const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
-        status: "rejected",
-      });
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
+      const dupont = await insertUser(
+        db,
+        "pierre.dupont-94c@univ-lorraine.fr",
+        {
+          status: "rejected",
+        },
+      );
       await moderateManualGroup(db, curie.id, [MASSIF]);
       await moderateManualGroup(db, dupont.id, [MASSIF]);
       const client = await asSuperAdmin(db);
@@ -896,15 +901,15 @@ describe("admin manual group routes", () => {
           .parse(await res.json())
           .data.map(({ email, status }) => ({ email, status })),
       ).toEqual([
-        { email: "marie.curie@univ-lorraine.fr", status: "accepted" },
-        { email: "pierre.dupont@univ-lorraine.fr", status: "rejected" },
+        { email: "marie.curie-94c@univ-lorraine.fr", status: "accepted" },
+        { email: "pierre.dupont-94c@univ-lorraine.fr", status: "rejected" },
       ]);
     });
 
     pgTest("should add a manager", async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       const client = await asSuperAdmin(db);
       // Act
       const res = await addManager(client, MASSIF, curie.id);
@@ -915,8 +920,8 @@ describe("admin manual group routes", () => {
 
     pgTest("should accept adding a manager twice", async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       await moderateManualGroup(db, curie.id, [MASSIF]);
       const client = await asSuperAdmin(db);
       // Act
@@ -930,8 +935,8 @@ describe("admin manual group routes", () => {
       "should answer 422 adding a manager who is not accepted",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
-        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+        const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr", {
           status: "pending",
         });
         const client = await asSuperAdmin(db);
@@ -945,7 +950,7 @@ describe("admin manual group routes", () => {
 
     pgTest("should answer 404 adding an unknown user", async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
       const client = await asSuperAdmin(db);
       // Act
       const res = await addManager(client, MASSIF, UNKNOWN);
@@ -955,8 +960,8 @@ describe("admin manual group routes", () => {
 
     pgTest("should remove a manager", async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       await moderateManualGroup(db, curie.id, [MASSIF]);
       const client = await asSuperAdmin(db);
       // Act
@@ -970,8 +975,8 @@ describe("admin manual group routes", () => {
       "should answer 404 removing a user who manages nothing",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
-        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+        const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
         const client = await asSuperAdmin(db);
         // Act
         const res = await removeManager(client, MASSIF, curie.id);
@@ -982,11 +987,15 @@ describe("admin manual group routes", () => {
 
     pgTest("should count the accepted managers only", async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-      const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
-        status: "rejected",
-      });
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
+      const dupont = await insertUser(
+        db,
+        "pierre.dupont-94c@univ-lorraine.fr",
+        {
+          status: "rejected",
+        },
+      );
       await moderateManualGroup(db, curie.id, [MASSIF]);
       await moderateManualGroup(db, dupont.id, [MASSIF]);
       const client = await asSuperAdmin(db);
@@ -1001,7 +1010,7 @@ describe("admin manual group routes", () => {
       ).toEqual([
         {
           id: MASSIF,
-          name: "Massif Central 2026",
+          name: "Massif Central 2026 94c",
           memberCount: 0,
           managerCount: 1,
         },
@@ -1012,12 +1021,16 @@ describe("admin manual group routes", () => {
       "should keep only the groups without accepted manager on noManager",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
-        await insertGroup(db, ALPES, "Alpes 2026");
-        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-        const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
-          status: "rejected",
-        });
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+        await insertGroup(db, ALPES, "Alpes 2026 94c");
+        const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
+        const dupont = await insertUser(
+          db,
+          "pierre.dupont-94c@univ-lorraine.fr",
+          {
+            status: "rejected",
+          },
+        );
         await moderateManualGroup(db, curie.id, [MASSIF]);
         await moderateManualGroup(db, dupont.id, [ALPES]);
         await asSuperAdmin(db);
@@ -1028,7 +1041,7 @@ describe("admin manual group routes", () => {
         );
         // Assert
         const body = listManualGroupsResponseSchema.parse(await res.json());
-        expect(body.data.map(({ name }) => name)).toEqual(["Alpes 2026"]);
+        expect(body.data.map(({ name }) => name)).toEqual(["Alpes 2026 94c"]);
         expect(body.meta.total).toBe(1);
       },
     );
@@ -1037,8 +1050,8 @@ describe("admin manual group routes", () => {
       "should answer 403 to the manager of that very group",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
-        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+        const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
         const client = await asGroupManager(db, [MASSIF]);
         const param = { id: MASSIF };
         // Act
@@ -1065,8 +1078,8 @@ describe("admin manual group routes", () => {
       "should answer 401 to a %s on a revoked session",
       async (method, { db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
-        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+        const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
         const client = await asSuperAdmin(db);
         vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
           c.json({ error: "Unauthorized" }, 401),
@@ -1087,7 +1100,7 @@ describe("admin manual group routes", () => {
       "should answer 403 to a %s user who is not super admin",
       async (status, { db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertGroup(db, MASSIF, "Massif Central 2026 94c");
         await provisionUser(db, "moderator", { status });
         const client = testClient(createApp(db).app);
         // Act
@@ -1096,7 +1109,7 @@ describe("admin manual group routes", () => {
           { headers: authHeader },
         );
         const create = await client.admin["manual-groups"].$post(
-          { json: { name: "Alpes 2026", managerIds: [] } },
+          { json: { name: "Alpes 2026 94c", managerIds: [] } },
           { headers: authHeader },
         );
         // Assert
@@ -1116,8 +1129,8 @@ describe("admin manual group routes", () => {
 describe("the caller's own manual groups", () => {
   pgTest("should list the caller's groups, leaving allowed", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
-    await insertGroup(db, ALPES, "Alpes 2026");
+    await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+    await insertGroup(db, ALPES, "Alpes 2026 94c");
     const researcher = await provisionUser(db, "researcher");
     await insertMember(db, MASSIF, researcher.id);
     // Act
@@ -1127,7 +1140,7 @@ describe("the caller's own manual groups", () => {
     // Assert
     expect(res.status).toBe(200);
     expect(myManualGroupsResponseSchema.parse(await res.json())).toEqual({
-      data: [{ id: MASSIF, name: "Massif Central 2026", canLeave: true }],
+      data: [{ id: MASSIF, name: "Massif Central 2026 94c", canLeave: true }],
     });
   });
 
@@ -1135,8 +1148,8 @@ describe("the caller's own manual groups", () => {
     "should refuse leaving only the group holding the caller's published sample",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      await insertGroup(db, ALPES, "Alpes 2026 94c");
       const researcher = await provisionUser(db, "researcher");
       await insertMember(db, MASSIF, researcher.id);
       await insertMember(db, ALPES, researcher.id);
@@ -1159,8 +1172,8 @@ describe("the caller's own manual groups", () => {
       );
       expect(myManualGroupsResponseSchema.parse(await mine.json())).toEqual({
         data: [
-          { id: ALPES, name: "Alpes 2026", canLeave: true },
-          { id: MASSIF, name: "Massif Central 2026", canLeave: false },
+          { id: ALPES, name: "Alpes 2026 94c", canLeave: true },
+          { id: MASSIF, name: "Massif Central 2026 94c", canLeave: false },
         ],
       });
     },
@@ -1182,8 +1195,8 @@ describe("the caller's own manual groups", () => {
     "should let a caller who $case leave",
     async ({ role, group }, { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      await insertGroup(db, ALPES, "Alpes 2026 94c");
       const researcher = await provisionUser(db, "researcher");
       await insertMember(db, MASSIF, researcher.id);
       if (role) {
@@ -1220,7 +1233,7 @@ describe("manual group creation requests", () => {
     db: Db,
     sendMail = vi.fn().mockResolvedValue(undefined),
   ) => {
-    await insertGroup(db, MASSIF, "Massif Central 2026");
+    await insertGroup(db, MASSIF, "Massif Central 2026 94c");
     const manager = await provisionUser(db, "manager", { status: "accepted" });
     await moderateManualGroup(db, manager.id, [MASSIF]);
     const client = testClient(
@@ -1233,8 +1246,8 @@ describe("manual group creation requests", () => {
 
   const insertSuperAdmins = (db: Db) =>
     Promise.all([
-      insertUser(db, "root@univ-lorraine.fr", { superAdmin: true }),
-      insertUser(db, "boss@univ-lorraine.fr", { superAdmin: true }),
+      insertUser(db, "root-94c@univ-lorraine.fr", { superAdmin: true }),
+      insertUser(db, "boss-94c@univ-lorraine.fr", { superAdmin: true }),
     ]);
 
   pgTest(
@@ -1242,7 +1255,7 @@ describe("manual group creation requests", () => {
     async ({ db }) => {
       // Arrange
       await insertSuperAdmins(db);
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr", {
         name: "Curie",
         firstname: "Marie",
       });
@@ -1257,11 +1270,11 @@ describe("manual group creation requests", () => {
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
           expect.objectContaining({
-            to: ["boss@univ-lorraine.fr", "root@univ-lorraine.fr"],
+            to: ["boss-94c@univ-lorraine.fr", "root-94c@univ-lorraine.fr"],
             audience: "admin",
             subject: 'Test User requests the manual group "Vosges 2027"',
             text: expect.stringContaining(
-              "Marie Curie (marie.curie@univ-lorraine.fr)",
+              "Marie Curie (marie.curie-94c@univ-lorraine.fr)",
             ) as unknown as string,
           }),
         ),

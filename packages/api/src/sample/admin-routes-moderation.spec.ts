@@ -17,7 +17,7 @@ import { insertUser } from "../tests/insert-user.ts";
 import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
-import { provisionUser } from "../tests/provision-user.ts";
+import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 import {
   attachGroup,
   draft,
@@ -40,8 +40,8 @@ const IN_REACH = "UMR7358";
 const OUT_OF_REACH = "UMR5275";
 const MANAGED_OSU = { kind: "osu" as const, code: "OTELo" };
 const MANAGED_GROUP = {
-  id: "01890a5d-ac96-774b-bcce-b302099a9001",
-  name: "Massif Central 2026",
+  id: "01890a5d-ac96-774b-83a4-b302099a9001",
+  name: "Massif Central 2026 3a4",
 };
 
 const REQUESTED_ORGANIZATION = "04vfs2w97";
@@ -79,7 +79,7 @@ async function arrangeManager(
 ) {
   const manager = await provisionUser(db, "test-token", { status: "accepted" });
   await moderateInstitution(db, manager.id, MANAGED_OSU);
-  const owner = await insertUser(db, "owner@example.com", {
+  const owner = await insertUser(db, tokenEmail("owner"), {
     name: "Hutton",
     firstname: "James",
   });
@@ -162,7 +162,7 @@ describe("moderated sample list", () => {
         status: "accepted",
         superAdmin: true,
       });
-      const owner = await insertUser(db, "owner@example.com");
+      const owner = await insertUser(db, tokenEmail("owner"));
       await ownedSample(
         db,
         owner.id,
@@ -240,8 +240,8 @@ describe("filters on the moderated sample list", () => {
     async ({ db }) => {
       // Arrange
       const app = await arrangeSuperAdmin(db);
-      const hutton = await insertUser(db, "hutton@example.com");
-      const lyell = await insertUser(db, "lyell@example.com");
+      const hutton = await insertUser(db, tokenEmail("hutton"));
+      const lyell = await insertUser(db, tokenEmail("lyell"));
       const owned = await ownedSample(db, hutton.id, {
         ...draft,
         name: "Owned by Hutton",
@@ -264,7 +264,7 @@ describe("filters on the moderated sample list", () => {
     async ({ db }) => {
       // Arrange
       const app = await arrangeSuperAdmin(db);
-      const owner = await insertUser(db, "owner@example.com");
+      const owner = await insertUser(db, tokenEmail("owner"));
       await db.insertInto("manual_group").values(MANAGED_GROUP).execute();
       const grouped = await ownedSample(db, owner.id, {
         ...draft,
@@ -285,7 +285,7 @@ describe("filters on the moderated sample list", () => {
     async ({ db }) => {
       // Arrange
       const app = await arrangeSuperAdmin(db);
-      const owner = await insertUser(db, "owner@example.com");
+      const owner = await insertUser(db, tokenEmail("owner"));
       const cotutelle = await ownedSample(
         db,
         owner.id,
@@ -316,7 +316,7 @@ describe("filters on the moderated sample list", () => {
     async ({ db }) => {
       // Arrange
       const app = await arrangeSuperAdmin(db);
-      const owner = await insertUser(db, "owner@example.com");
+      const owner = await insertUser(db, tokenEmail("owner"));
       const published = await ownedSample(db, owner.id, {
         ...draft,
         name: "Published",
@@ -466,7 +466,7 @@ describe("access to a moderated sample", () => {
     async ({ db }) => {
       // Arrange
       const { app, owner } = await arrangeManager(db);
-      const invitee = await insertUser(db, "invitee@example.com");
+      const invitee = await insertUser(db, tokenEmail("invitee"));
       const sample = await ownedSample(db, owner.id, draft, IN_REACH);
       // Act
       const res = await testClient(app).admin.samples[
@@ -509,7 +509,7 @@ describe("the moderation mail", () => {
     expect(res.status).toBe(200);
     await vi.waitFor(() =>
       expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: ["owner@example.com"] }),
+        expect.objectContaining({ to: [tokenEmail("owner")] }),
       ),
     );
     expect(sendMail.mock.calls[0]?.[0].text).toContain("Name");
@@ -536,7 +536,7 @@ describe("the moderation mail", () => {
     await vi.waitFor(() =>
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
-          to: ["owner@example.com"],
+          to: [tokenEmail("owner")],
           subject: expect.stringContaining("published"),
         }),
       ),
@@ -568,7 +568,7 @@ describe("the moderation mail", () => {
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
           expect.objectContaining({
-            to: ["owner@example.com"],
+            to: [tokenEmail("owner")],
             subject: expect.stringContaining("published as withdrawn"),
           }),
         ),
@@ -586,7 +586,7 @@ describe("the moderation mail", () => {
         status: "accepted",
         superAdmin: true,
       });
-      const owner = await insertUser(db, "owner@example.com");
+      const owner = await insertUser(db, tokenEmail("owner"));
       const app = createApp(db, {
         mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
       }).app;
@@ -607,7 +607,7 @@ describe("the moderation mail", () => {
       expect(res.status).toBe(200);
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
-          expect.objectContaining({ to: ["owner@example.com"] }),
+          expect.objectContaining({ to: [tokenEmail("owner")] }),
         ),
       );
     },
@@ -785,7 +785,7 @@ describe("a tombstoned sample", () => {
     async ([, write], { db }) => {
       // Arrange
       const { app, sample } = await arrangeManaged(db, "tombstone");
-      const invitee = await insertUser(db, "invitee@example.com");
+      const invitee = await insertUser(db, tokenEmail("invitee"));
       // Act
       const res = await write(app, sample, invitee.id);
       // Assert

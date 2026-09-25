@@ -43,6 +43,7 @@ export const publishedSample = (
   age: null,
   relations: [],
   processSteps: [],
+  mineralClassifications: [],
   attachments: [],
   security: null,
   existenceStatus: null,

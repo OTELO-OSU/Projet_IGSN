@@ -17,6 +17,7 @@ import { EconomicInterestView } from "#/domain/samples/economic-interest-view.ts
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LazySampleLocationMap } from "#/domain/samples/lazy-sample-location-map.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
+import { MineralClassificationsView } from "#/domain/samples/mineral-classifications-view.tsx";
 import { ProcessStepsView } from "#/domain/samples/process-steps-view.tsx";
 import { RelationsView } from "#/domain/samples/relations-view.tsx";
 import { RepositoryView } from "#/domain/samples/repository-view.tsx";
@@ -61,6 +62,7 @@ export function sampleSections(
     physiographicEnvironment,
     syntheticDetails,
     processSteps,
+    mineralClassifications,
     institutionalOrganization,
     institutionalOsu,
     institutionalLaboratory,
@@ -216,6 +218,15 @@ export function sampleSections(
       id: "process-steps",
       title: m.sample_section_process_steps(),
       content: <ProcessStepsView processSteps={processSteps} />,
+    },
+    mineralClassifications.length > 0 && {
+      id: "mineral-classifications",
+      title: m.sample_section_mineral_classifications(),
+      content: (
+        <MineralClassificationsView
+          mineralClassifications={mineralClassifications}
+        />
+      ),
     },
     institutionalOrganization !== null && {
       id: "institution",

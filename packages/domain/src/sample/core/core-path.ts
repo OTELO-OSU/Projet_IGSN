@@ -116,6 +116,7 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   economicResourceTypePrecision:
     "extensions.geology.economic.resourceTypePrecision",
   economicInterestElements: "extensions.geology.economic.interestElements",
+  mineralClassifications: "extensions.geology.mineralogy",
 
   "security.radioactivity": "extensions.safety.radioactivity.flag",
   "security.radioactivityExplanation":

@@ -4,6 +4,7 @@ import catalog from "../../messages/en.json";
 import { COLLECTION_METHODS } from "./collection-method/vocabulary.ts";
 import { createSampleLabels, type Messages } from "./create-sample-labels.ts";
 import { MATERIAL_PATHS } from "./material/classification.ts";
+import { STRUNZ_PATHS } from "./mineral/mineral-hierarchy.ts";
 import { pathSegment } from "./path/segment.ts";
 import { PHYSIOGRAPHIC_ENVIRONMENTS } from "./physiographic-environment/vocabulary.ts";
 import { RESOURCE_TYPE_PATHS } from "./resource-type/vocabulary.ts";
@@ -21,6 +22,7 @@ const {
   collectionMethodLabel,
   resourceTypeLabel,
   physiographicEnvironmentLabel,
+  mineralClassificationLabel,
 } = createSampleLabels(m);
 
 describe("materialPathLabel", () => {
@@ -51,7 +53,25 @@ describe("typeLabel", () => {
   });
 });
 
+describe("mineralClassificationLabel", () => {
+  it.each([
+    ["9", "Silicates"],
+    ["2.B-E", "Metal Sulfides"],
+    ["9.E.mindat_2815", "Muscovite"],
+  ])("should label %s as %s", (path, label) => {
+    expect(mineralClassificationLabel(path)).toBe(label);
+  });
+});
+
 describe("tree vocabulary label coverage", () => {
+  it("should translate every Strunz path", () => {
+    expect(
+      STRUNZ_PATHS.filter((path) =>
+        mineralClassificationLabel(path).includes("strunz_"),
+      ),
+    ).toEqual([]);
+  });
+
   it.each([
     ["material", MATERIAL_PATHS, materialPathLabel, "material"],
     ["type", SAMPLE_TYPES, typeLabel, "type"],

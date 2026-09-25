@@ -41,6 +41,7 @@ const sample: AdminSampleListItem = {
   age: null,
   relations: [],
   processSteps: [],
+  mineralClassifications: [],
   attachments: [],
   security: null,
   existenceStatus: "exists",

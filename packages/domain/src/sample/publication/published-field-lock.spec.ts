@@ -87,6 +87,7 @@ const stored: Sample = {
   economicResourceTypePrecision: null,
   economicDepositName: null,
   economicDepositDescription: null,
+  mineralClassifications: [],
   igsn: "ABC123",
   doiPrefix: "10.5072",
   internalNumber: 1,
@@ -179,6 +180,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     economicResourceTypePrecision: null,
     economicDepositName: null,
     economicDepositDescription: null,
+    mineralClassifications: [],
     parentIds: [],
     ...overrides,
   };

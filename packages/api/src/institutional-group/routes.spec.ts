@@ -18,7 +18,7 @@ import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 
 const LABORATORY = { kind: "laboratory", code: "UMR7358" } as const;
-const UNKNOWN_USER = "01890a5d-ac96-774b-bcce-b302099a9099";
+const UNKNOWN_USER = "01890a5d-ac96-774b-841c-b302099a9099";
 
 const authHeader = { Authorization: "Bearer moderator" };
 
@@ -73,11 +73,15 @@ describe("admin institutional group routes", () => {
     "should list a laboratory's managers with their status",
     async ({ db }) => {
       // Arrange
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-      const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
-        status: "rejected",
-      });
-      const outside = await insertUser(db, "outside@univ-lorraine.fr");
+      const curie = await insertUser(db, "marie.curie-41c@univ-lorraine.fr");
+      const dupont = await insertUser(
+        db,
+        "pierre.dupont-41c@univ-lorraine.fr",
+        {
+          status: "rejected",
+        },
+      );
+      const outside = await insertUser(db, "outside-41c@univ-lorraine.fr");
       await moderateInstitution(db, curie.id, LABORATORY);
       await moderateInstitution(db, dupont.id, LABORATORY);
       await moderateInstitution(db, outside.id, {
@@ -94,15 +98,15 @@ describe("admin institutional group routes", () => {
           .parse(await res.json())
           .data.map(({ email, status }) => ({ email, status })),
       ).toEqual([
-        { email: "marie.curie@univ-lorraine.fr", status: "accepted" },
-        { email: "pierre.dupont@univ-lorraine.fr", status: "rejected" },
+        { email: "marie.curie-41c@univ-lorraine.fr", status: "accepted" },
+        { email: "pierre.dupont-41c@univ-lorraine.fr", status: "rejected" },
       ]);
     },
   );
 
   pgTest("should add a manager", async ({ db }) => {
     // Arrange
-    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+    const curie = await insertUser(db, "marie.curie-41c@univ-lorraine.fr");
     const client = await asSuperAdmin(db);
     // Act
     const res = await addManager(client, LABORATORY, curie.id);
@@ -115,7 +119,7 @@ describe("admin institutional group routes", () => {
 
   pgTest("should accept adding a manager twice", async ({ db }) => {
     // Arrange
-    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+    const curie = await insertUser(db, "marie.curie-41c@univ-lorraine.fr");
     await moderateInstitution(db, curie.id, LABORATORY);
     const client = await asSuperAdmin(db);
     // Act
@@ -129,7 +133,7 @@ describe("admin institutional group routes", () => {
     "should answer 422 adding a manager who is not accepted",
     async ({ db }) => {
       // Arrange
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      const curie = await insertUser(db, "marie.curie-41c@univ-lorraine.fr", {
         status: "pending",
       });
       const client = await asSuperAdmin(db);
@@ -152,7 +156,7 @@ describe("admin institutional group routes", () => {
 
   pgTest("should remove a manager", async ({ db }) => {
     // Arrange
-    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+    const curie = await insertUser(db, "marie.curie-41c@univ-lorraine.fr");
     await moderateInstitution(db, curie.id, LABORATORY);
     const client = await asSuperAdmin(db);
     // Act
@@ -166,7 +170,7 @@ describe("admin institutional group routes", () => {
     "should answer 404 removing a user who does not manage the group",
     async ({ db }) => {
       // Arrange
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const curie = await insertUser(db, "marie.curie-41c@univ-lorraine.fr");
       const client = await asSuperAdmin(db);
       // Act
       const res = await removeManager(client, LABORATORY, curie.id);
@@ -177,8 +181,8 @@ describe("admin institutional group routes", () => {
 
   pgTest("should count the accepted managers of each kind", async ({ db }) => {
     // Arrange
-    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
-    const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+    const curie = await insertUser(db, "marie.curie-41c@univ-lorraine.fr");
+    const dupont = await insertUser(db, "pierre.dupont-41c@univ-lorraine.fr", {
       status: "rejected",
     });
     await moderateInstitution(
@@ -248,7 +252,7 @@ describe("admin institutional group routes", () => {
     "should answer 401 to a %s on a revoked session",
     async (method, { db }) => {
       // Arrange
-      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const curie = await insertUser(db, "marie.curie-41c@univ-lorraine.fr");
       const client = await asSuperAdmin(db);
       vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
         c.json({ error: "Unauthorized" }, 401),
