@@ -129,9 +129,7 @@ describe("ImportSamplesDialog", () => {
 
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
-      .toHaveTextContent(
-        "File received. Its samples will be imported in a later version.",
-      );
+      .toHaveTextContent("Samples successfully imported.");
     expect(screen.getByRole("dialog").elements()).toHaveLength(0);
     expect(posted).toEqual([{ name: "samples.xlsx", type: XLSX_MEDIA_TYPE }]);
   });
