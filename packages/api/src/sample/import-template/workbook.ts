@@ -42,9 +42,9 @@ export const sheetValidations = (sheet: ExcelJS.Worksheet): RangeValidations =>
 
 const GROUP_ROW = 1;
 
-const HEADER_ROW = 2;
+export const HEADER_ROW = 2;
 
-const FIRST_DATA_ROW = HEADER_ROW + 1;
+export const FIRST_DATA_ROW = HEADER_ROW + 1;
 
 const lastDataRow = (rows: number) => FIRST_DATA_ROW + rows - 1;
 
