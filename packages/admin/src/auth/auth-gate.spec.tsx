@@ -159,40 +159,20 @@ describe("AuthGate", () => {
     expect(readSignedOut()).toBe(true);
   });
 
-  it("should send a reader back once to the frontend page they signed in from", async () => {
-    auth.isAuthenticated = true;
-    auth.user = { profile: {}, url_state: "/samples/x" };
-    history.replaceState(null, "", "/admin/auth/callback");
-    const navigate = vi.fn();
+  it.each(["/admin/users", "/samples/x"])(
+    "should open the admin app whatever page the sign-in came from (%s)",
+    async (urlState) => {
+      auth.isAuthenticated = true;
+      auth.user = { profile: {}, url_state: urlState };
+      history.replaceState(null, "", "/admin/auth/callback");
 
-    const screen = await render(
-      <StrictMode>
-        <AuthGate base="/admin/" navigate={navigate} />
-      </StrictMode>,
-    );
+      const screen = await render(<AuthGate />);
 
-    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith("/samples/x"));
-    expect(navigate).toHaveBeenCalledTimes(1);
-    await expect
-      .element(screen.getByRole("status"))
-      .toHaveTextContent(/loading/i);
-  });
-
-  it("should open the admin app when the sign-in came from an admin page", async () => {
-    auth.isAuthenticated = true;
-    auth.user = { profile: {}, url_state: "/admin/users" };
-    history.replaceState(null, "", "/admin/auth/callback");
-    const navigate = vi.fn();
-
-    const screen = await render(
-      <AuthGate base="/admin/" navigate={navigate} />,
-    );
-
-    await expect
-      .element(screen.getByRole("alert"))
-      .toHaveTextContent(/account gate/i);
-    expect(navigate).not.toHaveBeenCalled();
-  });
+      await expect
+        .element(screen.getByRole("alert"))
+        .toHaveTextContent(/account gate/i);
+    },
+  );
 
   it.each(["orcid", "ORCID"])(
     "routes a user signed in through ORCID to the ORCID access gate (identity_provider %s)",
