@@ -169,6 +169,7 @@ export type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: Partial<CreateSample>;
+  defaultOperatorUserId?: string;
   parents?: SampleFormParent[];
   fieldSuggestions?: FieldSuggestionRule;
   status?: SampleStatus;
@@ -187,6 +188,7 @@ export function SampleForm({
   onCancel,
   isPending,
   defaultValues,
+  defaultOperatorUserId,
   parents = [],
   fieldSuggestions = NO_FIELD_SUGGESTIONS,
   status = "draft",
@@ -280,8 +282,20 @@ export function SampleForm({
     });
   };
 
+  const draft = toSampleDraft(defaultValues);
+  const { operatorUserId, operatorFirstname, operatorLastname } =
+    draft.syntheticDetails;
   const form = useAppForm({
-    defaultValues: toSampleDraft(defaultValues),
+    defaultValues:
+      operatorUserId || operatorFirstname || operatorLastname
+        ? draft
+        : {
+            ...draft,
+            syntheticDetails: {
+              ...draft.syntheticDetails,
+              operatorUserId: defaultOperatorUserId,
+            },
+          },
     onSubmitMeta: {
       onValid: defaultSubmit,
       checkDuplicates: wasPublished,

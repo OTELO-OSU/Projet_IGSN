@@ -17,12 +17,14 @@ export function useSearchUsers(
     status,
     excludeMembersOf,
     includeSelf,
+    selfFirst,
   }: {
     enabled?: boolean;
     ids?: string[];
     status?: UserStatus;
     excludeMembersOf?: string;
     includeSelf?: boolean;
+    selfFirst?: boolean;
   } = {},
 ) {
   const apiFetch = useApiClient();
@@ -38,6 +40,7 @@ export function useSearchUsers(
       excludeMembersOf,
       searchedIds,
       includeSelf,
+      selfFirst,
     ],
     queryFn: async () => {
       const url = new URL("admin/users/search", API_URL);
@@ -58,6 +61,9 @@ export function useSearchUsers(
       }
       if (includeSelf) {
         url.searchParams.set("includeSelf", "true");
+      }
+      if (selfFirst) {
+        url.searchParams.set("selfFirst", "true");
       }
       const { data } = await apiJson(
         apiFetch,

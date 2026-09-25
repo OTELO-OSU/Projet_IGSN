@@ -13,16 +13,19 @@ export function ContactNamePicker({
   userId,
   onChange,
   onFreeText,
+  selfFirst,
 }: {
   id: string;
   userId: string | null | undefined;
   onChange: (user: UserIdentity | null) => void;
   onFreeText: () => void;
+  selfFirst?: boolean;
 }) {
   const picker = usePicker();
   const found = useSearchUsers(picker.search, undefined, {
     enabled: picker.isOpen,
     includeSelf: true,
+    selfFirst,
   });
   const [picked, setPicked] = useState<UserIdentity | null>(null);
   const named = useSearchUsers("", undefined, {

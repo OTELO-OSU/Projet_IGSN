@@ -24,12 +24,13 @@ export function searchUsers(
     status,
     excludeMembersOf,
     includeSelf,
+    selfFirst,
   }: SearchUsersFilters,
 ): Promise<UserIdentity[]> {
   const others = db
     .selectFrom("user")
     .select(["id", "email", "name", "firstname", "orcid"])
-    .$if(ids === undefined && !includeSelf, (qb) =>
+    .$if(ids === undefined && !includeSelf && !selfFirst, (qb) =>
       qb.where("id", "!=", callerId),
     )
     .$if(ids === undefined, (qb) => qb.where("status", "!=", "rejected"))
@@ -69,7 +70,8 @@ export function searchUsers(
           ),
         ),
       ),
-    );
+    )
+    .$if(selfFirst === true, (qb) => qb.orderBy(sql`id = ${callerId}`, "desc"));
   if (search === undefined) {
     return others.orderBy("email").limit(BROWSE_LIMIT).execute();
   }

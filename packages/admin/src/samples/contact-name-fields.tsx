@@ -25,10 +25,12 @@ export function ContactNameFields({
   label,
   person,
   requiredToPublish = false,
+  selfFirst,
 }: {
   label: string;
   person: ContactPerson;
   requiredToPublish?: boolean;
+  selfFirst?: boolean;
 }) {
   const form = useSampleForm();
   const userIdName = `${person}UserId` as const;
@@ -101,6 +103,7 @@ export function ContactNameFields({
           <ContactNamePicker
             id={userIdName}
             userId={field.state.value}
+            selfFirst={selfFirst}
             onChange={(user) => field.handleChange(user?.id)}
             onFreeText={() => {
               field.handleChange(undefined);
