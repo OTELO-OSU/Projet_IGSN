@@ -13,14 +13,13 @@ export const importIssueCodeSchema = z.enum([
   "unknown_value",
   "parent_level_missing",
   "not_a_number",
-  "not_a_date",
   "not_applicable",
   "duplicate_value",
 ]);
 export type ImportIssueCode = z.infer<typeof importIssueCodeSchema>;
 
 export const importIssueSchema = z.object({
-  sheet: z.string(),
+  sheet: z.string().optional(),
   row: z.number().int().optional(),
   column: z.string().optional(),
   code: z.string(),
