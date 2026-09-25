@@ -25,6 +25,7 @@ Phase 3 of the Excel bulk import parses and validates the workbook a researcher 
 - Customising the template (a later goal) needs no parser change, since nothing pins a version.
 - `required-columns.ts` must stay derived from the domain (`createSampleSchema`, `samplePublishBlockers`, the hierarchy completeness helpers), never a hand-maintained list, or it silently drifts from what actually blocks publication.
 - Every parse and validation dependency (exceljs, the vocabulary blocks, the publish blockers) stays in `api`; `admin` carries none of it.
+- The server parses the upload with no unzipped-size guard: uploads are authenticated and rate limited to 5 per minute, so a crafted archive exhausting the api's memory is an accepted risk rather than a JSZip-mirroring archive check.
 
 ## Rejected option
 

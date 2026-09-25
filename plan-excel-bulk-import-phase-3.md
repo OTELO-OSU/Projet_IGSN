@@ -28,13 +28,11 @@ Steps 1 and 2 decide whether the file is processable: any issue there stops ever
 
 Files in `packages/api/src/sample/import-template/`, next to `columns.ts`, which the original plan already names as the importer's column map.
 
-### Step 1: open (`open-workbook.ts` + `unzipped-size.ts`, specs)
+### Step 1: open (`open-workbook.ts`, spec)
 
-- `unzipped-size.ts` is a zip-bomb guard: the 20 MB cap only bounds the compressed bytes, and exceljs inflates the whole archive in memory (the original plan's "On exceljs" section asks for it).
-- It sums the uncompressed sizes declared in the zip central directory (EOCD scan, ~20 lines of `DataView`), refusing Zip64 and anything over 100 MB.
-- `// ponytail: declared sizes only, a lying archive still inflates; count inflated bytes if the exceljs read path gets audited`.
-- Then `ExcelJS.Workbook().xlsx.load` runs inside the existing `queueBuild` (`build-queue.ts`), so only one request at a time holds a parsed workbook.
-- A guard refusal or a load throw gives `unreadable_file`.
+- `ExcelJS.Workbook().xlsx.load` runs inside the existing `queueBuild` (`build-queue.ts`), so only one request at a time holds a parsed workbook.
+- A load throw gives `unreadable_file`.
+- No zip-bomb guard (decided after review): only an authenticated user can upload, rate limited to 5 per minute alongside the template download. A declared-size check is bypassable because JSZip reads the archive differently, and a sound one means mirroring JSZip's parsing. Accepted risk: a crafted archive can exhaust the api's memory.
 
 ### Step 2: validate the template (`template-layout.ts` + spec)
 
