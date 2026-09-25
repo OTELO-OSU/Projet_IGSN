@@ -1,5 +1,10 @@
 import type { Kysely } from "kysely";
 
+import {
+  IMPORT_MAX_BYTES,
+  IMPORT_TEMPLATE_FILENAME,
+  XLSX_MEDIA_TYPE,
+} from "@projet-igsn/domain/sample/import/import-validator";
 import ExcelJS from "exceljs";
 import { describe, expect } from "vitest";
 
@@ -15,6 +20,18 @@ const download = (db: Kysely<DB>, query = "") =>
   createApp(db).app.request(`/admin/samples/import-template${query}`, {
     headers: authHeader,
   });
+
+const upload = (db: Kysely<DB>, file?: File) => {
+  const body = new FormData();
+  if (file) {
+    body.append("file", file);
+  }
+  return createApp(db).app.request("/admin/samples/import", {
+    method: "POST",
+    headers: authHeader,
+    body,
+  });
+};
 
 describe("import template route", () => {
   pgTest(
@@ -58,4 +75,62 @@ describe("import template route", () => {
       expect(res.status).toBe(400);
     },
   );
+});
+
+describe("import upload route", () => {
+  pgTest(
+    "should accept the downloaded template posted back",
+    async ({ db }) => {
+      const template = await (await download(db)).blob();
+
+      const res = await upload(
+        db,
+        new File([template], IMPORT_TEMPLATE_FILENAME, {
+          type: XLSX_MEDIA_TYPE,
+        }),
+      );
+
+      expect(res.status).toBe(202);
+    },
+    30_000,
+  );
+
+  pgTest.for([
+    ["samples.csv", "text/csv"],
+    ["samples.xlsx", "text/csv"],
+    ["samples.csv", XLSX_MEDIA_TYPE],
+  ] as const)(
+    "should refuse the file %s typed %s as 415",
+    async ([name, type], { db }) => {
+      const res = await upload(db, new File(["a,b"], name, { type }));
+
+      expect(res.status).toBe(415);
+    },
+  );
+
+  pgTest("should refuse a file over the size cap as 413", async ({ db }) => {
+    const res = await upload(
+      db,
+      new File([new Uint8Array(IMPORT_MAX_BYTES + 1)], "big.xlsx", {
+        type: XLSX_MEDIA_TYPE,
+      }),
+    );
+
+    expect(res.status).toBe(413);
+  });
+
+  pgTest("should refuse a missing file as 400", async ({ db }) => {
+    const res = await upload(db);
+
+    expect(res.status).toBe(400);
+  });
+
+  pgTest("should refuse an anonymous upload", async ({ db }) => {
+    const res = await createApp(db).app.request("/admin/samples/import", {
+      method: "POST",
+      body: new FormData(),
+    });
+
+    expect(res.status).toBe(401);
+  });
 });

@@ -61,6 +61,7 @@ import {
   validateCollaboratorParams,
   validateCreateSampleBody,
   validateIdParam,
+  validateImportUpload,
   validateImportTemplateQuery,
   validateListQuery,
   validateRequestDeletionBody,
@@ -137,6 +138,7 @@ export function createSampleAdminRoutes(
     .get("/import-template", validateImportTemplateQuery, (c) =>
       importTemplateResponse(c.req.valid("query").rows),
     )
+    .post("/import", validateImportUpload, (c) => c.body(null, 202))
     .use("/:id", accessibleSample)
     .use("/:id/*", accessibleSample)
     .get("/:id", validateIdParam, async (c) => {
