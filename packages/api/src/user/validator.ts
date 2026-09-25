@@ -24,6 +24,7 @@ const searchUsersQuerySchema = z.strictObject({
   status: userStatusSchema.exclude(["rejected"]).optional(),
   excludeMembersOf: z.uuid().optional(),
   includeSelf: z.stringbool().optional(),
+  selfFirst: z.stringbool().optional(),
 });
 
 export const validateSearchUsersQuery = validator("query", (value, c) => {

@@ -36,6 +36,7 @@ export type SearchUsersFilters = {
   status?: UserStatus;
   excludeMembersOf?: string;
   includeSelf?: boolean;
+  selfFirst?: boolean;
 };
 
 export type UserRepository = {

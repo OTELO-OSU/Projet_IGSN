@@ -735,6 +735,32 @@ describe("CreateSamplePage", () => {
       .toHaveTextContent("Sample published");
   });
 
+  it("should prefill the operator with the current user", async () => {
+    const screen = await renderCreatePage();
+    worker.use(
+      http.get("*/admin/users/search", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: "3f2504e0-4f89-41d3-9a0c-0305000000f1",
+              email: "marie.dupont@cnrs.fr",
+              firstname: "Marie",
+              name: "Dupont",
+              orcid: null,
+            },
+          ],
+        }),
+      ),
+    );
+
+    await openTab(screen, "Sample classification");
+    await pick(screen, "Material *", "Synthetic rock / mineral");
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Operator name" }))
+      .toHaveTextContent("Marie Dupont");
+  });
+
   it("should keep Publish disabled until the current user is known", async () => {
     let answerCurrentUser = () => {};
     const screen = await renderCreatePage(

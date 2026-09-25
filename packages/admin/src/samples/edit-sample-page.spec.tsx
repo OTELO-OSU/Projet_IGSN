@@ -1182,6 +1182,28 @@ describe("EditSamplePage", () => {
       .toHaveTextContent("Sample saved");
   });
 
+  it("should leave an empty operator empty on the edit page", async () => {
+    const { screen, calls } = await renderEditPage(
+      "draft",
+      "rock_and_sediment.synthetic_rock_mineral",
+    );
+    const bodies: unknown[] = [];
+    worker.use(
+      http.put("*/samples/:id", async ({ request }) => {
+        bodies.push(await request.clone().json());
+      }),
+    );
+
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await vi.waitFor(() =>
+      expect(calls).toEqual(["PUT Basalte du Massif Central"]),
+    );
+    expect(bodies).toEqual([
+      expect.not.objectContaining({ syntheticDetails: expect.anything() }),
+    ]);
+  });
+
   it("should upload files staged in the Related URL or document tab only when saving, before the save", async () => {
     FakeXhr.instances = [];
     vi.stubGlobal("XMLHttpRequest", FakeXhr);

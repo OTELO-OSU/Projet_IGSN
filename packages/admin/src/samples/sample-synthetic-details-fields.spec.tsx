@@ -18,6 +18,10 @@ const createAction = (onSubmit: (value: CreateSample) => void) =>
 
 const SYNTHETIC_MATERIAL = "Synthetic rock / mineral";
 
+const CURRENT_USER_ID = "3f2504e0-4f89-41d3-9a0c-0305000000f1";
+
+const OTHER_USER_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f7";
+
 const syntheticDefaults = {
   name: "Synthetic forsterite",
   nature: "thin_section",
@@ -397,4 +401,60 @@ describe("SampleSyntheticDetailsFields", () => {
       .element(screen.getByLabelText("Equipment used", { exact: true }))
       .toBeEnabled();
   });
+
+  it("should list the current user first in the operator picker alone", async () => {
+    const screen = await renderSyntheticForm();
+    const searches: string[] = [];
+    worker.use(
+      http.get("*/admin/users/search", ({ request }) => {
+        searches.push(new URL(request.url).search);
+        return HttpResponse.json({ data: [] });
+      }),
+    );
+
+    await operatorName(screen)
+      .getByRole("combobox", { name: "Operator name" })
+      .click();
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
+    await screen
+      .getByRole("group", { name: "Collector name" })
+      .getByRole("combobox", { name: "Collector name" })
+      .click();
+
+    await vi.waitFor(() =>
+      expect(searches).toEqual([
+        "?includeSelf=true&selfFirst=true",
+        "?includeSelf=true",
+      ]),
+    );
+  });
+
+  it.each([
+    { operatorUserId: OTHER_USER_ID },
+    { operatorFirstname: "Marie", operatorLastname: "Curie" },
+  ])(
+    "should keep the operator already set over the current user: %o",
+    async (operator) => {
+      worker.use(
+        http.get("*/admin/users/search", () => HttpResponse.json({ data: [] })),
+      );
+      const onSubmit = vi.fn();
+      const screen = await render(
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{ ...syntheticDefaults, syntheticDetails: operator }}
+          defaultOperatorUserId={CURRENT_USER_ID}
+          primaryAction={createAction(onSubmit)}
+        />,
+      );
+
+      await screen.getByRole("button", { name: "Create" }).click();
+
+      await vi.waitFor(() =>
+        expect(onSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({ syntheticDetails: operator }),
+        ),
+      );
+    },
+  );
 });

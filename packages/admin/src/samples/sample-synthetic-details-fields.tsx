@@ -171,6 +171,7 @@ export function SampleSyntheticDetailsFields() {
         label={m.field_operator_name()}
         person="syntheticDetails.operator"
         requiredToPublish
+        selfFirst
       />
 
       <form.AppField name="syntheticDetails.researchStructure">

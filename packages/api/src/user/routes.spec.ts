@@ -128,6 +128,16 @@ describe("admin user search routes", () => {
         tokenEmail("test-token"),
       ],
     },
+    {
+      case: "the caller first when selfFirst is set",
+      query: () => "selfFirst=true",
+      emails: [
+        tokenEmail("test-token"),
+        "jean.martin@univ-lorraine.fr",
+        "marie.curie@univ-lorraine.fr",
+        "pierre.dupont@univ-lorraine.fr",
+      ],
+    },
   ])("should return $case", async ({ query, emails }, { db }) => {
     const caller = await provisionUser(db, "test-token");
     const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
@@ -158,6 +168,7 @@ describe("admin user search routes", () => {
     "status=rejected",
     "status=unknown",
     "excludeCollaboratorsOf=not-a-uuid",
+    "selfFirst=maybe",
   ])("should reject the query %s with 400", async (query, { db }) => {
     const res = await createApp(db).app.request(
       `/admin/users/search?${query}`,
@@ -168,6 +179,28 @@ describe("admin user search routes", () => {
 
     expect(res.status).toBe(400);
   });
+
+  pgTest(
+    "should list the caller first on selfFirst even when their name sorts last",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+      await insertUser(db, "aubry@example.com", { name: "Aubry" });
+      await insertUser(db, "zeller@example.com", { name: "Zeller" });
+
+      const res = await createApp(db).app.request(
+        "/admin/users/search?search=example&selfFirst=true",
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(200);
+      const body = userIdentitiesResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.email)).toEqual([
+        tokenEmail("test-token"),
+        "aubry@example.com",
+        "zeller@example.com",
+      ]);
+    },
+  );
 
   pgTest(
     "should reject a search term past the length ceiling with 400",
