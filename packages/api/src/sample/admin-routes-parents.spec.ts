@@ -183,7 +183,7 @@ describe("a sample's parents", () => {
       const caller = await provisionUser(db, "test-token", {
         status: "accepted",
       });
-      const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
+      const stranger = await insertUser(db, "stranger-3e2@univ-lorraine.fr");
       const parent = await insertParent(db, stranger.id, "withdrawn");
       if (role) {
         await db
@@ -205,7 +205,7 @@ describe("a sample's parents", () => {
       await provisionUser(db, "test-token", { status: "accepted" });
       // Act
       const res = await createChild(db, [
-        "01890a5d-ac96-774b-bcce-b302099a9999",
+        "01890a5d-ac96-774b-83e2-b302099a9999",
       ]);
       // Assert
       expect(res.status).toBe(422);
@@ -416,7 +416,7 @@ describe("the parent read for prefill", () => {
     async ({ db }) => {
       // Arrange
       await provisionUser(db, "test-token", { status: "accepted" });
-      const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
+      const stranger = await insertUser(db, "stranger-3e2@univ-lorraine.fr");
       const created = await insertSample(db, {
         ...publishableSample,
         repository: {
@@ -451,10 +451,10 @@ describe("the parent read for prefill", () => {
       const caller = await provisionUser(db, "test-token", {
         status: "accepted",
       });
-      const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
+      const stranger = await insertUser(db, "stranger-3e2@univ-lorraine.fr");
       const id =
         status === null
-          ? "01890a5d-ac96-774b-bcce-b302099a9999"
+          ? "01890a5d-ac96-774b-83e2-b302099a9999"
           : (await insertParent(db, own ? caller.id : stranger.id, status)).id;
       // Act
       const res = await readParent(db, id);
@@ -470,7 +470,7 @@ describe("the parent read for prefill", () => {
       // Arrange
       const sendMail = vi.fn().mockResolvedValue(undefined);
       await provisionUser(db, "test-token", { status: "accepted" });
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-3e2@univ-lorraine.fr");
       const parent = await insertParent(db, owner.id);
       const app = createApp(db, {
         mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
@@ -484,7 +484,7 @@ describe("the parent read for prefill", () => {
       expect(res.status).toBe(201);
       await vi.waitFor(() =>
         expect(sendMail).toHaveBeenCalledWith(
-          expect.objectContaining({ to: ["owner@univ-lorraine.fr"] }),
+          expect.objectContaining({ to: ["owner-3e2@univ-lorraine.fr"] }),
         ),
       );
     },

@@ -19,6 +19,11 @@ import { type VerticalReference } from "./location/vertical-reference.ts";
 import { isUnderMetaRock } from "./material/is-under-meta-rock.ts";
 import { type MetamorphicFabric } from "./metamorphic-fabric/vocabulary.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
+import {
+  fromMineralPath,
+  mineralClassificationText,
+} from "./mineral/mineral-hierarchy.ts";
+import { type MineralAbundance } from "./mineral/model.ts";
 import { type Nature } from "./nature.ts";
 import { pathSegment } from "./path/segment.ts";
 import { vocabularyLabel } from "./path/vocabulary-label.ts";
@@ -72,6 +77,8 @@ type _verticalReferenceKeys =
   AssertKeys<`vertical_reference_${VerticalReference}`>;
 type _processStepKindKeys = AssertKeys<`process_step_kind_${ProcessStepKind}`>;
 type _additionalRoleKeys = AssertKeys<`additional_role_${AdditionalRole}`>;
+type _mineralAbundanceKeys =
+  AssertKeys<`mineral_abundance_${MineralAbundance}`>;
 type _relationTypeKeys = AssertKeys<`relation_type_${RelationType}`>;
 type _relationTargetResourceTypeKeys =
   AssertKeys<`relation_resource_type_${RelationTargetResourceType}`>;
@@ -122,6 +129,8 @@ type SampleLabels = {
   relationTargetResourceTypeLabel: (
     resourceType: RelationTargetResourceType,
   ) => string;
+  mineralAbundanceLabel: (abundance: MineralAbundance) => string;
+  mineralClassificationLabel: (path: string) => string;
 };
 
 const LABEL_KEY = {
@@ -161,7 +170,11 @@ const LABEL_KEY = {
   additionalRoleLabel: ["additional_role", "code"],
   relationTypeLabel: ["relation_type", "code"],
   relationTargetResourceTypeLabel: ["relation_resource_type", "code"],
-} satisfies Record<keyof SampleLabels, [string, "path" | "code"]>;
+  mineralAbundanceLabel: ["mineral_abundance", "code"],
+} satisfies Record<
+  Exclude<keyof SampleLabels, "mineralClassificationLabel">,
+  [string, "path" | "code"]
+>;
 
 export function createSampleLabels(m: Messages): SampleLabels {
   const labels = Object.fromEntries(
@@ -175,8 +188,19 @@ export function createSampleLabels(m: Messages): SampleLabels {
     ]),
   ) as unknown as SampleLabels;
   const materialPathLabel = labels.materialPathLabel;
+  const strunzLabel = vocabularyLabel(
+    (strunzId: string) =>
+      `strunz_${strunzId.toLowerCase().replaceAll(/[.-]/g, "_")}`,
+    m,
+  );
   return {
     ...labels,
+    mineralClassificationLabel: (path) => {
+      const row = fromMineralPath(path);
+      return row.mindatId == null
+        ? strunzLabel(row.strunzId)
+        : mineralClassificationText(row);
+    },
     materialPathLabel: (path) =>
       isUnderMetaRock(path)
         ? `${m.material_meta_prefix?.() ?? ""}${materialPathLabel(path)}`

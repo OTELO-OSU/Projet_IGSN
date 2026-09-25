@@ -1,4 +1,8 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
+import {
+  FieldListItem,
+  FieldListRemoveButton,
+} from "@projet-igsn/design-system/components/form/field-list-item";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   DropdownMenu,
@@ -7,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@projet-igsn/design-system/components/ui/dropdown-menu";
 import { ADDITIONAL_ROLES } from "@projet-igsn/domain/sample/additional-role/role";
-import { ChevronDownIcon, Trash2 } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { ContactNameFields } from "#/samples/contact-name-fields.tsx";
@@ -31,7 +35,18 @@ export function SampleAdditionalRolesFields() {
               <p className="font-medium">{m.legend_additional_roles()}</p>
             )}
             {roles.map((row, index) => (
-              <div key={row.key} className="relative rounded-lg border p-4">
+              <FieldListItem
+                key={row.key}
+                actions={
+                  <FieldListRemoveButton
+                    label={m.action_remove_additional_role({
+                      index: index + 1,
+                    })}
+                    disabled={isDisabled}
+                    onClick={() => form.removeFieldValue(ROLES_FIELD, index)}
+                  />
+                }
+              >
                 <ContactNameFields
                   label={m.legend_additional_role({
                     index: index + 1,
@@ -40,20 +55,7 @@ export function SampleAdditionalRolesFields() {
                   person={`${ROLES_FIELD}[${index}].person`}
                   requiredToPublish
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2"
-                  disabled={isDisabled}
-                  aria-label={m.action_remove_additional_role({
-                    index: index + 1,
-                  })}
-                  onClick={() => form.removeFieldValue(ROLES_FIELD, index)}
-                >
-                  <Trash2 aria-hidden />
-                </Button>
-              </div>
+              </FieldListItem>
             ))}
           </>
         )}

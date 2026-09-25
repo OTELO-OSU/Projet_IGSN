@@ -16,10 +16,10 @@ async function arrange(db: Transactional<DB>) {
     nature: "hand_sample",
     type: null,
   });
-  const pierre = await insertUser(db, "pierre@univ-lorraine.fr", {
+  const pierre = await insertUser(db, "pierre-c58@univ-lorraine.fr", {
     name: "Pierre Martin",
   });
-  const marie = await insertUser(db, "marie@univ-lorraine.fr", {
+  const marie = await insertUser(db, "marie-c58@univ-lorraine.fr", {
     name: "Marie Dupont",
   });
   return { sampleId: sample.id, pierre, marie };

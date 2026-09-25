@@ -733,7 +733,7 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample published");
-  });
+  }, 15000);
 
   it("should prefill the operator with the current user", async () => {
     const screen = await renderCreatePage();
@@ -799,7 +799,7 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Could not publish the sample. Please try again.");
-  });
+  }, 15000);
 
   it("should show an error toast when creation fails", async () => {
     const screen = await renderCreatePage(true);

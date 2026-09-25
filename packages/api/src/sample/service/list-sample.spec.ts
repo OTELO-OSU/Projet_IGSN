@@ -283,6 +283,47 @@ describe("listSamples", () => {
     },
   );
 
+  pgTest.for([
+    {
+      value: "2",
+      names: ["Acanthite", "Alacránite", "Sulfides", "Sulfosalts"],
+    },
+    { value: "2.B-E", names: ["Acanthite", "Sulfides"] },
+    { value: "2.F", names: ["Alacránite"] },
+  ])(
+    "should filter the mineral classification $value once per sample at or under it",
+    async ({ value, names }, { db }) => {
+      // Arrange
+      const mineral = (
+        name: string,
+        mineralClassifications: { strunzId: string; mindatId?: number }[],
+      ) =>
+        insertSample(db, {
+          ...bare,
+          name,
+          material: "rock_and_sediment.mineral",
+          mineralClassifications,
+        });
+      await mineral("Sulfosalts", [{ strunzId: "2" }]);
+      await mineral("Sulfides", [{ strunzId: "2.B-E" }]);
+      await mineral("Acanthite", [
+        { strunzId: "2" },
+        { strunzId: "2.B-E", mindatId: 10 },
+      ]);
+      await mineral("Alacránite", [{ strunzId: "2.F", mindatId: 91 }]);
+      await mineral("Silicates", [{ strunzId: "9" }]);
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        mineralClassification: value,
+      });
+      // Assert
+      expect(total).toBe(names.length);
+      expect(data.map((s) => s.name).sort()).toEqual(names);
+    },
+  );
+
   pgTest("should filter an enum facet by equality", async ({ db }) => {
     // Arrange
     await insertSample(db, {
@@ -399,10 +440,10 @@ describe("listSamples", () => {
 
   pgTest("should filter by an attached manual group", async ({ db }) => {
     // Arrange
-    const groupId = "01890a5d-ac96-774b-bcce-b302099a9001";
+    const groupId = "01890a5d-ac96-774b-822f-b302099a9001";
     await db
       .insertInto("manual_group")
-      .values({ id: groupId, name: "ANR CritMet" })
+      .values({ id: groupId, name: "ANR CritMet 22f" })
       .execute();
     await insertSample(db, {
       name: "In the group",
@@ -474,7 +515,7 @@ describe("listSamples", () => {
 
   pgTest("should filter by a linked user whatever the role", async ({ db }) => {
     // Arrange
-    const user = await insertUser(db, "marie.curie@univ-lorraine.fr");
+    const user = await insertUser(db, "marie.curie-22f@univ-lorraine.fr");
     const linked = [
       ["Owned", "owner"],
       ["Edited", "editor"],

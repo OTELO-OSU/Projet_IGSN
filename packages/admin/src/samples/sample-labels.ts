@@ -41,4 +41,6 @@ export const {
   additionalRoleLabel,
   relationTypeLabel,
   relationTargetResourceTypeLabel,
+  mineralClassificationLabel,
+  mineralAbundanceLabel,
 } = createSampleLabels(m as unknown as Messages);

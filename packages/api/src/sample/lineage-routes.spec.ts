@@ -45,7 +45,7 @@ async function lineageStatus(db: Db, igsn: string) {
 }
 
 const owner = (db: Db) =>
-  insertUser(db, "owner@univ-lorraine.fr").then((user) => user.id);
+  insertUser(db, "owner-a8f@univ-lorraine.fr").then((user) => user.id);
 
 describe("the public sample lineage", () => {
   pgTest(

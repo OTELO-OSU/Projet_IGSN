@@ -27,6 +27,9 @@ import {
   faciesFor,
   metamorphicFaciesSchema,
 } from "./metamorphic-facies/vocabulary.ts";
+import { allowsMineralClassifications } from "./mineral/allows-mineral-classifications.ts";
+import { toMineralPath } from "./mineral/mineral-hierarchy.ts";
+import { mineralClassificationSchema } from "./mineral/model.ts";
 import { natureSchema } from "./nature.ts";
 import { sampleParentSchema } from "./parent/model.ts";
 import { physiographicEnvironmentSchema } from "./physiographic-environment/vocabulary.ts";
@@ -103,6 +106,7 @@ export const sampleSchema = z.object({
   economicResourceTypePrecision: nameSchema.nullable(),
   economicDepositName: nameSchema.nullable(),
   economicDepositDescription: nameSchema.nullable(),
+  mineralClassifications: z.array(mineralClassificationSchema).default([]),
   igsn: igsnSchema.nullable(),
   doiPrefix: z.string().nullable(),
   internalNumber: z.number().int().positive().nullable(),
@@ -157,6 +161,7 @@ const createSampleFieldsSchema = z.strictObject({
   economicResourceTypePrecision: nameSchema.nullish(),
   economicDepositName: nameSchema.nullish(),
   economicDepositDescription: nameSchema.nullish(),
+  mineralClassifications: z.array(mineralClassificationSchema).optional(),
   manualGroupIds: z.array(z.uuid()).optional(),
   parentIds: z.array(z.uuid()).max(MAX_SAMPLE_PARENTS).optional(),
 });
@@ -257,6 +262,24 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
       path: ["material"],
       message: "a sample with two parents must be synthetic",
     });
+  }
+  const rows = value.mineralClassifications ?? [];
+  if (rows.length > 0 && !allowsMineralClassifications(value.material)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["mineralClassifications"],
+      message: "only a mineral sample carries mineral classifications",
+    });
+  }
+  const rowPaths = rows.map(toMineralPath);
+  for (const [index, path] of rowPaths.entries()) {
+    if (rowPaths.indexOf(path) !== index) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["mineralClassifications", index],
+        message: "a mineral classification is listed twice",
+      });
+    }
   }
   if (
     value.syntheticDetails != null &&

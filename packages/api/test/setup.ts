@@ -1,26 +1,29 @@
 import type { KeycloakClaims } from "../src/auth/middleware.ts";
 
-vi.mock("../src/auth/middleware.ts", () => ({
-  requireAuth: async (
-    c: {
-      req: { header: (name: string) => string | undefined };
-      set: (key: "jwtPayload", value: KeycloakClaims) => void;
+vi.mock("../src/auth/middleware.ts", async () => {
+  const { tokenEmail } = await import("../src/tests/provision-user.ts");
+  return {
+    requireAuth: async (
+      c: {
+        req: { header: (name: string) => string | undefined };
+        set: (key: "jwtPayload", value: KeycloakClaims) => void;
+      },
+      next: () => Promise<void>,
+    ) => {
+      const authorization = c.req.header("Authorization");
+      if (!authorization) return new Response(null, { status: 401 });
+      const sub = authorization.replace("Bearer ", "");
+      c.set("jwtPayload", {
+        sub,
+        email: tokenEmail(sub),
+        given_name: "Test",
+        family_name: "User",
+        identity_provider: "satosa",
+      });
+      await next();
     },
-    next: () => Promise<void>,
-  ) => {
-    const authorization = c.req.header("Authorization");
-    if (!authorization) return new Response(null, { status: 401 });
-    const sub = authorization.replace("Bearer ", "");
-    c.set("jwtPayload", {
-      sub,
-      email: `${sub}@example.com`,
-      given_name: "Test",
-      family_name: "User",
-      identity_provider: "satosa",
-    });
-    await next();
-  },
-}));
+  };
+});
 
 vi.mock("../src/auth/active-session.ts", () => ({
   requireActiveSession: vi.fn(

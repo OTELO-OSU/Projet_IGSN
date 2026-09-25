@@ -8,10 +8,10 @@ import { publishSample } from "../sample/service/publish-sample.ts";
 import { setSampleStatus } from "../sample/service/set-sample-status.ts";
 import { pgTest } from "../tests/pg-test.ts";
 
-const PUBLISHED = "01890a5d-ac96-774b-bcce-b302099a9001";
-const DRAFT_ONLY = "01890a5d-ac96-774b-bcce-b302099a9002";
-const EMPTY = "01890a5d-ac96-774b-bcce-b302099a9003";
-const WITHDRAWN_ONLY = "01890a5d-ac96-774b-bcce-b302099a9004";
+const PUBLISHED = "01890a5d-ac96-774b-8634-b302099a9001";
+const DRAFT_ONLY = "01890a5d-ac96-774b-8634-b302099a9002";
+const EMPTY = "01890a5d-ac96-774b-8634-b302099a9003";
+const WITHDRAWN_ONLY = "01890a5d-ac96-774b-8634-b302099a9004";
 
 describe("public manual group routes", () => {
   pgTest(
@@ -21,9 +21,9 @@ describe("public manual group routes", () => {
       await db
         .insertInto("manual_group")
         .values([
-          { id: PUBLISHED, name: "ANR CritMet" },
+          { id: PUBLISHED, name: "ANR CritMet 634" },
           { id: DRAFT_ONLY, name: "ProfilLoire 2024" },
-          { id: EMPTY, name: "OZCAR-RI" },
+          { id: EMPTY, name: "OZCAR-RI 634" },
           { id: WITHDRAWN_ONLY, name: "Zone Atelier Moselle" },
         ])
         .execute();
@@ -56,7 +56,7 @@ describe("public manual group routes", () => {
       // Assert
       expect(res.status).toBe(200);
       expect(manualGroupsResponseSchema.parse(await res.json())).toEqual({
-        data: [{ id: PUBLISHED, name: "ANR CritMet" }],
+        data: [{ id: PUBLISHED, name: "ANR CritMet 634" }],
       });
     },
   );

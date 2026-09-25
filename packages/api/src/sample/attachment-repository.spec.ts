@@ -75,7 +75,7 @@ describe("sampleAttachmentRepository", () => {
     // Act / Assert
     expect(
       await repository.create(
-        "00000000-0000-7000-8000-000000000000",
+        "00000000-0000-7000-83e1-000000000000",
         input,
         content,
       ),
@@ -147,7 +147,7 @@ describe("sampleAttachmentRepository", () => {
     expect(
       await repository.remove(
         sample.id,
-        "00000000-0000-7000-8000-000000000000",
+        "00000000-0000-7000-83e1-000000000000",
       ),
     ).toBe(false);
   });

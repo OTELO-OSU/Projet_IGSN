@@ -22,7 +22,7 @@ const NO_GROUPS = {
 };
 
 const claims = {
-  email: "jean.martin@univ-lorraine.fr",
+  email: "jean.martin-1ba@univ-lorraine.fr",
   name: "Martin",
   firstname: "Jean",
 };
@@ -75,11 +75,11 @@ describe("createUserRepository", () => {
     // Arrange
     const repository = createUserRepository(db);
     const first = await repository.upsert(claims);
-    await repository.setOrcid(first.id, "0000-0002-1825-0097");
+    await repository.setOrcid(first.id, "0000-0002-0442-0091");
     // Act
     const again = await repository.upsert(claims);
     // Assert
-    expect(again).toEqual({ ...first, orcid: "0000-0002-1825-0097" });
+    expect(again).toEqual({ ...first, orcid: "0000-0002-0442-0091" });
   });
 
   pgTest("should set and return the user's orcid", async ({ db }) => {
@@ -87,16 +87,16 @@ describe("createUserRepository", () => {
     const repository = createUserRepository(db);
     const user = await repository.upsert(claims);
     // Act
-    const updated = await repository.setOrcid(user.id, "0000-0002-1825-0097");
+    const updated = await repository.setOrcid(user.id, "0000-0002-0442-0091");
     // Assert
-    expect(updated).toEqual({ ...user, orcid: "0000-0002-1825-0097" });
+    expect(updated).toEqual({ ...user, orcid: "0000-0002-0442-0091" });
   });
 
   pgTest("should clear the orcid with null", async ({ db }) => {
     // Arrange
     const repository = createUserRepository(db);
     const user = await repository.upsert(claims);
-    await repository.setOrcid(user.id, "0000-0002-1825-0097");
+    await repository.setOrcid(user.id, "0000-0002-0442-0091");
     // Act
     const cleared = await repository.setOrcid(user.id, null);
     // Assert
@@ -108,15 +108,15 @@ describe("createUserRepository", () => {
     async ({ db }) => {
       // Arrange
       const repository = createUserRepository(db);
-      const holder = await insertUser(db, "holder@univ-lorraine.fr", {
-        orcid: "0000-0002-1825-0097",
+      const holder = await insertUser(db, "holder-1ba@univ-lorraine.fr", {
+        orcid: "0000-0002-0442-0091",
       });
       const user = await repository.upsert(claims);
       // Act
-      const refused = await repository.setOrcid(user.id, "0000-0002-1825-0097");
+      const refused = await repository.setOrcid(user.id, "0000-0002-0442-0091");
       // Assert
       expect(refused).toBeNull();
-      expect(await repository.findByOrcid("0000-0002-1825-0097")).toEqual(
+      expect(await repository.findByOrcid("0000-0002-0442-0091")).toEqual(
         expect.objectContaining({ id: holder.id }),
       );
     },
@@ -126,11 +126,11 @@ describe("createUserRepository", () => {
     // Arrange
     const repository = createUserRepository(db);
     const user = await repository.upsert(claims);
-    await repository.setOrcid(user.id, "0000-0002-1825-0097");
+    await repository.setOrcid(user.id, "0000-0002-0442-0091");
     // Act / Assert
-    expect(await repository.findByOrcid("0000-0002-1825-0097")).toEqual({
+    expect(await repository.findByOrcid("0000-0002-0442-0091")).toEqual({
       ...user,
-      orcid: "0000-0002-1825-0097",
+      orcid: "0000-0002-0442-0091",
     });
     expect(await repository.findByOrcid("0000-0001-5109-3700")).toBeUndefined();
   });
@@ -177,11 +177,11 @@ describe("createUserRepository", () => {
     async function insertResearchers(
       db: Parameters<typeof createUserRepository>[0],
     ) {
-      await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      await insertUser(db, "marie.curie-1ba@univ-lorraine.fr", {
         name: "Curie",
         firstname: "Marie",
       });
-      await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+      await insertUser(db, "pierre.dupont-1ba@univ-lorraine.fr", {
         name: "Dupont",
         firstname: "Pierre",
       });
@@ -196,7 +196,7 @@ describe("createUserRepository", () => {
       expect(found).toEqual([
         {
           id: expect.any(String),
-          email: "marie.curie@univ-lorraine.fr",
+          email: "marie.curie-1ba@univ-lorraine.fr",
           name: "Curie",
           firstname: "Marie",
           orcid: null,
@@ -216,12 +216,12 @@ describe("createUserRepository", () => {
 
       expect(searched.map((user) => user.email)).toEqual([
         "admin.curie@univ-lorraine.fr",
-        "marie.curie@univ-lorraine.fr",
+        "marie.curie-1ba@univ-lorraine.fr",
       ]);
       expect(browsed.map((user) => user.email)).toEqual([
         "admin.curie@univ-lorraine.fr",
-        "marie.curie@univ-lorraine.fr",
-        "pierre.dupont@univ-lorraine.fr",
+        "marie.curie-1ba@univ-lorraine.fr",
+        "pierre.dupont-1ba@univ-lorraine.fr",
       ]);
     });
 
@@ -229,7 +229,7 @@ describe("createUserRepository", () => {
       "should leave out the collaborators of the given sample",
       async ({ db }) => {
         const repository = await insertResearchers(db);
-        const owner = await insertUser(db, "owner@univ-lorraine.fr", {
+        const owner = await insertUser(db, "owner-1ba@univ-lorraine.fr", {
           name: "Moreau",
         });
         const sample = await insertSample(db, {
@@ -256,10 +256,10 @@ describe("createUserRepository", () => {
         });
 
         expect(searched.map((user) => user.email)).toEqual([
-          "pierre.dupont@univ-lorraine.fr",
+          "pierre.dupont-1ba@univ-lorraine.fr",
         ]);
         expect(browsed.map((user) => user.email)).toEqual([
-          "pierre.dupont@univ-lorraine.fr",
+          "pierre.dupont-1ba@univ-lorraine.fr",
         ]);
       },
     );
@@ -268,7 +268,7 @@ describe("createUserRepository", () => {
       const repository = await insertResearchers(db);
 
       const found = await repository.search(CALLER_ID, {
-        search: "pierre.dupont@univ",
+        search: "pierre.dupont-1ba@univ",
       });
 
       expect(found.map((user) => user.name)).toEqual(["Dupont"]);
@@ -289,7 +289,7 @@ describe("createUserRepository", () => {
       "should find a researcher by %s",
       async ([, search], { db }) => {
         const repository = createUserRepository(db);
-        await insertUser(db, "mc@univ-lorraine.fr", {
+        await insertUser(db, "mc-1ba@univ-lorraine.fr", {
           name: "Curié",
           firstname: "Marie",
         });
@@ -363,8 +363,8 @@ describe("createUserRepository", () => {
         const found = await repository.search(CALLER_ID, {});
 
         expect(found.map((user) => user.email)).toEqual([
-          "marie.curie@univ-lorraine.fr",
-          "pierre.dupont@univ-lorraine.fr",
+          "marie.curie-1ba@univ-lorraine.fr",
+          "pierre.dupont-1ba@univ-lorraine.fr",
         ]);
       });
 
@@ -391,21 +391,21 @@ describe("createUserRepository", () => {
       .insertInto("user")
       .values([
         {
-          id: "01890a5d-ac96-774b-bcce-b302099a8061",
-          email: "pending@univ-lorraine.fr",
+          id: "01890a5d-ac96-774b-81ba-b302099a8061",
+          email: "pending-1ba@univ-lorraine.fr",
           name: "Pending",
           firstname: "Paul",
         },
         {
-          id: "01890a5d-ac96-774b-bcce-b302099a8062",
-          email: "accepted@univ-lorraine.fr",
+          id: "01890a5d-ac96-774b-81ba-b302099a8062",
+          email: "accepted-1ba@univ-lorraine.fr",
           name: "Accepted",
           firstname: "Anne",
           status: "accepted",
         },
         {
-          id: "01890a5d-ac96-774b-bcce-b302099a8063",
-          email: "rejected@univ-lorraine.fr",
+          id: "01890a5d-ac96-774b-81ba-b302099a8063",
+          email: "rejected-1ba@univ-lorraine.fr",
           name: "Rejected",
           firstname: "Remi",
           status: "rejected",
@@ -428,13 +428,13 @@ describe("createUserRepository", () => {
     // Assert
     expect(total).toBe(3);
     expect(data.map((user) => user.email)).toEqual([
-      "accepted@univ-lorraine.fr",
-      "pending@univ-lorraine.fr",
-      "rejected@univ-lorraine.fr",
+      "accepted-1ba@univ-lorraine.fr",
+      "pending-1ba@univ-lorraine.fr",
+      "rejected-1ba@univ-lorraine.fr",
     ]);
     expect(data[0]).toEqual({
-      id: "01890a5d-ac96-774b-bcce-b302099a8062",
-      email: "accepted@univ-lorraine.fr",
+      id: "01890a5d-ac96-774b-81ba-b302099a8062",
+      email: "accepted-1ba@univ-lorraine.fr",
       name: "Accepted",
       firstname: "Anne",
       orcid: null,
@@ -448,7 +448,7 @@ describe("createUserRepository", () => {
   pgTest.for([
     { case: "the last name", search: "ccept" },
     { case: "the first name", search: "anne" },
-    { case: "the email", search: "accepted@" },
+    { case: "the email", search: "accepted-1ba@" },
   ])("should filter on a search matching $case", async ({ search }, { db }) => {
     // Arrange
     await insertUsers(db);
@@ -459,7 +459,7 @@ describe("createUserRepository", () => {
     );
     // Assert
     expect(data.map((user) => user.email)).toEqual([
-      "accepted@univ-lorraine.fr",
+      "accepted-1ba@univ-lorraine.fr",
     ]);
     expect(total).toBe(1);
   });
@@ -492,7 +492,7 @@ describe("createUserRepository", () => {
     // Assert
     expect(total).toBe(1);
     expect(data.map((user) => user.email)).toEqual([
-      "pending@univ-lorraine.fr",
+      "pending-1ba@univ-lorraine.fr",
     ]);
   });
 
@@ -511,18 +511,18 @@ describe("createUserRepository", () => {
     // Assert
     expect(total).toBe(3);
     expect(data.map((user) => user.email)).toEqual([
-      "rejected@univ-lorraine.fr",
+      "rejected-1ba@univ-lorraine.fr",
     ]);
   });
 
   const insertGroupedUsers = (db: Parameters<typeof createUserRepository>[0]) =>
     Promise.all([
-      insertUser(db, "alice@univ-lorraine.fr", {
+      insertUser(db, "alice-1ba@univ-lorraine.fr", {
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
         institutionalLaboratory: "UMR7358",
       }),
-      insertUser(db, "bruno@univ-lorraine.fr", {
+      insertUser(db, "bruno-1ba@univ-lorraine.fr", {
         status: "pending",
         institutionalOrganization: "02feahw73",
         institutionalLaboratory: "UMR7358",
@@ -538,13 +538,13 @@ describe("createUserRepository", () => {
     [
       "organization",
       { institutionalOrganization: "04vfs2w97" },
-      ["alice@univ-lorraine.fr"],
+      ["alice-1ba@univ-lorraine.fr"],
     ],
-    ["OSU", { institutionalOsu: "OTELo" }, ["alice@univ-lorraine.fr"]],
+    ["OSU", { institutionalOsu: "OTELo" }, ["alice-1ba@univ-lorraine.fr"]],
     [
       "laboratory",
       { institutionalLaboratory: "UMR7358" },
-      ["alice@univ-lorraine.fr", "bruno@univ-lorraine.fr"],
+      ["alice-1ba@univ-lorraine.fr", "bruno-1ba@univ-lorraine.fr"],
     ],
   ] as const)(
     "should return only the users of the requested %s, total included",
@@ -574,10 +574,10 @@ describe("createUserRepository", () => {
       const groupId = "01890a5d-ac96-774b-bcce-b302099a8100";
       await db
         .insertInto("manual_group")
-        .values({ id: groupId, name: "Massif Central 2026" })
+        .values({ id: groupId, name: "Massif Central 2026 1ba" })
         .execute();
-      const member = await insertUser(db, "alice@univ-lorraine.fr");
-      await insertUser(db, "bruno@univ-lorraine.fr");
+      const member = await insertUser(db, "alice-1ba@univ-lorraine.fr");
+      await insertUser(db, "bruno-1ba@univ-lorraine.fr");
       await db
         .insertInto("manual_group_member")
         .values({ group_id: groupId, user_id: member.id })
@@ -589,7 +589,7 @@ describe("createUserRepository", () => {
       );
       // Assert
       expect(data.map((user) => user.email)).toEqual([
-        "alice@univ-lorraine.fr",
+        "alice-1ba@univ-lorraine.fr",
       ]);
       expect(total).toBe(1);
     },
@@ -609,7 +609,9 @@ describe("createUserRepository", () => {
       SUPER_ADMIN,
     );
     // Assert
-    expect(data.map((user) => user.email)).toEqual(["alice@univ-lorraine.fr"]);
+    expect(data.map((user) => user.email)).toEqual([
+      "alice-1ba@univ-lorraine.fr",
+    ]);
     expect(total).toBe(1);
   });
 
@@ -630,7 +632,7 @@ describe("createUserRepository", () => {
       );
       // Assert
       expect(data.map((user) => user.email)).toEqual([
-        "bruno@univ-lorraine.fr",
+        "bruno-1ba@univ-lorraine.fr",
       ]);
       expect(total).toBe(2);
     },
@@ -642,17 +644,17 @@ describe("createUserRepository", () => {
     const repository = createUserRepository(db);
     // Act
     const found = await repository.get(
-      "01890a5d-ac96-774b-bcce-b302099a8061",
+      "01890a5d-ac96-774b-81ba-b302099a8061",
       SUPER_ADMIN,
     );
     const missing = await repository.get(
-      "01890a5d-ac96-774b-bcce-b302099a8099",
+      "01890a5d-ac96-774b-81ba-b302099a8099",
       SUPER_ADMIN,
     );
     // Assert
     expect(found).toEqual({
-      id: "01890a5d-ac96-774b-bcce-b302099a8061",
-      email: "pending@univ-lorraine.fr",
+      id: "01890a5d-ac96-774b-81ba-b302099a8061",
+      email: "pending-1ba@univ-lorraine.fr",
       name: "Pending",
       firstname: "Paul",
       orcid: null,
@@ -680,11 +682,11 @@ describe("createUserRepository", () => {
         status: "pending",
         createdAt: new Date("2026-07-07T12:00:00Z"),
       });
-      await insertUser(db, "accepted@univ-lorraine.fr", {
+      await insertUser(db, "accepted-1ba@univ-lorraine.fr", {
         status: "accepted",
         createdAt: new Date("2026-06-01T12:00:00Z"),
       });
-      await insertUser(db, "rejected@univ-lorraine.fr", {
+      await insertUser(db, "rejected-1ba@univ-lorraine.fr", {
         status: "rejected",
         createdAt: new Date("2026-06-01T12:00:00Z"),
       });
@@ -713,19 +715,19 @@ describe("createUserRepository", () => {
   pgTest(
     "should list the super admins' emails, rejected accounts excluded",
     async ({ db }) => {
-      await insertUser(db, "zoe@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "zoe-1ba@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "admin-1ba@univ-lorraine.fr", { superAdmin: true });
       await insertUser(db, "gone@univ-lorraine.fr", {
         superAdmin: true,
         status: "rejected",
       });
-      await insertUser(db, "researcher@univ-lorraine.fr", {});
+      await insertUser(db, "researcher-1ba@univ-lorraine.fr", {});
 
       const emails = await createUserRepository(db).listSuperAdminEmails();
 
       expect(emails).toEqual([
-        "admin@univ-lorraine.fr",
-        "zoe@univ-lorraine.fr",
+        "admin-1ba@univ-lorraine.fr",
+        "zoe-1ba@univ-lorraine.fr",
       ]);
     },
   );
@@ -734,20 +736,20 @@ describe("createUserRepository", () => {
     "should list the accepted non super admin users holding a scope",
     async ({ db }) => {
       // Arrange
-      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      const manager = await insertUser(db, "manager-1ba@univ-lorraine.fr");
       await moderateInstitution(db, manager.id, {
         kind: "laboratory",
         code: "UMR7358",
       });
       await insertUser(db, "scopeless@univ-lorraine.fr");
-      const waiting = await insertUser(db, "waiting@univ-lorraine.fr", {
+      const waiting = await insertUser(db, "waiting-1ba@univ-lorraine.fr", {
         status: "pending",
       });
       await moderateInstitution(db, waiting.id, {
         kind: "laboratory",
         code: "UMR7358",
       });
-      const admin = await insertUser(db, "admin@univ-lorraine.fr", {
+      const admin = await insertUser(db, "admin-1ba@univ-lorraine.fr", {
         superAdmin: true,
       });
       await moderateInstitution(db, admin.id, {
@@ -760,7 +762,7 @@ describe("createUserRepository", () => {
       expect(managers).toEqual([
         {
           id: manager.id,
-          email: "manager@univ-lorraine.fr",
+          email: "manager-1ba@univ-lorraine.fr",
           groups: { ...NO_MANAGED_GROUPS, laboratories: ["UMR7358"] },
         },
       ]);
@@ -771,8 +773,8 @@ describe("createUserRepository", () => {
 describe("moderation scope", () => {
   pgTest("should reach no user at all with an empty scope", async ({ db }) => {
     // Arrange
-    const caller = await insertUser(db, "manager@univ-lorraine.fr");
-    const other = await insertUser(db, "peer@univ-lorraine.fr", {
+    const caller = await insertUser(db, "manager-1ba@univ-lorraine.fr");
+    const other = await insertUser(db, "peer-1ba@univ-lorraine.fr", {
       institutionalLaboratory: "UMR7358",
     });
     const repository = createUserRepository(db);
@@ -787,7 +789,7 @@ describe("moderation scope", () => {
 
   pgTest("should read the caller's own managed groups", async ({ db }) => {
     // Arrange
-    const caller = await insertUser(db, "manager@univ-lorraine.fr");
+    const caller = await insertUser(db, "manager-1ba@univ-lorraine.fr");
     await moderateInstitution(
       db,
       caller.id,

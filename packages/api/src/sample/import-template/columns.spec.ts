@@ -66,6 +66,7 @@ const DEFERRED_FIELDS = [
   "processSteps",
   "syntheticDetails",
   "attachments",
+  "mineralClassifications",
 ];
 
 // TODO(phase 3): these carry a uuid a researcher cannot type; drop them from this list once the importer resolves people and groups by name.

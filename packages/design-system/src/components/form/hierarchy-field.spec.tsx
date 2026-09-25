@@ -28,11 +28,13 @@ const MUST_REFINE = "Refinement required";
 const CAN_REFINE = "Can be refined";
 
 function Harness({
+  tree = hierarchy,
   onSubmit = () => {},
   selected = [],
   rule,
   disabled,
 }: {
+  tree?: Hierarchy;
   onSubmit?: (value: string[]) => void;
   selected?: string[];
   rule?: (name: string) => boolean;
@@ -53,7 +55,7 @@ function Harness({
       {(field) => (
         <field.HierarchyField
           label="Material"
-          hierarchy={hierarchy}
+          hierarchy={tree}
           translate={translate}
           placeholder="Select a material"
           searchPlaceholder="Search material..."
@@ -293,6 +295,23 @@ describe("HierarchyField", () => {
     await expect
       .element(page.getByRole("option", { name: "Sea" }))
       .toBeVisible();
+  });
+
+  it("should cap the search results at 100 options", async () => {
+    const tree: Hierarchy = {
+      roots: ["mineral"],
+      nodes: {
+        mineral: { choices: Array.from({ length: 150 }, (_, i) => `ite_${i}`) },
+      },
+    };
+    await render(<Harness tree={tree} />);
+
+    await combobox().click();
+    await searchInput().fill("ite");
+
+    await expect
+      .poll(() => page.getByRole("option").elements().length)
+      .toBe(100);
   });
 
   it("should render a locked level as plain text and keep the deeper chips removable", async () => {

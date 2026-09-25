@@ -29,6 +29,7 @@ import {
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { allowsSpecificName } from "@projet-igsn/domain/sample/material/allows-specific-name";
+import { allowsMineralClassifications } from "@projet-igsn/domain/sample/mineral/allows-mineral-classifications";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
@@ -90,6 +91,7 @@ import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest
 import { SampleGeologicalContextFields } from "#/samples/sample-geological-context-fields.tsx";
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
+import { SampleMineralClassificationsFields } from "#/samples/sample-mineral-classifications-fields.tsx";
 import { SampleProcessStepsFields } from "#/samples/sample-process-steps-fields.tsx";
 import { SampleRelationsFields } from "#/samples/sample-relations-fields.tsx";
 import { SampleRepositoryFields } from "#/samples/sample-repository-fields.tsx";
@@ -661,6 +663,11 @@ export function SampleForm({
                       <form.AppForm>
                         <MetamorphicDetails />
                       </form.AppForm>
+                      {allowsMineralClassifications(material) ? (
+                        <form.AppForm>
+                          <SampleMineralClassificationsFields />
+                        </form.AppForm>
+                      ) : null}
                       {allowsSpecificName(material) ? (
                         <form.AppField name="specificName">
                           {(field) => (

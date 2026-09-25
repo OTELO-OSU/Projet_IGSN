@@ -38,6 +38,8 @@ export const {
   finalProductLabel,
   experimentTypeLabel,
   processStepKindLabel,
+  mineralClassificationLabel,
+  mineralAbundanceLabel,
   additionalRoleLabel,
   relationTypeLabel,
   relationTargetResourceTypeLabel,

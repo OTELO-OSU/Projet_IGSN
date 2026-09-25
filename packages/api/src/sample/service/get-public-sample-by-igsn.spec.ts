@@ -33,7 +33,7 @@ describe("getPublicSampleByIgsn", () => {
       material: "rock_and_sediment.sediment",
       collectionMethod: null,
     });
-    const owner = await insertUser(db, "marie.dupont@univ-lorraine.fr", {
+    const owner = await insertUser(db, "marie.dupont-ef8@univ-lorraine.fr", {
       name: "Dupont",
       firstname: "Marie",
     });

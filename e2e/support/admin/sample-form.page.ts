@@ -54,6 +54,21 @@ export function sampleFormPage(page: Page) {
     await group.getByRole("textbox", { name: /last name/i }).fill(lastname);
   };
 
+  const addClassificationRow = async () => {
+    await openTab("Sample classification");
+    const rank =
+      (await page
+        .getByRole("button", { name: /^Remove classification / })
+        .count()) + 1;
+    await page.getByRole("button", { name: "Add classification" }).click();
+    const row = page.getByRole("group", {
+      name: `Classification ${rank}`,
+      exact: true,
+    });
+    await expect(row).toBeVisible();
+    return row;
+  };
+
   const publishDialog = page.getByRole("dialog", { name: "Publish sample" });
 
   const confirm = (dialog: string) =>
@@ -191,6 +206,35 @@ export function sampleFormPage(page: Page) {
       });
       await block.getByRole("textbox", { name: /^Date/ }).fill(date);
       await block.getByLabel("Description").fill(description);
+    },
+    addMineralBySearch: async (
+      search: string,
+      option: string,
+      abundance: string,
+    ) => {
+      const row = await addClassificationRow();
+      const combobox = fieldCombobox("Classification", row);
+      const searchbox = page.getByPlaceholder("Search a class or a mineral...");
+      const chip = row.getByRole("button", {
+        name: `Remove ${option.split(" > ").at(-1)}`,
+        exact: true,
+      });
+      await expect(async () => {
+        if (!(await searchbox.isVisible())) await combobox.click();
+        await searchbox.fill(search);
+        await page.getByRole("option", { name: option, exact: true }).click();
+        await expect(chip).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 20_000 });
+      await pick("Abundance", abundance, row);
+    },
+    addStrunzClass: async (levels: string[]) => {
+      const row = await addClassificationRow();
+      const combobox = fieldCombobox("Classification", row);
+      for (const level of levels)
+        await pickHierarchyLevel(page, combobox, level, row);
+      await page
+        .getByRole("option", { name: "Stop here", exact: true })
+        .click();
     },
     setOriented: async (explanation: string) => {
       await openTab("Physical description");

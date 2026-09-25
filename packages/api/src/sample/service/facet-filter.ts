@@ -43,18 +43,23 @@ const matchesLinkedAccount = (userIdColumn: string) => (token: string) =>
 export const FACET_JOIN: Record<string, { table: string; column: string }> = {
   manualGroup: { table: "sample_manual_group", column: "group_id" },
   contributor: { table: "user_sample", column: "user_id" },
+  mineralClassification: {
+    table: "mineral_classification",
+    column: "strunz_id",
+  },
 };
 
 function facetFilter(
   facet: (typeof SAMPLE_FACETS)[number],
   value: string,
 ): Expression<SqlBool> | undefined {
-  if (facet.kind === "linked") {
-    const { table, column } = FACET_JOIN[facet.key]!;
+  const join = FACET_JOIN[facet.key];
+  if (join) {
+    const column = sql.ref(`${join.table}.${join.column}`);
     return sql<SqlBool>`exists (
-      select 1 from ${sql.table(table)}
-       where ${sql.ref(`${table}.sample_id`)} = sample.id
-         and ${sql.ref(`${table}.${column}`)} = ${value}
+      select 1 from ${sql.table(join.table)}
+       where ${sql.ref(`${join.table}.sample_id`)} = sample.id
+         and ${facet.kind === "hierarchy" ? sql`${column} <@ ${value}::ltree` : sql`${column} = ${value}`}
     )`;
   }
   const person = PERSON_FACET_COLUMNS[facet.key];

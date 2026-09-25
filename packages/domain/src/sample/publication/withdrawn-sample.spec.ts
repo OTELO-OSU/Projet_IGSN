@@ -54,6 +54,7 @@ const withdrawn: Sample = {
   economicResourceTypePrecision: null,
   economicDepositName: null,
   economicDepositDescription: null,
+  mineralClassifications: [],
   igsn: "CNRS1234567890",
   doiPrefix: "10.5072",
   internalNumber: 42,

@@ -540,7 +540,7 @@ describe("public sample routes", () => {
     db: Parameters<typeof createApp>[0],
     sampleId: string,
   ) => {
-    const account = await insertUser(db, "mc@univ-lorraine.fr", {
+    const account = await insertUser(db, "mc-f62@univ-lorraine.fr", {
       firstname: "Marie",
       name: "Curié",
     });

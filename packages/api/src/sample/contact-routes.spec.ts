@@ -25,8 +25,8 @@ const ADMIN_URL = "http://localhost:3001";
 const FRONTEND_URL = "http://localhost:3000";
 
 const GROUP = {
-  id: "01890a5d-ac96-774b-bcce-b302099a9001",
-  name: "Massif Central 2026",
+  id: "01890a5d-ac96-774b-8819-b302099a9001",
+  name: "Massif Central 2026 819",
 };
 
 const INSTITUTION = {
@@ -96,19 +96,19 @@ const joinGroup = (db: Db, userId: string) =>
 async function arrangeGroupOwner(db: Db) {
   await insertGroup(db);
   const sample = await publish(db, { manualGroupIds: [GROUP.id] });
-  const owner = await insertUser(db, "owner@univ-lorraine.fr");
+  const owner = await insertUser(db, "owner-819@univ-lorraine.fr");
   await insertSampleOwner(db, sample.id, owner.id);
   await joinGroup(db, owner.id);
-  return { sample, email: "owner@univ-lorraine.fr" };
+  return { sample, email: "owner-819@univ-lorraine.fr" };
 }
 
 async function arrangeInstitutionalOwner(db: Db) {
   const sample = await publish(db, { institution: INSTITUTION });
-  const owner = await insertUser(db, "owner@univ-lorraine.fr", {
+  const owner = await insertUser(db, "owner-819@univ-lorraine.fr", {
     institutionalLaboratory: INSTITUTION.institutionalLaboratory,
   });
   await insertSampleOwner(db, sample.id, owner.id);
-  return { sample, email: "owner@univ-lorraine.fr" };
+  return { sample, email: "owner-819@univ-lorraine.fr" };
 }
 
 describe("POST /samples/:igsn/contact", () => {
@@ -157,11 +157,11 @@ describe("POST /samples/:igsn/contact", () => {
       const { sendMail, contact } = arrangeApp(db);
       await insertGroup(db);
       const sample = await publish(db, { manualGroupIds: [GROUP.id] });
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-819@univ-lorraine.fr");
       await insertSampleOwner(db, sample.id, owner.id);
-      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      const manager = await insertUser(db, "manager-819@univ-lorraine.fr");
       const second = await insertUser(db, "second@univ-lorraine.fr");
-      const pending = await insertUser(db, "pending@univ-lorraine.fr", {
+      const pending = await insertUser(db, "pending-819@univ-lorraine.fr", {
         status: "pending",
       });
       await moderateManualGroup(db, manager.id, [GROUP.id]);
@@ -172,7 +172,7 @@ describe("POST /samples/:igsn/contact", () => {
       // Assert
       expect(res.status).toBe(204);
       expect(sendMail.mock.lastCall![0].to).toEqual([
-        "manager@univ-lorraine.fr",
+        "manager-819@univ-lorraine.fr",
         "second@univ-lorraine.fr",
       ]);
     },
@@ -184,9 +184,9 @@ describe("POST /samples/:igsn/contact", () => {
       // Arrange
       const { sendMail, contact } = arrangeApp(db);
       const sample = await publish(db, { institution: INSTITUTION });
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-819@univ-lorraine.fr");
       await insertSampleOwner(db, sample.id, owner.id);
-      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      const manager = await insertUser(db, "manager-819@univ-lorraine.fr");
       const stranger = await insertUser(db, "stranger@univ-grenoble.fr");
       await moderateInstitution(db, manager.id, {
         kind: "laboratory",
@@ -201,7 +201,7 @@ describe("POST /samples/:igsn/contact", () => {
       // Assert
       expect(res.status).toBe(204);
       expect(sendMail.mock.lastCall![0].to).toEqual([
-        "manager@univ-lorraine.fr",
+        "manager-819@univ-lorraine.fr",
       ]);
     },
   );
@@ -212,7 +212,7 @@ describe("POST /samples/:igsn/contact", () => {
       async (db: Db) => {
         await insertGroup(db);
         const sample = await publish(db, { manualGroupIds: [GROUP.id] });
-        const owner = await insertUser(db, "owner@univ-lorraine.fr", {
+        const owner = await insertUser(db, "owner-819@univ-lorraine.fr", {
           status: "rejected",
         });
         await insertSampleOwner(db, sample.id, owner.id);
@@ -224,7 +224,7 @@ describe("POST /samples/:igsn/contact", () => {
       "it belongs to no group at all",
       async (db: Db) => {
         const sample = await publish(db);
-        const owner = await insertUser(db, "owner@univ-lorraine.fr");
+        const owner = await insertUser(db, "owner-819@univ-lorraine.fr");
         await insertSampleOwner(db, sample.id, owner.id);
         return sample;
       },

@@ -2,6 +2,10 @@ import type { CoreSample } from "../core/core-sample-schema.ts";
 import type { ISamplesSample } from "./isamples-schema.ts";
 
 import { mainTitleOf } from "../core/core-sample-schema.ts";
+import {
+  mineralClassificationText,
+  toMindatUri,
+} from "../mineral/mineral-hierarchy.ts";
 import { ISAMPLES_SCHEMA_URI } from "./isamples-schema.ts";
 import { toISamplesAgents } from "./to-isamples-agents.ts";
 import {
@@ -29,13 +33,23 @@ export function toISamplesSample(core: CoreSample): ISamplesSample {
     label: mainTitleOf(identification.titles)?.value ?? "",
     description: core.physicalDescription?.openPhysicalDescription,
     alternate_identifiers: [record.recordId],
-    keywords: (core.extensions?.geology?.economic?.interestElements ?? []).map(
-      ({ label, schemeName, schemeURI }) => ({
-        label,
-        scheme_name: schemeName,
-        scheme_uri: schemeURI,
-      }),
-    ),
+    keywords: [
+      ...(core.extensions?.geology?.economic?.interestElements ?? []).map(
+        ({ label, schemeName, schemeURI }) => ({
+          label,
+          scheme_name: schemeName,
+          scheme_uri: schemeURI,
+        }),
+      ),
+      ...(core.extensions?.geology?.mineralogy ?? []).map(
+        ({ id, mindatId, schemeName, schemeURI }) => ({
+          label: mineralClassificationText({ strunzId: id, mindatId }),
+          pid: mindatId == null ? undefined : toMindatUri(mindatId),
+          scheme_name: schemeName,
+          scheme_uri: schemeURI,
+        }),
+      ),
+    ],
     dc_rights: core.rightsAndAccess.rightsURIs[0] ?? "",
     last_modified_time: record.updatedAt,
     complies_with: [ISAMPLES_SCHEMA_URI],

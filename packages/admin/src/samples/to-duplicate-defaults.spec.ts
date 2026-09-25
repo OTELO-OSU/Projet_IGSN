@@ -22,6 +22,12 @@ const relation = {
   description: null,
 };
 
+const mineralClassification = {
+  strunzId: "9.E",
+  mindatId: 2815,
+  abundance: "major" as const,
+};
+
 const processStep = {
   kind: "preparation" as const,
   date: { precision: "day" as const, start: "2026-02-01", end: "2026-02-01" },
@@ -62,6 +68,7 @@ const source: Sample = {
   age: null,
   relations: [relation],
   processSteps: [processStep],
+  mineralClassifications: [mineralClassification],
   attachments: [
     {
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
@@ -151,6 +158,7 @@ it("should copy every declared field under a copy name, keeping no attachment, n
     economicDepositDescription: null,
     relations: [relation],
     processSteps: [processStep],
+    mineralClassifications: [mineralClassification],
     attachments: [],
     manualGroupIds: [ATTACHABLE_GROUP_ID],
     parentIds: [PARENT_ID],

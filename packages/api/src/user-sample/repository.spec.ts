@@ -15,7 +15,7 @@ const draft = {
 describe("userSampleRepository", () => {
   pgTest("should link a user to a sample as owner", async ({ db }) => {
     // Arrange
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     // Act
@@ -32,8 +32,8 @@ describe("userSampleRepository", () => {
   });
 
   pgTest("should reject a second owner on the same sample", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
-    const other = await insertUser(db, "other@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
+    const other = await insertUser(db, "other-2c0@univ-lorraine.fr");
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
@@ -43,7 +43,7 @@ describe("userSampleRepository", () => {
 
   pgTest("should reject linking the same owner twice", async ({ db }) => {
     // Arrange
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
@@ -53,21 +53,25 @@ describe("userSampleRepository", () => {
 
   pgTest("should reject linking to an unknown sample", async ({ db }) => {
     // Arrange
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
     const repository = createUserSampleRepository(db);
     // Act & Assert
     await expect(
-      repository.addOwner("01890a5d-ac96-774b-bcce-b302099a8057", owner.id),
+      repository.addOwner("01890a5d-ac96-774b-82c0-b302099a8057", owner.id),
     ).rejects.toThrow();
   });
 
   pgTest("should add a contributor to a sample", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr", {
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr", {
       name: "Durand",
     });
-    const contributor = await insertUser(db, "contributor@univ-lorraine.fr", {
-      name: "Curie",
-    });
+    const contributor = await insertUser(
+      db,
+      "contributor-2c0@univ-lorraine.fr",
+      {
+        name: "Curie",
+      },
+    );
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
@@ -80,7 +84,7 @@ describe("userSampleRepository", () => {
 
     expect(result).toEqual({
       added: {
-        email: "contributor@univ-lorraine.fr",
+        email: "contributor-2c0@univ-lorraine.fr",
         name: "Curie",
         firstname: null,
       },
@@ -88,7 +92,7 @@ describe("userSampleRepository", () => {
     expect(await repository.listCollaborators(sample.id)).toEqual([
       {
         id: owner.id,
-        email: "owner@univ-lorraine.fr",
+        email: "owner-2c0@univ-lorraine.fr",
         name: "Durand",
         firstname: null,
         orcid: null,
@@ -97,7 +101,7 @@ describe("userSampleRepository", () => {
       },
       {
         id: contributor.id,
-        email: "contributor@univ-lorraine.fr",
+        email: "contributor-2c0@univ-lorraine.fr",
         name: "Curie",
         firstname: null,
         orcid: null,
@@ -108,8 +112,11 @@ describe("userSampleRepository", () => {
   });
 
   pgTest("should ignore adding the same contributor twice", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
-    const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
+    const contributor = await insertUser(
+      db,
+      "contributor-2c0@univ-lorraine.fr",
+    );
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
@@ -128,7 +135,7 @@ describe("userSampleRepository", () => {
   pgTest(
     "should refuse a role change to a caller who may not make one",
     async ({ db }) => {
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
       const editor = await insertUser(db, "editor@univ-lorraine.fr");
       const sample = await insertSample(db, draft);
       const repository = createUserSampleRepository(db);
@@ -148,7 +155,7 @@ describe("userSampleRepository", () => {
   pgTest(
     "should leave the owner untouched when they are added as contributor",
     async ({ db }) => {
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
       const sample = await insertSample(db, draft);
       const repository = createUserSampleRepository(db);
       await repository.addOwner(sample.id, owner.id);
@@ -163,7 +170,7 @@ describe("userSampleRepository", () => {
       expect(await repository.listCollaborators(sample.id)).toEqual([
         {
           id: owner.id,
-          email: "owner@univ-lorraine.fr",
+          email: "owner-2c0@univ-lorraine.fr",
           name: null,
           firstname: null,
           orcid: null,
@@ -183,7 +190,7 @@ describe("userSampleRepository", () => {
   );
 
   pgTest("should refuse an unknown user as collaborator", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
@@ -191,14 +198,14 @@ describe("userSampleRepository", () => {
     await expect(
       repository.addCollaborator(
         sample.id,
-        "01890a5d-ac96-774b-bcce-b302099a8057",
+        "01890a5d-ac96-774b-82c0-b302099a8057",
         "contributor",
       ),
     ).rejects.toThrow();
     expect(await repository.listCollaborators(sample.id)).toEqual([
       {
         id: owner.id,
-        email: "owner@univ-lorraine.fr",
+        email: "owner-2c0@univ-lorraine.fr",
         name: null,
         firstname: null,
         orcid: null,
@@ -209,7 +216,7 @@ describe("userSampleRepository", () => {
   });
 
   pgTest("should refuse a rejected account as collaborator", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
     const invitee = await insertUser(db, "invitee@univ-lorraine.fr", {
       status: "rejected",
     });
@@ -231,8 +238,11 @@ describe("userSampleRepository", () => {
   });
 
   pgTest("should remove a contributor from a sample", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
-    const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
+    const contributor = await insertUser(
+      db,
+      "contributor-2c0@univ-lorraine.fr",
+    );
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
@@ -245,7 +255,7 @@ describe("userSampleRepository", () => {
 
     expect(result).toEqual({
       removed: {
-        email: "contributor@univ-lorraine.fr",
+        email: "contributor-2c0@univ-lorraine.fr",
         name: null,
         firstname: null,
         status: "accepted",
@@ -254,7 +264,7 @@ describe("userSampleRepository", () => {
     expect(await repository.listCollaborators(sample.id)).toEqual([
       {
         id: owner.id,
-        email: "owner@univ-lorraine.fr",
+        email: "owner-2c0@univ-lorraine.fr",
         name: null,
         firstname: null,
         orcid: null,
@@ -267,8 +277,11 @@ describe("userSampleRepository", () => {
   pgTest(
     "should release the edit lock of a removed contributor",
     async ({ db }) => {
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
-      const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
+      const contributor = await insertUser(
+        db,
+        "contributor-2c0@univ-lorraine.fr",
+      );
       const sample = await insertSample(db, draft);
       const repository = createUserSampleRepository(db);
       await repository.addOwner(sample.id, owner.id);
@@ -300,7 +313,7 @@ describe("userSampleRepository", () => {
   pgTest(
     "should leave the owner untouched when removed as contributor",
     async ({ db }) => {
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
       const sample = await insertSample(db, draft);
       const repository = createUserSampleRepository(db);
       await repository.addOwner(sample.id, owner.id);
@@ -322,17 +335,17 @@ describe("userSampleRepository", () => {
   pgTest(
     "should list the owner, then the editors, then the contributors, each by name",
     async ({ db }) => {
-      const owner = await insertUser(db, "owner@univ-lorraine.fr", {
+      const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr", {
         name: "Moreau",
       });
       const sample = await insertSample(db, draft);
       const repository = createUserSampleRepository(db);
       await repository.addOwner(sample.id, owner.id);
       for (const [email, name, role] of [
-        ["zoe@univ-lorraine.fr", "Zeller", "contributor"],
-        ["alice@univ-lorraine.fr", "Aubry", "contributor"],
+        ["zoe-2c0@univ-lorraine.fr", "Zeller", "contributor"],
+        ["alice-2c0@univ-lorraine.fr", "Aubry", "contributor"],
         ["yann@univ-lorraine.fr", "Ybert", "editor"],
-        ["bruno@univ-lorraine.fr", "Broglie", "editor"],
+        ["bruno-2c0@univ-lorraine.fr", "Broglie", "editor"],
       ] as const) {
         const user = await insertUser(db, email, { name });
         await repository.addCollaborator(sample.id, user.id, role, {
@@ -353,8 +366,11 @@ describe("userSampleRepository", () => {
   );
 
   pgTest("should not list a collaborator of another sample", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
-    const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-2c0@univ-lorraine.fr");
+    const contributor = await insertUser(
+      db,
+      "contributor-2c0@univ-lorraine.fr",
+    );
     const sample = await insertSample(db, draft);
     const other = await insertSample(db, { ...draft, name: "Autre" });
     const repository = createUserSampleRepository(db);
@@ -365,7 +381,7 @@ describe("userSampleRepository", () => {
     expect(await repository.listCollaborators(sample.id)).toEqual([
       {
         id: owner.id,
-        email: "owner@univ-lorraine.fr",
+        email: "owner-2c0@univ-lorraine.fr",
         name: null,
         firstname: null,
         orcid: null,

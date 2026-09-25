@@ -99,5 +99,6 @@
   "mail_sample_field_economicInterestElements": "Elements of economic interest",
   "mail_sample_field_economicResourceTypePrecision": "Economic resource type",
   "mail_sample_field_economicDepositName": "Deposit name",
-  "mail_sample_field_economicDepositDescription": "Deposit description"
+  "mail_sample_field_economicDepositDescription": "Deposit description",
+  "mail_sample_field_mineralClassifications": "Strunz-Mindat (2026) Classifications"
 }

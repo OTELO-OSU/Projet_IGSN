@@ -36,7 +36,7 @@ describe("the eligible parent search", () => {
     async ({ status, found }, { db }) => {
       // Arrange
       await provisionUser(db, "test-token", { status: "accepted" });
-      const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
+      const stranger = await insertUser(db, "stranger-522@univ-lorraine.fr");
       const sample = await insertParent(
         db,
         stranger.id,
@@ -82,7 +82,7 @@ describe("the eligible parent search", () => {
         status: "accepted",
         superAdmin: true,
       });
-      const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
+      const stranger = await insertUser(db, "stranger-522@univ-lorraine.fr");
       const sample = await insertParent(
         db,
         stranger.id,

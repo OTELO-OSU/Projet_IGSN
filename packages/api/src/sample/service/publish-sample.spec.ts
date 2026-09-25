@@ -82,7 +82,7 @@ describe("publishSample", () => {
       // Act
       const published = await publishSample(
         db,
-        "01890a5d-ac96-774b-bcce-b302099a8057",
+        "01890a5d-ac96-774b-8c03-b302099a8057",
       );
       // Assert
       expect(published).toBeNull();
@@ -288,7 +288,7 @@ describe("publishSample with DataCite configured", () => {
   pgTest("should name the owner as the DOI creator", async ({ db }) => {
     // Arrange
     const created = await insertSample(db, publishableSample);
-    const owner = await insertUser(db, "marie.dupont@univ-lorraine.fr", {
+    const owner = await insertUser(db, "marie.dupont-c03@univ-lorraine.fr", {
       name: "Dupont",
       firstname: "Marie",
     });

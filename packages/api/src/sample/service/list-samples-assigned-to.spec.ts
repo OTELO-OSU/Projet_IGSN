@@ -22,8 +22,8 @@ function insertSampleNamed(db: Transactional<DB>, name: string) {
 describe("listSamplesAssignedTo", () => {
   pgTest("should list only the owner's samples", async ({ db }) => {
     // Arrange
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
-    const other = await insertUser(db, "other@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner-a07@univ-lorraine.fr");
+    const other = await insertUser(db, "other-a07@univ-lorraine.fr");
     const owned = await insertSampleNamed(db, "Grès de Fontainebleau");
     const foreign = await insertSampleNamed(db, "Basalte du Massif Central");
     await insertSampleOwner(db, owned.id, owner.id);
@@ -47,8 +47,8 @@ describe("listSamplesAssignedTo", () => {
     "should scope the assigned list to the %s ownership",
     async ([ownership, expected], { db }) => {
       // Arrange
-      const marie = await insertUser(db, "marie@univ-lorraine.fr");
-      const other = await insertUser(db, "other@univ-lorraine.fr");
+      const marie = await insertUser(db, "marie-a07@univ-lorraine.fr");
+      const other = await insertUser(db, "other-a07@univ-lorraine.fr");
       const sandstone = await insertSampleNamed(db, "Owned sandstone");
       const basalt = await insertSampleNamed(db, "Owned basalt");
       const gneiss = await insertSampleNamed(db, "Shared gneiss");
@@ -70,8 +70,8 @@ describe("listSamplesAssignedTo", () => {
 
   pgTest("should narrow a search instead of replacing it", async ({ db }) => {
     // Arrange
-    const marie = await insertUser(db, "marie@univ-lorraine.fr");
-    const other = await insertUser(db, "other@univ-lorraine.fr");
+    const marie = await insertUser(db, "marie-a07@univ-lorraine.fr");
+    const other = await insertUser(db, "other-a07@univ-lorraine.fr");
     const owned = await insertSampleNamed(db, "Granite core");
     const shared = await insertSampleNamed(db, "Granite section");
     await insertSampleOwner(db, owned.id, marie.id);
@@ -92,7 +92,7 @@ describe("listSamplesAssignedTo", () => {
     "should keep a sample nobody is assigned to out of both ownership scopes",
     async ({ db }) => {
       // Arrange
-      const marie = await insertUser(db, "marie@univ-lorraine.fr");
+      const marie = await insertUser(db, "marie-a07@univ-lorraine.fr");
       await insertSampleNamed(db, "Imported sandstone");
       const params = { page: 1, perPage: 10 };
       // Act

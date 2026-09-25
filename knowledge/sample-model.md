@@ -32,6 +32,7 @@ status: stable
 - Ids are app-generated UUIDv7, which also seeds the minted IGSN ([[igsn-identifier]]).
 - Sub-blocks: identity (name, specific name, nature, type), [[material-classification-ltree]], [[sample-location]] (`location: Location | null`), physical description, condition, scientific context, provenance, repository (archive plus two admin-only contacts), [[synthetic-details]] for a synthetic material.
 - One-to-many children have their own tables: `sample_relation` and `sample_attachment`, see [[sample-relations-attachments]]; `sample_parent` links a sample to its at-most-one parent, see [[sample-parentage]].
+- `mineralClassifications` has its own child table too, `mineral_classification`: rows only on a material at or under `rock_and_sediment.mineral`, editable after publication and dropped from a withdrawn sample; see ADR [0050](../docs/adr/0050-strunz-mindat-mineral-classification.md).
 - `manualGroups` (id plus name) come from the `sample_manual_group` join table, `createSampleSchema` carrying `manualGroupIds`; see [[manual-groups]].
 - Three institutional codes (`institutional_organization`, `institutional_osu`, `institutional_laboratory`) are snapshotted at creation from the owner and never updated; they stay out of `createSampleSchema`. See [[institutional-groups]].
 - Ownership and collaborators live in `user_sample`; see [[per-sample-roles]].

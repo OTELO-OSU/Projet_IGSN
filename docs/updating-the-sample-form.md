@@ -144,6 +144,28 @@ it.each(["rock_and_sediment.rock.igneous.plutonic.felsic.syenogranite"])(
 
 Delete its code from `choices` (or the roots array), its label in every language file, and its spec cases. Warning: a code still stored on an existing sample becomes invalid the moment you remove it, so only remove values nothing uses.
 
+### Strunz-Mindat minerals
+
+The mineral classification is the same kind of tree, split like material: [strunz-classification.ts](../packages/domain/src/sample/mineral/strunz-classification.ts) spreads one file per Strunz category from [strunz-classification/](../packages/domain/src/sample/mineral/strunz-classification/). Its codes are the Strunz ones (`9`, `9.E`, `2.B-E`), and each class node lists its own minerals:
+
+```ts
+// packages/domain/src/sample/mineral/strunz-classification/silicates-subtree.ts
+"9.E": {
+  label: "E",
+  searchable: true,
+  minerals: [
+    { mindatId: 2815, name: "Muscovite", strunzCode: "9.E.161" },
+  ],
+},
+```
+
+- Add a mineral: one line in the `minerals` of its class, with its mindat.org id and name and the next free `strunzCode` of its Strunz class.
+- Rename a mineral: edit its `name`.
+- Add a sub-category: its code in the category's `choices`, a `"<category>.<code>"` entry holding its minerals, and its `strunz_<category>_<code>` label (lowercase, `.` and `-` as `_`).
+- Rename a category or sub-category: edit its `strunz_*` label.
+- Never change a `mindatId`, or move or remove a mineral a sample lists: the sample stores its class and Mindat id, and stops loading.
+- A spec fails on a duplicate `mindatId` or `strunzCode`.
+
 ## Add/remove a characteristic
 
 A whole new field (not just a value inside an existing one). Do the domain first, then the admin form.

@@ -12,6 +12,7 @@ import {
   replaceSampleAdditionalRoles,
 } from "./replace-sample-additional-roles.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
+import { replaceSampleMineralClassifications } from "./replace-sample-mineral-classifications.ts";
 import { replaceSampleProcessSteps } from "./replace-sample-process-steps.ts";
 import { replaceSampleRelations } from "./replace-sample-relations.ts";
 import { sampleColumns } from "./sample-columns.ts";
@@ -33,6 +34,11 @@ export async function updateSample(
   await inheritParentCollectionDate(db, id);
   await replaceSampleRelations(db, id, input.relations ?? []);
   await replaceSampleProcessSteps(db, id, input.processSteps ?? []);
+  await replaceSampleMineralClassifications(
+    db,
+    id,
+    input.mineralClassifications ?? [],
+  );
   await replaceSampleAdditionalRoles(db, id, additionalRolesOf(input));
   if (input.manualGroupIds) {
     await replaceSampleManualGroups(db, id, input.manualGroupIds);

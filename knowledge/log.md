@@ -1,5 +1,11 @@
 # Directory Update Log
 
+## 2026-09-24
+
+- **Update**: Sample model (sample-model)
+- **Update**: Public search facets registry (search-facets)
+- **Update**: Sample vocabularies as segment-keyed trees (vocabulary-tree)
+
 ## 2026-09-09
 
 - **Update**: API trust boundary and security rules (api-trust-boundary-security)

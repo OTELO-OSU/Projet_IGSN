@@ -17,15 +17,19 @@ describe("public user routes", () => {
     "should list accepted users linked to a published sample, plus the included accepted one",
     async ({ db }) => {
       // Arrange
-      const publisher = await insertUser(db, "marie.curie@univ-lorraine.fr", {
-        name: "Curie",
-        firstname: "Marie",
-      });
+      const publisher = await insertUser(
+        db,
+        "marie.curie-81b@univ-lorraine.fr",
+        {
+          name: "Curie",
+          firstname: "Marie",
+        },
+      );
       const drafter = await insertUser(db, "pierre.curie@univ-lorraine.fr", {
         name: "Curie",
         firstname: "Pierre",
       });
-      const pending = await insertUser(db, "irene.curie@univ-lorraine.fr", {
+      const pending = await insertUser(db, "irene.curie-81b@univ-lorraine.fr", {
         name: "Curie",
         firstname: "Irene",
         status: "pending",
@@ -40,10 +44,14 @@ describe("public user routes", () => {
         name: "Pending owner sample",
       });
       await publishSample(db, pendingSample.id);
-      const withdrawer = await insertUser(db, "eve.curie@univ-lorraine.fr", {
-        name: "Curie",
-        firstname: "Eve",
-      });
+      const withdrawer = await insertUser(
+        db,
+        "eve.curie-81b@univ-lorraine.fr",
+        {
+          name: "Curie",
+          firstname: "Eve",
+        },
+      );
       const withdrawnSample = await insertSample(db, {
         ...draft,
         name: "Withdrawn sample",

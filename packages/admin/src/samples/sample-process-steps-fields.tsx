@@ -1,4 +1,8 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
+import {
+  FieldListItem,
+  FieldListRemoveButton,
+} from "@projet-igsn/design-system/components/form/field-list-item";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
@@ -12,7 +16,7 @@ import {
   PROCESS_STEP_KINDS,
   type ProcessStepKind,
 } from "@projet-igsn/domain/sample/process-step/kind";
-import { ChevronDownIcon, Trash2 } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { DateRangeField } from "#/samples/date-range-field.tsx";
@@ -35,30 +39,20 @@ export function SampleProcessStepsFields() {
       <form.Subscribe selector={(state) => state.values.processSteps}>
         {(steps) =>
           steps.map((step, index) => (
-            <fieldset
+            <FieldListItem
               key={step.key}
-              className="grid gap-2 rounded-lg border p-4"
-            >
-              <legend className="px-1 text-sm font-medium">
-                {m.legend_process_step({
-                  index: index + 1,
-                  kind: processStepKindLabel(step.kind),
-                })}
-              </legend>
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
+              legend={m.legend_process_step({
+                index: index + 1,
+                kind: processStepKindLabel(step.kind),
+              })}
+              actions={
+                <FieldListRemoveButton
+                  label={m.action_remove_process_step({ index: index + 1 })}
                   disabled={isDisabled}
-                  aria-label={m.action_remove_process_step({
-                    index: index + 1,
-                  })}
                   onClick={() => form.removeFieldValue("processSteps", index)}
-                >
-                  <Trash2 aria-hidden />
-                </Button>
-              </div>
+                />
+              }
+            >
               <DateRangeField
                 prefix={`processSteps[${index}].date`}
                 id={`process-step-${index}-date`}
@@ -79,7 +73,7 @@ export function SampleProcessStepsFields() {
                   />
                 )}
               </form.AppField>
-            </fieldset>
+            </FieldListItem>
           ))
         }
       </form.Subscribe>

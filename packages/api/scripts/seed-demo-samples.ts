@@ -1,6 +1,7 @@
 import type { SampleAdditionalRole } from "@projet-igsn/domain/sample/additional-role/model";
 import type { GeologicalAge } from "@projet-igsn/domain/sample/age/geological-age";
 import type { Location } from "@projet-igsn/domain/sample/location/model";
+import type { MineralClassification } from "@projet-igsn/domain/sample/mineral/model";
 import type { SampleProcessStep } from "@projet-igsn/domain/sample/process-step/model";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
@@ -1671,6 +1672,17 @@ const DEMO_ROLES: SampleAdditionalRole[] = [
   },
   { role: "data_manager", personFirstname: "Luc", personLastname: "Moreau" },
 ];
+
+export const DEMO_MINERAL_CLASSIFICATIONS: Record<
+  string,
+  MineralClassification[]
+> = {
+  "Minas Gerais Beryl": [
+    { strunzId: "9" },
+    { strunzId: "4.F-G" },
+    { strunzId: "9.E", mindatId: 2815, abundance: "major" },
+  ],
+};
 
 export const DEMO_ADDITIONAL_ROLES: Record<string, SampleAdditionalRole[]> = {
   "Brittany Granite": DEMO_ROLES,

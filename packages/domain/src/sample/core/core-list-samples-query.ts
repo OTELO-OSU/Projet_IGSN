@@ -19,6 +19,10 @@ import {
   materialPathSchema,
   MATERIAL_HIERARCHY,
 } from "../material/classification.ts";
+import {
+  STRUNZ_PATHS,
+  strunzPathSchema,
+} from "../mineral/mineral-hierarchy.ts";
 import { NATURES, natureSchema } from "../nature.ts";
 import { expandPaths } from "../path/expand-paths.ts";
 import { type ListSamplesQuery, bboxSchema } from "../sample-validator.ts";
@@ -34,6 +38,7 @@ export const CORE_FILTER_PARAM = {
   bbox: "bbox",
   sampleObjectType: "type",
   materialCategory: "material",
+  mineralogy: "mineralClassification",
   collectionMethod: "collectionMethod",
   natureOfSample: "nature",
   texture: "texture",
@@ -78,6 +83,11 @@ export function coreFilterFields() {
       enum: expandPaths(MATERIAL_HIERARCHY.nodes, MATERIAL_HIERARCHY.roots),
       description:
         "Material classification path, matching that material and every material under it.",
+    }),
+    mineralogy: strunzPathSchema.optional().meta({
+      enum: STRUNZ_PATHS,
+      description:
+        "Strunz-Mindat (2026) category or sub-category path, matching that class and every class and mineral under it.",
     }),
     collectionMethod: collectionMethodSchema.optional().meta({
       enum: expandPaths(

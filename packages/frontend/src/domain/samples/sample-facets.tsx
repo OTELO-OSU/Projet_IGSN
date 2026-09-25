@@ -37,7 +37,7 @@ export const FACET_SECTIONS: readonly {
   },
   {
     title: m.facet_section_type,
-    keys: ["material", "texture", "collectionMethod"],
+    keys: ["material", "mineralClassification", "texture", "collectionMethod"],
   },
   {
     title: m.facet_section_author,

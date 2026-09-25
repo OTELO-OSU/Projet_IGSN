@@ -119,7 +119,7 @@ describe("updateSample", () => {
       // Act
       const updated = await updateSample(
         db,
-        "01890a5d-ac96-774b-bcce-b302099a8057",
+        "01890a5d-ac96-774b-8101-b302099a8057",
         {
           name: "Grès de Fontainebleau",
           nature: "powder",

@@ -113,6 +113,19 @@ describe("SampleFacets", () => {
     }
   });
 
+  it("should report a picked Strunz category of the mineral classification facet", async () => {
+    const { screen, onChange } = await renderFacets();
+
+    await screen
+      .getByRole("combobox", { name: "Strunz-Mindat (2026) Classifications" })
+      .click();
+    await screen
+      .getByRole("option", { name: "Silicates", exact: true })
+      .click();
+
+    expect(onChange).toHaveBeenCalledWith("mineralClassification", "9");
+  });
+
   it("should report an age bound on blur", async () => {
     const { screen, onChange } = await renderFacets();
 

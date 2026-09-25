@@ -1,12 +1,15 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/relation/target-resource-type";
-import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
+import {
+  FieldListAction,
+  FieldListItem,
+  FieldListRemoveButton,
+} from "@projet-igsn/design-system/components/form/field-list-item";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
-import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   Combobox,
   toComboboxItems,
@@ -17,7 +20,7 @@ import { Textarea } from "@projet-igsn/design-system/components/ui/textarea";
 import { cn } from "@projet-igsn/design-system/lib/utils";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relation/target-resource-type";
-import { Download, Trash2, Undo2 } from "lucide-react";
+import { Download, Undo2 } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { FileDropZone } from "#/samples/file-drop-zone.tsx";
@@ -41,35 +44,12 @@ type SampleAttachmentsProps = {
   changes: SampleAttachmentChanges;
 };
 
-type RowActionProps = {
-  icon: LucideIcon;
-  label: string;
-  onClick?: () => void;
-  disabled?: boolean;
-};
-
-function RowAction({ icon: Icon, label, onClick, disabled }: RowActionProps) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      disabled={disabled}
-      aria-label={label}
-      onClick={onClick}
-    >
-      <Icon aria-hidden />
-    </Button>
-  );
-}
-
 type AttachmentRowLayoutProps = {
   index: number;
   name: string;
   badge?: ReactNode;
   status?: string;
-  removeAction: ReactNode;
-  downloadAction?: ReactNode;
+  actions: ReactNode;
   isStruck?: boolean;
   fields: {
     id: string;
@@ -85,19 +65,15 @@ function AttachmentRowLayout({
   name,
   badge,
   status,
-  removeAction,
-  downloadAction,
+  actions,
   isStruck,
   fields,
 }: AttachmentRowLayoutProps) {
   const isDisabled = useIsFieldDisabled("relations");
   return (
     <li>
-      <fieldset className="grid gap-2 rounded-lg border p-4">
-        <legend className="px-1 text-sm font-medium">
-          {m.legend_attachment({ index })}
-        </legend>
-        <div className="flex items-center gap-2">
+      <FieldListItem legend={m.legend_attachment({ index })} actions={actions}>
+        <div className="flex items-center gap-2 pe-16">
           <span
             className={cn(
               "min-w-0 flex-1 truncate text-sm",
@@ -111,8 +87,6 @@ function AttachmentRowLayout({
           {status ? (
             <span className="text-destructive text-sm">{status}</span>
           ) : null}
-          {downloadAction}
-          {removeAction}
         </div>
         {fields ? (
           <div className="grid gap-2">
@@ -158,7 +132,7 @@ function AttachmentRowLayout({
             />
           </div>
         ) : null}
-      </fieldset>
+      </FieldListItem>
     </li>
   );
 }
@@ -189,30 +163,27 @@ function AttachmentRow({
       status={
         isMarkedForDeletion ? m.attachment_marked_for_deletion() : undefined
       }
-      removeAction={
+      actions={
         isMarkedForDeletion ? (
-          <RowAction
+          <FieldListAction
             icon={Undo2}
             label={m.action_restore_attachment({ name: attachment.name })}
             disabled={isDisabled}
             onClick={() => changes.restore(attachment.id)}
           />
         ) : (
-          <RowAction
-            icon={Trash2}
-            label={m.action_delete_attachment({ name: attachment.name })}
-            disabled={isDisabled}
-            onClick={() => changes.markDelete(attachment.id)}
-          />
-        )
-      }
-      downloadAction={
-        isMarkedForDeletion ? null : (
-          <RowAction
-            icon={Download}
-            label={m.action_download_attachment({ name: attachment.name })}
-            onClick={() => void download(attachment)}
-          />
+          <>
+            <FieldListAction
+              icon={Download}
+              label={m.action_download_attachment({ name: attachment.name })}
+              onClick={() => void download(attachment)}
+            />
+            <FieldListRemoveButton
+              label={m.action_delete_attachment({ name: attachment.name })}
+              disabled={isDisabled}
+              onClick={() => changes.markDelete(attachment.id)}
+            />
+          </>
         )
       }
       fields={
@@ -273,24 +244,23 @@ export function SampleAttachments({
                 </Badge>
               }
               status={staged.error ? m.attachment_upload_failed() : undefined}
-              removeAction={
-                <RowAction
-                  icon={Trash2}
-                  label={m.action_remove_attachment({
-                    name: staged.file.name,
-                  })}
-                  disabled={isDisabled}
-                  onClick={() => removeFile(staged.key)}
-                />
-              }
-              downloadAction={
-                <RowAction
-                  icon={Download}
-                  label={m.action_download_attachment({
-                    name: staged.file.name,
-                  })}
-                  disabled
-                />
+              actions={
+                <>
+                  <FieldListAction
+                    icon={Download}
+                    label={m.action_download_attachment({
+                      name: staged.file.name,
+                    })}
+                    disabled
+                  />
+                  <FieldListRemoveButton
+                    label={m.action_remove_attachment({
+                      name: staged.file.name,
+                    })}
+                    disabled={isDisabled}
+                    onClick={() => removeFile(staged.key)}
+                  />
+                </>
               }
               fields={{
                 id: `staged-${staged.key}`,

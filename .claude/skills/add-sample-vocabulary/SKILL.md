@@ -116,6 +116,11 @@ expect(SAMPLE_TYPES).not.toContain("core.core.core");
 expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
 ```
 
+## Strunz-Mindat minerals
+
+- `mineral/strunz-classification.ts` spreads one `strunz-classification/*-subtree.ts` per category, each class node (`9`, `9.E`, `2.B-E`) listing its minerals as `minerals` rows, never as `choices`.
+- A mineral is one `{ mindatId, name, strunzCode }` row, its code the next free one of its Strunz class; follow the walkthrough's "Strunz-Mindat minerals" section.
+
 ## Workflow
 
 1. **Spec first (red).** Add accept/reject cases to that vocabulary's specs:

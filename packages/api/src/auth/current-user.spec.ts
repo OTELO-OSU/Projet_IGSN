@@ -23,7 +23,7 @@ function appWithClaims(
 
 const claims: KeycloakClaims = {
   sub: "f:saml-idp:jean.martin",
-  email: "jean.martin@univ-lorraine.fr",
+  email: "jean.martin-b85@univ-lorraine.fr",
   given_name: "Jean",
   family_name: "Martin",
   identity_provider: "satosa",
@@ -38,7 +38,7 @@ describe("currentUser", () => {
       // Assert
       expect(await res.json()).toEqual({
         id: expect.any(String),
-        email: "jean.martin@univ-lorraine.fr",
+        email: "jean.martin-b85@univ-lorraine.fr",
         firstname: "Jean",
         name: "Martin",
         orcid: null,
@@ -63,7 +63,7 @@ describe("currentUser", () => {
     // Assert
     expect(await res.json()).toEqual({
       id: expect.any(String),
-      email: "jean.martin@univ-lorraine.fr",
+      email: "jean.martin-b85@univ-lorraine.fr",
       firstname: null,
       name: null,
       orcid: null,
@@ -148,18 +148,18 @@ describe("currentUser", () => {
   );
 
   const orcidClaims: KeycloakClaims = {
-    sub: "f:orcid:0000-0002-1825-0097",
+    sub: "f:orcid:0000-0002-2949-0096",
     preferred_username: "e7c3a1f0-shell",
     identity_provider: "orcid",
-    identity_provider_identity: "0000-0002-1825-0097",
+    identity_provider_identity: "0000-0002-2949-0096",
   };
 
   pgTest(
     "should answer 403 to a rejected user signing in via ORCID",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "rejected@univ-lorraine.fr", {
-        orcid: "0000-0002-1825-0097",
+      await insertUser(db, "rejected-b85@univ-lorraine.fr", {
+        orcid: "0000-0002-2949-0096",
         status: "rejected",
       });
       // Act
@@ -173,18 +173,18 @@ describe("currentUser", () => {
     // Arrange
     const repository = createUserRepository(db);
     const linked = await repository.upsert({
-      email: "jean.martin@univ-lorraine.fr",
+      email: "jean.martin-b85@univ-lorraine.fr",
       name: "Martin",
       firstname: "Jean",
     });
-    await repository.setOrcid(linked.id, "0000-0002-1825-0097");
+    await repository.setOrcid(linked.id, "0000-0002-2949-0096");
     // Act
     const res = await appWithClaims(db, orcidClaims).request("/probe");
     // Assert
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       ...linked,
-      orcid: "0000-0002-1825-0097",
+      orcid: "0000-0002-2949-0096",
     });
   });
 
@@ -207,7 +207,7 @@ describe("currentUser", () => {
     async (identityProvider, { db }) => {
       // Arrange
       await createUserRepository(db).upsert({
-        email: "jean.martin@univ-lorraine.fr",
+        email: "jean.martin-b85@univ-lorraine.fr",
         name: "Martin",
         firstname: "Jean",
       });

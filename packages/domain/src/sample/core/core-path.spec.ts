@@ -12,6 +12,11 @@ describe("toCorePath", () => {
       "relations.0.identifier",
       "relations.0",
     ],
+    [
+      "a row field of the mineral classifications",
+      "mineralClassifications.2.abundance",
+      "extensions.geology.mineralogy.2",
+    ],
   ])("should map %s to its Core path", (_rule, path, expected) => {
     expect(toCorePath(path)).toBe(expected);
   });

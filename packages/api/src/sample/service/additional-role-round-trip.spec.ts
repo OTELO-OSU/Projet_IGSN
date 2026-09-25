@@ -12,7 +12,7 @@ import { readSample } from "../../tests/read-sample.ts";
 import { insertSample } from "./insert-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
-const ORCID = "0000-0002-1825-0097";
+const ORCID = "0000-0002-3848-0092";
 
 const typed = (
   role: SampleAdditionalRole["role"],

@@ -79,6 +79,7 @@ describe("sampleSchema", () => {
       publicationYear: null,
       resourceType: null,
       economicInterestElements: [],
+      mineralClassifications: [],
       economicResourceTypePrecision: null,
       economicDepositName: null,
       economicDepositDescription: null,
@@ -476,6 +477,55 @@ describe("createSampleSchema", () => {
     // Assert
     expect(result.error?.issues).toMatchObject([{ path: ["parentIds"] }]);
   });
+
+  it.each([
+    ["rock_and_sediment.mineral", [{ strunzId: "9.E", mindatId: 2815 }]],
+    ["rock_and_sediment.rock", []],
+    [null, []],
+  ])(
+    "should accept on the %s material the mineral classifications %o",
+    (material, mineralClassifications) => {
+      const result = createSampleSchema.safeParse({
+        name: "Mica flake",
+        material,
+        mineralClassifications,
+      });
+      expect(result).toMatchObject({ success: true });
+    },
+  );
+
+  it.each([
+    [[{ strunzId: "9" }, { strunzId: "9", mindatId: null }]],
+    [
+      [
+        { strunzId: "9.E", mindatId: 2815, abundance: "major" },
+        { strunzId: "9.E", mindatId: 2815, abundance: "trace" },
+      ],
+    ],
+  ])("should reject the duplicate mineral classifications %o", (rows) => {
+    const result = createSampleSchema.safeParse({
+      name: "Mica flake",
+      material: "rock_and_sediment.mineral",
+      mineralClassifications: rows,
+    });
+    expect(result.error?.issues).toMatchObject([
+      { path: ["mineralClassifications", 1] },
+    ]);
+  });
+
+  it.each(["rock_and_sediment.rock.igneous.plutonic.felsic.granite", null])(
+    "should reject mineral classifications on the non-mineral material %s",
+    (material) => {
+      const result = createSampleSchema.safeParse({
+        name: "Granite 1",
+        material,
+        mineralClassifications: [{ strunzId: "9" }],
+      });
+      expect(result.error?.issues).toMatchObject([
+        { path: ["mineralClassifications"] },
+      ]);
+    },
+  );
 
   it("should reject unknown fields", () => {
     // Arrange / Act

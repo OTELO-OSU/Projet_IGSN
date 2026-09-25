@@ -87,7 +87,7 @@ const insertAccount = (db: Transactional<DB>) =>
   insertUser(db, `${crypto.randomUUID()}@univ-lorraine.fr`, {
     firstname: "Marie",
     name: "Curié",
-    orcid: "0000-0002-1825-0097",
+    orcid: "0000-0002-0073-0092",
   });
 
 describe("sample person account link persistence", () => {
@@ -138,7 +138,7 @@ describe("sample person account link persistence", () => {
         collectorUserId: account.id,
         collectorFirstname: "Marie",
         collectorLastname: "Curié",
-        collectorOrcid: "0000-0002-1825-0097",
+        collectorOrcid: "0000-0002-0073-0092",
       });
     },
   );

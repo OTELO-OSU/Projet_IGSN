@@ -23,6 +23,7 @@ Public sample-list filters are driven by the `SAMPLE_FACETS` registry (`domain/s
 
 - Facet kinds: hierarchy, enum, text, numeric range, manual group, contributor.
 - A hierarchy facet filters with an ltree ancestor predicate, served by the GiST index at any depth ([[material-classification-ltree]]).
+- A facet stored in a child table (`manualGroup`, `contributor`, `mineralClassification`) sits in `FACET_JOIN` (`facet-filter.ts`), matched by `=`, or by the ltree ancestor predicate for a hierarchy.
 - The `searchable` flag on a `TreeNode` is the public facet policy alone; the admin collection-method filter (`admin/src/samples/collection-method-tree-nodes.ts`) offers every level regardless ([[vocabulary-tree]]).
 - A query-schema drift guard and an API column allow-list keep the registry and the SQL in step; text facets keep a substring `ILIKE`, except the two person facets (`chiefScientist`, `collectorName`), each stored as a firstname/lastname pair and matched token by token against both columns, in any order, accent-insensitive, with the same fuzzy fallback as the free-text search ([[sample-search]]). A person linked to a registry account (`*UserId`) matches the same way against that account's own `firstname`/`name` columns instead, so the facet reaches a linked person exactly like a typed one.
 - Facets only ever see `status = 'published'` rows ([[sample-status-lifecycle]]).

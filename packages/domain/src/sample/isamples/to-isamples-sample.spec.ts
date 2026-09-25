@@ -9,6 +9,7 @@ import {
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
+import { MINERAL_RESOURCE_SAMPLE } from "../core/core-sample-variant-fixture.ts";
 import { MATERIAL_TREE } from "../material/classification.ts";
 import { toISamplesSample } from "./to-isamples-sample.ts";
 
@@ -233,6 +234,29 @@ describe("a Core record mapped to iSamples", () => {
       },
       related_resource: [],
     });
+  });
+});
+
+describe("the Strunz-Mindat keywords of an iSamples record", () => {
+  it("should carry one keyword per mineral classification, naming a mineral by its Mindat entry", () => {
+    const scheme = {
+      scheme_name: "otelo:strunz-mindat",
+      scheme_uri: "urn:otelo:vocabulary:strunz-mindat",
+    };
+
+    expect(
+      toISamplesSample(core(MINERAL_RESOURCE_SAMPLE)).keywords.filter(
+        ({ scheme_name }) => scheme_name === scheme.scheme_name,
+      ),
+    ).toEqual([
+      { label: "9", ...scheme },
+      { label: "2.B-E", ...scheme },
+      {
+        label: "Muscovite",
+        pid: "https://www.mindat.org/min-2815.html",
+        ...scheme,
+      },
+    ]);
   });
 });
 

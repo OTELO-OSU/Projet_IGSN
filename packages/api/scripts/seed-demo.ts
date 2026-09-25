@@ -7,9 +7,11 @@ import type { SampleOwner } from "./seed.ts";
 
 import { createDb } from "../src/db.ts";
 import { replaceSampleAdditionalRoles } from "../src/sample/service/replace-sample-additional-roles.ts";
+import { replaceSampleMineralClassifications } from "../src/sample/service/replace-sample-mineral-classifications.ts";
 import { replaceSampleProcessSteps } from "../src/sample/service/replace-sample-process-steps.ts";
 import {
   DEMO_ADDITIONAL_ROLES,
+  DEMO_MINERAL_CLASSIFICATIONS,
   DEMO_PARENTS,
   DEMO_PROCESS_STEPS,
   DEMO_SAMPLES,
@@ -81,6 +83,9 @@ for (const [name, steps] of Object.entries(DEMO_PROCESS_STEPS)) {
 }
 for (const [name, roles] of Object.entries(DEMO_ADDITIONAL_ROLES)) {
   await replaceSampleAdditionalRoles(db, sampleId(name), roles);
+}
+for (const [name, rows] of Object.entries(DEMO_MINERAL_CLASSIFICATIONS)) {
+  await replaceSampleMineralClassifications(db, sampleId(name), rows);
 }
 await db.destroy();
 

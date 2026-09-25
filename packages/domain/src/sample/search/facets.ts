@@ -25,6 +25,10 @@ import {
   materialPathSchema,
   MATERIAL_HIERARCHY,
 } from "../material/classification.ts";
+import {
+  STRUNZ_HIERARCHY,
+  strunzPathSchema,
+} from "../mineral/mineral-hierarchy.ts";
 import { NATURES, natureSchema } from "../nature.ts";
 import { TEXTURES, textureSchema } from "../texture/vocabulary.ts";
 import { sampleTypeSchema, SAMPLE_TYPE_HIERARCHY } from "../type/vocabulary.ts";
@@ -73,6 +77,12 @@ export const SAMPLE_FACETS: readonly SampleFacet[] = [
     kind: "hierarchy",
     hierarchy: MATERIAL_HIERARCHY,
     schema: materialPathSchema,
+  },
+  {
+    key: "mineralClassification",
+    kind: "hierarchy",
+    hierarchy: STRUNZ_HIERARCHY,
+    schema: strunzPathSchema,
   },
   {
     key: "collectionMethod",
@@ -141,6 +151,7 @@ export function facetQueryFields() {
   return {
     type: optionalFilter(sampleTypeSchema),
     material: optionalFilter(materialPathSchema),
+    mineralClassification: optionalFilter(strunzPathSchema),
     collectionMethod: optionalFilter(collectionMethodSchema),
     nature: optionalFilter(natureSchema),
     texture: optionalFilter(textureSchema),

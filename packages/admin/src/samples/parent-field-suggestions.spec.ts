@@ -32,6 +32,7 @@ const sample = (overrides: Partial<Sample>): Sample => ({
   age: null,
   relations: [],
   processSteps: [{ kind: "preparation", description: "Powdered" }],
+  mineralClassifications: [],
   attachments: [],
   security: null,
   existenceStatus: "exists",

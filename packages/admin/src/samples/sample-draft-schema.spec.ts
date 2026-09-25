@@ -10,6 +10,7 @@ import { toRepositoryDraft } from "./compose-repository.ts";
 import { toScientificContextDraft } from "./compose-scientific-context.ts";
 import { toSecurityDraft } from "./compose-security.ts";
 import { toSyntheticDetailsDraft } from "./compose-synthetic-details.ts";
+import { sampleDraftFieldErrors } from "./sample-draft-field-errors.ts";
 import {
   EMPTY_RELATION_DRAFT,
   type RelationDraft,
@@ -54,6 +55,7 @@ const draft: SampleDraft = {
   age: EMPTY_AGE_FORM_VALUES,
   relations: [],
   processSteps: [],
+  mineralClassifications: [],
   manualGroupIds: [],
   parentIds: [],
   ...toEconomicInterestDraft(undefined),
@@ -456,5 +458,72 @@ describe("sampleDraftSchema", () => {
         manualGroupIds: [MANUAL_GROUP_ID],
       }).manualGroupIds,
     ).toEqual([MANUAL_GROUP_ID]);
+  });
+
+  const mineralClassifications = [
+    { strunzId: "9", mindatId: null, abundance: undefined },
+    { strunzId: "4.F-G", mindatId: null, abundance: "minor" },
+    { strunzId: "9.E", mindatId: 2815, abundance: "major" },
+  ] as const;
+
+  it("should round-trip category, sub-category and mineral classification rows through the draft", () => {
+    const loaded = toSampleDraft({
+      name: "Basalt 42",
+      nature: "thin_section",
+      type: null,
+      material: "rock_and_sediment.mineral",
+      mineralClassifications: [...mineralClassifications],
+    });
+
+    expect(sampleDraftSchema.parse(loaded)).toMatchObject({
+      mineralClassifications,
+    });
+  });
+
+  it.each([
+    {
+      paths: [null],
+      field: "mineralClassifications[0].path",
+      message: "Required.",
+    },
+    {
+      paths: ["9", null],
+      field: "mineralClassifications[1].path",
+      message: "Required.",
+    },
+    {
+      paths: ["4", "9", "9"],
+      field: "mineralClassifications[2].path",
+      message: "Invalid value.",
+    },
+  ])(
+    "should show a classification row's error on its own classification field: $paths",
+    ({ paths, field, message }) => {
+      const result = sampleDraftSchema.safeParse({
+        ...draft,
+        mineralClassifications: paths.map((path, index) => ({
+          key: `k${index}`,
+          path: toHierarchyPath(path),
+          abundance: undefined,
+        })),
+      });
+
+      if (result.success) throw new Error("expected the parse to fail");
+      expect(sampleDraftFieldErrors(result.error.issues)).toEqual({
+        [field]: { message },
+      });
+    },
+  );
+
+  it("should drop the classifications a non-mineral material hides", () => {
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        materialPath: toHierarchyPath("rock_and_sediment.rock"),
+        mineralClassifications: [
+          { key: "k0", path: toHierarchyPath("9"), abundance: undefined },
+        ],
+      }),
+    ).not.toHaveProperty("mineralClassifications");
   });
 });

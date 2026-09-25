@@ -27,6 +27,9 @@ import {
   PopoverTrigger,
 } from "./popover.tsx";
 
+// ponytail: no virtualization, so a short query over a large tree renders at most this many; virtualize the list or require a longer query to lift it.
+const MAX_SEARCH_RESULTS = 100;
+
 type HierarchyInputProps = {
   id?: string;
   hierarchy: Hierarchy;
@@ -85,10 +88,13 @@ export function HierarchyInput({
   const parent = path[depth - 1] ?? null;
   const query = search.trim().toLowerCase();
   const children = query
-    ? hierarchyDescendantItems(hierarchy, parent, translate).filter(
-        (item) =>
-          isSelectable(item.value) && item.label.toLowerCase().includes(query),
-      )
+    ? hierarchyDescendantItems(hierarchy, parent, translate)
+        .filter(
+          (item) =>
+            isSelectable(item.value) &&
+            item.label.toLowerCase().includes(query),
+        )
+        .slice(0, MAX_SEARCH_RESULTS)
     : childrenOf(parent);
 
   const close = () => {
