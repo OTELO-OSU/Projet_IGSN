@@ -33,7 +33,7 @@ type UngroupedColumn = Omit<Column, "group">;
 
 export const TEMPLATE_VERSION = "1";
 
-export const MAX_IMPORT_ROWS = 1000;
+export const MAX_IMPORT_ROWS = 500;
 
 export const SHEETS = {
   readMe: "Read me",
