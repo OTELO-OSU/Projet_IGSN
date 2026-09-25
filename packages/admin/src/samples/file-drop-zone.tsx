@@ -1,21 +1,43 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { cn } from "@projet-igsn/design-system/lib/utils";
+import { UploadIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { m } from "#/paraglide/messages.js";
-
-type AttachmentDropZoneProps = {
+type FileDropZoneProps = {
+  hint: string;
+  browseLabel: string;
+  accept?: string;
+  multiple?: boolean;
+  isInline?: boolean;
   onFiles: (files: File[]) => void;
 };
 
-export function AttachmentDropZone({ onFiles }: AttachmentDropZoneProps) {
+export function FileDropZone({
+  hint,
+  browseLabel,
+  accept,
+  multiple,
+  isInline,
+  onFiles,
+}: FileDropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const pick = (list: FileList | null) => {
     const files = Array.from(list ?? []);
-    if (files.length > 0) onFiles(files);
+    if (files.length > 0) onFiles(multiple ? files : files.slice(0, 1));
   };
+
+  const browse = (
+    <Button
+      type="button"
+      variant={isInline ? "link" : "outline"}
+      className={cn(isInline && "text-foreground h-auto p-0 underline")}
+      onClick={() => inputRef.current?.click()}
+    >
+      {browseLabel}
+    </Button>
+  );
 
   return (
     <div
@@ -34,22 +56,26 @@ export function AttachmentDropZone({ onFiles }: AttachmentDropZoneProps) {
         isDragOver && "bg-muted border-primary",
       )}
     >
-      <p className="text-muted-foreground text-sm">
-        {m.attachment_drop_hint()}
-      </p>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => inputRef.current?.click()}
-      >
-        {m.action_browse_files()}
-      </Button>
+      {isInline ? (
+        <>
+          <UploadIcon aria-hidden className="text-muted-foreground size-5" />
+          <p className="text-muted-foreground text-sm">
+            {hint} {browse}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="text-muted-foreground text-sm">{hint}</p>
+          {browse}
+        </>
+      )}
       <input
         ref={inputRef}
         type="file"
-        multiple
+        accept={accept}
+        multiple={multiple}
         className="sr-only"
-        aria-label={m.action_browse_files()}
+        aria-label={browseLabel}
         tabIndex={-1}
         onChange={(event) => {
           pick(event.target.files);

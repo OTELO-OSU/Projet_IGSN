@@ -1,5 +1,6 @@
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
+import { importSamplesSchema } from "@projet-igsn/domain/sample/import/import-validator";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   checkDuplicatesBodySchema,
@@ -180,4 +181,25 @@ export const validateAttachmentUpload = validator("form", (value, c) => {
     return c.json({ error: "Invalid attachment" }, 400);
   }
   return parsed.data;
+});
+
+export const validateImportUpload = validator("form", (value, c) => {
+  const parsed = importSamplesSchema.safeParse(value);
+  if (parsed.success) {
+    return parsed.data;
+  }
+  const { issues } = parsed.error;
+  if (issues.some((issue) => issue.code === "too_big")) {
+    return c.json({ error: "Import file too large" }, 413);
+  }
+  if (
+    issues.some(
+      (issue) =>
+        issue.path[0] === "file" &&
+        (issue.code === "invalid_value" || issue.code === "custom"),
+    )
+  ) {
+    return c.json({ error: "Import file must be an .xlsx workbook" }, 415);
+  }
+  return c.json({ error: "Invalid import" }, 400);
 });

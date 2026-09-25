@@ -9,6 +9,7 @@ import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { SelectFilter } from "#/filters/select-filter.tsx";
 import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx";
 import { m } from "#/paraglide/messages.js";
+import { ImportSamplesDialog } from "#/samples/import-samples-dialog.tsx";
 import { sampleFilterEntries } from "#/samples/sample-filters.tsx";
 import { SampleListPanel } from "#/samples/sample-list-panel.tsx";
 
@@ -54,9 +55,12 @@ function SampleListPage() {
       <ListHeader
         title={m.samples_title()}
         action={
-          <Button asChild>
-            <Link to="/samples/create">{m.action_create()}</Link>
-          </Button>
+          <div className="flex gap-2">
+            <ImportSamplesDialog />
+            <Button asChild>
+              <Link to="/samples/create">{m.action_create()}</Link>
+            </Button>
+          </div>
         }
         filters={[
           searchFilterEntry({

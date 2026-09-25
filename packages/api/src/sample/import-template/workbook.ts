@@ -1,3 +1,7 @@
+import {
+  IMPORT_TEMPLATE_FILENAME,
+  XLSX_MEDIA_TYPE,
+} from "@projet-igsn/domain/sample/import/import-validator";
 import ExcelJS from "exceljs";
 
 import type { Column } from "./columns.ts";
@@ -290,15 +294,10 @@ export function importTemplateWorkbook(
   return queueBuild(() => build(rows));
 }
 
-const IMPORT_TEMPLATE_MEDIA_TYPE =
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-const IMPORT_TEMPLATE_FILENAME = "igsn-sample-import-template.xlsx";
-
 export async function importTemplateResponse(rows: number): Promise<Response> {
   return new Response(await importTemplateWorkbook(rows), {
     headers: {
-      "Content-Type": IMPORT_TEMPLATE_MEDIA_TYPE,
+      "Content-Type": XLSX_MEDIA_TYPE,
       "Content-Disposition": `attachment; filename="${IMPORT_TEMPLATE_FILENAME}"`,
       "X-Content-Type-Options": "nosniff",
     },
