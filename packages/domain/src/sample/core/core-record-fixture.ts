@@ -56,7 +56,7 @@ export function hydrate(body: CoreSampleBody): Sample {
     parents: parents.map(({ igsn, relationIndex }) => ({
       id: PARENT_ID,
       igsn,
-      name: body.relations?.[relationIndex]?.targetTitles[0]?.value ?? "",
+      name: body.relations?.[relationIndex]?.targetTitles?.[0]?.value ?? "",
       material: null,
     })),
     manualGroups: body.manualGroups ?? [],

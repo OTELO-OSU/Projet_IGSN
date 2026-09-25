@@ -20,6 +20,11 @@ import { toDataCiteDates } from "./to-datacite-dates.ts";
 import { toDataCiteFundingReferences } from "./to-datacite-funding.ts";
 import { toDataCiteGeoLocations } from "./to-datacite-geolocations.ts";
 
+const OUTSIDE_DATACITE_RESOURCE_TYPES = new Set([
+  "FieldNotebook",
+  "SamplingManagementPlan",
+]);
+
 type Licence = Omit<DataCiteSample["rightsList"][number], "rightsUri">;
 
 const LICENCE_BY_URI: Record<string, Licence> = {
@@ -81,7 +86,11 @@ export function toDataCiteSample(core: CoreSample): DataCiteSample {
       relatedIdentifier: relation.targetIdentifier.value,
       relatedIdentifierType: relation.targetIdentifier.identifierType,
       relationType: relation.relationType,
-      resourceTypeGeneral: relation.targetResourceType,
+      resourceTypeGeneral: OUTSIDE_DATACITE_RESOURCE_TYPES.has(
+        relation.targetResourceType,
+      )
+        ? "Other"
+        : relation.targetResourceType,
     })),
     sizes: [
       ...toSize(physicalDescription?.mass),

@@ -109,6 +109,41 @@ describe("RelationsView", () => {
     },
   );
 
+  it.each([
+    {
+      identifierType: "igsn" as const,
+      identifier: "0123456789abcdefghjkmnpqrs",
+      href: "/samples/0123456789ABCDEFGHJKMNPQRS",
+    },
+    {
+      identifierType: "doi" as const,
+      identifier: "https://doi.org/10.1594/IEDA.100252",
+      href: "https://doi.org/10.1594/IEDA.100252",
+    },
+  ])(
+    "should link a title-less $identifierType relation by its identifier, shown once",
+    async ({ href, ...overrides }) => {
+      const screen = await renderRelations([
+        relation({ ...overrides, targetTitle: null }),
+      ]);
+
+      const anchor = screen.getByRole("link", { name: overrides.identifier });
+      await expect.element(anchor).toHaveAttribute("href", href);
+      expect(screen.getByText(overrides.identifier).elements()).toHaveLength(1);
+    },
+  );
+
+  it("should render a title-less unlinkable relation's identifier once, as text", async () => {
+    const identifier = "978-3-16-148410-0";
+    const screen = await renderRelations([
+      relation({ identifierType: "isbn", identifier, targetTitle: null }),
+    ]);
+
+    await expect.element(screen.getByText(identifier)).toBeVisible();
+    expect(screen.getByText(identifier).elements()).toHaveLength(1);
+    expect(screen.getByRole("link").query()).toBeNull();
+  });
+
   it("should describe a relation by its relation type, identifier type and resource type", async () => {
     const screen = await renderRelations([relation()]);
 

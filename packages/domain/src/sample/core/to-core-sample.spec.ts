@@ -242,6 +242,20 @@ describe("toCoreSample", () => {
     });
   });
 
+  it("should carry no title on a relation without one", () => {
+    const sample = {
+      ...FIELD_SAMPLE,
+      relations: FIELD_SAMPLE.relations.map((relation) => ({
+        ...relation,
+        targetTitle: null,
+      })),
+    };
+
+    expect(
+      toCoreSample(sample, FRONTEND_URL).relations?.[0]?.targetTitles,
+    ).toBeUndefined();
+  });
+
   it.each([
     ["0123456789ABCDEFGHJKMNPQRS", "DOI"],
     ["CNRS1234567890", "IGSN"],

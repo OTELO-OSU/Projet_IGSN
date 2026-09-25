@@ -125,15 +125,22 @@ describe("sampleRelationSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it.each(["", "   ", null, undefined])(
-    "should reject a relation without a title #%#",
-    (targetTitle) => {
-      // Arrange / Act
-      const paths = issuePaths({ ...relation, targetTitle });
-      // Assert
-      expect(paths).toEqual([["targetTitle"]]);
-    },
-  );
+  it("should accept a relation without a title", () => {
+    // Arrange / Act
+    const result = sampleRelationSchema.safeParse({
+      ...relation,
+      targetTitle: null,
+    });
+    // Assert
+    expect(result.success).toBe(true);
+  });
+
+  it.each(["", "   "])("should reject a blank title #%#", (targetTitle) => {
+    // Arrange / Act
+    const paths = issuePaths({ ...relation, targetTitle });
+    // Assert
+    expect(paths).toEqual([["targetTitle"]]);
+  });
 
   it.each([
     { relatedMetadataScheme: "citeproc+json" },
@@ -178,7 +185,7 @@ describe("createSampleRelationSchema", () => {
     });
   });
 
-  it("should reject a relation without a title", () => {
+  it("should accept a relation without a title", () => {
     // Arrange / Act
     const result = createSampleRelationSchema.safeParse({
       relationType: "references",
@@ -186,7 +193,7 @@ describe("createSampleRelationSchema", () => {
       identifier: "https://doi.org/10.1594/IEDA.100252",
     });
     // Assert
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("should reject an unknown key", () => {

@@ -1135,6 +1135,40 @@ describe("POST /service/samples", () => {
     },
   );
 
+  pgTest(
+    "should refuse PhysicalObject on a relation that is not a parent",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(app, {
+        ...NEW_BODY,
+        relations: [
+          {
+            relationType: "References",
+            targetIdentifier: {
+              value: "https://example.com/specimen",
+              identifierType: "URL",
+            },
+            targetResourceType: "PhysicalObject",
+          },
+        ],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "relations.0",
+            code: "invalid_value",
+            message: expect.any(String),
+          },
+        ],
+      });
+    },
+  );
+
   pgTest("should refuse the same parent listed twice", async ({ db }) => {
     // Arrange
     const { app, owner } = await arrangeAccount(db);

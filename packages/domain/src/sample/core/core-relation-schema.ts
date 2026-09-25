@@ -13,7 +13,7 @@ import { coreEnum, toPascalCase } from "./core-enum.ts";
 
 export const coreRelationType = coreEnum(RELATION_TYPES, toPascalCase);
 export const coreTargetResourceType = coreEnum(
-  RELATION_TARGET_RESOURCE_TYPES,
+  [...RELATION_TARGET_RESOURCE_TYPES, "physical_object"],
   toPascalCase,
 );
 export const coreIdentifierType = coreEnum(
@@ -51,8 +51,8 @@ export const coreRelationSchema = z.strictObject({
     description:
       "Navigable form of the identifier, for a DOI or a URL only; emit only.",
   }),
-  targetTitles: z.array(coreTitleSchema).length(1).meta({
-    description: "Name of the related resource, exactly one title.",
+  targetTitles: z.array(coreTitleSchema).max(1).optional().meta({
+    description: "Name of the related resource, one title at most.",
   }),
   targetResourceType: coreTargetResourceType.schema.meta({
     description:

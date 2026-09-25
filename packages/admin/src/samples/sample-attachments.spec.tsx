@@ -257,6 +257,20 @@ describe("SampleAttachments", () => {
       .toHaveValue("Raw measurements");
   });
 
+  it("should mark only the resource type of an attachment as required", async () => {
+    const screen = await renderAttachments();
+
+    await expect
+      .element(screen.getByLabelText("Title", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Resource type *" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("Description", { exact: true }))
+      .toBeVisible();
+  });
+
   it("should say when there is nothing attached", async () => {
     const screen = await renderAttachments([]);
 

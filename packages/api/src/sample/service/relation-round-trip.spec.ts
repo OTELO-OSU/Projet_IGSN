@@ -50,6 +50,15 @@ describe("sample relations persistence", () => {
     expect(await readSample(db, created.id)).toEqual(created);
   });
 
+  pgTest("should round-trip a relation without a title", async ({ db }) => {
+    const { targetTitle: _title, ...untitled } = minimalRelation;
+    const created = await insertSample(db, { ...base, relations: [untitled] });
+    expect(created.relations).toMatchObject([
+      { ...persistedMinimal, targetTitle: null },
+    ]);
+    expect(await readSample(db, created.id)).toEqual(created);
+  });
+
   pgTest("should create a sample without relations", async ({ db }) => {
     const created = await insertSample(db, base);
     expect(created.relations).toEqual([]);

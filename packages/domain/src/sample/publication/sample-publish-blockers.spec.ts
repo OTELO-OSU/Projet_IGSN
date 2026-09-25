@@ -769,21 +769,23 @@ describe("samplePublishBlockers", () => {
     ...overrides,
   });
 
-  it.each([
-    { targetResourceType: null },
-    { title: null },
-    { description: null },
-  ])(
-    "should report attachment_metadata_missing for an attachment with %o",
-    (overrides) => {
-      expect(
-        samplePublishBlockers({
-          ...base,
-          attachments: [attachment(overrides)],
-        }),
-      ).toEqual(["attachment_metadata_missing"]);
-    },
-  );
+  it("should report attachment_metadata_missing for an attachment without a resource type", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        attachments: [attachment({ targetResourceType: null })],
+      }),
+    ).toEqual(["attachment_metadata_missing"]);
+  });
+
+  it("should not report attachment_metadata_missing for an attachment with only a resource type", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        attachments: [attachment({ title: null, description: null })],
+      }),
+    ).toEqual([]);
+  });
 
   it("should report attachment_limit_exceeded above the default limit", () => {
     expect(

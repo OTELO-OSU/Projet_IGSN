@@ -25,7 +25,7 @@ export async function replaceSampleRelations(
         relation_type: relation.relationType,
         identifier_type: relation.identifierType,
         identifier: relation.identifier,
-        target_title: relation.targetTitle,
+        target_title: relation.targetTitle ?? null,
         target_resource_type: relation.targetResourceType ?? null,
         related_metadata_scheme: relation.relatedMetadataScheme ?? null,
         scheme_uri: relation.schemeURI ?? null,

@@ -13,7 +13,7 @@ export function fromCoreRelation(relation: CoreRelation) {
       relation.targetIdentifier.identifierType,
     ),
     identifier: relation.targetIdentifier.value,
-    targetTitle: relation.targetTitles[0]?.value ?? "",
+    targetTitle: relation.targetTitles?.[0]?.value ?? null,
     targetResourceType: coreTargetResourceType.fromCore(
       relation.targetResourceType,
     ),

@@ -208,7 +208,7 @@ export const toSampleDraft = (
     relationType: relation.relationType,
     identifierType: relation.identifierType,
     identifier: relation.identifier,
-    targetTitle: relation.targetTitle,
+    targetTitle: relation.targetTitle ?? "",
     targetResourceType: relation.targetResourceType ?? "",
     relatedMetadataScheme: relation.relatedMetadataScheme ?? "",
     schemeURI: relation.schemeURI ?? "",
@@ -237,7 +237,7 @@ const composeRelations = (relations: RelationDraft[]) =>
     relationType: relation.relationType,
     identifierType: relation.identifierType,
     identifier: relation.identifier.trim(),
-    targetTitle: relation.targetTitle.trim(),
+    targetTitle: relation.targetTitle.trim() || null,
     targetResourceType: relation.targetResourceType || null,
     description: relation.description.trim() || null,
     ...(hasMetadataScheme(relation.relationType)

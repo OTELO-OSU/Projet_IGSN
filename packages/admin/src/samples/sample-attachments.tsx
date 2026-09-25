@@ -117,7 +117,7 @@ function AttachmentRowLayout({
         {fields ? (
           <div className="grid gap-2">
             <Label htmlFor={`${fields.id}-title`}>
-              {withRequired(m.attachment_title_label(), true)}
+              {m.attachment_title_label()}
             </Label>
             <Input
               id={`${fields.id}-title`}
@@ -145,7 +145,7 @@ function AttachmentRowLayout({
               }
             />
             <Label htmlFor={`${fields.id}-description`}>
-              {withRequired(m.field_description(), true)}
+              {m.field_description()}
             </Label>
             <Textarea
               id={`${fields.id}-description`}

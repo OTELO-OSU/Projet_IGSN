@@ -1,5 +1,6 @@
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { allowedAvailabilityStatuses } from "@projet-igsn/domain/sample/curation/allowed-availability-statuses";
+import { AVAILABILITY_STATUSES } from "@projet-igsn/domain/sample/curation/availability-status";
 import { existenceStatusSchema } from "@projet-igsn/domain/sample/curation/existence-status";
 
 import { m } from "#/paraglide/messages.js";
@@ -25,6 +26,12 @@ export function ExistenceStatusField() {
           const current = form.state.values.availabilityStatus;
           if (current && !allowed.includes(current)) {
             form.setFieldValue("availabilityStatus", allowed[0]);
+          } else if (
+            allowed.length === AVAILABILITY_STATUSES.length &&
+            (current === "not_available" || current === "unknown")
+          ) {
+            // ponytail: the listener cannot see the previous existence, so a deliberate Not available on Exists resets when switching to Partially consumed; track the previous value if the PO objects.
+            form.setFieldValue("availabilityStatus", "available");
           }
         },
       }}

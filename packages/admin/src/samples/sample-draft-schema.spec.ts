@@ -326,20 +326,39 @@ describe("sampleDraftSchema", () => {
     expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
       "relations.0.relationType",
       "relations.0.identifier",
-      "relations.0.targetTitle",
     ]);
   });
 
-  it("should flag a row whose title is blank", () => {
-    const result = sampleDraftSchema.safeParse({
-      ...draft,
-      relations: [{ ...relationDraft, targetTitle: "  " }],
-    });
+  it("should compose a blank relation title as no title", () => {
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        relations: [{ ...relationDraft, targetTitle: "  " }],
+      }).relations,
+    ).toEqual([expect.objectContaining({ targetTitle: null })]);
+  });
 
-    if (result.success) throw new Error("expected the parse to fail");
-    expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
-      "relations.0.targetTitle",
-    ]);
+  it("should open a saved relation with no title on an empty title", () => {
+    expect(
+      toSampleDraft({
+        name: "Basalt 42",
+        nature: "thin_section",
+        type: null,
+        relations: [
+          {
+            relationType: "is_cited_by",
+            identifierType: "doi",
+            identifier: "https://doi.org/10.1594/IEDA.100252",
+            targetTitle: null,
+            targetResourceType: null,
+            relatedMetadataScheme: null,
+            schemeURI: null,
+            schemeType: null,
+            description: null,
+          },
+        ],
+      }).relations,
+    ).toEqual([expect.objectContaining({ targetTitle: "" })]);
   });
 
   it("should keep the scheme fields only when the relation has metadata", () => {

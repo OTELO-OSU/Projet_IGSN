@@ -136,6 +136,31 @@ describe("SampleForm related resources tab", () => {
     );
   });
 
+  it("should save a relation without a title, the title being optional", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderEditForm(onSubmit);
+
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
+    await addRelation(screen);
+    const block = relationBlock(screen, 1);
+    await expect
+      .element(block.getByLabelText("Title", { exact: true }))
+      .toBeVisible();
+    await select(screen, block, "Relation type", "Is cited by");
+    await block
+      .getByRole("textbox", { name: "DOI" })
+      .fill("https://doi.org/10.1594/IEDA.100252");
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          relations: [expect.objectContaining({ targetTitle: null })],
+        }),
+      ),
+    );
+  });
+
   it("should remove a relation row before saving", async () => {
     const onSubmit = vi.fn();
     const screen = await renderEditForm(onSubmit);

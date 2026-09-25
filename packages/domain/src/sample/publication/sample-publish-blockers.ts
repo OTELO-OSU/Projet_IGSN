@@ -116,10 +116,7 @@ const nameBlockers = (
 
 export function samplePublishBlockers(
   sample: PublishableFields & {
-    attachments?: readonly Pick<
-      SampleAttachment,
-      "targetResourceType" | "title" | "description"
-    >[];
+    attachments?: readonly Pick<SampleAttachment, "targetResourceType">[];
     parents?: readonly (Pick<Sample, "id"> | null)[];
   },
   uploadLimit: number = DEFAULT_UPLOAD_LIMIT,
@@ -310,10 +307,7 @@ export function samplePublishBlockers(
 
   if (
     sample.attachments?.some(
-      (attachment) =>
-        attachment.targetResourceType == null ||
-        attachment.title == null ||
-        attachment.description == null,
+      (attachment) => attachment.targetResourceType == null,
     )
   ) {
     blockers.push("attachment_metadata_missing");

@@ -22,7 +22,10 @@ export function toCoreRelations(
       identifierType: coreIdentifierType.toCore(relation.identifierType),
     },
     targetURI: relationTargetHref(relation.identifier) ?? undefined,
-    targetTitles: [{ value: relation.targetTitle, titleType: "Main" as const }],
+    targetTitles:
+      relation.targetTitle == null
+        ? undefined
+        : [{ value: relation.targetTitle, titleType: "Main" as const }],
     targetResourceType: coreTargetResourceType.toCore(
       relation.targetResourceType ?? "other",
     ),
