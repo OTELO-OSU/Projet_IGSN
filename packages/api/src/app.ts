@@ -59,6 +59,11 @@ export function createApp(
     .filter(Boolean);
 
   const rateLimitConfig = loadRateLimitConfig();
+  const importRateLimit = rateLimit(
+    rateLimitConfig,
+    "user",
+    IMPORT_TEMPLATE_USER_BUDGET,
+  );
 
   const sampleRepository = createSampleRepository(database, dataCiteConfig());
   const sampleAttachmentRepository = createSampleAttachmentRepository(
@@ -143,10 +148,8 @@ export function createApp(
       "/samples/:id/deletion-request",
       rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),
     )
-    .use(
-      "/samples/import-template",
-      rateLimit(rateLimitConfig, "user", IMPORT_TEMPLATE_USER_BUDGET),
-    )
+    .use("/samples/import-template", importRateLimit)
+    .use("/samples/import", importRateLimit)
     .route(
       "/samples/parents",
       createSampleParentRoutes(sampleRepository, userRepository),

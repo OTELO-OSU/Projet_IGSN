@@ -56,6 +56,9 @@ export const SAMPLE_LOOKUP_HEADER = "Sample name (filled automatically)";
 
 export const REQUIRED_MARKER = " *";
 
+export const plainHeader = (column: Column): string =>
+  column.header.replace(REQUIRED_MARKER, "");
+
 const PUBLISH_REQUIRED_PATHS = new Set(
   Object.values(PUBLISH_BLOCKER_PATH).map((path) => path.join(".")),
 );

@@ -146,17 +146,19 @@ This phase exists to land the plumbing (route, auth, multipart limits, UI) with 
 
 ## Phase 3: parse, validate, report. No writes.
 
-The same `POST /admin/samples/import` now parses and answers a report; still writes nothing.
+Shipped as planned, with a few adjustments below. See [ADR 0050](docs/adr/0050-excel-import-label-contract.md) for the workbook contract, and [plan-excel-bulk-import-phase-3.md](plan-excel-bulk-import-phase-3.md) for the detailed phase plan.
 
-- Read the workbook with exceljs, by header name, refusing an unknown `Read me!B1` version.
-- Resolve every label back to its code or dot-path, per column and, for hierarchies, per parent, from the same domain constants the generator used. An unresolvable label is a reported error naming the cell, never a silent drop. A raw code typed by a power user is also accepted, since accepting more costs nothing.
+- Read the workbook with exceljs, columns matched by header name on row 2. No template version check: the template is meant to become customisable, so no version gate to keep in sync.
+- Only `Sample #` and the always-required columns (`required-columns.ts`, derived from `createSampleSchema` plus the unconditional publish blockers, hierarchies down to their publish frontier, conditional fields excluded) make the file unprocessable if missing. Any other absent column just drops that field, reported per row if still needed.
+- Resolve every label back to its code or dot-path, per column and, for hierarchies, per parent, from the same vocabulary blocks the generator writes. A raw code is also accepted.
 - Attach child rows by `Sample #`; a dangling or duplicate number is an error.
-- Parse each assembled sample with **`publishedSampleSchema`** (`packages/domain/src/sample/publication/published-sample-schema.ts`, which is `createSampleSchema` plus the publish refinements), since a clean file imports as published. Every row is a root sample, so no parent resolution and none of `find-eligible-parent.ts`.
-- Map every issue to `{ sheet, row, column, message }`, translating the zod path through `columns.ts`. Reuse the issue-listing shape `/service` already uses (`createServiceSampleIssues`, `publish-blocker-path.ts`) so one vocabulary of errors serves both.
-- **Any issue anywhere means no import**, and the whole report goes back. Admin renders it as a table grouped by sheet, each line naming the sheet and row the user opens in Excel.
-- Cap the row count (200 is a sane first number) so one request stays bounded.
+- Parse each assembled sample with **`publishedSampleSchema`**, since a clean file imports as published. Every row is a root sample, so no parent resolution.
+- Map every issue to `{ sheet, row?, column?, code, message? }`.
+- **Any issue anywhere means no import**: `POST /admin/samples/import` answers 422 with the whole report; admin renders it as a table grouped by sheet.
+- Row count capped at `MAX_IMPORT_ROWS` (500), matching the template's pre-filled `Sample #` range.
+- Validation and the report run on the server alone (ADR 0050); the admin app only uploads and renders the returned issues.
 
-**Verification**: unit specs over a handful of fixture workbooks committed under `packages/api/src/sample/import-template/__fixtures__/`, one clean, one with a bad vocabulary value, one with a dangling `Sample #`, one with a wrong version, one violating a publish blocker. Each asserts the exact report rows. An e2e uploading the bad fixture and reading the report table.
+**Verification**: unit specs build fixture workbooks in-process from the generated template (`import-fixture.ts`), never a committed binary, covering a clean file, a bad vocabulary value, a dangling or duplicate `Sample #`, a missing required column, a publish blocker, and reordered/deleted optional columns. An e2e uploads an invalid fixture and reads the rendered report table.
 
 ---
 
@@ -185,5 +187,5 @@ It covers every feature above (`dataValidation`, per-sheet protection, `state: '
 
 - Last release 4.4.0, October 2023; maintainers inactive. The feature set we need is 2007-era OOXML and will not change, so a frozen library is tolerable.
 - Two transitive advisories in its locked deps, `uuid@^8.3.0` and `tmp@^0.2.0`. Pin both through `pnpm.overrides` in the root `package.json`.
-- Its known parser weaknesses (prototype pollution, unbounded decompression) sit on the read path, which phase 3 walks onto. Phase 3 must therefore cap file size and unzipped size before handing bytes to exceljs, and revisit the library choice if the audit looks bad by then. Phase 1 only writes, from our own data.
+- Its known parser weaknesses (prototype pollution, unbounded decompression) sit on the read path, which phase 3 walks onto. Phase 3 caps the file size and rate limits the upload, but deliberately has no unzipped-size guard: uploads are authenticated, so a crafted archive exhausting memory is an accepted risk (see `plan-excel-bulk-import-phase-3.md`). Phase 1 only writes, from our own data.
 - Its workbook-level defined-name API is weak, which is why the cascade uses `OFFSET`/`MATCH` and no names at all.
