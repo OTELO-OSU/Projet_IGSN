@@ -13,6 +13,7 @@ import type { DB } from "../../db.ts";
 import { createApp } from "../../app.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { MAX_IMPORT_ROWS, SHEETS } from "./columns.ts";
+import { cleanBook } from "./import-fixture.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 
@@ -79,7 +80,28 @@ describe("import template route", () => {
 
 describe("import upload route", () => {
   pgTest(
-    "should accept the downloaded template posted back",
+    "should accept a publishable file",
+    async ({ db }) => {
+      const book = await cleanBook();
+
+      const res = await upload(
+        db,
+        new File(
+          [new Uint8Array(await book.xlsx.writeBuffer())],
+          IMPORT_TEMPLATE_FILENAME,
+          {
+            type: XLSX_MEDIA_TYPE,
+          },
+        ),
+      );
+
+      expect(res.status).toBe(202);
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should refuse the downloaded template posted back empty with its issues",
     async ({ db }) => {
       const template = await (await download(db)).blob();
 
@@ -90,7 +112,13 @@ describe("import upload route", () => {
         }),
       );
 
-      expect(res.status).toBe(202);
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [{ sheet: SHEETS.samples, code: "no_sample" }],
+        },
+      });
     },
     30_000,
   );
