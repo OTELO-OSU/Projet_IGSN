@@ -87,10 +87,7 @@ export function SampleRelationsFields() {
               </div>
               <form.AppField name={`relations[${index}].targetTitle`}>
                 {(field) => (
-                  <field.TextField
-                    label={m.field_relation_target_title()}
-                    requiredToPublish
-                  />
+                  <field.TextField label={m.field_relation_target_title()} />
                 )}
               </form.AppField>
               <form.AppField name={`relations[${index}].relationType`}>

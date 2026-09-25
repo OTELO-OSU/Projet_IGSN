@@ -58,7 +58,7 @@ export function toISamplesSample(core: CoreSample): ISamplesSample {
     related_resource: (core.relations ?? []).map((relation) => ({
       relationship: relation.relationType,
       target: relation.targetIdentifier.value,
-      label: relation.targetTitles[0]?.value ?? "",
+      label: relation.targetTitles?.[0]?.value ?? "",
       description: relation.description,
     })),
   };

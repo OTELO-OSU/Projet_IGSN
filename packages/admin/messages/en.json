@@ -260,7 +260,7 @@
   "publish_blocked_additional_role_firstname_missing": "Set a first name or link an account on every additional role before publishing.",
   "publish_blocked_additional_role_lastname_missing": "Set a last name or link an account on every additional role before publishing.",
   "publish_blocked_parent_not_found": "The parent sample could not be found or is not eligible.",
-  "publish_blocked_attachment_metadata_missing": "Give every attached file a resource type, a title and a description before publishing.",
+  "publish_blocked_attachment_metadata_missing": "Give every attached file a resource type before publishing.",
   "publish_blocked_attachment_limit_exceeded": "Keep at most {limit} attached files before publishing.",
   "publish_blocked_synthetic_starting_material_missing": "Set the starting material before publishing.",
   "publish_blocked_synthetic_starting_material_composition_missing": "Describe the starting material composition before publishing.",

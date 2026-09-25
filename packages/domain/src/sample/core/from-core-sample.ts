@@ -25,7 +25,9 @@ import { fromQuantity } from "./quantity.ts";
 type CoreSampleParent = { igsn: Igsn; relationIndex: number };
 
 type ReversedCoreSample = {
-  sample: z.input<typeof createSampleSchema>;
+  sample: Omit<z.input<typeof createSampleSchema>, "relations"> & {
+    relations: ReturnType<typeof fromCoreRelation>[];
+  };
   parents: CoreSampleParent[];
 };
 

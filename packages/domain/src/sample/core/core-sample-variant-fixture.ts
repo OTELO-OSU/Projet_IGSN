@@ -197,6 +197,18 @@ const RELATED_SAMPLE: Sample = {
       schemeType: null,
       description: null,
     },
+    {
+      id: "ffffffff-6666-4666-8666-ffffffffffff",
+      relationType: "is_described_by",
+      identifierType: "url",
+      identifier: "https://example.org/field-notebook",
+      targetTitle: null,
+      targetResourceType: "field_notebook",
+      relatedMetadataScheme: null,
+      schemeURI: null,
+      schemeType: null,
+      description: null,
+    },
   ],
   parents: [
     {

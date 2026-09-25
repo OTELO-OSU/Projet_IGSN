@@ -1055,17 +1055,13 @@ describe("EditSamplePage", () => {
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/resource type, a title and a description/i);
+      .toHaveTextContent(/give every attached file a resource type before/i);
     publish.element().closest<HTMLElement>("[tabindex]")?.blur();
 
     await screen.getByRole("tab", { name: "Related URL or document" }).click();
-    await screen.getByLabelText("Title *").fill("Orphan run");
     await screen.getByRole("combobox", { name: "Resource type *" }).click();
     await screen.getByPlaceholder("Search resource type...").fill("Dataset");
     await screen.getByRole("option", { name: "Dataset", exact: true }).click();
-    await screen
-      .getByLabelText("Description of orphan.csv")
-      .fill("A run with no home");
 
     await expect.element(publish).toBeEnabled();
   });

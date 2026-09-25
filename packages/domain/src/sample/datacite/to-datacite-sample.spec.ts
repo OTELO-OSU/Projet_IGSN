@@ -459,6 +459,25 @@ describe("the geolocation of a DataCite record", () => {
   });
 });
 
+describe("the related identifiers of a DataCite record", () => {
+  it.each(["field_notebook", "sampling_management_plan"] as const)(
+    "should type a %s relation as Other, outside the DataCite vocabulary",
+    (targetResourceType) => {
+      expect(
+        toDataCiteSample(
+          core({
+            ...FIELD_SAMPLE,
+            relations: FIELD_SAMPLE.relations.map((relation) => ({
+              ...relation,
+              targetResourceType,
+            })),
+          }),
+        ).relatedIdentifiers[0]?.resourceTypeGeneral,
+      ).toBe("Other");
+    },
+  );
+});
+
 describe("the Core coverage of the DataCite mapping", () => {
   it("should hold every Core field as projected or deliberately dropped", () => {
     expect(corePaths().toSorted()).toEqual(

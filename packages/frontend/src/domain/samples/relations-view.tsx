@@ -35,6 +35,7 @@ const relationSummary = ({
 
 function RelationTarget({ relation }: { relation: SampleRelation }) {
   const { identifierType, identifier, targetTitle } = relation;
+  const label = targetTitle ?? identifier;
 
   if (identifierType === "igsn") {
     const parsed = igsnSchema.safeParse(identifier);
@@ -45,7 +46,7 @@ function RelationTarget({ relation }: { relation: SampleRelation }) {
           params={{ igsn: parsed.data }}
           className="font-medium break-all text-sky-800 underline"
         >
-          {targetTitle}
+          {label}
         </Link>
       );
     }
@@ -56,15 +57,17 @@ function RelationTarget({ relation }: { relation: SampleRelation }) {
   if (href !== null) {
     return (
       <ExternalLink href={href} className="font-medium break-all">
-        {targetTitle}
+        {label}
       </ExternalLink>
     );
   }
 
   return (
     <>
-      <span className="font-medium break-all">{targetTitle}</span>
-      <span className="text-muted-foreground break-all">{identifier}</span>
+      <span className="font-medium break-all">{label}</span>
+      {targetTitle === null ? null : (
+        <span className="text-muted-foreground break-all">{identifier}</span>
+      )}
     </>
   );
 }

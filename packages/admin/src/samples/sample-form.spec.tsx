@@ -1464,6 +1464,25 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should restore the availability to available when the existence status allows it again", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
+    const existence = screen.getByRole("combobox", {
+      name: /existence status/i,
+    });
+    await existence.click();
+    await screen.getByRole("option", { name: "Lost", exact: true }).click();
+    await existence.click();
+    await screen.getByRole("option", { name: "Exists", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: /availability status/i }))
+      .toHaveTextContent("Available");
+  });
+
   it("should render a link action as an anchor to the public page", async () => {
     const screen = await render(
       <SampleForm

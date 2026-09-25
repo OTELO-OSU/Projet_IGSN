@@ -175,7 +175,7 @@ type SampleRelationTable = {
   relation_type: string;
   identifier_type: string;
   identifier: string;
-  target_title: string;
+  target_title: string | null;
   target_resource_type: string | null;
   related_metadata_scheme: string | null;
   scheme_uri: string | null;
