@@ -7,6 +7,7 @@ import type ExcelJS from "exceljs";
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 
 import type { Column } from "./columns.ts";
+import type { ConditionalCondition } from "./conditional-fields.ts";
 import type {
   LayoutColumn,
   LayoutSheet,
@@ -26,7 +27,7 @@ import {
   conditionOf,
   driverIndexOf,
 } from "./conditional-fields.ts";
-import { resolveLabel } from "./resolve-label.ts";
+import { labelOf, resolveLabel } from "./resolve-label.ts";
 import { blockIdOf, FIRST_DATA_ROW } from "./workbook.ts";
 
 type Cell = string | Date;
@@ -133,6 +134,32 @@ const templateColumnsOf = (name: string): readonly Column[] =>
 const cellOf = (row: SheetRow, matches: (column: DataColumn) => boolean) =>
   [...row.cells].find(([column]) => matches(column))?.[1];
 
+function driverLabel(
+  template: readonly Column[],
+  row: SheetRow,
+  condition: ConditionalCondition,
+): string | undefined {
+  const cell = cellOf(
+    row,
+    (candidate) =>
+      candidate.path === condition.path && candidate.level === condition.level,
+  );
+  if (cell === undefined) return undefined;
+  const text = textOf(cell);
+  const driver = template[driverIndexOf(template, condition)];
+  const blockId = driver && blockIdOf(driver);
+  if (driver === undefined || blockId === undefined) return text;
+  const levels = hierarchiesOf(template).find((candidate) =>
+    candidate.includes(driver),
+  );
+  const resolved =
+    levels === undefined
+      ? { path: resolveLabel(blockId, "", text) }
+      : hierarchyValue(levels.slice(0, condition.level), row);
+  const code = "path" in resolved ? resolved.path : undefined;
+  return (code && labelOf(blockId, code)) ?? text;
+}
+
 function inapplicableColumns(sheet: LayoutSheet, row: SheetRow): DataColumn[] {
   const template = templateColumnsOf(sheet.name);
   return [...row.cells.keys()].filter((column) =>
@@ -142,14 +169,8 @@ function inapplicableColumns(sheet: LayoutSheet, row: SheetRow): DataColumn[] {
         return false;
       if (!field.paths.some((path) => isPathAtOrUnder(column.path, path)))
         return false;
-      const driver = cellOf(
-        row,
-        (candidate) =>
-          candidate.path === condition.path &&
-          candidate.level === condition.level,
-      );
-      const applies =
-        typeof driver === "string" && condition.values.includes(driver);
+      const driver = driverLabel(template, row, condition);
+      const applies = driver !== undefined && condition.values.includes(driver);
       return condition.match === "is" ? !applies : applies;
     }),
   );

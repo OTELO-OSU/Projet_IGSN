@@ -1,3 +1,5 @@
+import { inflateRawSync } from "node:zlib";
+
 const END_OF_DIRECTORY_SIGNATURE = 0x06054b50;
 
 const DIRECTORY_ENTRY_SIGNATURE = 0x02014b50;
@@ -12,6 +14,12 @@ const ZIP64_COUNT = 0xffff;
 
 const ZIP64_SIZE = 0xffffffff;
 
+const LOCAL_HEADER_SIZE = 30;
+
+const STORED = 0;
+
+const DEFLATED = 8;
+
 export const MAX_UNZIPPED_BYTES = 100 * 1024 * 1024;
 
 function endOfDirectory(view: DataView): number | undefined {
@@ -24,8 +32,35 @@ function endOfDirectory(view: DataView): number | undefined {
   return undefined;
 }
 
-// ponytail: declared sizes only, a lying archive still inflates; count inflated bytes if the exceljs read path gets audited
-export function fitsUnzippedCap(bytes: Uint8Array): boolean {
+function inflatedSize(
+  bytes: Uint8Array,
+  view: DataView,
+  entry: number,
+  remaining: number,
+): number | undefined {
+  const method = view.getUint16(entry + 10, true);
+  const compressed = view.getUint32(entry + 20, true);
+  if (method === STORED) return compressed;
+  if (method !== DEFLATED) return undefined;
+  try {
+    const local = view.getUint32(entry + 42, true);
+    const start =
+      local +
+      LOCAL_HEADER_SIZE +
+      view.getUint16(local + 26, true) +
+      view.getUint16(local + 28, true);
+    return inflateRawSync(bytes.subarray(start, start + compressed), {
+      maxOutputLength: remaining,
+    }).length;
+  } catch {
+    return undefined;
+  }
+}
+
+export function fitsUnzippedCap(
+  bytes: Uint8Array,
+  cap = MAX_UNZIPPED_BYTES,
+): boolean {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const end = endOfDirectory(view);
   if (end === undefined) return false;
@@ -41,8 +76,13 @@ export function fitsUnzippedCap(bytes: Uint8Array): boolean {
     )
       return false;
     const size = view.getUint32(position + 24, true);
+    if (
+      size === ZIP64_SIZE ||
+      inflatedSize(bytes, view, position, cap - total) !== size
+    )
+      return false;
     total += size;
-    if (size === ZIP64_SIZE || total > MAX_UNZIPPED_BYTES) return false;
+    if (total > cap) return false;
     position +=
       DIRECTORY_ENTRY_SIZE +
       view.getUint16(position + 28, true) +

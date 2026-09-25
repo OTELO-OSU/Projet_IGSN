@@ -3,6 +3,7 @@ import type { z } from "zod";
 
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import { publishBlockerSchema } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
 import type { Column } from "./columns.ts";
 import type { SampleCandidate } from "./read-rows.ts";
@@ -31,10 +32,10 @@ function columnAt(
   return undefined;
 }
 
-function issueOf(
+function placeOf(
   sample: SampleCandidate,
-  { path, code, message, ...issue }: z.core.$ZodIssue,
-): ImportIssue {
+  path: readonly PropertyKey[],
+): Omit<ImportIssue, "code"> {
   const keys = path.map(String);
   const source = prefixesOf(keys)
     .map((prefix) => sample.rowsByPath[prefix])
@@ -53,16 +54,53 @@ function issueOf(
     (found === undefined || found.sheet === SHEETS.samples
       ? { sheet: SHEETS.samples, row: sample.row }
       : { sheet: found.sheet });
-  const blocker =
+  return {
+    ...place,
+    ...(found === undefined ? {} : { column: plainHeader(found.column) }),
+  };
+}
+
+function issueOf(
+  sample: SampleCandidate,
+  { path, code, message, ...issue }: z.core.$ZodIssue,
+): ImportIssue {
+  const domainCode =
     "params" in issue && typeof issue.params?.code === "string"
       ? issue.params.code
       : undefined;
   return {
-    ...place,
-    ...(found === undefined ? {} : { column: plainHeader(found.column) }),
-    ...(blocker === undefined ? { code, message } : { code: blocker }),
+    ...placeOf(sample, path),
+    code: domainCode ?? code,
+    ...(publishBlockerSchema.safeParse(domainCode).success ? {} : { message }),
   };
 }
+
+function leavesOf(value: unknown, path: readonly string[] = []): string[][] {
+  return value !== null && typeof value === "object"
+    ? Object.entries(value).flatMap(([key, inner]) =>
+        leavesOf(inner, [...path, key]),
+      )
+    : [[...path]];
+}
+
+const valueAt = (value: unknown, path: readonly string[]): unknown =>
+  path.reduce<unknown>(
+    (inner, key) =>
+      inner !== null && typeof inner === "object"
+        ? (inner as Record<string, unknown>)[key]
+        : undefined,
+    value,
+  );
+
+const droppedIssues = (sample: SampleCandidate, parsed: unknown) =>
+  leavesOf(sample.input)
+    .filter((path) => valueAt(parsed, path) === undefined)
+    .map(
+      (path): ImportIssue => ({
+        ...placeOf(sample, path),
+        code: "not_applicable",
+      }),
+    );
 
 export function sampleIssues(
   samples: readonly SampleCandidate[],
@@ -70,7 +108,7 @@ export function sampleIssues(
   return samples.flatMap((sample) => {
     const parsed = publishedSampleSchema.safeParse(sample.input);
     return parsed.success
-      ? []
+      ? droppedIssues(sample, parsed.data)
       : parsed.error.issues.map((issue) => issueOf(sample, issue));
   });
 }

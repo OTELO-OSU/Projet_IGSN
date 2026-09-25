@@ -330,6 +330,35 @@ describe("app", () => {
       },
     );
 
+    pgTest(
+      "should throttle the import on the import template's budget, per user",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const headersOf = (token: string) => ({
+          Authorization: `Bearer ${token}`,
+        });
+        const importFrom = (token: string) =>
+          app.request("/admin/samples/import", {
+            method: "POST",
+            headers: headersOf(token),
+          });
+
+        await spend(
+          () => importFrom("user-7"),
+          IMPORT_TEMPLATE_USER_BUDGET.points,
+        );
+        expect((await importFrom("user-7")).status).toBe(429);
+        expect(
+          (
+            await app.request("/admin/samples/import-template?rows=0", {
+              headers: headersOf("user-7"),
+            })
+          ).status,
+        ).toBe(429);
+        expect((await importFrom("user-8")).status).not.toBe(429);
+      },
+    );
+
     pgTest("should let a browser read the 429 headers", async ({ db }) => {
       const app = createApp(db).app;
       const from = () =>

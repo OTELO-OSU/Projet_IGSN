@@ -49,6 +49,7 @@ describe("readRows", () => {
     fill(book, SHEETS.samples, 3, {
       Nature: "hand_sample",
       "Material (level 2)": "rock",
+      "Position type": "point",
     });
 
     expect(read(book)).toEqual(CLEAN);

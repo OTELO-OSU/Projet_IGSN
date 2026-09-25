@@ -1,10 +1,10 @@
+import { pathSegment } from "@projet-igsn/domain/sample/path/segment";
+
 import { VOCABULARY_BLOCKS } from "./vocabulary-sheet.ts";
 
 type Codes = ReadonlyMap<string, ReadonlyMap<string, string>>;
 
 const parentOf = (path: string) => path.split(".").slice(0, -1).join(".");
-
-const segmentOf = (path: string) => path.split(".").at(-1) ?? path;
 
 function codesOf(rows: (typeof VOCABULARY_BLOCKS)[number]["rows"]): Codes {
   const byParent = new Map<string, Map<string, string>>();
@@ -15,7 +15,7 @@ function codesOf(rows: (typeof VOCABULARY_BLOCKS)[number]["rows"]): Codes {
     );
   for (const [key, , path] of rows) {
     if (path === "") add("", key, key);
-    else add(parentOf(path), segmentOf(path), path);
+    else add(parentOf(path), pathSegment(path), path);
   }
   for (const [key, label, path] of rows) {
     add(path === "" ? "" : parentOf(path), label, path === "" ? key : path);
@@ -34,3 +34,8 @@ export function resolveLabel(
 ): string | undefined {
   return CODES.get(blockId)?.get(parentPath)?.get(value);
 }
+
+export const labelOf = (blockId: string, code: string): string | undefined =>
+  VOCABULARY_BLOCKS.find((block) => block.id === blockId)?.rows.find(
+    ([key, , path]) => (path === "" ? key : path) === code,
+  )?.[1];

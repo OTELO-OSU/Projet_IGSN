@@ -68,6 +68,28 @@ describe("sampleIssues", () => {
           row: 3,
           column: "Identifier",
           code: "relation_identifier_doi",
+          message: expect.any(String),
+        },
+      ],
+    ],
+    [
+      "a filled cell the sample's provenance branch drops",
+      (book) => {
+        fill(book, SHEETS.samples, 4, {
+          ...COLLECTION_SPECIMEN,
+          "Collection origin": "scientific_expedition",
+        });
+        fill(book, SHEETS.funderOrganizations, 3, {
+          "Sample #": 2,
+          "Funder organization": "03fd77x13",
+        });
+      },
+      [
+        {
+          sheet: SHEETS.funderOrganizations,
+          row: 3,
+          column: "Funder organization",
+          code: "not_applicable",
         },
       ],
     ],

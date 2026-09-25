@@ -1,26 +1,47 @@
+import { deflateRawSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 
-import { fitsUnzippedCap, MAX_UNZIPPED_BYTES } from "./unzipped-size.ts";
+import { fitsUnzippedCap } from "./unzipped-size.ts";
 import { importTemplateWorkbook } from "./workbook.ts";
 
-const ENTRY_SIZE = 46;
+const CAP = 1024;
 
-const EOCD_SIZE = 22;
+const DEFLATED = 8;
 
-const archiveDeclaring = (sizes: readonly number[]) => {
-  const directory = sizes.length * ENTRY_SIZE;
-  const bytes = new Uint8Array(directory + EOCD_SIZE);
-  const view = new DataView(bytes.buffer);
-  for (const [index, size] of sizes.entries()) {
-    view.setUint32(index * ENTRY_SIZE, 0x02014b50, true);
-    view.setUint32(index * ENTRY_SIZE + 24, size, true);
-  }
-  view.setUint32(directory, 0x06054b50, true);
-  view.setUint16(directory + 10, sizes.length, true);
-  view.setUint32(directory + 12, directory, true);
-  view.setUint32(directory + 16, 0, true);
-  return bytes;
-};
+type Entry = { data: Uint8Array; size: number; method?: number };
+
+const deflated = (size: number): Entry => ({
+  data: deflateRawSync(Buffer.alloc(size)),
+  size,
+});
+
+function zipOf(entries: readonly Entry[]): Uint8Array {
+  const locals = entries.map(({ data, size, method = DEFLATED }) => {
+    const header = Buffer.alloc(30);
+    header.writeUInt32LE(0x04034b50, 0);
+    header.writeUInt16LE(method, 8);
+    header.writeUInt32LE(data.length, 18);
+    header.writeUInt32LE(size, 22);
+    return Buffer.concat([header, data]);
+  });
+  let offset = 0;
+  const directory = entries.map(({ data, size, method = DEFLATED }, index) => {
+    const entry = Buffer.alloc(46);
+    entry.writeUInt32LE(0x02014b50, 0);
+    entry.writeUInt16LE(method, 10);
+    entry.writeUInt32LE(data.length, 20);
+    entry.writeUInt32LE(size, 24);
+    entry.writeUInt32LE(offset, 42);
+    offset += locals[index]?.length ?? 0;
+    return entry;
+  });
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(entries.length, 10);
+  end.writeUInt32LE(directory.length * 46, 12);
+  end.writeUInt32LE(offset, 16);
+  return new Uint8Array(Buffer.concat([...locals, ...directory, end]));
+}
 
 describe("fitsUnzippedCap", () => {
   it("should accept the generated template", async () => {
@@ -29,13 +50,29 @@ describe("fitsUnzippedCap", () => {
     expect(fitsUnzippedCap(template)).toBe(true);
   });
 
+  it("should accept an archive inflating within the cap", () => {
+    expect(fitsUnzippedCap(zipOf([deflated(CAP / 2)]), CAP)).toBe(true);
+  });
+
   it.each([
     [
-      "an archive whose entries together declare more than the cap",
-      archiveDeclaring([MAX_UNZIPPED_BYTES / 2, MAX_UNZIPPED_BYTES / 2 + 1]),
+      "an entry declaring 1 byte that inflates past the cap",
+      zipOf([{ data: deflateRawSync(Buffer.alloc(CAP * 2)), size: 1 }]),
+    ],
+    [
+      "entries that together inflate past the cap",
+      zipOf([deflated(CAP / 2 + 1), deflated(CAP / 2)]),
+    ],
+    [
+      "an entry inflating to another size than it declares",
+      zipOf([{ data: deflateRawSync(Buffer.alloc(10)), size: 1 }]),
+    ],
+    [
+      "an entry compressed with an unsupported method",
+      zipOf([{ ...deflated(10), method: 12 }]),
     ],
     ["bytes that are not a zip archive", new TextEncoder().encode("a,b\n1,2")],
   ])("should refuse %s", (_, bytes) => {
-    expect(fitsUnzippedCap(bytes)).toBe(false);
+    expect(fitsUnzippedCap(bytes, CAP)).toBe(false);
   });
 });

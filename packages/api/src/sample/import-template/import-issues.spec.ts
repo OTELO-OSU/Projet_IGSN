@@ -13,7 +13,7 @@ describe("importIssues", () => {
   it("should answer unreadable_file for bytes that are no workbook", async () => {
     expect(
       await importIssues(new TextEncoder().encode("a,b\n1,2").buffer),
-    ).toEqual([{ sheet: "", code: "unreadable_file" }]);
+    ).toEqual([{ code: "unreadable_file" }]);
   });
 
   it("should stop at a structural issue before reading any row", async () => {
