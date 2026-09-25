@@ -64,7 +64,7 @@ const READ_ME_LINES = [
   `A greyed cell does not apply to the row as you filled it, so leave it empty.`,
 ];
 
-const blockIdOf = (column: Column) =>
+export const blockIdOf = (column: Column): string | undefined =>
   column.block === undefined
     ? undefined
     : column.level === undefined
