@@ -7,7 +7,7 @@ import type { DB } from "../../db.ts";
 
 import { createApp } from "../../app.ts";
 import { pgTest } from "../../tests/pg-test.ts";
-import { DEFAULT_TEMPLATE_ROWS, MAX_TEMPLATE_ROWS, SHEETS } from "./columns.ts";
+import { MAX_IMPORT_ROWS, SHEETS } from "./columns.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 
@@ -18,7 +18,7 @@ const download = (db: Kysely<DB>, query = "") =>
 
 describe("import template route", () => {
   pgTest(
-    "should answer the xlsx template numbered to the default row count",
+    "should answer the xlsx template numbered up to the import row cap by default",
     async ({ db }) => {
       const res = await download(db);
       const book = new ExcelJS.Workbook();
@@ -36,7 +36,7 @@ describe("import template route", () => {
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         disposition: 'attachment; filename="igsn-sample-import-template.xlsx"',
         sniff: "nosniff",
-        sampleRows: DEFAULT_TEMPLATE_ROWS,
+        sampleRows: MAX_IMPORT_ROWS,
       });
     },
     30_000,
@@ -50,7 +50,7 @@ describe("import template route", () => {
     expect(res.status).toBe(401);
   });
 
-  pgTest.for(["0", "1.5", String(MAX_TEMPLATE_ROWS + 1)])(
+  pgTest.for(["0", "1.5", String(MAX_IMPORT_ROWS + 1)])(
     "should refuse the rows parameter %s",
     async (rows, { db }) => {
       const res = await download(db, `?rows=${rows}`);

@@ -17,10 +17,7 @@ import { z } from "zod";
 
 import { idParamSchema, validateUuidIdParam } from "../uuid-param.ts";
 import { zodValidator } from "../zod-validator.ts";
-import {
-  DEFAULT_TEMPLATE_ROWS,
-  MAX_TEMPLATE_ROWS,
-} from "./import-template/columns.ts";
+import { MAX_IMPORT_ROWS } from "./import-template/columns.ts";
 import { uploadLimit } from "./upload-limit.ts";
 
 const igsnParamSchema = z.object({ igsn: igsnSchema });
@@ -64,14 +61,14 @@ const importTemplateQuerySchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(MAX_TEMPLATE_ROWS)
-    .default(DEFAULT_TEMPLATE_ROWS),
+    .max(MAX_IMPORT_ROWS)
+    .default(MAX_IMPORT_ROWS),
 });
 
 export const validateImportTemplateQuery = zodValidator(
   "query",
   importTemplateQuerySchema,
-  `"rows" must be a whole number between 1 and ${MAX_TEMPLATE_ROWS}`,
+  `"rows" must be a whole number between 1 and ${MAX_IMPORT_ROWS}`,
 );
 
 export const validateListQuery = validator("query", (value, c) => {

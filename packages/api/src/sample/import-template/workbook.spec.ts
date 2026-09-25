@@ -6,7 +6,7 @@ import {
   CHILD_SHEETS,
   COLUMN_GROUPS,
   DATA_SHEETS,
-  DEFAULT_TEMPLATE_ROWS,
+  MAX_IMPORT_ROWS,
   SAMPLE_COLUMNS,
   SHEETS,
   TEMPLATE_VERSION,
@@ -167,7 +167,7 @@ describe("import template workbook", () => {
   });
 
   it("should key a child row on a sample number of the Samples sheet and fill the name beside it by lookup", () => {
-    const lastRow = DEFAULT_TEMPLATE_ROWS + HEADER_ROW;
+    const lastRow = MAX_IMPORT_ROWS + HEADER_ROW;
 
     expect(
       CHILD_SHEETS.map((child) => ({
@@ -247,6 +247,26 @@ describe("import template workbook", () => {
     expect(
       sheetValidations(storage).find(`C${FIRST_DATA_ROW}`)?.formulae,
     ).toEqual([`=${BLOCK_PLACEMENTS.storage_condition?.labelRange}`]);
+  });
+
+  it("should keep every validation formula within Excel's 255-character limit", () => {
+    const tooLong = book.worksheets.flatMap((worksheet) =>
+      Object.entries(
+        (
+          worksheet as unknown as {
+            dataValidations: {
+              model: Record<string, { formulae?: string[] }>;
+            };
+          }
+        ).dataValidations.model,
+      ).flatMap(([address, { formulae = [] }]) =>
+        formulae
+          .filter((formula) => String(formula).length > 255)
+          .map(() => `${worksheet.name}!${address}`),
+      ),
+    );
+
+    expect(tooLong).toEqual([]);
   });
 
   it("should cascade the material level 2 dropdown off the level 2 vocabulary block", () => {

@@ -118,7 +118,7 @@ const hierarchy = (
     return segments
       .slice(0, -1)
       .map((_, index) => label(segments.slice(0, index + 1).join(".")))
-      .join(" > ");
+      .join(">");
   };
   return Array.from({ length: depthOf(paths) }, (_, index) => {
     const level = index + 1;

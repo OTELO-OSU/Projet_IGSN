@@ -4,10 +4,9 @@ import type { Column } from "./columns.ts";
 import type { ConditionalCondition } from "./conditional-fields.ts";
 
 import { queueBuild } from "./build-queue.ts";
-import { cacheBuild } from "./cache-build.ts";
 import {
   CHILD_SHEETS,
-  DEFAULT_TEMPLATE_ROWS,
+  MAX_IMPORT_ROWS,
   SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
   SHEETS,
@@ -90,7 +89,7 @@ const breadcrumbOf = (
         ? [`$${columnLetter(sheet, index)}${FIRST_DATA_ROW}`]
         : [],
     )
-    .join('&" > "&');
+    .join('&">"&');
 
 function vocabularyValidationOf(
   sheet: ExcelJS.Worksheet,
@@ -106,7 +105,7 @@ function vocabularyValidationOf(
   let follows = "";
   if ((column.level ?? 1) > 1) {
     const breadcrumb = breadcrumbOf(sheet, columns, column);
-    formula = `=OFFSET(${labelAnchor}, MATCH(${breadcrumb}, ${keyRange}, 0)-1, 0, COUNTIF(${keyRange}, ${breadcrumb}), 1)`;
+    formula = `=OFFSET(${labelAnchor},MATCH(${breadcrumb},${keyRange},0)-1,0,COUNTIF(${keyRange},${breadcrumb}),1)`;
     follows = ", which follows the level above";
   }
   return {
@@ -285,13 +284,10 @@ async function build(rows: number): Promise<ExcelBuffer> {
   return book.xlsx.writeBuffer();
 }
 
-const cachedDefault = cacheBuild(() => build(DEFAULT_TEMPLATE_ROWS));
-
 export function importTemplateWorkbook(
-  rows: number = DEFAULT_TEMPLATE_ROWS,
+  rows: number = MAX_IMPORT_ROWS,
 ): Promise<ExcelBuffer> {
-  if (rows !== DEFAULT_TEMPLATE_ROWS) return queueBuild(() => build(rows));
-  return cachedDefault();
+  return queueBuild(() => build(rows));
 }
 
 const IMPORT_TEMPLATE_MEDIA_TYPE =
