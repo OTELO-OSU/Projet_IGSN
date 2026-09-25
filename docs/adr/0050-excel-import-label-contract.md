@@ -12,7 +12,7 @@ Phase 3 of the Excel bulk import parses and validates the workbook a researcher 
 
 ## Decision
 
-- Columns are matched by header name on row 2, never by position: a reordered or inserted column is survivable, a renamed or deleted one is not.
+- Columns are matched by header name on row 2, never by position: a reordered or inserted column is survivable, and a renamed one reads as deleted.
 - No template version check. The workbook drops its version gate: the template is meant to become customisable, so pinning parsing to one generated version would break on the first customisation.
 - Only two kinds of column make the whole file unprocessable if absent: `Sample #`, and the columns `required-columns.ts` derives from the domain (`createSampleSchema`'s own required fields plus the unconditional publish blockers, hierarchies included down to their publish frontier). Conditional fields are excluded even when always-required in some branch. Any other missing column just leaves that field out of every row, reported per row instead if a row still needs it.
 - Vocabulary labels are resolved per parent, from the same blocks the template generator writes (`vocabulary-sheet.ts`), so the generator and the parser never drift apart. A raw snake_case code or dot-path is also accepted where a label is expected, since tolerating a power user typing it costs nothing.

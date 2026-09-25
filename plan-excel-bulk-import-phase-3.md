@@ -11,7 +11,7 @@ Still no DB writes: a clean file answers 202 as today (phase 4 turns that into t
 
 New `packages/domain/src/sample/import/import-report.ts`:
 
-- `importIssueCodeSchema`: `z.enum` of the import's own codes: `unreadable_file`, `missing_sheet`, `missing_column`, `duplicate_column`, `no_sample`, `too_many_rows`, `missing_sample_key`, `duplicate_sample_key`, `unknown_sample_key`, `unknown_value`, `parent_level_missing`, `not_a_number`, `not_a_date`, `not_applicable`, `duplicate_value`.
+- `importIssueCodeSchema`: `z.enum` of the import's own codes: `unreadable_file`, `missing_sheet`, `missing_column`, `duplicate_column`, `no_sample`, `too_many_rows`, `missing_sample_key`, `duplicate_sample_key`, `unknown_sample_key`, `unknown_value`, `parent_level_missing`, `not_a_number`, `not_applicable`, `duplicate_value`.
 - `importIssueSchema`: `{ sheet, row?, column?, code: string, message? }`. `code` is an import code, a publish blocker, a domain `params.code` (e.g. `collection_date_order`) or a zod issue code; `message` carries zod's text for the last kind.
 - `invalidImportSchema`: `{ error: "Invalid import", issues: importIssue[] }`, parsed by admin.
 
