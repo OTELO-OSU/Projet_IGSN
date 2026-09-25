@@ -21,7 +21,6 @@ const IMPORT_ISSUE_LABELS: Record<ImportIssueCode, () => string> = {
   unknown_value: m.import_issue_unknown_value,
   parent_level_missing: m.import_issue_parent_level_missing,
   not_a_number: m.import_issue_not_a_number,
-  not_a_date: m.import_issue_not_a_date,
   not_applicable: m.import_issue_not_applicable,
   duplicate_value: m.import_issue_duplicate_value,
 };

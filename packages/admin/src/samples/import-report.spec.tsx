@@ -15,7 +15,7 @@ describe("ImportReport", () => {
         issues={[
           { sheet: "Samples", row: 3, column: "Nature", code: "unknown_value" },
           { sheet: "Storage", column: "Sample #", code: "missing_column" },
-          { sheet: "Samples", row: 5, code: "not_a_date" },
+          { sheet: "Samples", row: 5, code: "not_a_number" },
         ]}
       />,
     );
@@ -34,13 +34,26 @@ describe("ImportReport", () => {
     ).toEqual([
       ["Row", "Column", "Problem"],
       ["3", "Nature", "This value is not one of the choices of the list."],
-      ["5", "", "This value is not a date."],
+      ["5", "", "This value is not a number."],
     ]);
     expect(
       cellTexts(screen.getByRole("table", { name: "Storage" }).element()),
     ).toEqual([
       ["Row", "Column", "Problem"],
       ["", "Sample #", "This required column is missing from the sheet."],
+    ]);
+  });
+
+  it("should group an issue naming no sheet under the file", async () => {
+    const screen = await render(
+      <ImportReport issues={[{ code: "unreadable_file" }]} />,
+    );
+
+    expect(
+      cellTexts(screen.getByRole("table", { name: "File" }).element()),
+    ).toEqual([
+      ["Row", "Column", "Problem"],
+      ["", "", "This file cannot be read as an Excel workbook."],
     ]);
   });
 

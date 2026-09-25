@@ -27,35 +27,38 @@ export function ImportReport({ issues }: { issues: ImportIssue[] }) {
       <p id={`${id}-intro`} className="text-destructive">
         {m.import_report_intro()}
       </p>
-      {[...Map.groupBy(issues, (issue) => issue.sheet)].map(
-        ([sheet, sheetIssues], index) => (
-          <div key={sheet} className="grid gap-2">
-            <h3 id={`${id}-${index}`} className="font-semibold">
-              {sheet}
-            </h3>
-            <Table aria-labelledby={`${id}-${index}`}>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{m.import_report_row()}</TableHead>
-                  <TableHead>{m.import_report_column()}</TableHead>
-                  <TableHead>{m.import_report_problem()}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sheetIssues.map((issue) => (
-                  <TableRow key={issueKey(issue)}>
-                    <TableCell>{issue.row}</TableCell>
-                    <TableCell>{issue.column}</TableCell>
-                    <TableCell className="whitespace-normal">
-                      {importIssueLabel(issue)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+      {[
+        ...Map.groupBy(
+          issues,
+          (issue) => issue.sheet ?? m.import_report_file(),
         ),
-      )}
+      ].map(([sheet, sheetIssues], index) => (
+        <div key={sheet} className="grid gap-2">
+          <h3 id={`${id}-${index}`} className="font-semibold">
+            {sheet}
+          </h3>
+          <Table aria-labelledby={`${id}-${index}`}>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{m.import_report_row()}</TableHead>
+                <TableHead>{m.import_report_column()}</TableHead>
+                <TableHead>{m.import_report_problem()}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sheetIssues.map((issue) => (
+                <TableRow key={issueKey(issue)}>
+                  <TableCell>{issue.row}</TableCell>
+                  <TableCell>{issue.column}</TableCell>
+                  <TableCell className="whitespace-normal">
+                    {importIssueLabel(issue)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ))}
     </section>
   );
 }
