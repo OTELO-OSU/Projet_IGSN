@@ -1,3 +1,4 @@
+import { adminPage } from "../support/admin/admin.page";
 import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
@@ -139,11 +140,12 @@ test.describe("sub samples", () => {
     await detail.goto(parent.igsn);
     await header.signIn();
     await completeIdpLogin(strangerPage, RESEARCHERS.jean);
-    await header.expectSignedIn();
+    await adminPage(strangerPage).expectSignedIn();
 
     const accessAnswered = header.accessAnswered(parent.id);
     await detail.goto(parent.igsn);
     await accessAnswered;
+    await header.expectSignedIn();
     await header.expectNoEditLink();
 
     await detail.addSubSample();

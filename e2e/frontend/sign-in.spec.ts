@@ -1,4 +1,5 @@
 import { adminPage } from "../support/admin/admin.page";
+import { institutionalGroupsPage } from "../support/admin/institutional-groups.page";
 import {
   RESEARCHERS,
   completeIdpLogin,
@@ -10,7 +11,7 @@ import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { adminUrl } from "../support/urls";
 
 test.describe("sign in from the public frontend", () => {
-  test("a researcher signs in from a sample page and edits their own sample in admin", async ({
+  test("a researcher signs in from a sample page, lands in admin and edits their own sample", async ({
     page,
     samples,
   }) => {
@@ -26,7 +27,9 @@ test.describe("sign in from the public frontend", () => {
 
     await header.signIn();
     await completeIdpLogin(page, RESEARCHERS.jean);
+    await adminPage(page).expectSignedIn();
 
+    await detail.goto(own.igsn);
     await detail.expectSample(own.name, own.igsn);
     await header.expectSignedIn();
     await header.expectGoToDashboardHref(adminUrl);
@@ -56,9 +59,10 @@ test.describe("sign in from the public frontend", () => {
     const header = headerPage(publicTab);
     const detail = sampleDetailPage(publicTab);
 
+    await publicTab.goto(`${adminUrl}/`);
+    await adminPage(publicTab).expectSignedIn();
     await detail.goto(own.igsn);
-    await header.signInWithExistingSession();
-    await detail.expectSample(own.name, own.igsn);
+    await header.expectSignedIn();
 
     await header.signOut();
     await header.expectSignedOut();
@@ -79,6 +83,8 @@ test.describe("sign in from the public frontend", () => {
     await detail.goto(own.igsn);
     await header.signIn();
     await completeIdpLogin(page, RESEARCHERS.jean);
+    await adminPage(page).expectSignedIn();
+    await detail.goto(own.igsn);
     await header.expectEditHref(`${adminUrl}/samples/${own.id}`);
 
     const adminTab = await page.context().newPage();
@@ -89,5 +95,19 @@ test.describe("sign in from the public frontend", () => {
 
     await header.expectSignedOut();
     await header.expectNoEditLink();
+  });
+
+  test("a researcher with no institution signing in from a sample page is asked for it in admin", async ({
+    page,
+    samples,
+  }) => {
+    const sample = sampleNamed(samples, "Basalt 42");
+    const header = headerPage(page);
+
+    await sampleDetailPage(page).goto(sample.igsn);
+    await header.signIn();
+    await completeIdpLogin(page, RESEARCHERS.theo);
+
+    await institutionalGroupsPage(page).expectShown();
   });
 });
