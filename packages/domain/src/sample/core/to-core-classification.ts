@@ -5,7 +5,6 @@ import type {
 } from "./core-classification-schema.ts";
 
 import { materialPathSchema } from "../material/classification.ts";
-import { isOtherMaterial } from "../material/is-other-material.ts";
 import { natureSchema } from "../nature.ts";
 import { sampleTypeSchema } from "../type/vocabulary.ts";
 import { toConcept } from "./concept.ts";
@@ -21,13 +20,7 @@ export function toCoreClassification(sample: Sample): CoreClassification {
     notation: N,
   ) => (id == null ? undefined : toConcept("scientificContext", id, notation));
   const contextCategories: CoreContextCategory[] = [
-    toConcept(
-      "material",
-      material,
-      isOtherMaterial(material)
-        ? (sample.materialOtherName ?? undefined)
-        : undefined,
-    ),
+    toConcept("material", material),
     optionalConcept("texture", sample.texture),
     optionalConcept("metamorphic-facies", sample.metamorphicFacies),
     optionalConcept("metamorphic-fabric", sample.metamorphicFabric),

@@ -164,30 +164,6 @@ describe("SampleView", () => {
     },
   );
 
-  it.each<[string, Partial<PublishedSample>, string[]]>([
-    [
-      "the other material free text as the last material step",
-      {
-        material: "rock_and_sediment.rock.other",
-        materialOtherName: "Fossilized wood",
-      },
-      ["Rock and sediment", "Rock", "Other", "Fossilized wood"],
-    ],
-    [
-      "no extra step when the sample has no free text",
-      { material: "rock_and_sediment.rock.igneous" },
-      ["Rock and sediment", "Rock", "Igneous"],
-    ],
-  ])("should show %s", async (_case, overrides, steps) => {
-    const screen = await render(<SampleView sample={sample(overrides)} />);
-
-    const items = screen
-      .getByRole("list", { name: "Material" })
-      .getByRole("listitem")
-      .elements();
-    expect(items.map((item) => item.textContent)).toEqual(steps);
-  });
-
   it.each<[string, Partial<PublishedSample>, (string | RegExp)[]]>([
     ["the translated nature", {}, ["Powder"]],
     [

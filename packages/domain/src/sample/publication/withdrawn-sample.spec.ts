@@ -10,13 +10,12 @@ const withdrawn: Sample = {
   nature: "hand_sample",
   type: "dredge",
   material: "rock_and_sediment.rock.other",
-  materialOtherName: "Volcanic breccia",
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,
   collectionMethod: "dredging",
   collectionMethodDescription: null,
-  specificName: null,
+  specificName: "Pitchstone",
   location: {
     position: { type: "point", longitude: 2.8, latitude: 45.5 },
     region: { kind: "country", country: "FR" },
@@ -77,7 +76,7 @@ describe("toWithdrawnSample", () => {
       nature: "hand_sample",
       type: "dredge",
       material: "rock_and_sediment.rock.other",
-      materialOtherName: "Volcanic breccia",
+      specificName: "Pitchstone",
       location: {
         region: { kind: "country", country: "FR" },
         localityName: "Mont-Dore",

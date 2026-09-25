@@ -56,7 +56,6 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
       nature: body.classification.natureOfSample.id,
       type: body.classification.sampleObjectTypes[0]?.id ?? null,
       material: material?.id ?? null,
-      materialOtherName: material?.notation ?? null,
       texture: bySchemeName("otelo:texture")?.id ?? null,
       metamorphicFacies: bySchemeName("otelo:metamorphic-facies")?.id ?? null,
       metamorphicFabric: bySchemeName("otelo:metamorphic-fabric")?.id ?? null,

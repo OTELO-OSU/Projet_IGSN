@@ -27,7 +27,6 @@ export type CardSample = Pick<
   | "nature"
   | "type"
   | "material"
-  | "materialOtherName"
   | "specificName"
   | "location"
   | "scientificContext"
@@ -67,7 +66,6 @@ export function typeNatureText(sample: CardSample): string | null {
 export function materialText(sample: CardSample): string | null {
   return joinPath([
     ...pathText(sample.material, materialPathLabel),
-    sample.materialOtherName,
     sample.specificName,
   ]);
 }

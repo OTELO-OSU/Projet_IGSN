@@ -19,7 +19,6 @@ const sample = {
   nature: "thin_section",
   type: null,
   material: null,
-  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,

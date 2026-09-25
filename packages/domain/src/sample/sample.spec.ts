@@ -13,7 +13,6 @@ const validSample = {
   nature: "thin_section",
   type: "core.section",
   material: null,
-  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,
@@ -55,7 +54,6 @@ describe("sampleSchema", () => {
       nature: "thin_section",
       type: "core.section",
       material: null,
-      materialOtherName: null,
       texture: null,
       metamorphicFacies: null,
       metamorphicFabric: null,
@@ -338,30 +336,6 @@ describe("createSampleSchema", () => {
       expect(result.success).toBe(false);
     },
   );
-
-  it("should accept a material free text on the other material", () => {
-    const result = createSampleSchema.safeParse({
-      name: "Other 1",
-      nature: "hand_sample",
-      material: "rock_and_sediment.rock.other",
-      materialOtherName: "Impactite",
-    });
-    expect(result).toMatchObject({ success: true });
-  });
-
-  it.each([
-    "rock_and_sediment.rock.igneous",
-    "rock_and_sediment.rock.sedimentary.clastic_sedimentary_rock.other",
-    null,
-  ])("should reject a material free text on the material %s", (material) => {
-    const result = createSampleSchema.safeParse({
-      name: "Other 1",
-      nature: "hand_sample",
-      material,
-      materialOtherName: "Impactite",
-    });
-    expect(result.success).toBe(false);
-  });
 
   it.each([
     ["rock_and_sediment.rock.unknown", null],

@@ -21,7 +21,7 @@ export function withdrawnSampleSections(
     nature,
     type,
     material,
-    materialOtherName,
+    specificName,
     location,
     collectorFirstname,
     collectorLastname,
@@ -49,7 +49,10 @@ export function withdrawnSampleSections(
             label={m.sample_field_material()}
             path={material}
             pathLabel={materialPathLabel}
-            suffix={materialOtherName}
+          />
+          <FieldRow
+            label={m.sample_field_specific_name()}
+            value={specificName}
           />
           <FieldRow
             label={m.card_field_location()}

@@ -21,7 +21,6 @@ const stored: Sample = {
   nature: "hand_sample",
   type: "core",
   material: "rock_and_sediment.rock.igneous.plutonic",
-  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,
@@ -111,7 +110,6 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     nature: "powder",
     type: "dredge",
     material: "rock_and_sediment.sediment",
-    materialOtherName: null,
     texture: null,
     metamorphicFacies: null,
     metamorphicFabric: null,
@@ -601,42 +599,6 @@ describe("mergePublishedEdit", () => {
         material:
           "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample",
         location: null,
-      });
-    });
-
-    it("takes the free text of the other material sent alongside it", () => {
-      const merged = mergePublishedEdit(
-        {
-          ...stored,
-          material: "rock_and_sediment.rock.other",
-          materialOtherName: "Stored breccia",
-        },
-        incoming({
-          material: "rock_and_sediment.rock.other",
-          materialOtherName: "Impactite",
-        }),
-      );
-      expect(merged).toMatchObject({
-        material: "rock_and_sediment.rock.other",
-        materialOtherName: "Impactite",
-      });
-    });
-
-    it("keeps the stored free text when the payload's material is rejected", () => {
-      const merged = mergePublishedEdit(
-        {
-          ...stored,
-          material: "rock_and_sediment.rock.other",
-          materialOtherName: "Stored breccia",
-        },
-        incoming({
-          material: "rock_and_sediment.sediment",
-          materialOtherName: "Impactite",
-        }),
-      );
-      expect(merged).toMatchObject({
-        material: "rock_and_sediment.rock.other",
-        materialOtherName: "Stored breccia",
       });
     });
 

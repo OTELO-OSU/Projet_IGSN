@@ -488,7 +488,7 @@ describe("public sample routes", () => {
           nature: "powder",
           type: "individual_sample",
           material: "rock_and_sediment.sediment.exogenous_detritic.clay",
-          materialOtherName: null,
+          specificName: "Rhyolite retirée 001",
           location: { region: null, localityName: null },
           collectorFirstname: null,
           collectorLastname: null,

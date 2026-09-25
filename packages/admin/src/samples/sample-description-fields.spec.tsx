@@ -553,7 +553,6 @@ describe("SampleDescriptionFields", () => {
         nature: "thin_section",
         type: null,
         material: "rock_and_sediment",
-        materialOtherName: null,
         collectionMethod: null,
         collectionMethodDescription: null,
         localId: null,

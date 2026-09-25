@@ -12,7 +12,6 @@ function sampleItem(overrides: Partial<CardSample> = {}): CardSample {
     nature: "powder",
     type: null,
     material: "rock_and_sediment.rock.igneous",
-    materialOtherName: null,
     specificName: null,
     location: null,
     scientificContext: null,
@@ -99,14 +98,6 @@ describe("SampleList", () => {
       "no trailing separator when the specific name is missing",
       { material: "rock_and_sediment.rock.igneous" },
       "Rock and sediment > Rock > Igneous",
-    ],
-    [
-      "the other material free text as the last step",
-      {
-        material: "rock_and_sediment.rock.other",
-        materialOtherName: "Fossilized wood",
-      },
-      "Rock and sediment > Rock > Other > Fossilized wood",
     ],
     [
       "the specific name alone when the sample is unclassified",

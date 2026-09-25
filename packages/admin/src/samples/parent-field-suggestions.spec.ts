@@ -15,7 +15,6 @@ const sample = (overrides: Partial<Sample>): Sample => ({
   nature: "thin_section",
   type: "dredge",
   material: "rock_and_sediment.mineral",
-  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,

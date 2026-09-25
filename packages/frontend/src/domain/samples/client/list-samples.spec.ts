@@ -12,7 +12,6 @@ const sampleJson = {
   nature: "hand_sample",
   type: null,
   material: "rock_and_sediment.rock.igneous",
-  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,

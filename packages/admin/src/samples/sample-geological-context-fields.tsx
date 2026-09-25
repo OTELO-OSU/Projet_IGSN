@@ -9,15 +9,6 @@ export function SampleGeologicalContextFields() {
   const form = useSampleForm();
   return (
     <div className="grid gap-4">
-      <form.AppField name="geologicalContextDescription">
-        {(field) => (
-          <field.TextField
-            label={m.field_geological_context_description()}
-            multiline
-          />
-        )}
-      </form.AppField>
-
       <form.AppField name="physiographicEnvironmentPath">
         {(field) => (
           <field.HierarchyField
@@ -28,6 +19,15 @@ export function SampleGeologicalContextFields() {
             searchPlaceholder={m.physiographic_environment_search_placeholder()}
             emptyText={m.physiographic_environment_empty()}
             {...HIERARCHY_FIELD_LABELS}
+          />
+        )}
+      </form.AppField>
+
+      <form.AppField name="geologicalContextDescription">
+        {(field) => (
+          <field.TextField
+            label={m.field_geological_context_description()}
+            multiline
           />
         )}
       </form.AppField>

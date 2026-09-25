@@ -45,7 +45,6 @@ type SampleTable = {
   nature: string | null;
   type: string | null;
   material: string | null;
-  material_other_name: string | null;
   texture: string | null;
   metamorphic_facies: string | null;
   metamorphic_fabric: string | null;

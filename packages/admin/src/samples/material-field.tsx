@@ -1,6 +1,5 @@
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
-import { isOtherMaterial } from "@projet-igsn/domain/sample/material/is-other-material";
 import { fabricsFor } from "@projet-igsn/domain/sample/metamorphic-fabric/vocabulary";
 import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
@@ -49,25 +48,6 @@ export function MaterialField() {
           />
         )}
       </form.AppField>
-
-      <form.Subscribe
-        selector={(state) =>
-          isOtherMaterial(composeHierarchyValue(state.values.materialPath))
-        }
-      >
-        {(isOther) =>
-          isOther ? (
-            <form.AppField name="materialOtherName">
-              {(field) => (
-                <field.TextField
-                  label={m.field_material_other_name()}
-                  requiredToPublish
-                />
-              )}
-            </form.AppField>
-          ) : null
-        }
-      </form.Subscribe>
     </>
   );
 }

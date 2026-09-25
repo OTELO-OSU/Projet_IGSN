@@ -46,7 +46,7 @@ const OTHER_MATERIAL_SAMPLE: Sample = {
   ...FIELD_SAMPLE,
   name: "Unidentified dark rock",
   material: "rock_and_sediment.rock.other",
-  materialOtherName: "Dark fine grained rock",
+  specificName: "Dark fine grained rock",
   texture: null,
 };
 

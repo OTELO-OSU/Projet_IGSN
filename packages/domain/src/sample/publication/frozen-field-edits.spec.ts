@@ -14,7 +14,6 @@ const EMPTY_SAMPLE_FIELDS = {
   localIdDescription: null,
   nature: null,
   type: null,
-  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,

@@ -479,7 +479,6 @@ const sampleRowSchema = sampleSchema
     nature: true,
     type: true,
     material: true,
-    materialOtherName: true,
     texture: true,
     metamorphicFacies: true,
     metamorphicFabric: true,
@@ -501,7 +500,6 @@ const sampleRowSchema = sampleSchema
   .partial({
     type: true,
     material: true,
-    materialOtherName: true,
     texture: true,
     metamorphicFacies: true,
     metamorphicFabric: true,
