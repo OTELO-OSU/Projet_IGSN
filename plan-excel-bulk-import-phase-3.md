@@ -65,13 +65,17 @@ What each change to the file does:
 
 - `Samples` (`missing_sheet`).
 - `Sample #`, on every data sheet present, since the references between sheets join on it.
-- An **always-required column**: one every sample must fill whatever else it holds, like `Name`, `Nature` or the collection date.
+- An **always-required column**: one every sample must fill to be published whatever else it holds, like `Name`, `Nature`, the collection date, or the material levels down to the publish frontier.
 
 **Always-required columns are derived, not listed** (`required-columns.ts` + spec), so they follow the domain like the rest of `columns.ts`:
 
 - Parse an empty candidate (`{}`) with `publishedSampleSchema` once at module load. The issue paths are exactly what a sample must hold when nothing triggers a condition: schema-required fields (`name`) and unconditional publish blockers (`nature`, `type`, `material`, `description.collectionDate`, `scientificContext.provenanceStatus`, `existenceStatus`, `availabilityStatus`).
 - Conditional blockers (`materialOtherName`, collector and chief scientist names, `location`, `collectionOrigin`) do not fire on an empty candidate, so they stay out.
-- An issue path maps to the `Samples` columns at or under it, keeping level 1 alone for a hierarchy and dropping any column governed by `CONDITIONAL_FIELDS` (so `Collection date time zone`, only for the hour precision, stays optional while precision, start and end are required).
+- An issue path maps to the `Samples` columns at or under it, dropping any column governed by `CONDITIONAL_FIELDS` (so `Collection date time zone`, only for the hour precision, stays optional while precision, start and end are required).
+- A hierarchy keeps its levels down to its **publish frontier**: the deepest level at which a path first becomes complete (`isMaterialComplete`, `isSampleTypeComplete`, the same functions the `*_incomplete` blockers call), i.e. the depth of the complete paths whose parent is not complete.
+  - Material: `Material (level 1)` to `(level 3)`, the tree's levels 0 to 2 (`rock_and_sediment`, its five kinds, then ADR 0037's niveau 1). `mineral` is complete at level 2, but the other kinds need level 3, so the column is required.
+  - Sample type: `Sample type (level 1)` and `(level 2)`.
+  - Deeper levels (material 4 to 9) stay optional columns.
 - The spec pins the resulting header list, so a domain change that makes a field required shows up in review.
 
 Every other absent column simply leaves its field out, and parsing proceeds to validation, which reports the consequences row by row:
