@@ -53,18 +53,18 @@ What each change to the file does:
 | Column moved                         | Found by name at its new position: no effect.                                                               |
 | Column inserted (unknown header)     | Ignored.                                                                                                    |
 | Optional column deleted              | Its field is left out of every sample.                                                                      |
-| `Sample #` or a `*` column deleted   | `missing_column` naming the expected header, then stop.                                                     |
+| `Sample #` deleted                   | `missing_column` naming the expected header, then stop.                                                     |
+| `*` column deleted                   | Not a structural error: only the rows that need it fail, in step 4, each issue naming the deleted column.   |
 | Column renamed                       | Same as deleting it plus inserting an unknown one.                                                          |
 | Same header twice in a sheet         | `duplicate_column`, then stop, since we cannot tell which to read.                                          |
-| Child sheet deleted                  | Fine unless it holds a `*` column (`missing_sheet`); `Samples` itself is mandatory.                         |
+| Child sheet deleted                  | Its fields are left out of every sample, like its columns; `Samples` itself is mandatory (`missing_sheet`). |
 | Rows inserted or deleted in the data | Harmless: rows are read wherever they are, and child rows join on the `Sample #` value, not the row number. |
 
-A missing column is never an error, with two exceptions, each giving one `missing_column` naming the expected header, then stop:
-
-- `Sample #`, on every data sheet present, since the references between sheets join on it.
-- A column required for publication: those `marked()` with `*` in `columns.ts` (level 1 for hierarchies), the same set the template shows the user as required.
+A missing column is never a structural error, with one exception: `Sample #`, on every data sheet present, since the references between sheets join on it. It gives one `missing_column`, then stop.
 
 Every other absent column simply leaves its field out, and the row-level steps report what that causes:
+
+- A column required for publication (`*`) is often required only in some cases (`Other material name` only for an "other" material, the chief scientist only for a field sample), so its absence fails only the rows whose publish blocker fires, in step 4. An always-required one (`Nature`) thus fails every filled row, each issue naming the deleted column.
 
 - A hierarchy whose level 2 is deleted while level 3 is kept: a filled level 3 cell gives `parent_level_missing` on that row.
 - A condition driver deleted (e.g. `Oriented sample`) while a governed column is kept: a filled governed cell gives `not_applicable` on that row.
@@ -92,7 +92,7 @@ Every other absent column simply leaves its field out, and the row-level steps r
 - `publishedSampleSchema.safeParse` per candidate: `createSampleSchema` plus the publish blockers, since a clean file imports as published.
 - Each zod issue becomes `{ sheet, row, column, code: params.code ?? code, message }`.
 - Sheet and row come from `rowsByPath` for an array path, else the sample's `Samples` row.
-- Column: the header of the first layout column at or under the issue path (`isPathAtOrUnder`), walking up the path until one matches, else none (blocker paths like `location.position`).
+- Column: the header of the first `columns.ts` column (not only the layout's, so a deleted column is still named) at or under the issue path (`isPathAtOrUnder`), walking up the path until one matches, else none (blocker paths like `location.position`).
 
 ### Route
 
@@ -101,8 +101,8 @@ Every other absent column simply leaves its field out, and the row-level steps r
 ### Specs and fixtures
 
 - Fixtures are built in the specs from `importTemplateWorkbook(3)`, filled and edited through exceljs, never committed binaries, so the headers never go stale.
-- `template-layout.spec.ts`: one case per row of the table above, a deleted `Sample #`, and a deleted `*` column.
-- `read-rows.spec.ts` also covers a hierarchy hole and a governed column without its driver.
+- `template-layout.spec.ts`: one case per row of the table above, and a deleted `Sample #`.
+- `read-rows.spec.ts` also covers a hierarchy hole and a governed column without its driver; `sample-issues.spec.ts` a deleted conditional `*` column failing only the row that needs it.
 - `read-rows.spec.ts` / `sample-issues.spec.ts`: clean file, clean file with columns reordered and an optional one deleted, bad vocabulary label, raw code accepted, dangling `Sample #`, publish blocker, wrong position branch; each asserts the exact issue list.
 - `route.spec.ts`: one 422 case asserting the body shape. Its current 202 case (the empty template) becomes the `no_sample` 422, and the clean fixture takes the 202.
 
@@ -115,7 +115,7 @@ Every other absent column simply leaves its field out, and the row-level steps r
 
 ## Docs
 
-- ADR `docs/adr/0050-excel-import-label-contract.md`: the template's contract is headers matched by name (only `Sample #` and `*` columns mandatory), labels resolved per parent, raw codes tolerated, whole-file rejection, validated and reported server-side only (rejected option: browser pre-validation, with its cost).
+- ADR `docs/adr/0050-excel-import-label-contract.md`: the template's contract is headers matched by name (only `Sample #` mandatory), labels resolved per parent, raw codes tolerated, whole-file rejection, validated and reported server-side only (rejected option: browser pre-validation, with its cost).
 - Update phase 3 in `plan-excel-bulk-import.md`: server-only report, row cap is `MAX_IMPORT_ROWS` (500), fixtures generated not committed.
 
 ## Verification
