@@ -7,7 +7,6 @@ import { EXISTENCE_STATUSES } from "@projet-igsn/domain/sample/curation/existenc
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { allowsSpecificName } from "@projet-igsn/domain/sample/material/allows-specific-name";
 import { isMetamorphicRock } from "@projet-igsn/domain/sample/material/is-metamorphic-rock";
-import { isOtherMaterial } from "@projet-igsn/domain/sample/material/is-other-material";
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { HAZARDS } from "@projet-igsn/domain/sample/security/model";
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
@@ -170,10 +169,6 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
   {
     paths: ["metamorphicFacies", "metamorphicFabric"],
     condition: material(3, "is", isMetamorphicRock),
-  },
-  {
-    paths: ["materialOtherName"],
-    condition: material(3, "is", isOtherMaterial),
   },
   {
     paths: ["specificName"],

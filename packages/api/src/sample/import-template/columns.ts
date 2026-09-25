@@ -135,7 +135,6 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
   ]),
   ...grouped("Sample classification", [
     ...tree("material", "material", "Material", TEMPLATE_MATERIAL_PATHS),
-    field("Other material name", "materialOtherName"),
     field("Texture", "texture", "texture"),
     field("Metamorphic facies", "metamorphicFacies", "metamorphic_facies"),
     field("Metamorphic fabrics", "metamorphicFabric", "metamorphic_fabric"),
