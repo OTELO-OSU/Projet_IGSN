@@ -20,7 +20,7 @@ import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relat
 import { Download, Trash2, Undo2 } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
-import { AttachmentDropZone } from "#/samples/attachment-drop-zone.tsx";
+import { FileDropZone } from "#/samples/file-drop-zone.tsx";
 import { relationTargetResourceTypeLabel } from "#/samples/sample-labels.ts";
 import {
   type AttachmentEdit,
@@ -242,7 +242,14 @@ export function SampleAttachments({
 
   return (
     <FormSection title={m.section_attachments()}>
-      {isDisabled ? null : <AttachmentDropZone onFiles={addFiles} />}
+      {isDisabled ? null : (
+        <FileDropZone
+          hint={m.attachment_drop_hint()}
+          browseLabel={m.action_browse_files()}
+          multiple
+          onFiles={addFiles}
+        />
+      )}
       <p
         className={cn(
           "text-sm",
