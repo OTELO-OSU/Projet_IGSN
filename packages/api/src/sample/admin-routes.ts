@@ -44,6 +44,7 @@ import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
+import { importTemplateResponse } from "./import-template/workbook.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { notifySubSampleDeclared } from "./notify-sub-sample-declared.ts";
@@ -60,6 +61,7 @@ import {
   validateCollaboratorParams,
   validateCreateSampleBody,
   validateIdParam,
+  validateImportTemplateQuery,
   validateListQuery,
   validateRequestDeletionBody,
   validateStatusBody,
@@ -132,6 +134,9 @@ export function createSampleAdminRoutes(
         data: await repository.findDuplicates(criteria, exclude),
       });
     })
+    .get("/import-template", validateImportTemplateQuery, (c) =>
+      importTemplateResponse(c.req.valid("query").rows),
+    )
     .use("/:id", accessibleSample)
     .use("/:id/*", accessibleSample)
     .get("/:id", validateIdParam, async (c) => {

@@ -9,6 +9,7 @@ export const MAIL_REQUEST_USER_BUDGET = {
   points: 5,
   duration: 3600,
 } as const;
+export const IMPORT_TEMPLATE_USER_BUDGET = { points: 5, duration: 60 } as const;
 
 export type RateLimitConfig = {
   enabled: boolean;

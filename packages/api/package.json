@@ -11,7 +11,8 @@
     "seed:demo": "node scripts/seed-demo.ts",
     "seed:e2e": "node scripts/reset-and-seed.ts",
     "digest:send": "node scripts/send-pending-users-digest.ts",
-    "import:legacy": "node scripts/import-legacy.ts"
+    "import:legacy": "node scripts/import-legacy.ts",
+    "import-template:dump": "node scripts/dump-import-template.ts"
   },
   "dependencies": {
     "@hono/node-server": "catalog:",
@@ -19,6 +20,7 @@
     "@hono/zod-openapi": "catalog:",
     "@projet-igsn/domain": "workspace:*",
     "croner": "catalog:",
+    "exceljs": "catalog:",
     "hono": "catalog:",
     "i18next": "catalog:",
     "kysely": "catalog:",

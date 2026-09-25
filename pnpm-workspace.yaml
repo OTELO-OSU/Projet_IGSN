@@ -6,6 +6,10 @@ allowBuilds:
   msw: true
   memnos@https://codeload.github.com/marmelab/memnos/tar.gz/ca542741e961876ca90eed4d0015eb97454227f9: true
 
+overrides:
+  exceljs>uuid: ^14.0.1
+  exceljs>tmp: ^0.2.5
+
 catalog:
   "@hono/node-server": ^2.0.5
   "@inlang/paraglide-js": ^2.20.2
@@ -35,6 +39,7 @@ catalog:
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
   cmdk: ^1.1.1
+  exceljs: ^4.4.0
   hono: ^4.12.26
   husky: ^9.1.7
   i18next: ^26.3.6

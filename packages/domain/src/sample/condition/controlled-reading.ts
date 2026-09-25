@@ -1,6 +1,6 @@
 import type { StorageCondition } from "./storage-condition.ts";
 
-const READING_STORAGE_CONDITION = {
+export const READING_STORAGE_CONDITION = {
   temperature: "temperature_controlled",
   pressure: "pressure_controlled",
   humidity: "moisture_controlled",

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { freeTextSchema } from "../free-text.ts";
 
-const HAZARDS = [
+export const HAZARDS = [
   { flag: "radioactivity", explanation: "radioactivityExplanation" },
   { flag: "asbestosRich", explanation: "asbestosExplanation" },
   { flag: "chemicalRisk", explanation: "chemicalRiskExplanation" },
