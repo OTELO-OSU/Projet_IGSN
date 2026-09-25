@@ -26,7 +26,6 @@ export const publishedSample = (
   nature: "powder",
   type: null,
   material: null,
-  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,

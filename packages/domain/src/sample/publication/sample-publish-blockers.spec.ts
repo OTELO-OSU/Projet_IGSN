@@ -15,7 +15,6 @@ const base: Sample = {
   nature: "hand_sample",
   type: "individual_sample",
   material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
-  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,
@@ -142,21 +141,11 @@ describe("samplePublishBlockers", () => {
     ).toEqual([]);
   });
 
-  it("should report material_other_name_missing when the other material has no free text", () => {
+  it("should publish the other rock without a specific name", () => {
     expect(
       samplePublishBlockers({
         ...base,
         material: "rock_and_sediment.rock.other",
-      }),
-    ).toEqual(["material_other_name_missing"]);
-  });
-
-  it("should publish the other material once it is named", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        material: "rock_and_sediment.rock.other",
-        materialOtherName: "Impactite",
       }),
     ).toEqual([]);
   });

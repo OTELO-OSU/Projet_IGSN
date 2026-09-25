@@ -217,6 +217,31 @@ describe("toCoreSample", () => {
     ]);
   });
 
+  it("should name the other material through the local name, never a material notation", () => {
+    const core = toCoreSample(
+      {
+        ...FIELD_SAMPLE,
+        material: "rock_and_sediment.rock.other",
+        texture: null,
+        specificName: "Dark fine grained rock",
+      },
+      FRONTEND_URL,
+    );
+
+    expect({
+      localName: core.identification.localName,
+      material: core.classification.contextCategories[0],
+    }).toEqual({
+      localName: "Dark fine grained rock",
+      material: {
+        id: "rock_and_sediment.rock.other",
+        label: "other",
+        schemeName: "otelo:material",
+        schemeURI: "urn:otelo:vocabulary:material",
+      },
+    });
+  });
+
   it.each([
     ["0123456789ABCDEFGHJKMNPQRS", "DOI"],
     ["CNRS1234567890", "IGSN"],

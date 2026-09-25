@@ -354,7 +354,6 @@ export function SampleForm({
             nature: values.nature ?? null,
             type: composeHierarchyValue(values.typePath),
             material: composeHierarchyValue(values.materialPath),
-            materialOtherName: values.materialOtherName ?? null,
             location: composeLocation(values.location),
             description: composeDescription(values.description),
             age: toAgeInput(values.age),

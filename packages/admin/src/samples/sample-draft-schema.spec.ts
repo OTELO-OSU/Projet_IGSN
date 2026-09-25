@@ -34,7 +34,6 @@ const draft: SampleDraft = {
   nature: "thin_section",
   typePath: toHierarchyPath("dredge"),
   materialPath: toHierarchyPath("rock_and_sediment.mineral"),
-  materialOtherName: null,
   texture: undefined,
   metamorphicFacies: undefined,
   metamorphicFabric: undefined,
@@ -70,7 +69,6 @@ describe("sampleDraftSchema", () => {
       nature: "thin_section",
       type: "dredge",
       material: "rock_and_sediment.mineral",
-      materialOtherName: null,
       collectionMethod: null,
       collectionMethodDescription: null,
       specificName: null,
@@ -91,27 +89,6 @@ describe("sampleDraftSchema", () => {
       },
       manualGroupIds: [],
     });
-  });
-
-  it.each<[string, string[], string | null]>([
-    [
-      "keep the free-text material name for the Other rock",
-      toHierarchyPath("rock_and_sediment.rock.other"),
-      "Impactite",
-    ],
-    [
-      "drop it for any other material",
-      toHierarchyPath("rock_and_sediment.mineral"),
-      null,
-    ],
-  ])("should %s", (_case, materialPath, materialOtherName) => {
-    expect(
-      sampleDraftSchema.parse({
-        ...draft,
-        materialPath,
-        materialOtherName: "  Impactite  ",
-      }),
-    ).toMatchObject({ materialOtherName });
   });
 
   it.each<[string, string[], string | null]>([
@@ -216,7 +193,6 @@ describe("sampleDraftSchema", () => {
       nature: "thin_section",
       type: "dredge",
       material: "rock_and_sediment.mineral",
-      materialOtherName: null,
       collectionMethod: null,
       collectionMethodDescription: null,
       specificName: null,

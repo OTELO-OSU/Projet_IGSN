@@ -28,7 +28,6 @@ const publishableScientificContext = {
 const publishableRepository = { currentArchiveLaboratory: "UMR6112" } as const;
 
 const NO_ANSWERS = {
-  materialOtherName: null,
   description: { oriented: false },
   security: { radioactivity: false, asbestosRich: false, chemicalRisk: false },
   scientificContext: { provenanceStatus: "field_sample", additionalRoles: [] },
@@ -474,44 +473,20 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should offer the free-text material name for the Other rock alone", async () => {
+  it("should offer only the optional specific name for the Other rock", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
-
-    await expect
-      .element(screen.getByLabelText("Other material name *"))
-      .not.toBeInTheDocument();
-
     await pickPath(screen, "Material *", "Rock", "Other");
 
     await expect
-      .element(screen.getByLabelText("Other material name *"))
+      .element(screen.getByLabelText("Specific Name", { exact: true }))
       .toBeVisible();
-  });
-
-  it("should restore the free-text material name after the material leaves the Other rock and returns", async () => {
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
-    );
-
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await pickPath(screen, "Material *", "Rock", "Other");
-    await screen.getByLabelText("Other material name *").fill("Impactite");
-
-    await repickPath(screen, "Other", "Unknown");
-
     await expect
-      .element(screen.getByLabelText("Other material name *"))
+      .element(screen.getByLabelText(/other material name/i))
       .not.toBeInTheDocument();
-
-    await repickPath(screen, "Unknown", "Other");
-
-    await expect
-      .element(screen.getByLabelText("Other material name *"))
-      .toHaveValue("Impactite");
   });
 
   it("should pre-fill the provenance status of a new declaration with Field sample", async () => {
@@ -1255,7 +1230,6 @@ describe("SampleForm", () => {
           nature: "thin_section",
           type: "dredge",
           material: "rock_and_sediment.mineral",
-          materialOtherName: null,
           collectionMethod: null,
           collectionMethodDescription: null,
           localId: null,
@@ -1365,51 +1339,62 @@ describe("SampleForm", () => {
     },
   );
 
-  it("should enable Save & Publish when the specific name is missing", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          defaultValues={{
-            name: "Basalte du Massif Central",
-            nature: "thin_section",
-            type: "dredge",
-            material: "rock_and_sediment.mineral",
-            collectionMethod: null,
-            collectionMethodDescription: null,
-            location: {
-              position: { type: "point", longitude: 3, latitude: 45 },
-            },
-            description: {
-              collectionDate: {
-                precision: "day",
-                start: "2026-01-01",
-                end: "2026-01-01",
+  it.each([
+    ["a mineral lacks a specific name", "rock_and_sediment.mineral", null],
+    [
+      "an Other rock lacks a specific name",
+      "rock_and_sediment.rock.other",
+      null,
+    ],
+  ])(
+    "should enable Save & Publish when %s",
+    async (_case, material, specificName) => {
+      const screen = await render(
+        <TooltipProvider>
+          <SampleForm
+            onCancel={noop}
+            defaultValues={{
+              name: "Basalte du Massif Central",
+              nature: "thin_section",
+              type: "dredge",
+              material,
+              specificName,
+              collectionMethod: null,
+              collectionMethodDescription: null,
+              location: {
+                position: { type: "point", longitude: 3, latitude: 45 },
               },
-            },
-            existenceStatus: "exists",
-            availabilityStatus: "available",
-            scientificContext: publishableScientificContext,
-            repository: publishableRepository,
-          }}
-          secondaryAction={{
-            kind: "submit",
-            label: "Save as draft",
-            onSubmit: noop,
-          }}
-          primaryAction={{
-            kind: "publish",
-            label: "Save & Publish",
-            onPublish: noop,
-          }}
-        />
-      </TooltipProvider>,
-    );
+              description: {
+                collectionDate: {
+                  precision: "day",
+                  start: "2026-01-01",
+                  end: "2026-01-01",
+                },
+              },
+              existenceStatus: "exists",
+              availabilityStatus: "available",
+              scientificContext: publishableScientificContext,
+              repository: publishableRepository,
+            }}
+            secondaryAction={{
+              kind: "submit",
+              label: "Save as draft",
+              onSubmit: noop,
+            }}
+            primaryAction={{
+              kind: "publish",
+              label: "Save & Publish",
+              onPublish: noop,
+            }}
+          />
+        </TooltipProvider>,
+      );
 
-    await expect
-      .element(screen.getByRole("button", { name: "Save & Publish" }))
-      .toBeEnabled();
-  });
+      await expect
+        .element(screen.getByRole("button", { name: "Save & Publish" }))
+        .toBeEnabled();
+    },
+  );
 
   it("should default the curation statuses to Exists and Available and not block publish on them", async () => {
     const screen = await render(

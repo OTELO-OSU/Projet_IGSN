@@ -798,7 +798,7 @@ const PUBLISHED: DemoRow[] = [
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock_and_sediment.rock.other",
-    materialOtherName: "Suevite impactite",
+    specificName: "Suevite impactite",
     collectionMethod: "manual",
     location: {
       position: point(10.6, 48.9),

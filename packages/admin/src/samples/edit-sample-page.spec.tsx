@@ -162,7 +162,6 @@ function fakeApi(
     nature: "thin_section",
     type: "dredge",
     material,
-    materialOtherName: null,
     texture,
     metamorphicFacies,
     metamorphicFabric: sampleMetamorphicFabric,

@@ -33,6 +33,22 @@ async function renderGeologicalContextSection(
 beforeAll(() => page.viewport(1280, 1600));
 
 describe("SampleGeologicalContextFields", () => {
+  it("should offer the physiographic environment before the description", async () => {
+    const screen = await renderGeologicalContextSection();
+
+    const environment = screen
+      .getByRole("combobox", { name: "Physiographic environment" })
+      .element();
+    const description = screen
+      .getByLabelText("Geological context description")
+      .element();
+
+    expect(
+      environment.compareDocumentPosition(description) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("should submit the description with the picked physiographic environment", async () => {
     const onSubmit = vi.fn();
     const screen = await renderGeologicalContextSection(onSubmit);

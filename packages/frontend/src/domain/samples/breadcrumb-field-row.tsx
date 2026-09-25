@@ -7,19 +7,17 @@ type BreadcrumbProps = {
   labelId: string;
   segments: string[];
   pathLabel: (path: string) => string;
-  suffix: string | null | undefined;
 };
 
 function ClassificationBreadcrumb({
   labelId,
   segments,
   pathLabel,
-  suffix,
 }: BreadcrumbProps) {
-  const steps = [
-    ...segments.map((segment) => ({ key: segment, text: pathLabel(segment) })),
-    ...(suffix ? [{ key: "suffix", text: suffix }] : []),
-  ];
+  const steps = segments.map((segment) => ({
+    key: segment,
+    text: pathLabel(segment),
+  }));
   return (
     <ol
       aria-labelledby={labelId}
@@ -46,7 +44,6 @@ type BreadcrumbFieldRowProps = {
   label: string;
   path: string | null | undefined;
   pathLabel: (path: string) => string;
-  suffix?: string | null;
 };
 
 export function BreadcrumbFieldRow({
@@ -54,7 +51,6 @@ export function BreadcrumbFieldRow({
   label,
   path,
   pathLabel,
-  suffix,
 }: BreadcrumbFieldRowProps) {
   return (
     <FieldRow
@@ -66,7 +62,6 @@ export function BreadcrumbFieldRow({
             labelId={id}
             segments={ancestorPaths(path)}
             pathLabel={pathLabel}
-            suffix={suffix}
           />
         )
       }

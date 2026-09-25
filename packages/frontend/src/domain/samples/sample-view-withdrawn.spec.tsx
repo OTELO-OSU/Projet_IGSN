@@ -14,7 +14,7 @@ const sample = (overrides: Partial<WithdrawnSample> = {}): WithdrawnSample => ({
   nature: "powder",
   type: "core.half_round",
   material: "rock_and_sediment.rock.igneous",
-  materialOtherName: null,
+  specificName: "Pitchstone",
   location: {
     region: { kind: "country", country: "FR" },
     localityName: "Mont-Dore",
@@ -109,6 +109,7 @@ describe("SampleView of a withdrawn sample", () => {
         screen.getByRole("list", { name: "Material" }).getByText("Igneous"),
       )
       .toBeVisible();
+    await expect.element(screen.getByText("Pitchstone")).toBeVisible();
     await expect.element(screen.getByText("France > Mont-Dore")).toBeVisible();
     await expect.element(screen.getByText("Claire Martin")).toBeVisible();
     expect(
@@ -135,25 +136,6 @@ describe("SampleView of a withdrawn sample", () => {
     await expect
       .element(screen.getByRole("img", { name: /QR code/ }))
       .toBeInTheDocument();
-  });
-
-  it("should show the other material free text as the last material step", async () => {
-    const screen = await renderWithRouter(
-      <SampleView
-        sample={sample({
-          material: "rock_and_sediment.rock.other",
-          materialOtherName: "Fossilized wood",
-        })}
-      />,
-    );
-
-    await expect
-      .element(
-        screen
-          .getByRole("list", { name: "Material" })
-          .getByText("Fossilized wood"),
-      )
-      .toBeVisible();
   });
 
   it("should offer the private notice and a way to contact the owner", async () => {

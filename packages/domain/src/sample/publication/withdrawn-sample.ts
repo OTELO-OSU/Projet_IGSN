@@ -11,7 +11,7 @@ export const withdrawnSampleSchema = sampleSchema
     nature: true,
     type: true,
     material: true,
-    materialOtherName: true,
+    specificName: true,
   })
   .extend({
     status: z.literal("withdrawn"),
@@ -37,7 +37,7 @@ export function toWithdrawnSample(sample: Sample): WithdrawnSample {
     nature: sample.nature,
     type: sample.type,
     material: sample.material,
-    materialOtherName: sample.materialOtherName,
+    specificName: sample.specificName,
     location: sample.location
       ? {
           region: sample.location.region ?? null,

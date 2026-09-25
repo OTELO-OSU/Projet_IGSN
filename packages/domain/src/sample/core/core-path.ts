@@ -8,7 +8,6 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   nature: "classification.natureOfSample",
   type: "classification.sampleObjectTypes.0",
   material: "classification.contextCategories",
-  materialOtherName: "classification.contextCategories",
   texture: "classification.contextCategories",
   metamorphicFacies: "classification.contextCategories",
   metamorphicFabric: "classification.contextCategories",
