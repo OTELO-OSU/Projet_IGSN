@@ -63,7 +63,12 @@ test.describe("service account request", () => {
     expect(answered.status()).toBe(200);
     expect(typeof (await answered.json()).meta.total).toBe("number");
 
-    const refused = await request.get(SAMPLES_URL);
+    const publicRead = await request.get(SAMPLES_URL);
+    expect(publicRead.status()).toBe(200);
+
+    const refused = await request.get(SAMPLES_URL, {
+      headers: { Authorization: "Bearer unknown-key" },
+    });
     expect(refused.status()).toBe(403);
   });
 });

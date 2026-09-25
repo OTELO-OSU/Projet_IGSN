@@ -46,6 +46,13 @@ Accepted, then amended.
 
 - `POST` and `PUT` refuse a record suspected to duplicate a published sample (same name, material and collector), answering 409 `{ error, reason: "duplicates", duplicates: [{ id, igsn, name }] }` unless the request carries `?confirmDuplicates=true`; see [`docs/igsn-core-mapping.md`](../igsn-core-mapping.md#suspected-duplicates).
 
+### 2026-09-25, `GET /service/samples` and `GET /service/samples/:igsn` need no key
+
+- Reading no longer needs a key: a call with no `Authorization` header lists or reads the published samples anyone can already see on the public site, redacted the same way (`redactPrivateContacts`, no archive contact, no `*UserId`).
+- A present but unknown key, or a valid key whose owner is no longer accepted, still answers 403.
+- An anonymous `?editable=true` is ignored: every published sample is listed, since there is no account to narrow by.
+- `POST` and `PUT` are unchanged, still needing a valid key and answering 403 for a missing or unknown one.
+
 ## Context
 
 ADR 0035 declared the `service_account` entity but deferred its credential and any machine API: nothing recorded who a service account is for, and a created account could call nothing. A researcher must be able to ask for one, own it, and hold a credential a script can send.
@@ -69,7 +76,7 @@ ADR 0035 declared the `service_account` entity but deferred its credential and a
 **`/service` is the machine API mount**, guarded by `requireServiceAccount` and rate-limited by IP like the other unauthenticated-by-JWT surfaces.
 
 - It carries one route, `GET /service/ping` answering `{ ok: true }`, so the credential is provable before any data route exists.
-- A missing header and an unknown key both answer **403** (PO decision): the caller is not a session to renew, and 403 tells a script nothing about whether the key exists.
+- A missing header and an unknown key both answer **403** (PO decision): the caller is not a session to renew, and 403 tells a script nothing about whether the key exists. Amended 2026-09-25: this still holds for writing, but a missing header on a read is no longer 403, reading having become public.
 - The middleware sets the whole `ServiceAccount` on the context, so a future data route reads its groups (`managerScope` + `moderatedSampleWhere`) with no extra lookup.
 
 ## Rejected alternatives

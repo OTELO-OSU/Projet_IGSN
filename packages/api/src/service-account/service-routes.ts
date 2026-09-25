@@ -4,6 +4,7 @@ import type {
   SuspectedDuplicate,
 } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
+import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { DuplicateConflict } from "@projet-igsn/domain/sample/sample-validator";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
 import type {
@@ -12,6 +13,7 @@ import type {
   ServiceSampleIssue,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
+import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 import type { Context } from "hono";
 
 import { swaggerUI } from "@hono/swagger-ui";
@@ -35,6 +37,7 @@ import {
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
+import { redactPrivateContacts } from "@projet-igsn/domain/sample/publication/redact-private-contacts";
 import { duplicateCheckCriteria } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import {
   createSampleSchema,
@@ -42,6 +45,7 @@ import {
 } from "@projet-igsn/domain/sample/sample";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 import { accepts } from "hono/accepts";
+import { HTTPException } from "hono/http-exception";
 
 import type { SendMail } from "../mail/send-mail.ts";
 
@@ -101,6 +105,24 @@ const negotiate = (c: Context<ServiceEnv>) =>
         .sort((a, b) => b.q - a.q || specificity(b.type) - specificity(a.type))
         .find(({ type }) => supports.includes(type))?.type ?? "",
   });
+
+const NO_REACH: ModerationScope = {
+  callerId: "",
+  superAdmin: false,
+  managedLaboratories: [],
+  managedManualGroupIds: [],
+};
+
+const writingAccount = (c: Context<ServiceEnv>) => {
+  const account = c.get("serviceAccount");
+  if (!account) {
+    throw new HTTPException(403, { message: "Forbidden" });
+  }
+  return account;
+};
+
+const readable = (c: Context<ServiceEnv>, sample: Sample) =>
+  c.get("serviceAccount") ? sample : redactPrivateContacts(sample);
 
 const notAcceptable = (c: Context<ServiceEnv>) =>
   c.json({ error: "Not acceptable" }, 406);
@@ -167,7 +189,7 @@ export function createServiceRoutes(
           info: {
             title: "IGSN service API",
             version: CORE_SCHEMA_VERSION,
-            description: `Machine API of the IGSN registry, reading and writing published samples as IGSN Core v${CORE_SCHEMA_VERSION} records. A service account authenticates every call with its api key.`,
+            description: `Machine API of the IGSN registry, reading and writing published samples as IGSN Core v${CORE_SCHEMA_VERSION} records. Reading is public, a call with no api key omitting the archive contact; writing needs the api key of a service account.`,
           },
           servers: [{ url: new URL("api/service", frontendUrl).toString() }],
         }),
@@ -204,10 +226,12 @@ export function createServiceRoutes(
       const { editable, ...query } = c.req.valid("query");
       const { data, total } = await samples.listPublishedForService(
         { ...toListSamplesQuery(query), sort: "igsn" },
-        managerScope(account.id, account.managedGroups),
-        editable === true,
+        account ? managerScope(account.id, account.managedGroups) : NO_REACH,
+        account !== undefined && editable === true,
       );
-      const records = data.map((sample) => toCoreSample(sample, frontendUrl));
+      const records = data.map((sample) =>
+        toCoreSample(readable(c, sample), frontendUrl),
+      );
       const meta = { total };
       switch (format) {
         case DATACITE_MEDIA_TYPE:
@@ -235,7 +259,7 @@ export function createServiceRoutes(
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
-      const core = toCoreSample(sample, frontendUrl);
+      const core = toCoreSample(readable(c, sample), frontendUrl);
       switch (format) {
         case DATACITE_MEDIA_TYPE:
           return c.json(toDataCiteSample(core), 200, {
@@ -254,7 +278,7 @@ export function createServiceRoutes(
       }
     })
     .openapi(createSampleRoute, async (c) => {
-      const account = c.get("serviceAccount");
+      const account = writingAccount(c);
       const { sample, parents } = fromCoreSample(c.req.valid("json"));
       const resolved: ResolvedParent[] = await Promise.all(
         parents.map(async ({ igsn, relationIndex }) => ({
@@ -305,7 +329,7 @@ export function createServiceRoutes(
       return c.json(toCoreSample(created, frontendUrl), 201);
     })
     .openapi(updateSampleRoute, async (c) => {
-      const account = c.get("serviceAccount");
+      const account = writingAccount(c);
       const current = await findPublished(c.req.valid("param").igsn);
       if (!current) {
         return c.json({ error: "Not found" }, 404);
