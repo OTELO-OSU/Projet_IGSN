@@ -108,6 +108,18 @@ describe("the /service OpenAPI document", () => {
     },
   );
 
+  it.each(["/samples", "/samples/{igsn}"])(
+    "should declare GET %s callable without an api key",
+    async (path) => {
+      const document = await serviceDocument();
+
+      const { security } = document.paths[path]!.get as {
+        security: Record<string, string[]>[];
+      };
+      expect(security).toContainEqual({});
+    },
+  );
+
   it("should publish the vocabulary of a controlled filter as an enum", async () => {
     const document = await serviceDocument();
 

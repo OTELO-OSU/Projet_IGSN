@@ -464,8 +464,8 @@ describe("admin user routes", () => {
     "should carry each user's manual groups, name-ordered",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, ALPES, "Pyrénées 2026");
       const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
       await insertUser(db, "pierre.dupont@univ-lorraine.fr");
       await insertMember(db, MASSIF, curie.id);
@@ -484,7 +484,7 @@ describe("admin user routes", () => {
           user.manualGroups.map((group) => group.name),
         ]),
       ).toEqual([
-        ["marie.curie@univ-lorraine.fr", ["Alpes 2026", "Massif Central 2026"]],
+        ["marie.curie@univ-lorraine.fr", ["Pyrénées 2026", "Vosges 2026"]],
         ["moderator@example.com", []],
         ["pierre.dupont@univ-lorraine.fr", []],
       ]);
@@ -493,8 +493,8 @@ describe("admin user routes", () => {
 
   pgTest("should read one user's own manual groups", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
-    await insertGroup(db, ALPES, "Alpes 2026");
+    await insertGroup(db, MASSIF, "Vosges 2026");
+    await insertGroup(db, ALPES, "Pyrénées 2026");
     const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
     const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr");
     await insertMember(db, MASSIF, curie.id);
@@ -509,15 +509,15 @@ describe("admin user routes", () => {
     expect(res.status).toBe(200);
     expect(
       adminUserResponseSchema.parse(await res.json()).data.manualGroups,
-    ).toEqual([{ id: MASSIF, name: "Massif Central 2026", canDetach: true }]);
+    ).toEqual([{ id: MASSIF, name: "Vosges 2026", canDetach: true }]);
   });
 
   pgTest(
     "should mark a membership backing a published sample undetachable",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, ALPES, "Pyrénées 2026");
       const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
       await insertMember(db, MASSIF, curie.id);
       await insertMember(db, ALPES, curie.id);
@@ -547,8 +547,8 @@ describe("admin user routes", () => {
       expect(
         adminUserResponseSchema.parse(await res.json()).data.manualGroups,
       ).toEqual([
-        { id: ALPES, name: "Alpes 2026", canDetach: true },
-        { id: MASSIF, name: "Massif Central 2026", canDetach: false },
+        { id: ALPES, name: "Pyrénées 2026", canDetach: true },
+        { id: MASSIF, name: "Vosges 2026", canDetach: false },
       ]);
     },
   );
@@ -557,7 +557,7 @@ describe("admin user routes", () => {
     "should set the status, the institution and the groups in one request",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       const target = await insertUser(db, "crpg@univ-lorraine.fr", {
         status: "accepted",
         ...TRIO_A,
@@ -582,9 +582,7 @@ describe("admin user routes", () => {
         ...TRIO_B,
         status: "accepted",
         superAdmin: false,
-        manualGroups: [
-          { id: MASSIF, name: "Massif Central 2026", canDetach: true },
-        ],
+        manualGroups: [{ id: MASSIF, name: "Vosges 2026", canDetach: true }],
         managedGroups: NO_MANAGED_GROUPS,
       });
       await expect(readGroups(db, target.id)).resolves.toEqual({
@@ -596,8 +594,8 @@ describe("admin user routes", () => {
 
   pgTest("should detach the groups left out of the request", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
-    await insertGroup(db, ALPES, "Alpes 2026");
+    await insertGroup(db, MASSIF, "Vosges 2026");
+    await insertGroup(db, ALPES, "Pyrénées 2026");
     const target = await insertUser(db, "crpg@univ-lorraine.fr", {
       status: "accepted",
       ...TRIO_A,
@@ -617,7 +615,7 @@ describe("admin user routes", () => {
     expect(res.status).toBe(200);
     expect(
       adminUserResponseSchema.parse(await res.json()).data.manualGroups,
-    ).toEqual([{ id: ALPES, name: "Alpes 2026", canDetach: true }]);
+    ).toEqual([{ id: ALPES, name: "Pyrénées 2026", canDetach: true }]);
   });
 
   pgTest("should keep an unmoderated account pending", async ({ db }) => {
@@ -667,7 +665,7 @@ describe("admin user routes", () => {
     "should answer 422 when attaching a group to an account it does not accept",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       await insertResearchers(db);
       const client = await asSuperAdmin(db);
       // Act
@@ -953,7 +951,7 @@ describe("admin user routes", () => {
 
   pgTest("should invite the user to a group it joins", async ({ db }) => {
     // Arrange
-    await insertGroup(db, MASSIF, "Massif Central 2026");
+    await insertGroup(db, MASSIF, "Vosges 2026");
     await insertResearchers(db);
     await provisionUser(db, "moderator", {
       status: "accepted",
@@ -1041,7 +1039,7 @@ describe("admin user routes", () => {
     "should trace a membership the account leaves with ids only",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       await insertResearchers(db);
       await insertMember(db, MASSIF, ACCEPTED_ID);
       const moderator = await provisionUser(db, "moderator", {
@@ -1070,7 +1068,7 @@ describe("admin user routes", () => {
     "should answer 409 detaching a member owning a published sample of the group",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       await insertResearchers(db);
       await insertMember(db, MASSIF, ACCEPTED_ID);
       const sample = await insertSample(db, {
@@ -1181,7 +1179,7 @@ describe("admin user routes", () => {
       "should mail every super admin once per group the rejection orphans",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertGroup(db, MASSIF, "Vosges 2026");
         await insertResearchers(db);
         await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
         await moderateInstitution(db, ACCEPTED_ID, {
@@ -1214,7 +1212,7 @@ describe("admin user routes", () => {
       "should send nothing when another accepted manager remains",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertGroup(db, MASSIF, "Vosges 2026");
         await insertResearchers(db);
         await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
         await moderateInstitution(db, ACCEPTED_ID, {
@@ -1246,7 +1244,7 @@ describe("admin user routes", () => {
       "should send nothing when the status stays accepted",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertGroup(db, MASSIF, "Vosges 2026");
         await insertResearchers(db);
         await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
         const { client, sendMail } = await asSuperAdminWithMail(db);
@@ -1268,7 +1266,7 @@ describe("admin user routes", () => {
       "should mail the orphaned groups when clearing the institutions re-pends the account",
       async ({ db }) => {
         // Arrange
-        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertGroup(db, MASSIF, "Vosges 2026");
         const manager = await insertUser(db, "manager@univ-lorraine.fr", {
           status: "accepted",
           ...TRIO_A,
@@ -1429,7 +1427,7 @@ describe("space manager moderation", () => {
     "should answer 403 when a manual group manager tries to %s a user",
     async (route, { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       const member = await insertUser(db, "member@univ-lorraine.fr");
       await insertMember(db, MASSIF, member.id);
       const { client } = await asGroupManager(db, [MASSIF]);
@@ -1592,8 +1590,8 @@ describe("space manager moderation", () => {
     "should keep the managed groups and the memberships of an in-scope user",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, ALPES, "Pyrénées 2026");
       const target = await insertUser(db, "inside@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
@@ -1618,7 +1616,7 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(200);
       const { data } = adminUserResponseSchema.parse(await res.json());
       expect(data.manualGroups).toEqual([
-        { id: MASSIF, name: "Massif Central 2026", canDetach: true },
+        { id: MASSIF, name: "Vosges 2026", canDetach: true },
       ]);
       expect(data.managedGroups).toEqual({
         ...NO_MANAGED_GROUPS,
@@ -1634,7 +1632,7 @@ describe("space manager moderation", () => {
     "should drop %s a manager may not alter and apply the rest",
     async ([, managedGroups, manualGroupIds], { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       const target = await insertUser(db, "inside@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
@@ -1738,7 +1736,7 @@ describe("space manager moderation", () => {
     "should let a super admin set a scope that round-trips",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       const target = await insertUser(db, "inside@univ-lorraine.fr", {
         institutionalLaboratory: "UMR7358",
       });
@@ -1792,8 +1790,8 @@ describe("space manager moderation", () => {
     "should let a dual manager attach and detach the groups it manages",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, ALPES, "Pyrénées 2026");
       const target = await insertUser(db, "member@univ-grenoble.fr", {
         ...TRIO_B,
       });
@@ -1811,7 +1809,7 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(200);
       expect(
         adminUserResponseSchema.parse(await res.json()).data.manualGroups,
-      ).toEqual([{ id: ALPES, name: "Alpes 2026", canDetach: true }]);
+      ).toEqual([{ id: ALPES, name: "Pyrénées 2026", canDetach: true }]);
     },
   );
 
@@ -1819,8 +1817,8 @@ describe("space manager moderation", () => {
     "should drop a group it does not manage from a dual manager",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
-      await insertGroup(db, ALPES, "Alpes 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
+      await insertGroup(db, ALPES, "Pyrénées 2026");
       const target = await insertUser(db, "member@univ-grenoble.fr", {
         ...TRIO_B,
       });
@@ -1838,7 +1836,7 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(200);
       expect(
         adminUserResponseSchema.parse(await res.json()).data.manualGroups,
-      ).toEqual([{ id: MASSIF, name: "Massif Central 2026", canDetach: true }]);
+      ).toEqual([{ id: MASSIF, name: "Vosges 2026", canDetach: true }]);
     },
   );
 
@@ -1849,7 +1847,7 @@ describe("space manager moderation", () => {
     "should refuse to %s a user a dual manager only reaches by a manual group",
     async ([route, status], { db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       const member = await insertUser(db, "member@univ-lorraine.fr", {
         ...TRIO_A,
       });
@@ -1866,7 +1864,7 @@ describe("space manager moderation", () => {
     "should list for a dual manager only the users its institutional scope covers",
     async ({ db }) => {
       // Arrange
-      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, MASSIF, "Vosges 2026");
       const member = await insertUser(db, "member@univ-lorraine.fr", {
         ...TRIO_A,
       });

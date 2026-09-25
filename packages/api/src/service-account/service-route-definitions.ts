@@ -39,10 +39,12 @@ export const SERVICE_API_KEY_SCHEME = {
   type: "http",
   scheme: "bearer",
   description:
-    "Bearer token holding the api key of a service account. A missing key and an unknown key both answer 403, so the api tells no caller whether a key exists.",
+    "Bearer token holding the api key of a service account. Reading needs no key, but then omits the archive contact; writing needs one, a missing key and an unknown key both answering 403, so the api tells no caller whether a key exists.",
 } as const;
 
 const SECURITY = [{ apiKey: [] }];
+
+const OPTIONAL_SECURITY = [{}, ...SECURITY];
 
 const TAGS = ["Samples"];
 
@@ -85,6 +87,8 @@ const FORBIDDEN = json(
   serviceErrorSchema,
   "The api key is missing or unknown.",
 );
+
+const FORBIDDEN_READ = json(serviceErrorSchema, "The api key is unknown.");
 
 const THROTTLED = json(
   serviceErrorSchema,
@@ -150,8 +154,8 @@ export const listSamplesRoute = createRoute({
   tags: TAGS,
   summary: "List published samples",
   description:
-    "Lists every published sample of the registry as IGSN Core records, ordered by IGSN. Pass editable=true to narrow the list to the samples the service account itself may update, and any other parameter to filter it, several of them narrowing the list together.",
-  security: SECURITY,
+    "Lists every published sample of the registry as IGSN Core records, ordered by IGSN. Anyone may call it, but a call with no api key omits the archive contact. Pass editable=true to narrow the list to the samples the service account itself may update, and any other parameter to filter it, several of them narrowing the list together.",
+  security: OPTIONAL_SECURITY,
   request: {
     headers: acceptHeaderSchema,
     query: z.object({
@@ -170,7 +174,7 @@ export const listSamplesRoute = createRoute({
       editable: z.stringbool().optional().catch(undefined).meta({
         type: "boolean",
         description:
-          "Set to true to list only the samples the account's managed groups reach, so only those it may update; left out, every published sample is listed.",
+          "Set to true to list only the samples the account's managed groups reach, so only those it may update; left out, or sent with no api key, every published sample is listed.",
       }),
       ...coreFilterFields(),
     }),
@@ -185,7 +189,7 @@ export const listSamplesRoute = createRoute({
       },
       "One page of published samples.",
     ),
-    403: FORBIDDEN,
+    403: FORBIDDEN_READ,
     406: NOT_ACCEPTABLE,
     429: THROTTLED,
     500: FAILED,
@@ -198,8 +202,8 @@ export const getSampleRoute = createRoute({
   tags: TAGS,
   summary: "Read one published sample",
   description:
-    "Returns the published sample carrying this IGSN as an IGSN Core record, whatever the account's reach. A sample that is not published answers 404.",
-  security: SECURITY,
+    "Returns the published sample carrying this IGSN as an IGSN Core record, whatever the account's reach. Anyone may call it, but a call with no api key omits the archive contact. A sample that is not published answers 404.",
+  security: OPTIONAL_SECURITY,
   request: { headers: acceptHeaderSchema, params: igsnParamSchema },
   responses: {
     200: negotiated(
@@ -212,7 +216,7 @@ export const getSampleRoute = createRoute({
       "The published sample.",
     ),
     400: INVALID_IGSN,
-    403: FORBIDDEN,
+    403: FORBIDDEN_READ,
     404: NOT_FOUND,
     406: NOT_ACCEPTABLE,
     429: THROTTLED,

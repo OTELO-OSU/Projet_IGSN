@@ -7,7 +7,7 @@ import { HTTPException } from "hono/http-exception";
 import { hashApiKey } from "../service-account/api-key.ts";
 
 export type ServiceEnv = {
-  Variables: { serviceAccount: ServiceAccount };
+  Variables: { serviceAccount?: ServiceAccount };
 };
 
 const bearerKey = (authorization: string | undefined) =>
@@ -19,7 +19,12 @@ export function requireServiceAccount(
   serviceAccounts: Pick<ServiceAccountRepository, "findByApiKeyHash">,
 ): MiddlewareHandler<ServiceEnv> {
   return async (c, next) => {
-    const key = bearerKey(c.req.header("Authorization"));
+    const authorization = c.req.header("Authorization");
+    if (authorization === undefined && c.req.method === "GET") {
+      await next();
+      return;
+    }
+    const key = bearerKey(authorization);
     const account = key
       ? await serviceAccounts.findByApiKeyHash(hashApiKey(key))
       : undefined;

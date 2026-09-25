@@ -40,6 +40,7 @@ import {
   toOmsSample,
   toOmsSampleCollection,
 } from "@projet-igsn/domain/sample/oms/to-oms-sample";
+import { redactPrivateContacts } from "@projet-igsn/domain/sample/publication/redact-private-contacts";
 import {
   coreListSamplesResponseSchema,
   dataCiteListSamplesResponseSchema,
@@ -142,6 +143,11 @@ const serviceRequest = (
     },
     body: input === undefined ? undefined : JSON.stringify(input),
   });
+
+const anonymousRequest = (
+  app: ReturnType<typeof createApp>["app"],
+  path: string,
+) => app.request(`/service/samples${path}`);
 
 const postSample = (app: ReturnType<typeof createApp>["app"], input: unknown) =>
   serviceRequest(app, "POST", "", input);
@@ -289,6 +295,56 @@ describe("GET /service/samples", () => {
         data: published.map((sample) => core(sample!)),
         meta: { total: 2 },
       });
+    },
+  );
+
+  pgTest(
+    "should list only published samples to an anonymous caller, archive contacts omitted",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const published = await publishSample(
+        db,
+        (await inLaboratory(db, archivedSample, IN_REACH)).id,
+      );
+      await inLaboratory(db, archivedSample, IN_REACH);
+      for (const status of ["withdrawn", "tombstone"] as const) {
+        const sample = await inLaboratory(db, archivedSample, IN_REACH);
+        await publishSample(db, sample.id);
+        await setSampleStatus(db, sample.id, status);
+      }
+      // Act
+      const res = await anonymousRequest(app, "");
+      // Assert
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(JSON.stringify(body)).not.toContain("Durand");
+      expect(coreListSamplesResponseSchema.parse(body)).toEqual({
+        data: [core(redactPrivateContacts(published!))],
+        meta: { total: 1 },
+      });
+    },
+  );
+
+  pgTest(
+    "should list every published sample to an anonymous caller sending editable=true",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      await publishSample(
+        db,
+        (await inLaboratory(db, publishableSample, IN_REACH)).id,
+      );
+      await publishSample(
+        db,
+        (await inLaboratory(db, publishableSample, OUT_OF_REACH)).id,
+      );
+      // Act
+      const res = await anonymousRequest(app, "?editable=true");
+      // Assert
+      expect(
+        coreListSamplesResponseSchema.parse(await res.json()).meta.total,
+      ).toBe(2);
     },
   );
 
@@ -578,6 +634,48 @@ describe("GET /service/samples/:igsn", () => {
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "Not found" });
   });
+
+  pgTest(
+    "should answer an anonymous caller the published sample, archive contact omitted",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const sample = await inLaboratory(db, archivedSample, IN_REACH);
+      const published = (await publishSample(db, sample.id))!;
+      // Act
+      const res = await anonymousRequest(app, `/${published.igsn!}`);
+      // Assert
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(JSON.stringify(body)).not.toContain("Durand");
+      expect(body).toEqual(
+        core(redactPrivateContacts((await readSample(db, sample.id))!)),
+      );
+    },
+  );
+
+  pgTest.for(["draft", "withdrawn", "tombstone"] as const)(
+    "should answer an anonymous caller 404 for a %s sample",
+    async (status, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const sample = await inLaboratory(db, publishableSample, IN_REACH);
+      await db
+        .updateTable("sample")
+        .set({ igsn: "A".repeat(26) })
+        .where("id", "=", sample.id)
+        .execute();
+      if (status !== "draft") {
+        await publishSample(db, sample.id);
+        await setSampleStatus(db, sample.id, status);
+      }
+      const { igsn } = (await readSample(db, sample.id))!;
+      // Act
+      const res = await anonymousRequest(app, `/${igsn!}`);
+      // Assert
+      expect(res.status).toBe(404);
+    },
+  );
 
   pgTest(
     "should answer the name a person's account resolved to and never the account link",
@@ -1351,27 +1449,39 @@ describe("POST /service/samples", () => {
 });
 
 describe("the /service mount", () => {
-  pgTest.for(
-    (
-      [
-        { rule: "no Authorization header", headers: {}, status: "accepted" },
-        {
-          rule: "an unknown api key",
-          headers: { Authorization: "Bearer nope" },
-          status: "accepted",
-        },
-        {
-          rule: "a valid api key whose owner is no longer accepted",
-          headers: { Authorization: `Bearer ${KEY}` },
-          status: "rejected",
-        },
-      ] as const
-    ).flatMap((forbidden) =>
-      (["GET", "POST"] as const).map((method) => ({ ...forbidden, method })),
+  const ONE = `/${"A".repeat(26)}`;
+  const UNKNOWN_KEY = {
+    rule: "an unknown api key",
+    headers: { Authorization: "Bearer nope" },
+    status: "accepted",
+  } as const;
+  const REJECTED_OWNER = {
+    rule: "a valid api key whose owner is no longer accepted",
+    headers: { Authorization: `Bearer ${KEY}` },
+    status: "rejected",
+  } as const;
+  const NO_HEADER = {
+    rule: "no Authorization header",
+    headers: {},
+    status: "accepted",
+  } as const;
+
+  pgTest.for([
+    ...[UNKNOWN_KEY, REJECTED_OWNER].flatMap((forbidden) =>
+      (
+        [
+          ["GET", ""],
+          ["GET", ONE],
+          ["POST", ""],
+          ["PUT", ONE],
+        ] as const
+      ).map(([method, path]) => ({ ...forbidden, method, path })),
     ),
-  )(
-    "should answer 403 to $method /service/samples with $rule",
-    async ({ headers, status, method }, { db }) => {
+    { ...NO_HEADER, method: "POST", path: "" },
+    { ...NO_HEADER, method: "PUT", path: ONE },
+  ])(
+    "should answer 403 to $method /service/samples$path with $rule",
+    async ({ headers, status, method, path }, { db }) => {
       // Arrange
       const owner = await insertUser(db, "jean.martin@univ-lorraine.fr", {
         status,
@@ -1379,7 +1489,10 @@ describe("the /service mount", () => {
       await insertServiceAccount(db, "Harvester", owner.id, hashApiKey(KEY));
       const { app } = createApp(db);
       // Act
-      const res = await app.request("/service/samples", { method, headers });
+      const res = await app.request(`/service/samples${path}`, {
+        method,
+        headers,
+      });
       // Assert
       expect(res.status).toBe(403);
     },
