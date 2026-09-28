@@ -9,12 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersIndexRouteImport } from './routes/users.index'
 import { Route as ServiceAccountsIndexRouteImport } from './routes/service-accounts.index'
 import { Route as ManualGroupsIndexRouteImport } from './routes/manual-groups.index'
 import { Route as UsersUserIdRouteImport } from './routes/users.$userId'
+import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
+import { Route as SettingsGroupsRouteImport } from './routes/settings.groups'
 import { Route as ServiceAccountsCreateRouteImport } from './routes/service-accounts.create'
 import { Route as ServiceAccountsAccountIdRouteImport } from './routes/service-accounts.$accountId'
 import { Route as SamplesModerationRouteImport } from './routes/samples.moderation'
@@ -29,11 +30,6 @@ import { Route as InstitutionalGroupsOsusCodeRouteImport } from './routes/instit
 import { Route as InstitutionalGroupsOrganizationsRorRouteImport } from './routes/institutional-groups.organizations.$ror'
 import { Route as InstitutionalGroupsLaboratoriesCodeRouteImport } from './routes/institutional-groups.laboratories.$code'
 
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -57,6 +53,16 @@ const ManualGroupsIndexRoute = ManualGroupsIndexRouteImport.update({
 const UsersUserIdRoute = UsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsProfileRoute = SettingsProfileRouteImport.update({
+  id: '/settings/profile',
+  path: '/settings/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsGroupsRoute = SettingsGroupsRouteImport.update({
+  id: '/settings/groups',
+  path: '/settings/groups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServiceAccountsCreateRoute = ServiceAccountsCreateRouteImport.update({
@@ -134,7 +140,6 @@ const InstitutionalGroupsLaboratoriesCodeRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
@@ -142,6 +147,8 @@ export interface FileRoutesByFullPath {
   '/samples/moderation': typeof SamplesModerationRoute
   '/service-accounts/$accountId': typeof ServiceAccountsAccountIdRoute
   '/service-accounts/create': typeof ServiceAccountsCreateRoute
+  '/settings/groups': typeof SettingsGroupsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups/': typeof ManualGroupsIndexRoute
   '/service-accounts/': typeof ServiceAccountsIndexRoute
@@ -155,7 +162,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
@@ -163,6 +169,8 @@ export interface FileRoutesByTo {
   '/samples/moderation': typeof SamplesModerationRoute
   '/service-accounts/$accountId': typeof ServiceAccountsAccountIdRoute
   '/service-accounts/create': typeof ServiceAccountsCreateRoute
+  '/settings/groups': typeof SettingsGroupsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups': typeof ManualGroupsIndexRoute
   '/service-accounts': typeof ServiceAccountsIndexRoute
@@ -177,7 +185,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
@@ -185,6 +192,8 @@ export interface FileRoutesById {
   '/samples/moderation': typeof SamplesModerationRoute
   '/service-accounts/$accountId': typeof ServiceAccountsAccountIdRoute
   '/service-accounts/create': typeof ServiceAccountsCreateRoute
+  '/settings/groups': typeof SettingsGroupsRoute
+  '/settings/profile': typeof SettingsProfileRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups/': typeof ManualGroupsIndexRoute
   '/service-accounts/': typeof ServiceAccountsIndexRoute
@@ -200,7 +209,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/settings'
     | '/auth/callback'
     | '/manual-groups/$groupId'
     | '/samples/$sampleId'
@@ -208,6 +216,8 @@ export interface FileRouteTypes {
     | '/samples/moderation'
     | '/service-accounts/$accountId'
     | '/service-accounts/create'
+    | '/settings/groups'
+    | '/settings/profile'
     | '/users/$userId'
     | '/manual-groups/'
     | '/service-accounts/'
@@ -221,7 +231,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/settings'
     | '/auth/callback'
     | '/manual-groups/$groupId'
     | '/samples/$sampleId'
@@ -229,6 +238,8 @@ export interface FileRouteTypes {
     | '/samples/moderation'
     | '/service-accounts/$accountId'
     | '/service-accounts/create'
+    | '/settings/groups'
+    | '/settings/profile'
     | '/users/$userId'
     | '/manual-groups'
     | '/service-accounts'
@@ -242,7 +253,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/settings'
     | '/auth/callback'
     | '/manual-groups/$groupId'
     | '/samples/$sampleId'
@@ -250,6 +260,8 @@ export interface FileRouteTypes {
     | '/samples/moderation'
     | '/service-accounts/$accountId'
     | '/service-accounts/create'
+    | '/settings/groups'
+    | '/settings/profile'
     | '/users/$userId'
     | '/manual-groups/'
     | '/service-accounts/'
@@ -264,7 +276,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ManualGroupsGroupIdRoute: typeof ManualGroupsGroupIdRoute
   SamplesSampleIdRoute: typeof SamplesSampleIdRoute
@@ -272,6 +283,8 @@ export interface RootRouteChildren {
   SamplesModerationRoute: typeof SamplesModerationRoute
   ServiceAccountsAccountIdRoute: typeof ServiceAccountsAccountIdRoute
   ServiceAccountsCreateRoute: typeof ServiceAccountsCreateRoute
+  SettingsGroupsRoute: typeof SettingsGroupsRoute
+  SettingsProfileRoute: typeof SettingsProfileRoute
   UsersUserIdRoute: typeof UsersUserIdRoute
   ManualGroupsIndexRoute: typeof ManualGroupsIndexRoute
   ServiceAccountsIndexRoute: typeof ServiceAccountsIndexRoute
@@ -286,13 +299,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -326,6 +332,20 @@ declare module '@tanstack/react-router' {
       path: '/users/$userId'
       fullPath: '/users/$userId'
       preLoaderRoute: typeof UsersUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/profile': {
+      id: '/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof SettingsProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/groups': {
+      id: '/settings/groups'
+      path: '/settings/groups'
+      fullPath: '/settings/groups'
+      preLoaderRoute: typeof SettingsGroupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/service-accounts/create': {
@@ -424,7 +444,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ManualGroupsGroupIdRoute: ManualGroupsGroupIdRoute,
   SamplesSampleIdRoute: SamplesSampleIdRoute,
@@ -432,6 +451,8 @@ const rootRouteChildren: RootRouteChildren = {
   SamplesModerationRoute: SamplesModerationRoute,
   ServiceAccountsAccountIdRoute: ServiceAccountsAccountIdRoute,
   ServiceAccountsCreateRoute: ServiceAccountsCreateRoute,
+  SettingsGroupsRoute: SettingsGroupsRoute,
+  SettingsProfileRoute: SettingsProfileRoute,
   UsersUserIdRoute: UsersUserIdRoute,
   ManualGroupsIndexRoute: ManualGroupsIndexRoute,
   ServiceAccountsIndexRoute: ServiceAccountsIndexRoute,

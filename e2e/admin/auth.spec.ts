@@ -99,7 +99,7 @@ test.describe("authentication", () => {
     await admin.expectSignedIn();
 
     const settings = settingsPage(page);
-    await settings.open();
+    await settings.openProfile();
     await settings.setOrcid("0000-0001-5109-370X");
 
     await admin.signOut();

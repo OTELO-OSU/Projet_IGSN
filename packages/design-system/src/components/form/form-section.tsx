@@ -12,6 +12,7 @@ const HEADINGS = {
 
 type FormSectionProps = {
   title: string;
+  description?: string;
   level?: keyof typeof HEADINGS;
   action?: ReactNode;
   children: ReactNode;
@@ -19,20 +20,31 @@ type FormSectionProps = {
 
 export function FormSection({
   title,
+  description,
   level = 2,
   action,
   children,
 }: FormSectionProps) {
   const titleId = useId();
+  const descriptionId = useId();
   const { Tag, className, rowClassName } = HEADINGS[level];
   return (
-    <section className="grid gap-4" aria-labelledby={titleId}>
+    <section
+      className="grid gap-4"
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+    >
       <div className={`flex items-center gap-2 ${rowClassName}`}>
         <Tag id={titleId} className={className}>
           {title}
         </Tag>
         {action}
       </div>
+      {description && (
+        <p id={descriptionId} className="text-muted-foreground text-sm">
+          {description}
+        </p>
+      )}
       {children}
     </section>
   );

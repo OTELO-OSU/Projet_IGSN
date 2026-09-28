@@ -1,18 +1,10 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  RouterProvider,
-  createMemoryHistory,
-  createRouter,
-} from "@tanstack/react-router";
 import { HttpResponse, http } from "msw";
-import { StrictMode } from "react";
 import { vi } from "vitest";
-import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
 import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { worker } from "../../test/msw.ts";
-import { routeTree } from "../routeTree.gen.ts";
+import { renderRoute } from "../../test/render-route.tsx";
 
 vi.mock("react-oidc-context", () => ({
   useAuth: () => ({
@@ -32,14 +24,18 @@ const BASALT_TEAM = {
   name: "Basalt team",
   canLeave: true,
 };
-const MANUAL_GROUPS = [BASALT_TEAM];
+const FOSSIL_TEAM = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a2",
+  name: "Fossil team",
+  canLeave: true,
+};
 
 const SERVICE_ID = "3f2504e0-4f89-41d3-9a0c-030500000b01";
 
 function fakeApi({
   orcid = null,
   conflict = false,
-  manualGroups = MANUAL_GROUPS,
+  manualGroups = [BASALT_TEAM, FOSSIL_TEAM],
   status = "accepted",
   services = [],
 }: {
@@ -50,7 +46,6 @@ function fakeApi({
   services?: { id: string; name: string; hasApiKey: boolean }[];
 } = {}) {
   const puts: unknown[] = [];
-  const groupPuts: unknown[] = [];
   let stored = orcid;
   let myServices = services;
   worker.use(
@@ -66,13 +61,6 @@ function fakeApi({
     }),
     http.get("*/admin/currentUser/manual-groups", () =>
       HttpResponse.json({ data: manualGroups }),
-    ),
-    http.put(
-      "*/admin/currentUser/institutional-groups",
-      async ({ request }) => {
-        groupPuts.push(await request.json());
-        return new HttpResponse(null, { status: 204 });
-      },
     ),
     http.put("*/admin/currentUser/orcid", async ({ request }) => {
       if (conflict) return new HttpResponse(null, { status: 409 });
@@ -96,73 +84,30 @@ function fakeApi({
       }),
     ),
   );
-  return { puts, groupPuts };
+  return { puts };
 }
 
-async function renderSettingsPage(api: Parameters<typeof fakeApi>[0] = {}) {
-  const { puts, groupPuts } = fakeApi(api);
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  const router = createRouter({
-    routeTree,
-    context: { queryClient },
-    history: createMemoryHistory({ initialEntries: ["/settings"] }),
-  });
-  const screen = render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
-    </StrictMode>,
-  );
-  return { screen, puts, groupPuts };
+async function renderProfilePage(api: Parameters<typeof fakeApi>[0] = {}) {
+  const { puts } = fakeApi(api);
+  const { screen } = await renderRoute("/settings/profile");
+  return { screen, puts };
 }
 
 const orcidForm = () => page.getByRole("form", { name: "ORCID iD" });
 
-describe("settings page", () => {
+describe("profile page", () => {
   it("should show the stored orcid", async () => {
-    await renderSettingsPage({ orcid: "0000-0002-1825-0097" });
+    await renderProfilePage({ orcid: "0000-0002-1825-0097" });
+    await expect
+      .element(page.getByRole("heading", { level: 1, name: "Profile" }))
+      .toBeVisible();
     await expect
       .element(orcidForm().getByLabelText(/orcid/i))
       .toHaveValue("0000-0002-1825-0097");
   });
 
-  it("should save a new institution only once confirmed", async () => {
-    const { groupPuts } = await renderSettingsPage();
-    const institution = page.getByRole("form", { name: "Institution" });
-    await expect
-      .element(institution.getByRole("combobox", { name: /organization/i }))
-      .toHaveTextContent(/Lorraine/);
-
-    await institution.getByRole("combobox", { name: /laboratory/i }).click();
-    await page.getByRole("option", { name: /GéoRessources/ }).click();
-    await institution.getByRole("button", { name: /save/i }).click();
-    await expect
-      .element(page.getByRole("heading", { name: /change your institution/i }))
-      .toBeVisible();
-    expect(groupPuts).toEqual([]);
-
-    await page.getByRole("button", { name: /confirm/i }).click();
-
-    await expect
-      .element(page.getByText(/institution saved/i))
-      .toBeInTheDocument();
-    await expect
-      .element(institution.getByRole("button", { name: /save/i }))
-      .toBeEnabled();
-    expect(groupPuts).toEqual([
-      {
-        institutionalOrganization: "04vfs2w97",
-        institutionalOsu: "OTELo",
-        institutionalLaboratory: "UMR7359",
-      },
-    ]);
-  });
-
   it("should save a valid orcid", async () => {
-    const { puts } = await renderSettingsPage();
+    const { puts } = await renderProfilePage();
     await orcidForm().getByLabelText(/orcid/i).fill("0000-0002-1825-0097");
     await orcidForm().getByRole("button", { name: /save/i }).click();
     await expect.element(page.getByText(/orcid id saved/i)).toBeInTheDocument();
@@ -170,7 +115,7 @@ describe("settings page", () => {
   });
 
   it("should clear the orcid when the field is emptied", async () => {
-    const { puts } = await renderSettingsPage({
+    const { puts } = await renderProfilePage({
       orcid: "0000-0002-1825-0097",
     });
     await orcidForm().getByLabelText(/orcid/i).fill("");
@@ -180,7 +125,7 @@ describe("settings page", () => {
   });
 
   it("should reject a malformed orcid without calling the api", async () => {
-    const { puts } = await renderSettingsPage();
+    const { puts } = await renderProfilePage();
     await orcidForm().getByLabelText(/orcid/i).fill("not-an-orcid");
     await orcidForm().getByRole("button", { name: /save/i }).click();
     await expect
@@ -189,33 +134,51 @@ describe("settings page", () => {
     expect(puts).toEqual([]);
   });
 
-  it("should list the manual groups the user belongs to", async () => {
-    await renderSettingsPage();
-    await expect.element(page.getByText("Basalt team")).toBeVisible();
+  it("should offer a single save button", async () => {
+    await renderProfilePage();
+    await expect.element(orcidForm()).toBeVisible();
     await expect
-      .element(page.getByRole("button", { name: "Leave Basalt team" }))
-      .toBeEnabled();
+      .element(page.getByRole("button", { name: "Ask for a service account" }))
+      .toBeVisible();
+    expect(page.getByRole("button", { name: /save/i }).elements()).toHaveLength(
+      1,
+    );
   });
 
-  it("should refuse to leave only the group holding a published sample", async () => {
-    await renderSettingsPage({
-      manualGroups: [
-        { ...BASALT_TEAM, canLeave: false },
-        {
-          id: "3f2504e0-4f89-41d3-9a0c-0305000000a2",
-          name: "Fossil team",
-          canLeave: true,
-        },
-      ],
-    });
+  it.each([
+    [
+      "ORCID iD",
+      "Your ORCID iD becomes a sign-in method for this account, so make sure it is yours.",
+    ],
+    [
+      "My samples",
+      "Share this link to show every published sample you own or contribute to.",
+    ],
+    [
+      "Group samples",
+      "Share this link to show every published sample attached to a group you belong to.",
+    ],
+    [
+      "Services",
+      "Generate an API key so one of your services can call the API in your name.",
+    ],
+  ])("should describe the %s section under its title", async (title, hint) => {
+    await renderProfilePage();
     await expect
-      .element(page.getByRole("button", { name: "Leave Basalt team" }))
-      .toBeDisabled();
+      .element(page.getByRole("region", { name: title, exact: true }))
+      .toHaveAccessibleDescription(hint);
+  });
+
+  it("should group the samples links under one section", async () => {
+    await renderProfilePage();
+    const links = page.getByRole("region", { name: "Samples links" });
     await expect
-      .element(page.getByRole("button", { name: "Leave Fossil team" }))
-      .toBeEnabled();
+      .element(links.getByRole("region", { name: "My samples", exact: true }))
+      .toBeVisible();
     await expect
-      .element(page.getByText(/you cannot leave this group/i))
+      .element(
+        links.getByRole("region", { name: "Group samples", exact: true }),
+      )
       .toBeVisible();
   });
 
@@ -227,7 +190,7 @@ describe("settings page", () => {
 
   it("should offer the my-samples link", async () => {
     const writeText = stubClipboard();
-    await renderSettingsPage();
+    await renderProfilePage();
     const open = page.getByRole("link", { name: "Open in a new window" });
 
     await expect.element(mySamplesInput()).toHaveValue(MY_SAMPLES_LINK);
@@ -243,7 +206,7 @@ describe("settings page", () => {
 
   it("should select and copy the my-samples link on input click", async () => {
     const writeText = stubClipboard();
-    await renderSettingsPage();
+    await renderProfilePage();
 
     await mySamplesInput().click();
 
@@ -252,44 +215,52 @@ describe("settings page", () => {
     writeText.mockRestore();
   });
 
-  it("should offer the group samples link once a group is picked", async () => {
-    await renderSettingsPage();
-    const groupSelector = page.getByRole("combobox", {
-      name: "Group",
-      exact: true,
-    });
-    await expect.element(groupSelector).toBeEnabled();
-    await expect
-      .element(page.getByRole("textbox", { name: "Group samples link" }))
-      .not.toBeInTheDocument();
+  const groupSelector = () =>
+    page.getByRole("combobox", { name: "Group", exact: true });
+  const groupSamplesInput = () =>
+    page.getByRole("textbox", { name: "Group samples link" });
 
-    await groupSelector.click();
+  it("should offer the group samples link once a group is picked", async () => {
+    await renderProfilePage();
+    await expect.element(groupSelector()).toBeEnabled();
+    await expect.element(groupSamplesInput()).not.toBeInTheDocument();
+
+    await groupSelector().click();
     await page.getByRole("option", { name: "Basalt team" }).click();
 
     await expect
-      .element(page.getByRole("textbox", { name: "Group samples link" }))
+      .element(groupSamplesInput())
       .toHaveValue(
         `http://localhost:3000/search?manualGroup=${BASALT_TEAM.id}`,
       );
   });
 
-  it("should disable the group selector when the user belongs to no group", async () => {
-    await renderSettingsPage({ manualGroups: [] });
+  it("should offer the only group's samples link with no group to pick", async () => {
+    await renderProfilePage({ manualGroups: [BASALT_TEAM] });
 
     await expect
-      .element(page.getByRole("combobox", { name: "Group", exact: true }))
-      .toBeDisabled();
+      .element(groupSamplesInput())
+      .toHaveValue(
+        `http://localhost:3000/search?manualGroup=${BASALT_TEAM.id}`,
+      );
+    await expect.element(groupSelector()).not.toBeInTheDocument();
+  });
+
+  it("should disable the group selector when the user belongs to no group", async () => {
+    await renderProfilePage({ manualGroups: [] });
+
+    await expect.element(groupSelector()).toBeDisabled();
   });
 
   it("should hide the my-samples link from a pending user", async () => {
-    await renderSettingsPage({ status: "pending" });
+    await renderProfilePage({ status: "pending" });
 
     await expect.element(orcidForm()).toBeVisible();
     await expect.element(mySamplesInput()).not.toBeInTheDocument();
   });
 
   it("should offer an accepted user owning no service account to ask for one", async () => {
-    await renderSettingsPage();
+    await renderProfilePage();
 
     await expect
       .element(page.getByRole("heading", { name: "Services" }))
@@ -300,7 +271,7 @@ describe("settings page", () => {
   });
 
   it("should hide the services section from a pending user", async () => {
-    await renderSettingsPage({ status: "pending" });
+    await renderProfilePage({ status: "pending" });
 
     await expect.element(orcidForm()).toBeVisible();
     await expect
@@ -312,7 +283,7 @@ describe("settings page", () => {
   });
 
   it("should show the generated api key once and offer to regenerate it", async () => {
-    await renderSettingsPage({
+    await renderProfilePage({
       services: [{ id: SERVICE_ID, name: "Gaia harvester", hasApiKey: false }],
     });
 
@@ -332,7 +303,7 @@ describe("settings page", () => {
   });
 
   it("should surface a conflict when another account holds the orcid", async () => {
-    await renderSettingsPage({ conflict: true });
+    await renderProfilePage({ conflict: true });
     await orcidForm().getByLabelText(/orcid/i).fill("0000-0002-1825-0097");
     await orcidForm().getByRole("button", { name: /save/i }).click();
     await expect

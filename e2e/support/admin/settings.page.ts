@@ -9,23 +9,31 @@ export function settingsPage(page: Page) {
   const requestDialog = page.getByRole("dialog", {
     name: "Ask for a service account",
   });
+  const openFromUserMenu = async (title: string) => {
+    await page.getByRole("banner").getByRole("button").click();
+    await page.getByRole("menuitem", { name: title }).click();
+    await expect(
+      page.getByRole("heading", { level: 1, name: title }),
+    ).toBeVisible();
+    await expect(page.getByRole("menu")).toHaveCount(0);
+  };
 
   return {
-    open: async () => {
-      await page.getByRole("banner").getByRole("button").click();
-      await page.getByRole("menuitem", { name: "Settings" }).click();
-      await expect(
-        page.getByRole("heading", { name: "Settings" }),
-      ).toBeVisible();
-      await expect(page.getByRole("menu")).toHaveCount(0);
-    },
+    openProfile: () => openFromUserMenu("Profile"),
+    openGroups: () => openFromUserMenu("Groups"),
     mySamplesLink: () =>
       page.getByRole("textbox", { name: "My samples link" }).inputValue(),
     groupSamplesLink: async (name: string) => {
-      await chooseOption(page)("Group", name);
-      return page
-        .getByRole("textbox", { name: "Group samples link" })
-        .inputValue();
+      const link = page.getByRole("textbox", { name: "Group samples link" });
+      const groupPicker = page.getByRole("combobox", {
+        name: "Group",
+        exact: true,
+        disabled: false,
+      });
+      await expect(link.or(groupPicker)).toBeVisible();
+      if (await groupPicker.isVisible())
+        await chooseOption(page)("Group", name);
+      return link.inputValue();
     },
     setOrcid: async (orcid: string) => {
       const form = page.getByRole("form", { name: "ORCID iD" });
@@ -89,14 +97,13 @@ export function settingsPage(page: Page) {
     expectManualGroup: (name: string) => expect(item(name)).toBeVisible(),
     expectNoManualGroup: (name: string) => expect(item(name)).toHaveCount(0),
     expectManualGroupLeaveLocked: async (name: string) => {
-      await expect(
-        page.getByRole("button", { name: `Leave ${name}` }),
-      ).toBeDisabled();
-      await expect(
-        item(name).getByText(
-          "You cannot leave this group while you own a published sample attached to it.",
-        ),
-      ).toBeVisible();
+      const leave = page.getByRole("button", { name: `Leave ${name}` });
+      await expect(leave).toBeDisabled();
+      // A disabled Button has pointer-events: none, so hover its tooltip trigger.
+      await leave.locator("..").hover();
+      await expect(page.getByRole("tooltip")).toHaveText(
+        "You cannot leave this group while you own a published sample attached to it.",
+      );
     },
     leaveManualGroup: async (name: string) => {
       const dialog = page.getByRole("dialog", {

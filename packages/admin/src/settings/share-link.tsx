@@ -24,41 +24,41 @@ export function ShareLink({
     );
 
   return (
-    <div className="flex items-center gap-2">
-      <Label htmlFor={id} className="shrink-0">
-        {label}
-      </Label>
-      <Input
-        id={id}
-        readOnly
-        value={link}
-        className="flex-1"
-        onClick={(event) => {
-          event.currentTarget.select();
-          copyLink();
-        }}
-      />
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        aria-label={m.action_copy_link()}
-        onClick={copyLink}
-      >
-        <CopyIcon />
-      </Button>
-      {canOpen && (
-        <Button asChild variant="outline" size="icon">
-          <a
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={m.action_open_new_window()}
-          >
-            <ExternalLinkIcon />
-          </a>
+    <div className="grid gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          readOnly
+          value={link}
+          className="min-w-0 flex-1 sm:w-72 sm:flex-none"
+          onClick={(event) => {
+            event.currentTarget.select();
+            copyLink();
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label={m.action_copy_link()}
+          onClick={copyLink}
+        >
+          <CopyIcon />
         </Button>
-      )}
+        {canOpen && (
+          <Button asChild variant="outline" size="icon">
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={m.action_open_new_window()}
+            >
+              <ExternalLinkIcon />
+            </a>
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
