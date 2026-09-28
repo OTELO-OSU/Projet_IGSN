@@ -13,7 +13,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useState } from "react";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { SampleTable } from "./sample-table.tsx";
@@ -65,6 +65,7 @@ const sample: AdminSampleListItem = {
   institutionalLaboratory: null,
   status: "draft",
   createdAt: new Date("2026-06-01T00:00:00.000Z"),
+  publishedAt: null,
   updatedAt: new Date("2026-07-01T10:00:00.000Z"),
 };
 const samples = [sample];
@@ -72,6 +73,13 @@ const samples = [sample];
 const SUB_SAMPLE_ACTION = `Add a sub sample of ${sample.name}`;
 
 const DUPLICATE_ACTION = `Duplicate ${sample.name}`;
+
+const COLUMNS_KEY = "admin-sample-columns";
+
+const showColumns = (columns: string) =>
+  localStorage.setItem(COLUMNS_KEY, columns);
+
+afterEach(() => localStorage.removeItem(COLUMNS_KEY));
 
 function renderTable(
   data: AdminSampleListItem[],
@@ -132,16 +140,132 @@ describe("SampleTable", () => {
       .toHaveTextContent(/^IGSN/);
   });
 
-  it("should render the IGSN of a published sample", async () => {
+  it("should show IGSN, Name, Status, the four default card fields and Actions by default", async () => {
+    const screen = await renderTable(samples);
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Actions" }))
+      .toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("columnheader")
+        .elements()
+        .map((header) => header.textContent),
+    ).toEqual([
+      "",
+      "IGSN",
+      "Name",
+      "Status",
+      "Type",
+      "Material",
+      "Location",
+      "Collector",
+      "Actions",
+    ]);
+  });
+
+  it("should expose the full IGSN of a published sample in a tooltip", async () => {
     const screen = await renderTable([
       { ...sample, igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", status: "published" },
     ]);
+
+    await screen.getByText("01K072TVWVFK5A1RRZ5MY4PPK9").hover();
+
     await expect
-      .element(screen.getByText("01K072TVWVFK5A1RRZ5MY4PPK9"))
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("01K072TVWVFK5A1RRZ5MY4PPK9");
+  });
+
+  it("should render the card field texts in the default columns", async () => {
+    const screen = await renderTable([
+      {
+        ...sample,
+        type: "core.half_round",
+        material: "rock_and_sediment.rock",
+        scientificContext: {
+          provenanceStatus: "collection_specimen",
+          collectorFirstname: "Pierre",
+          collectorLastname: "Curie",
+        },
+      },
+    ]);
+    await expect
+      .element(screen.getByText("Core > Core Half round"))
       .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Rock and sediment > Rock > MC-2026-007"))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("Pierre Curie")).toBeInTheDocument();
+  });
+
+  it("should show a picked column with its value and hide it once unticked", async () => {
+    const screen = await renderTable([
+      { ...sample, publishedAt: new Date("2026-07-02T08:00:00.000Z") },
+    ]);
+
+    await screen.getByRole("button", { name: "Columns" }).click();
+    await screen.getByRole("checkbox", { name: "Published" }).click();
+
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Published" }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("2026-07-02")).toBeInTheDocument();
+
+    await screen.getByRole("checkbox", { name: "Published" }).click();
+
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Published" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should keep the picked columns across a remount", async () => {
+    const first = await renderTable(samples);
+    await first.getByRole("button", { name: "Columns" }).click();
+    await first.getByRole("checkbox", { name: "Published" }).click();
+    await first.getByRole("checkbox", { name: "Type" }).click();
+    await first.unmount();
+
+    const screen = await renderTable(samples);
+
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Published" }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Type" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should drop a stored column the table no longer offers", async () => {
+    showColumns("bogus");
+    const screen = await renderTable(samples);
+
+    await screen.getByRole("button", { name: "Columns" }).click();
+    await screen.getByRole("checkbox", { name: "Published" }).click();
+
+    expect(localStorage.getItem(COLUMNS_KEY)).toBe("publishedAt");
+  });
+
+  it.each([/^IGSN/, /^Name/, /^Status/])(
+    "should lock the %s checkbox, a column always shown",
+    async (name) => {
+      const screen = await renderTable(samples);
+
+      await screen.getByRole("button", { name: "Columns" }).click();
+
+      await expect
+        .element(screen.getByRole("checkbox", { name }))
+        .toBeDisabled();
+    },
+  );
+
+  it("should span the empty state over the visible columns alone", async () => {
+    const screen = await renderTable([]);
+    await expect
+      .element(screen.getByRole("cell", { name: "No results" }))
+      .toHaveAttribute("colspan", "9");
   });
 
   it("should render the internal identifier of a published sample", async () => {
+    showColumns("internalNumber");
     const screen = await renderTable([
       { ...sample, status: "published", internalNumber: 42 },
     ]);
@@ -151,6 +275,7 @@ describe("SampleTable", () => {
   });
 
   it("should render no internal identifier on a draft", async () => {
+    showColumns("internalNumber");
     const screen = await renderTable(samples);
     await expect
       .element(screen.getByRole("columnheader", { name: "Internal ID" }))
@@ -197,7 +322,7 @@ describe("SampleTable", () => {
     },
   );
 
-  it.each(["IGSN", "Owner"])(
+  it.each(["IGSN", "Type"])(
     "should announce no sort state on the %s column header, which cannot sort",
     async (name) => {
       const screen = await renderTable(samples);
@@ -220,18 +345,18 @@ describe("SampleTable", () => {
       .toHaveTextContent("Basalte du Massif Central");
   });
 
-  it("should render a sample row with the last-modified date as yyyy-mm-dd", async () => {
+  it("should render the picked record columns, dates as yyyy-mm-dd", async () => {
+    showColumns("specificName,collectionMethod,updatedAt");
     const screen = await renderTable(samples);
-    await expect
-      .element(screen.getByText("Basalte du Massif Central"))
-      .toBeInTheDocument();
     await expect.element(screen.getByText("MC-2026-007")).toBeInTheDocument();
-    await expect.element(screen.getByText("Thin section")).toBeInTheDocument();
-    await expect.element(screen.getByText("GravityCorer")).toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("cell", { name: /GravityCorer$/ }))
+      .toBeInTheDocument();
     await expect.element(screen.getByText("2026-07-01")).toBeInTheDocument();
   });
 
   it("should render the owner as initials, announced as the full name", async () => {
+    showColumns("owner");
     const screen = await renderTable(samples);
     await expect
       .element(screen.getByTitle("Marie Curie"))
@@ -242,6 +367,7 @@ describe("SampleTable", () => {
   });
 
   it("should render the owner account status when asked for it", async () => {
+    showColumns("owner");
     const screen = await renderTable(samples, vi.fn(), true);
     await expect
       .element(screen.getByRole("cell", { name: /Marie Curie\s*Active/ }))
@@ -249,6 +375,7 @@ describe("SampleTable", () => {
   });
 
   it("should render no owner account status by default", async () => {
+    showColumns("owner");
     const screen = await renderTable(samples);
     await expect
       .element(screen.getByRole("cell", { name: "Marie Curie", exact: true }))
@@ -260,6 +387,7 @@ describe("SampleTable", () => {
     ["a nameless owner", { name: null, firstname: null, status: "accepted" }],
     ["no owner", null],
   ])("should render an empty owner cell for %s", async (_, owner) => {
+    showColumns("owner");
     const screen = await renderTable([{ ...sample, owner }]);
     await expect
       .element(screen.getByText("Basalte du Massif Central"))
@@ -389,7 +517,7 @@ describe("SampleTable", () => {
 
   it("should navigate to the edit page when the row is clicked", async () => {
     const screen = await renderTable(samples);
-    await screen.getByText("Thin section").click();
+    await screen.getByText("Draft").click();
     await expect.element(screen.getByText("Edit page stub")).toBeVisible();
   });
 });

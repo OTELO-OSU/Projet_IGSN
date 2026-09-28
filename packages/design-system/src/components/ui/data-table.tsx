@@ -42,6 +42,8 @@ export function DataTable<T>({
   onRowClick,
   className,
 }: DataTableProps<T>) {
+  // TanStack Table v8 mutates a stable `table`, so compiler caching renders stale headers.
+  "use no memo";
   const rows = table.getRowModel().rows;
 
   return (
@@ -69,7 +71,7 @@ export function DataTable<T>({
         {rows.length === 0 ? (
           <TableRow>
             <TableCell
-              colSpan={table.getAllColumns().length}
+              colSpan={table.getVisibleLeafColumns().length}
               className="text-muted-foreground italic"
             >
               {emptyLabel}

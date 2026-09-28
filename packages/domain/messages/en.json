@@ -1392,5 +1392,20 @@
   "mineral_abundance_minor": "Minor",
   "mineral_abundance_accessory": "Accessory",
   "mineral_abundance_trace": "Trace",
-  "mineral_abundance_unknown": "Unknown"
+  "mineral_abundance_unknown": "Unknown",
+  "card_field_name": "Sample name",
+  "card_field_igsn": "IGSN",
+  "card_field_type_nature": "Type and nature",
+  "card_field_location": "Country and locality",
+  "sample_field_material": "Material",
+  "sample_field_collector_name": "Collector name",
+  "sample_field_collection_method": "Collection method",
+  "sample_field_numeric_age": "Numeric age",
+  "sample_field_geological_age": "Geological age",
+  "sample_section_sample": "Sample",
+  "sample_section_location": "Location",
+  "sample_section_scientific_context": "Scientific context",
+  "sample_section_age": "Age",
+  "facet_research_program_name": "Research program",
+  "facet_chief_scientist": "Chief scientist"
 }

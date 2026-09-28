@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { vi } from "vitest";
+import { onTestFinished, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { addFilter } from "../../test/add-filter.ts";
@@ -76,7 +76,9 @@ beforeAll(() => page.viewport(1280, 1600));
 type Screen = Awaited<ReturnType<typeof renderRoute>>["screen"];
 
 describe("SampleModerationPage", () => {
-  it("should list the moderated samples with each owner's account status", async () => {
+  it("should list the moderated samples with each owner's account status in the Owner column", async () => {
+    localStorage.setItem("admin-sample-columns", "owner");
+    onTestFinished(() => localStorage.removeItem("admin-sample-columns"));
     fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
     fakeApi();
 

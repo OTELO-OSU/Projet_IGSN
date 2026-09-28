@@ -1,7 +1,5 @@
 import { expect, type Page } from "@playwright/test";
 
-import { natureLabel } from "../nature-label";
-
 export const sampleRow = (page: Page, name: string) =>
   page
     .getByRole("row")
@@ -32,18 +30,20 @@ export function sampleListPage(page: Page) {
         page.getByRole("link", { name: `Add a sub sample of ${name}` }),
       ).toHaveCount(0),
     expectColumns: async () => {
-      await expect(
-        page.getByRole("columnheader", { name: "Name", exact: true }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("columnheader", { name: "Specific Name" }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("columnheader", { name: "Nature" }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("columnheader", { name: "Last modified" }),
-      ).toBeVisible();
+      for (const name of [
+        "IGSN",
+        "Name",
+        "Status",
+        "Type",
+        "Material",
+        "Location",
+        "Collector",
+        "Actions",
+      ]) {
+        await expect(
+          page.getByRole("columnheader", { name, exact: true }),
+        ).toBeVisible();
+      }
     },
     filterByOwnership: async (
       choice: "All samples" | "Mine" | "Shared with me",
@@ -60,10 +60,6 @@ export function sampleListPage(page: Page) {
     expectSampleRowWithStatus: (name: string, status: string) =>
       expect(
         sampleRow(page, name).getByRole("cell", { name: status, exact: true }),
-      ).toBeVisible(),
-    expectSampleRowWithNature: (name: string, nature: string) =>
-      expect(
-        sampleRow(page, name).getByRole("cell", { name: natureLabel(nature) }),
       ).toBeVisible(),
   };
 }

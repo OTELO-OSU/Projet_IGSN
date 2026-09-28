@@ -19,7 +19,7 @@ test.describe("samples", () => {
     const mine = (s: (typeof samples)[number]) =>
       s.owner === "jean" && s.status !== "tombstone";
     for (const sample of samples.filter(mine)) {
-      await list.expectSampleRowWithNature(sample.name, sample.nature);
+      await list.expectSampleRow(sample.name);
     }
     for (const sample of samples.filter((s) => !mine(s))) {
       await list.expectNoSampleRow(sample.name);

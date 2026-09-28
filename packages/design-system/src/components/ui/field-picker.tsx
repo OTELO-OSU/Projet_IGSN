@@ -1,32 +1,35 @@
-import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { Checkbox } from "@projet-igsn/design-system/components/ui/checkbox";
-import { Label } from "@projet-igsn/design-system/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@projet-igsn/design-system/components/ui/popover";
-import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { PlusIcon } from "lucide-react";
 
-import {
-  PICKABLE_FIELDS,
-  selectedCardFields,
-} from "#/domain/samples/card-fields.ts";
-import { m } from "#/paraglide/messages.js";
+import { withRequired } from "../../lib/with-required.ts";
+import { Button } from "./button.tsx";
+import { Checkbox } from "./checkbox.tsx";
+import { Label } from "./label.tsx";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover.tsx";
 
-export function CardFieldPicker({
-  fields = [],
-  onFieldsChange,
+type PickerField = {
+  key: string;
+  label: string;
+  section: string;
+  locked: boolean;
+};
+
+export function FieldPicker({
+  fields,
+  selected,
+  onSelectedChange,
+  triggerLabel,
+  legend,
 }: {
-  fields?: string[];
-  onFieldsChange: (fields: string[]) => void;
+  fields: readonly PickerField[];
+  selected: readonly string[];
+  onSelectedChange: (keys: string[]) => void;
+  triggerLabel: string;
+  legend: string;
 }) {
   function toggle(key: string, checked: boolean) {
-    const next = checked
-      ? [...fields, key]
-      : fields.filter((field) => field !== key);
-    onFieldsChange(selectedCardFields(next).map((field) => field.key));
+    onSelectedChange(
+      checked ? [...selected, key] : selected.filter((field) => field !== key),
+    );
   }
 
   return (
@@ -34,16 +37,16 @@ export function CardFieldPicker({
       <PopoverTrigger asChild>
         <Button type="button" variant="secondary">
           <PlusIcon aria-hidden />
-          {m.card_fields_add()}
+          {triggerLabel}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[32rem]">
         <fieldset>
           <legend className="mb-3 text-sm leading-none font-medium">
-            {m.card_fields_legend()}
+            {legend}
           </legend>
           <div className="columns-2 gap-6">
-            {[...Map.groupBy(PICKABLE_FIELDS, (field) => field.section())].map(
+            {[...Map.groupBy(fields, (field) => field.section)].map(
               ([section, sectionFields]) => (
                 <fieldset key={section} className="mb-4 break-inside-avoid">
                   <legend className="text-muted-foreground mb-2 text-xs font-medium">
@@ -53,15 +56,15 @@ export function CardFieldPicker({
                     {sectionFields.map((field) => (
                       <div key={field.key} className="flex items-center gap-2">
                         <Checkbox
-                          id={`card-field-${field.key}`}
-                          checked={field.locked || fields.includes(field.key)}
+                          id={`field-picker-${field.key}`}
+                          checked={field.locked || selected.includes(field.key)}
                           disabled={field.locked}
                           onCheckedChange={(state) =>
                             toggle(field.key, state === true)
                           }
                         />
-                        <Label htmlFor={`card-field-${field.key}`}>
-                          {withRequired(field.label(), field.locked)}
+                        <Label htmlFor={`field-picker-${field.key}`}>
+                          {withRequired(field.label, field.locked)}
                         </Label>
                       </div>
                     ))}

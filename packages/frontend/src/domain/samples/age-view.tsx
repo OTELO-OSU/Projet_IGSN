@@ -1,11 +1,11 @@
 import type { Age } from "@projet-igsn/domain/sample/age/model";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import {
   formatGeologicalAge,
   formatNumericAge,
-} from "#/domain/samples/format-age.ts";
+} from "#/domain/samples/card-fields.ts";
+import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export function hasAge(age: Sample["age"]): age is Age {

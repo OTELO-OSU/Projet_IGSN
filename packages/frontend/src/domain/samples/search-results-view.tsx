@@ -1,12 +1,16 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import { FieldPicker } from "@projet-igsn/design-system/components/ui/field-picker";
 import {
   Pager,
   PageSizeSelect,
 } from "@projet-igsn/design-system/components/ui/pagination";
 import { PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
 
-import { CardFieldPicker } from "#/domain/samples/card-field-picker.tsx";
+import {
+  PICKABLE_FIELDS,
+  selectedCardFields,
+} from "#/domain/samples/card-fields.ts";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
 import { m } from "#/paraglide/messages.js";
 
@@ -58,7 +62,20 @@ export function SearchResultsView({
             label={m.search_per_page()}
             onPerPageChange={onPerPageChange}
           />
-          <CardFieldPicker fields={fields} onFieldsChange={onFieldsChange} />
+          <FieldPicker
+            fields={PICKABLE_FIELDS.map((field) => ({
+              key: field.key,
+              label: field.label(),
+              section: field.section(),
+              locked: field.locked,
+            }))}
+            selected={fields ?? []}
+            onSelectedChange={(next) =>
+              onFieldsChange(selectedCardFields(next).map((field) => field.key))
+            }
+            triggerLabel={m.card_fields_add()}
+            legend={m.card_fields_legend()}
+          />
         </div>
       </div>
       <SampleList samples={samples} query={query} fields={fields} />
