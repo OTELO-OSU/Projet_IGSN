@@ -18,7 +18,7 @@ const parentRule = (
   forField: FieldSuggestionRule["forField"],
 ): FieldSuggestionRule => ({
   label: "Parent values",
-  noValueLabel: "no value",
+  sourceShortLabel: (index) => `P${index + 1}`,
   booleanLabel: (value) => (value ? "yes" : "no"),
   forField,
 });
@@ -128,7 +128,7 @@ describe("FieldSuggestions", () => {
       .toBeVisible();
   });
 
-  it("should keep a slot for a source without a value, disabled, in that source's position", async () => {
+  it("should skip a source without a value and keep the next source's short label", async () => {
     await render(
       <Harness
         rule={parentRule((field) =>
@@ -142,89 +142,32 @@ describe("FieldSuggestions", () => {
       />,
     );
 
-    const slots = page
+    const suggestions = page
       .getByRole("list", { name: "Parent values" })
       .getByRole("button");
-    await expect.element(slots.nth(0)).toHaveAccessibleName("IGSN-1: no value");
-    await expect.element(slots.nth(0)).toBeDisabled();
-    await expect
-      .element(slots.nth(1))
-      .toHaveAccessibleName("IGSN-2: Basalt 42");
+    await expect.element(suggestions).toHaveAccessibleName("IGSN-2: Basalt 42");
+    await expect.element(suggestions).toHaveTextContent("P2");
   });
 
-  it("should show each slot's parent name as a label above its button", async () => {
-    await render(
-      <Harness
-        rule={parentRule((field) =>
-          field === "name"
-            ? [
-                { source: "IGSN-1", value: "Basalt 42" },
-                { source: "IGSN-2", value: undefined },
-              ]
-            : [],
-        )}
-      />,
-    );
+  it("should show the parent name in a tooltip when a suggestion is hovered", async () => {
+    await render(<Harness />);
 
-    const slots = page.getByRole("list", { name: "Parent values" });
+    await page.getByRole("button", { name: "IGSN-1: Basalt 42" }).hover();
+
+    await expect.element(page.getByRole("tooltip")).toHaveTextContent("IGSN-1");
+  });
+
+  it("should keep the suggestions once one filled the field", async () => {
+    await render(<Harness />);
+
+    await page.getByRole("button", { name: "IGSN-1: Basalt 42" }).click();
+
     await expect
-      .element(slots.getByText("IGSN-1", { exact: true }))
+      .element(page.getByLabelText("Sample name"))
+      .toHaveValue("Basalt 42");
+    await expect
+      .element(page.getByRole("button", { name: "IGSN-1: Basalt 42" }))
       .toBeVisible();
-    await expect
-      .element(slots.getByText("IGSN-2", { exact: true }))
-      .toBeVisible();
-  });
-
-  it("should show the full value in a tooltip when a valued chip is hovered", async () => {
-    await render(
-      <Harness
-        rule={parentRule((field) =>
-          field === "name"
-            ? [
-                {
-                  source: "IGSN-1",
-                  value: "A basalt sampled in the Massif Central",
-                },
-              ]
-            : [],
-        )}
-      />,
-    );
-
-    await page
-      .getByRole("button", {
-        name: "IGSN-1: A basalt sampled in the Massif Central",
-      })
-      .hover();
-
-    await expect
-      .element(page.getByRole("tooltip"))
-      .toHaveTextContent("A basalt sampled in the Massif Central");
-  });
-
-  it("should show the full parent name in a tooltip when its label is hovered", async () => {
-    await render(
-      <Harness
-        rule={parentRule((field) =>
-          field === "name"
-            ? [
-                {
-                  source: "IGSN-FR-A-VERY-LONG-PARENT-SAMPLE-NAME",
-                  value: "Basalt 42",
-                },
-              ]
-            : [],
-        )}
-      />,
-    );
-
-    await page
-      .getByText("IGSN-FR-A-VERY-LONG-PARENT-SAMPLE-NAME", { exact: true })
-      .hover();
-
-    await expect
-      .element(page.getByRole("tooltip"))
-      .toHaveTextContent("IGSN-FR-A-VERY-LONG-PARENT-SAMPLE-NAME");
   });
 
   it("should render no slot list for a field no source can fill", async () => {

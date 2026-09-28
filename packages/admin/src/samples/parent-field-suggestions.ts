@@ -60,7 +60,8 @@ export const parentFieldSuggestions = (
   }));
   return {
     label: m.field_suggestions_from_parents(),
-    noValueLabel: m.field_suggestion_no_value(),
+    sourceShortLabel: (index) =>
+      m.field_suggestion_parent_short({ index: index + 1 }),
     booleanLabel: (value) => (value ? m.value_yes() : m.value_no()),
     forField: (name: string): FieldSuggestion[] =>
       isInheritable(name)

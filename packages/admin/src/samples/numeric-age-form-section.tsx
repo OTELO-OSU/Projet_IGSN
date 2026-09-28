@@ -52,7 +52,7 @@ export function NumericAgeFormSection() {
             disabled={isDisabled}
           />
 
-          <div className="grid gap-4">
+          <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
             {mode === "range" ? (
               <>
                 <AgeBoundField

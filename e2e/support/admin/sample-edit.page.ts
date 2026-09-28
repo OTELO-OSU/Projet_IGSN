@@ -220,6 +220,9 @@ export function sampleEditPage(page: Page) {
         .fill(relation.identifier);
       await block.getByLabel(/^Title/).fill(relation.title);
       await chooseOption(page, block)("Resource type", relation.resourceType);
+      await block
+        .getByRole("button", { name: `Describe relation ${index} in detail` })
+        .click();
       await block.getByLabel("Description").fill(relation.description);
     },
     expectRelation: async (index: number, relation: RelationFields) => {
@@ -249,6 +252,9 @@ export function sampleEditPage(page: Page) {
       const row = attachmentRow(name);
       await row.getByLabel(/^Title/).fill(resource.title);
       await chooseOption(page, row)("Resource type", resource.resourceType);
+      await page
+        .getByRole("button", { name: `Describe ${name} in detail` })
+        .click();
       await page
         .getByLabel(`Description of ${name}`)
         .fill(resource.description);

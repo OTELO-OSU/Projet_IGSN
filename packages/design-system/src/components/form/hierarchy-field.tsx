@@ -52,18 +52,20 @@ export function HierarchyField({
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish === true)}
       </Label>
-      <HierarchyInput
-        id={field.name}
-        value={field.state.value ?? []}
-        onChange={field.handleChange}
-        onBlur={field.handleBlur}
-        disabled={isDisabled}
-        isLevelLocked={(depth) => isLevelDisabled(`${field.name}[${depth}]`)}
-        hint={{ id: hintId, mustRefineText, canRefineText }}
-        translate={translate}
-        {...ariaProps}
-        {...hierarchyInput}
-      />
+      <div className="sm:max-w-72">
+        <HierarchyInput
+          id={field.name}
+          value={field.state.value ?? []}
+          onChange={field.handleChange}
+          onBlur={field.handleBlur}
+          disabled={isDisabled}
+          isLevelLocked={(depth) => isLevelDisabled(`${field.name}[${depth}]`)}
+          hint={{ id: hintId, mustRefineText, canRefineText }}
+          translate={translate}
+          {...ariaProps}
+          {...hierarchyInput}
+        />
+      </div>
       <FieldError error={error} errorId={errorId} />
     </FieldRow>
   );

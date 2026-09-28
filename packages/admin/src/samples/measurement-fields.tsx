@@ -75,7 +75,7 @@ export function MeasurementFieldPair({
 }) {
   const form = useSampleForm();
   return (
-    <div className="grid gap-4">
+    <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
       <form.AppField name={`${name}Value`}>
         {(field) => (
           <field.NumberField

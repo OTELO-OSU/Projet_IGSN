@@ -1,8 +1,5 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
-import {
-  FieldListItem,
-  FieldListRemoveButton,
-} from "@projet-igsn/design-system/components/form/field-list-item";
+import { FieldListRemoveButton } from "@projet-igsn/design-system/components/form/field-list-item";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
@@ -39,20 +36,28 @@ export function SampleProcessStepsFields() {
       <form.Subscribe selector={(state) => state.values.processSteps}>
         {(steps) =>
           steps.map((step, index) => (
-            <FieldListItem
+            <div
               key={step.key}
-              legend={m.legend_process_step({
-                index: index + 1,
-                kind: processStepKindLabel(step.kind),
-              })}
-              actions={
+              role="group"
+              aria-labelledby={`process-step-${index}-legend`}
+              className="grid gap-2"
+            >
+              <div className="flex items-center justify-between gap-2 sm:max-w-72">
+                <span
+                  id={`process-step-${index}-legend`}
+                  className="font-medium"
+                >
+                  {m.legend_process_step({
+                    index: index + 1,
+                    kind: processStepKindLabel(step.kind),
+                  })}
+                </span>
                 <FieldListRemoveButton
                   label={m.action_remove_process_step({ index: index + 1 })}
                   disabled={isDisabled}
                   onClick={() => form.removeFieldValue("processSteps", index)}
                 />
-              }
-            >
+              </div>
               <DateRangeField
                 prefix={`processSteps[${index}].date`}
                 id={`process-step-${index}-date`}
@@ -73,7 +78,8 @@ export function SampleProcessStepsFields() {
                   />
                 )}
               </form.AppField>
-            </FieldListItem>
+              <hr className="mt-2 sm:max-w-72" />
+            </div>
           ))
         }
       </form.Subscribe>
@@ -81,7 +87,11 @@ export function SampleProcessStepsFields() {
         <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-between sm:max-w-72"
+              >
                 {m.action_add_process_step()}
                 <ChevronDownIcon aria-hidden />
               </Button>

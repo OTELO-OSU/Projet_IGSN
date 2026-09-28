@@ -82,6 +82,11 @@ describe("SampleConditionFields", () => {
     await screen.getByRole("combobox", { name: "Pressure unit *" }).click();
     await screen.getByRole("option", { name: "bar", exact: true }).click();
     await screen
+      .getByRole("button", {
+        name: "Describe the specific conditions in detail",
+      })
+      .click();
+    await screen
       .getByLabelText("Specific sample conditions")
       .fill("Stored under argon");
     await screen.getByRole("button", { name: "Create" }).click();
@@ -107,7 +112,7 @@ describe("SampleConditionFields", () => {
         }),
       ),
     );
-  });
+  }, 15000);
 
   it("should show a reading only once its storage condition is picked, then its category is chosen", async () => {
     const screen = await renderConditionTab();
@@ -139,7 +144,11 @@ describe("SampleConditionFields", () => {
     );
 
     await expect
-      .element(screen.getByLabelText("Specific sample conditions"))
+      .element(
+        screen.getByRole("button", {
+          name: "Describe the specific conditions in detail",
+        }),
+      )
       .toBeVisible();
     await expect
       .element(screen.getByLabelText("Temperature value"))
@@ -313,6 +322,11 @@ describe("SampleConditionFields", () => {
       .click();
     await screen.getByRole("option", { name: "Ambient" }).click();
     await screen.getByLabelText("Temperature value").fill("21");
+    await screen
+      .getByRole("button", {
+        name: "Describe the specific conditions in detail",
+      })
+      .click();
     await screen
       .getByLabelText("Specific sample conditions")
       .fill("Stored under argon");

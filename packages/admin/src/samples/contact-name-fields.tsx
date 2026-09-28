@@ -6,9 +6,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { cn } from "@projet-igsn/design-system/lib/utils";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { UserRoundSearchIcon } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { isTypedContact } from "#/samples/compose-contact.ts";
@@ -26,11 +27,13 @@ export function ContactNameFields({
   person,
   requiredToPublish = false,
   selfFirst,
+  action,
 }: {
   label: string;
   person: ContactPerson;
   requiredToPublish?: boolean;
   selfFirst?: boolean;
+  action?: ReactNode;
 }) {
   const form = useSampleForm();
   const userIdName = `${person}UserId` as const;
@@ -51,7 +54,7 @@ export function ContactNameFields({
   };
 
   const typedNames = (
-    <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
+    <div className="grid gap-4 sm:flex sm:flex-wrap">
       <form.AppField name={firstnameName}>
         {(field) => (
           <field.TextField
@@ -96,9 +99,9 @@ export function ContactNameFields({
   const picker = (
     <form.AppField name={userIdName}>
       {(field) => (
-        <>
-          <Label htmlFor={userIdName} className="sr-only">
-            {label}
+        <div className="grid w-full gap-2 sm:w-72">
+          <Label htmlFor={userIdName}>
+            {withRequired(label, requiredToPublish)}
           </Label>
           <ContactNamePicker
             id={userIdName}
@@ -110,17 +113,33 @@ export function ContactNameFields({
               setIsTyped(true);
             }}
           />
-        </>
+        </div>
       )}
     </form.AppField>
   );
 
+  const isPicker = !isFrozen && !isTyped;
+
   return (
-    <fieldset className="grid gap-4">
-      <legend className="mb-2 font-medium">
-        {withRequired(label, requiredToPublish)}
-      </legend>
-      {isFrozen || isTyped ? typedNames : picker}
-    </fieldset>
+    <div className="relative">
+      <fieldset className="grid gap-4">
+        <legend
+          className={cn(
+            isPicker ? "sr-only" : "mb-2 font-medium",
+            action && "pr-10",
+          )}
+        >
+          {withRequired(label, requiredToPublish)}
+        </legend>
+        {isPicker ? picker : typedNames}
+      </fieldset>
+      {action ? (
+        <div
+          className={cn("absolute right-0", isPicker ? "-top-3" : "-top-1.5")}
+        >
+          {action}
+        </div>
+      ) : null}
+    </div>
   );
 }

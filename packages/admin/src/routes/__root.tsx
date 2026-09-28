@@ -17,7 +17,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       <TooltipProvider>
         <AuthGate>
           <Outlet />
-          <Toaster />
+          {/* Clears the sample form's fixed action bar, so a toast never covers Publish. */}
+          <Toaster offset={{ bottom: 80 }} mobileOffset={{ bottom: 80 }} />
         </AuthGate>
       </TooltipProvider>
     ),

@@ -227,7 +227,7 @@ describe("SampleProcessStepsFields", () => {
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/date every process step before publishing/i);
+      .toHaveTextContent("Identity > Step date");
   });
 
   it("should keep the saved process steps editable on a published sample", async () => {

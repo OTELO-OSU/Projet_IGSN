@@ -784,6 +784,16 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
+    await pickPath(
+      screen,
+      "Collection Method",
+      "Coring",
+      "GravityCorer",
+      "Giant",
+    );
+    await screen
+      .getByRole("button", { name: "Describe the collection method in detail" })
+      .click();
     await screen
       .getByLabelText("Collection Method Description")
       .fill("Cored at low tide from the northern outcrop");
@@ -796,7 +806,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: null,
         material: "rock_and_sediment",
-        collectionMethod: null,
+        collectionMethod: "coring.gravity_corer.giant",
         collectionMethodDescription:
           "Cored at low tide from the northern outcrop",
         localId: null,
@@ -820,6 +830,16 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
+    await pickPath(
+      screen,
+      "Collection Method",
+      "Coring",
+      "GravityCorer",
+      "Giant",
+    );
+    await screen
+      .getByRole("button", { name: "Describe the collection method in detail" })
+      .click();
     await screen.getByLabelText("Collection Method Description").fill("   ");
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -830,7 +850,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: null,
         material: "rock_and_sediment",
-        collectionMethod: null,
+        collectionMethod: "coring.gravity_corer.giant",
         collectionMethodDescription: null,
         localId: null,
         specificName: null,
@@ -1268,7 +1288,7 @@ describe("SampleForm", () => {
     collectionMethodDescription: null,
   } as const;
 
-  it.each<[string, CreateSample, RegExp]>([
+  it.each<[string, CreateSample, string]>([
     [
       "the nature is missing",
       {
@@ -1277,7 +1297,7 @@ describe("SampleForm", () => {
         type: "dredge",
         material: "rock_and_sediment.mineral",
       },
-      /set the nature before publishing/i,
+      "Identity > Nature",
     ],
     [
       "the material stops above the first refinable level",
@@ -1286,12 +1306,12 @@ describe("SampleForm", () => {
         type: "dredge",
         material: "rock_and_sediment.rock",
       },
-      /classify the material at least one level below its root/i,
+      "Sample classification > Material",
     ],
     [
       "the type is missing",
       { ...publishGateBase, type: null, material: "rock_and_sediment.mineral" },
-      /set the sample type before publishing/i,
+      "Identity > Type",
     ],
     [
       "the collection date is missing",
@@ -1301,7 +1321,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment.mineral",
         location: { position: { type: "point", longitude: 3, latitude: 45 } },
       },
-      /set the collection date before publishing/i,
+      "Identity > Collection date",
     ],
     [
       "a required location is missing",
@@ -1310,7 +1330,7 @@ describe("SampleForm", () => {
         type: "dredge",
         material: "rock_and_sediment.mineral",
       },
-      /set the sample location/i,
+      "Location > Coordinates",
     ],
   ])(
     "should disable Save & Publish and explain in a tooltip when %s",
@@ -1338,6 +1358,69 @@ describe("SampleForm", () => {
         .toHaveTextContent(message);
     },
   );
+
+  it("should list the publish blockers in tab order", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            ...publishGateBase,
+            type: "dredge",
+            material: "rock_and_sediment.rock",
+          }}
+          primaryAction={{
+            kind: "publish",
+            label: "Save & Publish",
+            onPublish: noop,
+          }}
+        />
+      </TooltipProvider>,
+    );
+
+    screen
+      .getByRole("button", { name: "Save & Publish" })
+      .element()
+      .closest<HTMLElement>("[tabindex]")
+      ?.focus();
+
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(
+        /Identity > Collection date.*Sample classification > Material/,
+      );
+  });
+
+  it("should count a publish requirement met on its tab before any save", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await expect
+      .element(screen.getByRole("tab", { name: "Identity (1/4)" }))
+      .toBeVisible();
+
+    await screen.getByRole("combobox", { name: /nature/i }).click();
+    await screen.getByText("Thin section").click();
+
+    await expect
+      .element(screen.getByRole("tab", { name: "Identity (2/4)" }))
+      .toBeVisible();
+  });
+
+  it("should add a numeric age's requirements to the Age total once a value is set", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Age", exact: true }).click();
+    await screen.getByRole("switch", { name: "Record a numeric age" }).click();
+    await screen.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
+
+    await expect
+      .element(screen.getByRole("tab", { name: "Age (1/2)" }))
+      .toBeVisible();
+  });
 
   it.each([
     ["a mineral lacks a specific name", "rock_and_sediment.mineral", null],
@@ -1581,7 +1664,7 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByRole("tablist"))
       .toHaveTextContent(
-        "IdentitySample classificationLocationAgePhysical descriptionScientific contextConservation and securityCuration and repositoryRelated URL or document",
+        /^Identity.*Sample classification.*Location.*Age.*Physical description.*Scientific context.*Conservation and security.*Curation and repository.*Related URL or document$/,
       );
   });
 
@@ -2084,7 +2167,7 @@ describe("SampleForm", () => {
     save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/whether the sample still exists/i);
+      .toHaveTextContent("Curation and repository > Existence status");
 
     await screen.getByRole("combobox", { name: /existence status/i }).click();
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
@@ -2398,9 +2481,7 @@ describe("SampleForm post-publication field lock", () => {
     save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(
-        /classify the material at least one level below its root/i,
-      );
+      .toHaveTextContent("Sample classification > Material");
   });
 
   it("keeps the collection date and the whole location editable on a published sample", async () => {
@@ -2409,7 +2490,10 @@ describe("SampleForm post-publication field lock", () => {
         <SampleForm
           onCancel={noop}
           status="published"
-          defaultValues={publishedFieldSampleFixture}
+          defaultValues={{
+            ...publishedFieldSampleFixture,
+            geologicalContextDescription: "Basaltic plateau",
+          }}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
       </TooltipProvider>,
@@ -2647,7 +2731,7 @@ describe("SampleForm post-publication field lock", () => {
     save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/resource type of every related resource/i);
+      .toHaveTextContent("Related URL or document > Relation resource type");
   });
 
   it("should offer no parent tab when the sample has no parent", async () => {
@@ -2695,7 +2779,7 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("link", { name: NATURAL_PARENT.name }))
       .toHaveAttribute("href", `http://localhost:3000/samples/${PARENT_IGSN}`);
     await expect
-      .element(screen.getByRole("heading", { name: "Location" }))
+      .element(screen.getByLabelText("Locality name"))
       .not.toBeInTheDocument();
   });
 
@@ -2926,7 +3010,12 @@ describe("SampleForm duplicate check", () => {
 
   it("should never check a published save leaving the name, material and collector unchanged", async () => {
     const bodies = fakeApi();
-    const { screen, onSubmit } = await renderPublishedSave();
+    const { screen, onSubmit } = await renderPublishedSave({
+      defaultValues: {
+        ...collectedFixture,
+        collectionMethodDescription: "Dredged once",
+      },
+    });
 
     await screen
       .getByLabelText("Collection Method Description")

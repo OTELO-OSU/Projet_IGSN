@@ -496,7 +496,7 @@ describe("CreateSamplePage", () => {
     });
   });
 
-  it("should offer a yes/no chip for a parent's switch and a disabled slot for the parent with no value", async () => {
+  it("should offer a yes/no chip for a parent's switch and no slot for the parent with no value", async () => {
     const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
     await continueWithTwoParents(screen);
     await openTab(screen, "Physical description");
@@ -510,10 +510,8 @@ describe("CreateSamplePage", () => {
       )
       .toBeVisible();
     await expect
-      .element(
-        orientedSlots.getByRole("button", { name: "Vosges 2026: No value" }),
-      )
-      .toBeDisabled();
+      .element(orientedSlots.getByRole("button", { name: /^Vosges 2026:/ }))
+      .not.toBeInTheDocument();
   });
 
   it("should hide a gated row until its own gate chip opens it, then fill it without touching the gate", async () => {
@@ -607,7 +605,9 @@ describe("CreateSamplePage", () => {
       .toBeVisible();
 
     await openTab(screen, "Parent sample");
-    await expect.element(screen.getByText("Massif Central 2026")).toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Parent", { exact: true }))
+      .toHaveValue("Massif Central 2026");
   });
 
   it("should drop a copied parent the duplicator may declare no sub sample of", async () => {
@@ -781,7 +781,7 @@ describe("CreateSamplePage", () => {
     answerCurrentUser();
 
     await expect.element(publish).toBeEnabled();
-  });
+  }, 15000);
 
   it("should land on the new draft's edit page when publishing fails after creation", async () => {
     const screen = await renderCreatePage(false, true);

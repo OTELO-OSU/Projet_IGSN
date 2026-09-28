@@ -1,3 +1,4 @@
+import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { PHYSIOGRAPHIC_ENVIRONMENT_HIERARCHY } from "@projet-igsn/domain/sample/physiographic-environment/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
@@ -23,14 +24,27 @@ export function SampleGeologicalContextFields() {
         )}
       </form.AppField>
 
-      <form.AppField name="geologicalContextDescription">
-        {(field) => (
-          <field.TextField
-            label={m.field_geological_context_description()}
-            multiline
-          />
+      <form.Subscribe
+        selector={(state) =>
+          composeHierarchyValue(state.values.physiographicEnvironmentPath) !==
+          null
+        }
+      >
+        {(hasEnvironment) => (
+          <form.AppField name="geologicalContextDescription">
+            {(field) => (
+              <field.TextField
+                label={m.field_geological_context_description()}
+                multiline
+                reveal={{
+                  label: m.reveal_geological_context_description(),
+                  canReveal: hasEnvironment,
+                }}
+              />
+            )}
+          </form.AppField>
         )}
-      </form.AppField>
+      </form.Subscribe>
     </div>
   );
 }

@@ -175,6 +175,9 @@ describe("SampleAttachments", () => {
     await screen.getByLabelText("Title").fill("Raw measurements");
     await screen.getByRole("combobox", { name: "Resource type" }).click();
     await screen.getByRole("option", { name: "Dataset" }).click();
+    await screen
+      .getByRole("button", { name: "Describe a.csv in detail" })
+      .click();
     await screen.getByLabelText("Description of a.csv").fill("Raw data");
 
     expect(FakeXhr.instances).toHaveLength(0);

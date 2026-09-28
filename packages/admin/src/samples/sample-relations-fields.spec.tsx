@@ -2,6 +2,7 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
+import { page } from "vitest/browser";
 
 import { fakeSample } from "../../test/fake-sample.ts";
 import { worker } from "../../test/msw.ts";
@@ -9,6 +10,8 @@ import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
 const SAMPLE_ID = fakeSample.id;
+
+beforeAll(() => page.viewport(1280, 1600));
 
 beforeAll(() => {
   worker.use(
@@ -115,6 +118,9 @@ describe("SampleForm related resources tab", () => {
       .fill("https://doi.org/10.1594/IEDA.100252");
     await block.getByLabelText("Title").fill("Companion dataset");
     await select(screen, block, "Resource type", "Journal article");
+    await block
+      .getByRole("button", { name: "Describe relation 1 in detail" })
+      .click();
     await block.getByLabelText("Description").fill("Cites this sample");
     await screen.getByRole("button", { name: "Save" }).click();
 

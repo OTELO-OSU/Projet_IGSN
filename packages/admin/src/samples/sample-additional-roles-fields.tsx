@@ -1,8 +1,5 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
-import {
-  FieldListItem,
-  FieldListRemoveButton,
-} from "@projet-igsn/design-system/components/form/field-list-item";
+import { FieldListRemoveButton } from "@projet-igsn/design-system/components/form/field-list-item";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   DropdownMenu,
@@ -35,18 +32,7 @@ export function SampleAdditionalRolesFields() {
               <p className="font-medium">{m.legend_additional_roles()}</p>
             )}
             {roles.map((row, index) => (
-              <FieldListItem
-                key={row.key}
-                actions={
-                  <FieldListRemoveButton
-                    label={m.action_remove_additional_role({
-                      index: index + 1,
-                    })}
-                    disabled={isDisabled}
-                    onClick={() => form.removeFieldValue(ROLES_FIELD, index)}
-                  />
-                }
-              >
+              <div key={row.key} className="grid gap-2 sm:w-fit">
                 <ContactNameFields
                   label={m.legend_additional_role({
                     index: index + 1,
@@ -54,8 +40,18 @@ export function SampleAdditionalRolesFields() {
                   })}
                   person={`${ROLES_FIELD}[${index}].person`}
                   requiredToPublish
+                  action={
+                    <FieldListRemoveButton
+                      label={m.action_remove_additional_role({
+                        index: index + 1,
+                      })}
+                      disabled={isDisabled}
+                      onClick={() => form.removeFieldValue(ROLES_FIELD, index)}
+                    />
+                  }
                 />
-              </FieldListItem>
+                <hr className="mt-2 sm:max-w-72" />
+              </div>
             ))}
           </>
         )}
@@ -64,7 +60,11 @@ export function SampleAdditionalRolesFields() {
         <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-between sm:max-w-72"
+              >
                 {m.action_add_additional_role()}
                 <ChevronDownIcon aria-hidden />
               </Button>

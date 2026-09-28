@@ -15,6 +15,7 @@ import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicat
 import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
 import { canSetSampleStatus } from "@projet-igsn/domain/user-sample/can-set-sample-status";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
+import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { InfoIcon } from "lucide-react";
 import { z } from "zod";
@@ -22,6 +23,7 @@ import { z } from "zod";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
+import { parentFieldSuggestions } from "#/samples/parent-field-suggestions.ts";
 import { SampleActionsMenu } from "#/samples/sample-actions-menu.tsx";
 import {
   SampleForm,
@@ -32,6 +34,7 @@ import { SetStatusButton } from "#/samples/set-status-button.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useDeleteSample } from "#/samples/use-delete-sample.ts";
+import { parentSampleQueryOptions } from "#/samples/use-parent-sample.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
 import { useSampleEditLock } from "#/samples/use-sample-edit-lock.ts";
 import { ForbiddenError, useSample } from "#/samples/use-sample.ts";
@@ -40,6 +43,7 @@ import {
   SampleConflictError,
   useUpdateSample,
 } from "#/samples/use-update-sample.ts";
+import { useApiClient } from "#/use-api-client.ts";
 
 const PUBLIC_HINT: Partial<Record<SampleStatus, () => string>> = {
   withdrawn: m.sample_withdrawn_hint,
@@ -69,6 +73,13 @@ function EditSamplePage() {
     query.data != null && canUpdateSample(query.data.role, query.data),
   );
   const attachmentChanges = useAttachmentChanges(sampleId);
+  const apiFetch = useApiClient();
+  const sampleParents = query.data?.parents ?? [];
+  const parentQueries = useQueries({
+    queries: (sampleParents.length > 1 ? sampleParents : []).map(({ id }) =>
+      parentSampleQueryOptions(apiFetch, id),
+    ),
+  });
 
   if (query.isPending || me.isPending) {
     return <p>{m.samples_loading()}</p>;
@@ -108,6 +119,9 @@ function EditSamplePage() {
         ? m.edit_sample_stale()
         : undefined;
   const publicHint = PUBLIC_HINT[status]?.();
+  const parents = parentQueries
+    .map((parentQuery) => parentQuery.data)
+    .filter((parent) => parent != null);
   const restoreButton = (to: PublishStatus, menuStatus?: PublishStatus) => (
     <SetStatusButton
       status={to}
@@ -257,6 +271,9 @@ function EditSamplePage() {
         }
         manualGroupOptions={query.data.manualGroupOptions}
         parents={query.data.parents}
+        fieldSuggestions={
+          parents.length > 1 ? parentFieldSuggestions(parents) : undefined
+        }
         sampleId={query.data.id}
         attachments={query.data.attachments}
         attachmentChanges={attachmentChanges}

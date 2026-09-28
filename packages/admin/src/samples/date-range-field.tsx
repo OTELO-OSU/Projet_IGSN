@@ -109,10 +109,7 @@ export function DateRangeField({
           className="grid gap-2"
         >
           <div className="flex items-center gap-4">
-            <span
-              id={`${id}-label`}
-              className="text-sm leading-none font-medium"
-            >
+            <span id={`${id}-label`} className="font-medium">
               {withRequired(groupLabel, requiredToPublish)}
             </span>
             <div className="flex items-center gap-2">
@@ -137,7 +134,7 @@ export function DateRangeField({
           <div className="flex flex-wrap items-start gap-4">
             {isRange ? (
               <>
-                <div className="flex-1">
+                <div className="w-full sm:w-72">
                   <form.AppField
                     name={startName}
                     validators={{
@@ -154,7 +151,7 @@ export function DateRangeField({
                     )}
                   </form.AppField>
                 </div>
-                <div className="flex-1">
+                <div className="w-full sm:w-72">
                   <form.AppField
                     name={endName}
                     validators={{
@@ -173,7 +170,7 @@ export function DateRangeField({
                 </div>
               </>
             ) : (
-              <div className="flex-1">
+              <div className="w-full sm:w-72">
                 <form.AppField
                   name={startName}
                   listeners={{
