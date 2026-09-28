@@ -1,4 +1,3 @@
-import { joinContactName } from "@projet-igsn/domain/sample/contact-name";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
@@ -10,6 +9,7 @@ import {
   materialText,
   selectedCardFields,
   typeNatureText,
+  collectorText,
 } from "#/domain/samples/card-fields.ts";
 import { exactRanges, matchRanges } from "#/domain/samples/highlight-match.ts";
 import { m } from "#/paraglide/messages.js";
@@ -76,18 +76,14 @@ export function SampleList({
   return (
     <ul ref={listRef} className="grid gap-4 sm:grid-cols-2">
       {samples.map((sample) => {
-        const { igsn, internalNumber, name, location, scientificContext } =
-          sample;
+        const { igsn, internalNumber, name, location } = sample;
         if (igsn === null) {
           return null;
         }
         const kind = typeNatureText(sample);
         const material = materialText(sample);
         const place = locationText(location);
-        const collector = joinContactName(
-          scientificContext?.collectorFirstname,
-          scientificContext?.collectorLastname,
-        );
+        const collector = collectorText(sample);
         return (
           <li key={igsn}>
             <Link

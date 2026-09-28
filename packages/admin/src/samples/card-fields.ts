@@ -5,15 +5,10 @@ import { createCardFields } from "@projet-igsn/domain/sample/card-field/create-c
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
-export type { CardSample } from "@projet-igsn/domain/sample/card-field/create-card-fields";
-
 export const {
-  PICKABLE_FIELDS,
-  selectedCardFields,
-  typeNatureText,
+  OPTIONAL_CARD_FIELDS,
   collectorText,
+  typeText,
   materialText,
   locationText,
-  formatNumericAge,
-  formatGeologicalAge,
 } = createCardFields(m as unknown as Messages, getLocale);

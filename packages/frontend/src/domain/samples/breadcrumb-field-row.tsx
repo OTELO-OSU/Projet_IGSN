@@ -1,6 +1,6 @@
+import { ancestorPaths } from "@projet-igsn/domain/sample/path/ancestor-paths";
 import { ChevronRightIcon } from "lucide-react";
 
-import { ancestorPaths } from "#/domain/samples/ancestor-paths.ts";
 import { FieldRow } from "#/domain/samples/field-rows.tsx";
 
 type BreadcrumbProps = {
