@@ -346,9 +346,8 @@ describe("SampleTable", () => {
   });
 
   it("should render the picked record columns, dates as yyyy-mm-dd", async () => {
-    showColumns("specificName,collectionMethod,updatedAt");
+    showColumns("collectionMethod,updatedAt");
     const screen = await renderTable(samples);
-    await expect.element(screen.getByText("MC-2026-007")).toBeInTheDocument();
     await expect
       .element(screen.getByRole("cell", { name: /GravityCorer$/ }))
       .toBeInTheDocument();

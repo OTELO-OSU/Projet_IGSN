@@ -97,11 +97,16 @@ function TextCell({ text }: { text: string | null }) {
   ) : null;
 }
 
-const LOCKED_COLUMNS = [
-  { id: "igsn", label: m.column_igsn, section: m.sample_section_sample },
-  { id: "name", label: m.column_name, section: m.sample_section_sample },
-  { id: "status", label: m.column_status, section: m.sample_section_sample },
-];
+const LOCKED_COLUMNS = {
+  igsn: { label: m.column_igsn, section: m.sample_section_sample },
+  name: { label: m.column_name, section: m.sample_section_sample },
+  status: { label: m.column_status, section: m.sample_section_sample },
+} satisfies Partial<
+  Record<
+    keyof AdminSampleListItem,
+    { label: () => string; section: () => string }
+  >
+>;
 
 const PICKABLE_COLUMNS: readonly PickableColumn[] = [
   {
@@ -135,12 +140,6 @@ const PICKABLE_COLUMNS: readonly PickableColumn[] = [
     cell: ({ internalNumber }) =>
       internalNumber === null ? null : formatInternalId(internalNumber),
     className: "w-32",
-  },
-  {
-    id: "specificName",
-    label: m.column_specific_name,
-    section: m.sample_section_sample,
-    cell: (sample) => <TextCell text={sample.specificName} />,
   },
   ...OPTIONAL_CARD_FIELDS.map(
     (field): PickableColumn => ({
@@ -211,7 +210,7 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
     },
     {
       accessorKey: "igsn",
-      header: () => m.column_igsn(),
+      header: () => LOCKED_COLUMNS.igsn.label(),
       cell: ({ row }) =>
         row.original.igsn ? (
           <TruncatedCell text={row.original.igsn}>
@@ -224,7 +223,7 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
     },
     {
       accessorKey: "name",
-      header: () => m.column_name(),
+      header: () => LOCKED_COLUMNS.name.label(),
       cell: ({ row }) => (
         <TruncatedCell text={row.original.name}>
           <Link
@@ -249,7 +248,7 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
           onClick={column.getToggleSortingHandler()}
           className="cursor-pointer"
         >
-          {m.column_status()}
+          {LOCKED_COLUMNS.status.label()}
           {{ asc: " ↑", desc: " ↓" }[column.getIsSorted() as string] ?? ""}
         </button>
       ),
@@ -285,7 +284,10 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
           ) : null}
         </span>
       ),
-      meta: { className: "sticky right-0 w-20 bg-background" },
+      meta: {
+        className:
+          "sticky right-0 w-20 bg-background [tr:hover_&]:bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-background))]",
+      },
     },
   ];
 }
@@ -331,7 +333,11 @@ export function SampleTable({
       <div className="flex justify-end">
         <FieldPicker
           fields={[
-            ...LOCKED_COLUMNS.map((column) => ({ ...column, locked: true })),
+            ...Object.entries(LOCKED_COLUMNS).map(([id, column]) => ({
+              id,
+              ...column,
+              locked: true,
+            })),
             ...PICKABLE_COLUMNS.map((column) => ({ ...column, locked: false })),
           ].map(({ id, label, section, locked }) => ({
             key: id,
