@@ -8,6 +8,7 @@ import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { FieldRow } from "./field-row.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
+import { RevealField } from "./reveal-field.tsx";
 
 const toNumber = (text: string): number | undefined => {
   const value = Number(text);
@@ -22,6 +23,7 @@ export function TextField({
   requiredToPublish = false,
   hint,
   placeholder,
+  reveal,
 }: {
   label: string;
   multiline?: boolean;
@@ -30,6 +32,7 @@ export function TextField({
   requiredToPublish?: boolean;
   hint?: string;
   placeholder?: string;
+  reveal?: { label: string; canReveal: boolean };
 }) {
   const field = useFieldContext<string | number | null | undefined>();
   const hintId = hint ? `${field.name}-hint` : undefined;
@@ -37,7 +40,7 @@ export function TextField({
   const isDisabled = useFieldDisabled(disabled);
   const [isBadInput, setIsBadInput] = useState(false);
   const Control = multiline ? Textarea : Input;
-  return (
+  const row = (
     <FieldRow>
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
@@ -45,6 +48,7 @@ export function TextField({
       <Control
         id={field.name}
         {...(number ? { type: "number", step: "any" } : {})}
+        className="sm:max-w-72"
         placeholder={placeholder}
         value={isBadInput ? "" : (field.state.value ?? "")}
         disabled={isDisabled}
@@ -71,5 +75,16 @@ export function TextField({
         </p>
       ) : null}
     </FieldRow>
+  );
+  if (!reveal) return row;
+  const value = field.state.value;
+  return (
+    <RevealField
+      label={reveal.label}
+      canReveal={reveal.canReveal}
+      isShown={value != null && value !== ""}
+    >
+      {row}
+    </RevealField>
   );
 }

@@ -9,8 +9,11 @@ import { SampleForm } from "./sample-form.tsx";
 
 const noop = () => {};
 
+const REVEAL = "Describe the geological context in detail";
+
 async function renderGeologicalContextSection(
   onSubmit: (value: CreateSample) => void = noop,
+  geologicalContextDescription: string | null = null,
 ) {
   const screen = await render(
     <SampleForm
@@ -22,6 +25,7 @@ async function renderGeologicalContextSection(
         material: "rock_and_sediment.mineral",
         collectionMethod: null,
         collectionMethodDescription: null,
+        geologicalContextDescription,
       }}
       primaryAction={{ kind: "submit", label: "Create", onSubmit }}
     />,
@@ -35,6 +39,8 @@ beforeAll(() => page.viewport(1280, 1600));
 describe("SampleGeologicalContextFields", () => {
   it("should offer the physiographic environment before the description", async () => {
     const screen = await renderGeologicalContextSection();
+    await pickPath(screen, "Physiographic environment", "Marine", "Seamount");
+    await screen.getByRole("button", { name: REVEAL }).click();
 
     const environment = screen
       .getByRole("combobox", { name: "Physiographic environment" })
@@ -61,10 +67,11 @@ describe("SampleGeologicalContextFields", () => {
         }),
       )
       .toBeVisible();
+    await pickPath(screen, "Physiographic environment", "Marine", "Seamount");
+    await screen.getByRole("button", { name: REVEAL }).click();
     await screen
       .getByLabelText("Geological context description")
       .fill("Basaltic plateau carved by the river");
-    await pickPath(screen, "Physiographic environment", "Marine", "Seamount");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -75,5 +82,34 @@ describe("SampleGeologicalContextFields", () => {
         }),
       ),
     );
+  });
+
+  it("should offer the description link only once a physiographic environment is set, revealing the textarea on click", async () => {
+    const screen = await renderGeologicalContextSection();
+
+    await expect
+      .element(screen.getByRole("button", { name: REVEAL }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText("Geological context description"))
+      .not.toBeInTheDocument();
+
+    await pickPath(screen, "Physiographic environment", "Marine", "Seamount");
+    await screen.getByRole("button", { name: REVEAL }).click();
+
+    await expect
+      .element(screen.getByLabelText("Geological context description"))
+      .toHaveFocus();
+  });
+
+  it("should show a saved description expanded", async () => {
+    const screen = await renderGeologicalContextSection(
+      noop,
+      "Basaltic plateau carved by the river",
+    );
+
+    await expect
+      .element(screen.getByLabelText("Geological context description"))
+      .toHaveValue("Basaltic plateau carved by the river");
   });
 });

@@ -1,9 +1,12 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import { page } from "vitest/browser";
 
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
+
+beforeAll(() => page.viewport(1280, 1600));
 
 const SECTION = "Strunz-Mindat (2026) Classifications";
 

@@ -142,7 +142,7 @@ export function SampleConditionFields() {
             >
               {(hasType) =>
                 hasType ? (
-                  <>
+                  <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
                     <form.AppField name={`condition.${reading.key}Value`}>
                       {(field) => (
                         <field.NumberField label={reading.valueLabel()} />
@@ -172,7 +172,7 @@ export function SampleConditionFields() {
                         ) : null
                       }
                     </form.Subscribe>
-                  </>
+                  </div>
                 ) : null
               }
             </form.Subscribe>
@@ -237,6 +237,10 @@ export function SampleConditionFields() {
                 <field.TextField
                   label={m.field_specific_conditions()}
                   multiline
+                  reveal={{
+                    label: m.reveal_specific_conditions(),
+                    canReveal: true,
+                  }}
                 />
               )}
             </form.AppField>

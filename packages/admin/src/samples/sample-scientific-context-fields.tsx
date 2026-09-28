@@ -1,3 +1,4 @@
+import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { ALL_ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/managed-group-items";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
@@ -30,91 +31,111 @@ export function SampleScientificContextFields() {
           if (provenanceStatus === "field_sample") {
             return (
               <>
-                <ContactNameFields
-                  label={m.field_collector_name()}
-                  person="scientificContext.collector"
-                  requiredToPublish
-                />
+                <FormSection title={m.section_scientific_context()}>
+                  <ContactNameFields
+                    label={m.field_collector_name()}
+                    person="scientificContext.collector"
+                    requiredToPublish
+                  />
 
-                <ContactNameFields
-                  label={m.field_chief_scientist()}
-                  person="scientificContext.chiefScientist"
-                />
+                  <ContactNameFields
+                    label={m.field_chief_scientist()}
+                    person="scientificContext.chiefScientist"
+                  />
 
-                <form.AppField name="scientificContext.hostInstitution">
-                  {(field) => (
-                    <field.MultiComboboxField
-                      label={m.field_host_institution()}
-                      items={ALL_ORGANIZATION_ITEMS}
-                      placeholder={m.organization_placeholder()}
-                      searchPlaceholder={m.organization_search_placeholder()}
-                      emptyText={m.organization_empty()}
-                      removeLabel={(label) =>
-                        m.host_institution_remove({ label })
-                      }
-                    />
-                  )}
-                </form.AppField>
+                  <form.AppField name="scientificContext.hostInstitution">
+                    {(field) => (
+                      <field.MultiComboboxField
+                        label={m.field_host_institution()}
+                        items={ALL_ORGANIZATION_ITEMS}
+                        placeholder={m.organization_placeholder()}
+                        searchPlaceholder={m.organization_search_placeholder()}
+                        emptyText={m.organization_empty()}
+                        removeLabel={(label) =>
+                          m.host_institution_remove({ label })
+                        }
+                      />
+                    )}
+                  </form.AppField>
 
-                <SampleAdditionalRolesFields />
+                  <SampleAdditionalRolesFields />
+                </FormSection>
 
-                <form.AppField name="scientificContext.funderOrganizations">
-                  {(field) => (
-                    <field.MultiComboboxField
-                      label={m.field_funder_organizations()}
-                      items={ALL_ORGANIZATION_ITEMS}
-                      placeholder={m.organization_placeholder()}
-                      searchPlaceholder={m.organization_search_placeholder()}
-                      emptyText={m.organization_empty()}
-                      removeLabel={(label) =>
-                        m.funder_organizations_remove({ label })
-                      }
-                    />
-                  )}
-                </form.AppField>
+                <FormSection title={m.section_funding()}>
+                  <form.AppField name="scientificContext.funderOrganizations">
+                    {(field) => (
+                      <field.MultiComboboxField
+                        label={m.field_funder_organizations()}
+                        items={ALL_ORGANIZATION_ITEMS}
+                        placeholder={m.organization_placeholder()}
+                        searchPlaceholder={m.organization_search_placeholder()}
+                        emptyText={m.organization_empty()}
+                        removeLabel={(label) =>
+                          m.funder_organizations_remove({ label })
+                        }
+                      />
+                    )}
+                  </form.AppField>
 
-                <form.AppField name="scientificContext.funding">
-                  {(field) => <field.TextField label={m.field_funding()} />}
-                </form.AppField>
+                  <form.AppField name="scientificContext.funding">
+                    {(field) => <field.TextField label={m.field_funding()} />}
+                  </form.AppField>
 
-                <form.AppField name="scientificContext.researchProgramName">
-                  {(field) => (
-                    <field.TextField label={m.field_research_program_name()} />
-                  )}
-                </form.AppField>
+                  <form.AppField name="scientificContext.researchProgramName">
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_research_program_name()}
+                      />
+                    )}
+                  </form.AppField>
 
-                <form.AppField name="scientificContext.researchProgramDescription">
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_research_program_description()}
-                      multiline
-                    />
-                  )}
-                </form.AppField>
+                  <form.Subscribe
+                    selector={(state) =>
+                      !!state.values.scientificContext.researchProgramName
+                    }
+                  >
+                    {(hasProgram) => (
+                      <form.AppField name="scientificContext.researchProgramDescription">
+                        {(field) => (
+                          <field.TextField
+                            label={m.field_research_program_description()}
+                            multiline
+                            reveal={{
+                              label: m.reveal_research_program_description(),
+                              canReveal: hasProgram,
+                            }}
+                          />
+                        )}
+                      </form.AppField>
+                    )}
+                  </form.Subscribe>
+                </FormSection>
 
-                <form.AppField name="scientificContext.platformType">
-                  {(field) => (
-                    <field.ComboboxField
-                      label={m.field_platform_type()}
-                      items={platformTypeItems}
-                      placeholder={m.platform_type_placeholder()}
-                      searchPlaceholder={m.platform_type_search_placeholder()}
-                      emptyText={m.platform_type_empty()}
-                    />
-                  )}
-                </form.AppField>
+                <FormSection title={m.section_platform()}>
+                  <form.AppField name="scientificContext.platformType">
+                    {(field) => (
+                      <field.ComboboxField
+                        label={m.field_platform_type()}
+                        items={platformTypeItems}
+                        placeholder={m.platform_type_placeholder()}
+                        searchPlaceholder={m.platform_type_search_placeholder()}
+                        emptyText={m.platform_type_empty()}
+                      />
+                    )}
+                  </form.AppField>
 
-                <form.AppField name="scientificContext.launchPlatformName">
-                  {(field) => (
-                    <field.TextField label={m.field_launch_platform_name()} />
-                  )}
-                </form.AppField>
+                  <form.AppField name="scientificContext.launchPlatformName">
+                    {(field) => (
+                      <field.TextField label={m.field_launch_platform_name()} />
+                    )}
+                  </form.AppField>
+                </FormSection>
               </>
             );
           }
           if (provenanceStatus === "collection_specimen") {
             return (
-              <>
+              <FormSection title={m.section_scientific_context()}>
                 <form.AppField name="scientificContext.collectionOrigin">
                   {(field) => (
                     <field.ComboboxField
@@ -133,15 +154,27 @@ export function SampleScientificContextFields() {
                   person="scientificContext.collector"
                 />
 
-                <form.AppField name="scientificContext.collectionContextDescription">
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_collection_context_description()}
-                      multiline
-                    />
+                <form.Subscribe
+                  selector={(state) =>
+                    !!state.values.scientificContext.collectionOrigin
+                  }
+                >
+                  {(hasOrigin) => (
+                    <form.AppField name="scientificContext.collectionContextDescription">
+                      {(field) => (
+                        <field.TextField
+                          label={m.field_collection_context_description()}
+                          multiline
+                          reveal={{
+                            label: m.reveal_collection_context_description(),
+                            canReveal: hasOrigin,
+                          }}
+                        />
+                      )}
+                    </form.AppField>
                   )}
-                </form.AppField>
-              </>
+                </form.Subscribe>
+              </FormSection>
             );
           }
           return null;

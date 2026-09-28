@@ -2,7 +2,7 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { toHierarchyPath } from "@projet-igsn/design-system/lib/hierarchy";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
@@ -15,6 +15,8 @@ import { SampleForm } from "#/samples/sample-form.tsx";
 
 import { pickPath, repickPath } from "../../test/pick-hierarchy.ts";
 import { render as renderWithClient } from "../../test/render.tsx";
+
+beforeAll(() => page.viewport(1280, 1600));
 
 function Harness({
   material = "rock_and_sediment.sediment",
@@ -94,7 +96,10 @@ describe("SampleEconomicInterestFields", () => {
     await expect
       .element(page.getByLabelText("Resource type details"))
       .toBeVisible();
-    await expect.element(page.getByLabelText("Deposit name")).toBeVisible();
+    await page.getByLabelText("Deposit name").fill("Bou Azzer");
+    await page
+      .getByRole("button", { name: "Describe the deposit in detail" })
+      .click();
     await expect
       .element(page.getByLabelText("Deposit description"))
       .toBeVisible();

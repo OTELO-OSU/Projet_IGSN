@@ -100,117 +100,130 @@ type NamedPerson =
   | "additional_role"
   | "synthetic_operator";
 
-const nameBlockers = (
+export type PublishRequirement = { blocker: PublishBlocker; isMet: boolean };
+
+type PublishCheckedSample = PublishableFields & {
+  attachments?: readonly Pick<SampleAttachment, "targetResourceType">[];
+  parents?: readonly (Pick<Sample, "id"> | null)[];
+};
+
+const nameRequirements = (
   person: NamedPerson,
   { userId, firstname, lastname }: ContactLink,
   presence: "required" | "optional",
-): PublishBlocker[] => {
-  if (userId != null) return [];
+): PublishRequirement[] => {
   if (presence === "optional" && firstname == null && lastname == null)
     return [];
   return [
-    ...(firstname == null ? ([`${person}_firstname_missing`] as const) : []),
-    ...(lastname == null ? ([`${person}_lastname_missing`] as const) : []),
+    {
+      blocker: `${person}_firstname_missing`,
+      isMet: userId != null || firstname != null,
+    },
+    {
+      blocker: `${person}_lastname_missing`,
+      isMet: userId != null || lastname != null,
+    },
   ];
 };
 
-export function samplePublishBlockers(
-  sample: PublishableFields & {
-    attachments?: readonly Pick<SampleAttachment, "targetResourceType">[];
-    parents?: readonly (Pick<Sample, "id"> | null)[];
-  },
-  uploadLimit: number = DEFAULT_UPLOAD_LIMIT,
-  publisher?: Pick<User, "status" | "superAdmin">,
-): PublishBlocker[] {
-  const blockers: PublishBlocker[] = [];
-
-  if (sample.nature === null) {
-    blockers.push("nature_missing");
-  }
-
-  if (sample.type === null) {
-    blockers.push("type_missing");
-  } else if (
-    !SAMPLE_TYPES.includes(sample.type) ||
-    !isSampleTypeComplete(sample.type)
-  ) {
-    blockers.push("type_incomplete");
-  }
+const fieldRequirements = (
+  sample: PublishCheckedSample,
+): PublishRequirement[] => {
+  const requirements: PublishRequirement[] = [
+    { blocker: "nature_missing", isMet: sample.nature !== null },
+    {
+      blocker: sample.type === null ? "type_missing" : "type_incomplete",
+      isMet:
+        sample.type !== null &&
+        SAMPLE_TYPES.includes(sample.type) &&
+        isSampleTypeComplete(sample.type),
+    },
+  ];
 
   const materialComplete =
     sample.material !== null &&
     MATERIAL_PATHS.includes(sample.material) &&
     isMaterialComplete(sample.material);
-  if (sample.material === null) {
-    blockers.push("material_missing");
-  } else if (!materialComplete) {
-    blockers.push("material_incomplete");
-  }
+  requirements.push({
+    blocker:
+      sample.material === null ? "material_missing" : "material_incomplete",
+    isMet: materialComplete,
+  });
 
   if (
     materialComplete &&
     allowsLocation(sample.material) &&
-    requiresLocation(sample.scientificContext?.provenanceStatus) &&
-    !sample.location?.position
+    requiresLocation(sample.scientificContext?.provenanceStatus)
   ) {
-    blockers.push("location_position_missing");
+    requirements.push({
+      blocker: "location_position_missing",
+      isMet: !!sample.location?.position,
+    });
   }
 
-  if (sample.description?.collectionDate == null) {
-    blockers.push("collection_date_missing");
-  }
+  requirements.push({
+    blocker: "collection_date_missing",
+    isMet: sample.description?.collectionDate != null,
+  });
 
   const age = sample.age;
-  const hasNumericValue =
-    age != null && (age.numericAgeMin != null || age.numericAgeMax != null);
-  if (hasNumericValue && age.numericAgeUnit === null) {
-    blockers.push("numeric_age_unit_missing");
+  if (age != null && (age.numericAgeMin != null || age.numericAgeMax != null)) {
+    requirements.push({
+      blocker: "numeric_age_unit_missing",
+      isMet: age.numericAgeUnit !== null,
+    });
+    // An age in annum is a point on a calendar, so it needs a reference
+    // (CE/BCE/BP/cal BP) before publishing.
+    if (age.numericAgeUnit === "a") {
+      requirements.push({
+        blocker: "numeric_age_reference_missing",
+        isMet: age.numericAgeYearsUnit !== null,
+      });
+    }
+    requirements.push({
+      blocker: "numeric_age_range_incomplete",
+      isMet: age.numericAgeMin != null && age.numericAgeMax != null,
+    });
   }
-
-  // An age in annum is a point on a calendar, so it needs a reference
-  // (CE/BCE/BP/cal BP) before publishing.
   if (
-    hasNumericValue &&
-    age.numericAgeUnit === "a" &&
-    age.numericAgeYearsUnit === null
+    age != null &&
+    (age.geologicalAgeMin != null || age.geologicalAgeMax != null)
   ) {
-    blockers.push("numeric_age_reference_missing");
-  }
-
-  if (age != null) {
-    if ((age.numericAgeMin != null) !== (age.numericAgeMax != null)) {
-      blockers.push("numeric_age_range_incomplete");
-    }
-    if ((age.geologicalAgeMin != null) !== (age.geologicalAgeMax != null)) {
-      blockers.push("geological_age_range_incomplete");
-    }
+    requirements.push({
+      blocker: "geological_age_range_incomplete",
+      isMet: age.geologicalAgeMin != null && age.geologicalAgeMax != null,
+    });
   }
 
   const position = sample.location?.position ?? null;
   if (position?.vertical != null) {
-    const { reference } = position.vertical;
-    if (
-      reference == null ||
-      verticalValues(position).some((value) => value == null)
-    ) {
-      blockers.push("vertical_position_incomplete");
-    }
+    requirements.push({
+      blocker: "vertical_position_incomplete",
+      isMet:
+        position.vertical.reference != null &&
+        verticalValues(position).every((value) => value != null),
+    });
   }
 
-  if (sample.existenceStatus == null) {
-    blockers.push("existence_status_missing");
-  }
-
-  if (sample.availabilityStatus == null) {
-    blockers.push("availability_status_missing");
-  }
+  requirements.push(
+    {
+      blocker: "existence_status_missing",
+      isMet: sample.existenceStatus != null,
+    },
+    {
+      blocker: "availability_status_missing",
+      isMet: sample.availabilityStatus != null,
+    },
+  );
 
   const context = sample.scientificContext;
-  if (context == null) {
-    blockers.push("scientific_context_missing");
-  } else if (context.provenanceStatus === "field_sample") {
-    blockers.push(
-      ...nameBlockers(
+  requirements.push({
+    blocker: "scientific_context_missing",
+    isMet: context != null,
+  });
+  if (context?.provenanceStatus === "field_sample") {
+    requirements.push(
+      ...nameRequirements(
         "collector",
         {
           userId: context.collectorUserId,
@@ -219,7 +232,7 @@ export function samplePublishBlockers(
         },
         "required",
       ),
-      ...nameBlockers(
+      ...nameRequirements(
         "chief_scientist",
         {
           userId: context.chiefScientistUserId,
@@ -228,27 +241,25 @@ export function samplePublishBlockers(
         },
         "optional",
       ),
-    );
-    blockers.push(
-      ...new Set(
-        context.additionalRoles.flatMap((role) =>
-          nameBlockers(
-            "additional_role",
-            {
-              userId: role.personUserId,
-              firstname: role.personFirstname,
-              lastname: role.personLastname,
-            },
-            "required",
-          ),
+      ...context.additionalRoles.flatMap((role) =>
+        nameRequirements(
+          "additional_role",
+          {
+            userId: role.personUserId,
+            firstname: role.personFirstname,
+            lastname: role.personLastname,
+          },
+          "required",
         ),
       ),
     );
-  } else {
-    if (context.collectionOrigin == null)
-      blockers.push("collection_origin_missing");
-    blockers.push(
-      ...nameBlockers(
+  } else if (context != null) {
+    requirements.push(
+      {
+        blocker: "collection_origin_missing",
+        isMet: context.collectionOrigin != null,
+      },
+      ...nameRequirements(
         "collector",
         {
           userId: context.collectorUserId,
@@ -263,23 +274,26 @@ export function samplePublishBlockers(
   if (materialComplete && isSyntheticMaterial(sample.material)) {
     const details = sample.syntheticDetails ?? {};
     const nature = details.startingMaterial;
-    if (nature == null) {
-      blockers.push("synthetic_starting_material_missing");
+    requirements.push({
+      blocker: "synthetic_starting_material_missing",
+      isMet: nature != null,
+    });
+    if (needsStartingMaterialComposition(nature)) {
+      requirements.push({
+        blocker: "synthetic_starting_material_composition_missing",
+        isMet: details.startingMaterialComposition != null,
+      });
     }
-    if (
-      needsStartingMaterialComposition(nature) &&
-      details.startingMaterialComposition == null
-    ) {
-      blockers.push("synthetic_starting_material_composition_missing");
-    }
-    if (details.finalProduct == null) {
-      blockers.push("synthetic_final_product_missing");
-    }
-    if (details.synthesisDate == null) {
-      blockers.push("synthetic_synthesis_date_missing");
-    }
-    blockers.push(
-      ...nameBlockers(
+    requirements.push(
+      {
+        blocker: "synthetic_final_product_missing",
+        isMet: details.finalProduct != null,
+      },
+      {
+        blocker: "synthetic_synthesis_date_missing",
+        isMet: details.synthesisDate != null,
+      },
+      ...nameRequirements(
         "synthetic_operator",
         {
           userId: details.operatorUserId,
@@ -291,27 +305,49 @@ export function samplePublishBlockers(
     );
   }
 
-  if (
-    sample.relations.some((relation) => relation.targetResourceType == null)
-  ) {
-    blockers.push("relation_resource_type_missing");
-  }
+  requirements.push(
+    ...sample.relations.map((relation) => ({
+      blocker: "relation_resource_type_missing" as const,
+      isMet: relation.targetResourceType != null,
+    })),
+    ...sample.processSteps.map((step) => ({
+      blocker: "process_step_date_missing" as const,
+      isMet: step.date != null,
+    })),
+  );
 
-  if (sample.processSteps.some((step) => step.date == null)) {
-    blockers.push("process_step_date_missing");
-  }
+  return requirements;
+};
+
+const attachmentRequirements = (
+  sample: PublishCheckedSample,
+): PublishRequirement[] =>
+  (sample.attachments ?? []).map((attachment) => ({
+    blocker: "attachment_metadata_missing",
+    isMet: attachment.targetResourceType != null,
+  }));
+
+const unmet = (requirements: PublishRequirement[]): PublishBlocker[] =>
+  requirements.filter(({ isMet }) => !isMet).map(({ blocker }) => blocker);
+
+export function samplePublishRequirements(
+  sample: PublishCheckedSample,
+): PublishRequirement[] {
+  return [...fieldRequirements(sample), ...attachmentRequirements(sample)];
+}
+
+export function samplePublishBlockers(
+  sample: PublishCheckedSample,
+  uploadLimit: number = DEFAULT_UPLOAD_LIMIT,
+  publisher?: Pick<User, "status" | "superAdmin">,
+): PublishBlocker[] {
+  const blockers = unmet(fieldRequirements(sample));
 
   if (sample.parents?.some((parent) => parent === null)) {
     blockers.push("parent_not_found");
   }
 
-  if (
-    sample.attachments?.some(
-      (attachment) => attachment.targetResourceType == null,
-    )
-  ) {
-    blockers.push("attachment_metadata_missing");
-  }
+  blockers.push(...unmet(attachmentRequirements(sample)));
 
   if (sample.attachments != null && sample.attachments.length > uploadLimit) {
     blockers.push("attachment_limit_exceeded");
@@ -321,5 +357,5 @@ export function samplePublishBlockers(
     blockers.push("user_not_verified");
   }
 
-  return blockers;
+  return [...new Set(blockers)];
 }

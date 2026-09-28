@@ -205,13 +205,15 @@ grainSize: value?.grainSize,
 
 Reuse the design-system form inputs (`TextField`, `ComboboxField`...). If the kit lacks the input type you need, add it to `packages/design-system/src/components/form/` so every form gets it, never inline a one-off input.
 
+A free-text detail field (a description, a note) that most samples leave blank stays hidden behind a "Describe ... in detail" link: pass `TextField`'s `reveal={{ label, canReveal }}` prop, or wrap the control in `RevealField` directly for a control the kit does not cover (an attachment's raw `Textarea`). `canReveal` usually reads a sibling value through `form.Subscribe`, so the link appears only once that sibling is set; a field with no natural sibling can pass `canReveal: true`. A filled value always shows expanded, saved or not.
+
 ### 3. i18n: add the strings
 
 Add the field's label and any error strings to the language files. No user-facing string is hardcoded; every one goes through the translation catalog.
 
 ### 4. Publish: make it required, if it should be
 
-Only if the sample cannot be published without this field. Add a code to `publishBlockerSchema` and push it in `samplePublishBlockers` when the field is missing:
+Only if the sample cannot be published without this field. Add a code to `publishBlockerSchema` and push a requirement in `samplePublishRequirements` under the field's applicability condition:
 
 ```ts
 // packages/domain/src/sample/publication/sample-publish-blockers.ts
@@ -221,13 +223,20 @@ export const publishBlockerSchema = z.enum([
   "grain_size_missing", // added
 ]);
 
-// in samplePublishBlockers
-if (sample.grainSize === null) {
-  blockers.push("grain_size_missing");
-}
+// in samplePublishRequirements
+requirements.push({
+  blocker: "grain_size_missing",
+  isMet: sample.grainSize != null,
+});
 ```
 
-Then translate it in the admin label map (`publish-blocker-label.ts`). That map is an exhaustive `Record`, so the build fails until you add the entry: forgetting the translation is impossible.
+`samplePublishBlockers` derives from `samplePublishRequirements`: it needs no edit of its own. `samplePublishRequirements` also drives the admin tab's live `(filled/total)` counter and its tooltip, so a new requirement needs three admin entries besides the domain one:
+
+- `publish-blocker-label.ts`: the full sentence, still an exhaustive `Record`, so the build fails until you add it.
+- `publish-blocker-field-label.ts`: the short field label shown after the tab name in the "Tab > Field" tooltip line, also exhaustive.
+- `sample-form-tabs.ts`'s `PUBLISH_BLOCKER_TAB`: which tab the field renders in, so the counter and the tooltip point at the right tab. `null` only for a non-field or unconditional blocker (`user_not_verified`).
+
+All three are exhaustive `Record`s over `PublishBlocker`, so the build fails until each carries the new code: forgetting one is impossible.
 
 ### 5. Publish: decide if it can still change after publishing
 

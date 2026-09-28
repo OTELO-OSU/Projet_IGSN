@@ -5,7 +5,10 @@ import type { SampleProcessStep } from "../process-step/model.ts";
 import type { SampleRelation } from "../relation/model.ts";
 import type { Sample } from "../sample.ts";
 
-import { samplePublishBlockers } from "./sample-publish-blockers.ts";
+import {
+  samplePublishBlockers,
+  samplePublishRequirements,
+} from "./sample-publish-blockers.ts";
 
 const base: Sample = {
   id: "00000000-0000-7000-8000-000000000001",
@@ -919,4 +922,73 @@ describe("samplePublishBlockers", () => {
       expect(samplePublishBlockers(sample)).toEqual([]);
     },
   );
+});
+
+describe("samplePublishRequirements", () => {
+  const requirementsStartingWith = (sample: Sample, prefixes: string[]) =>
+    samplePublishRequirements(sample).filter(({ blocker }) =>
+      prefixes.some((prefix) => blocker.startsWith(prefix)),
+    );
+
+  it("should require the unit and the other bound, not the reference, once one numeric bound is set", () => {
+    expect(
+      requirementsStartingWith(
+        {
+          ...base,
+          age: {
+            numericAgeMin: 120,
+            numericAgeMax: null,
+            numericAgeUnit: null,
+            numericAgeYearsUnit: null,
+            geologicalAgeMin: null,
+            geologicalAgeMax: null,
+            geologicalUnit: null,
+          },
+        },
+        ["numeric_age", "geological_age"],
+      ),
+    ).toEqual([
+      { blocker: "numeric_age_unit_missing", isMet: false },
+      { blocker: "numeric_age_range_incomplete", isMet: false },
+    ]);
+  });
+
+  it("should require an optional chief scientist's names only once one is typed, a linked user meeting both", () => {
+    const withChiefScientist = (chiefScientist: {
+      chiefScientistLastname?: string;
+      chiefScientistUserId?: string;
+    }) =>
+      requirementsStartingWith(
+        {
+          ...base,
+          scientificContext: {
+            provenanceStatus: "field_sample",
+            additionalRoles: [],
+            collectorFirstname: "Pierre",
+            collectorLastname: "Curie",
+            ...chiefScientist,
+          },
+        },
+        ["chief_scientist"],
+      );
+
+    expect([
+      withChiefScientist({}),
+      withChiefScientist({ chiefScientistLastname: "Curie" }),
+      withChiefScientist({
+        chiefScientistLastname: "Curie",
+        chiefScientistUserId: LINKED_USER_ID,
+      }),
+    ]).toEqual([
+      [],
+      [
+        { blocker: "chief_scientist_firstname_missing", isMet: false },
+        { blocker: "chief_scientist_lastname_missing", isMet: true },
+      ],
+      [
+        { blocker: "chief_scientist_firstname_missing", isMet: true },
+        { blocker: "chief_scientist_lastname_missing", isMet: true },
+      ],
+    ]);
+  });
 });

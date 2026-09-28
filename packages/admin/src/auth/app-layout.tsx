@@ -103,7 +103,7 @@ export function AppLayout({
           {m.app_title()}
         </Link>
         <nav>
-          <ul className="flex gap-1 md:flex-col">
+          <ul className="flex flex-wrap gap-1 md:flex-col">
             <NavItem
               to="/"
               search={listSearch}
@@ -168,7 +168,7 @@ export function AppLayout({
           </ul>
         </nav>
       </aside>
-      <div className="flex min-h-screen w-full flex-1 flex-col">
+      <div className="flex min-h-screen w-full min-w-0 flex-1 flex-col">
         <header className="border-b">
           <div className="flex items-center justify-between gap-4 px-6 py-4">
             <Button asChild variant="outline" size="sm">
@@ -180,7 +180,7 @@ export function AppLayout({
             <UserMenu onSignOut={onSignOut} />
           </div>
         </header>
-        <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-6">
+        <main className="flex w-full min-w-0 flex-col gap-4 p-6">
           {me?.status === "pending" && (
             <p
               role="status"

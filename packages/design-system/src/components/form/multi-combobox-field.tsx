@@ -37,16 +37,18 @@ export function MultiComboboxField({
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>
-      <MultiCombobox
-        id={field.name}
-        values={field.state.value ?? []}
-        onChange={field.handleChange}
-        onBlur={field.handleBlur}
-        disabled={isDisabled}
-        items={items}
-        {...ariaProps}
-        {...combobox}
-      />
+      <div className="sm:max-w-72">
+        <MultiCombobox
+          id={field.name}
+          values={field.state.value ?? []}
+          onChange={field.handleChange}
+          onBlur={field.handleBlur}
+          disabled={isDisabled}
+          items={items}
+          {...ariaProps}
+          {...combobox}
+        />
+      </div>
       <FieldError error={error} errorId={errorId} />
     </FieldRow>
   );

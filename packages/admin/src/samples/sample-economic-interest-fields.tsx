@@ -116,14 +116,24 @@ export function SampleEconomicInterestFields() {
                   )}
                 </form.AppField>
 
-                <form.AppField name="economicDepositDescription">
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_economic_deposit_description()}
-                      multiline
-                    />
+                <form.Subscribe
+                  selector={(state) => !!state.values.economicDepositName}
+                >
+                  {(hasDepositName) => (
+                    <form.AppField name="economicDepositDescription">
+                      {(field) => (
+                        <field.TextField
+                          label={m.field_economic_deposit_description()}
+                          multiline
+                          reveal={{
+                            label: m.reveal_economic_deposit_description(),
+                            canReveal: hasDepositName,
+                          }}
+                        />
+                      )}
+                    </form.AppField>
                   )}
-                </form.AppField>
+                </form.Subscribe>
               </div>
             ) : null}
           </FormSection>

@@ -9,6 +9,7 @@ import {
   FieldListRemoveButton,
 } from "@projet-igsn/design-system/components/form/field-list-item";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
+import { RevealField } from "@projet-igsn/design-system/components/form/reveal-field";
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import {
   Combobox,
@@ -118,18 +119,25 @@ function AttachmentRowLayout({
                 })
               }
             />
-            <Label htmlFor={`${fields.id}-description`}>
-              {m.field_description()}
-            </Label>
-            <Textarea
-              id={`${fields.id}-description`}
-              value={fields.description}
-              disabled={isDisabled}
-              aria-label={m.attachment_description({ name })}
-              onChange={(event) =>
-                fields.onChange({ description: event.target.value })
-              }
-            />
+            <RevealField
+              label={m.reveal_attachment_description({ name })}
+              isShown={fields.description !== ""}
+              canReveal={fields.title !== ""}
+            >
+              <Label htmlFor={`${fields.id}-description`}>
+                {m.field_description()}
+              </Label>
+              <Textarea
+                id={`${fields.id}-description`}
+                className="sm:max-w-72"
+                value={fields.description}
+                disabled={isDisabled}
+                aria-label={m.attachment_description({ name })}
+                onChange={(event) =>
+                  fields.onChange({ description: event.target.value })
+                }
+              />
+            </RevealField>
           </div>
         ) : null}
       </FieldListItem>

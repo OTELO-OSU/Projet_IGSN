@@ -302,6 +302,19 @@ function fakeApi(
         meta: { total: 1 },
       });
     }),
+    http.get("*/admin/samples/parents/:id", ({ params }) => {
+      const parent = sampleParents.find(({ id }) => id === params.id);
+      return parent
+        ? HttpResponse.json({
+            data: {
+              ...sample,
+              ...parent,
+              parents: [],
+              specificName: `${parent.name} specimen`,
+            },
+          })
+        : new HttpResponse(null, { status: 404 });
+    }),
     http.get("*/samples/:id", () => {
       sampleFetched = true;
       return HttpResponse.json({
@@ -483,7 +496,7 @@ describe("EditSamplePage", () => {
       .element(screen.getByRole("link", { name: PARENT.name }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("heading", { name: "Location" }))
+      .element(screen.getByLabelText("Locality name"))
       .not.toBeInTheDocument();
   });
 
@@ -499,6 +512,28 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("link", { name: SECOND_PARENT.name }))
       .toBeVisible();
+  });
+
+  it("should offer each parent's value under its short label on a saved two-parent sample", async () => {
+    sampleParents = [PARENT, SECOND_PARENT];
+    const { screen } = await renderEditPage();
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+
+    await expect
+      .element(
+        screen.getByRole("button", {
+          name: `${PARENT.name}: ${PARENT.name} specimen`,
+        }),
+      )
+      .toHaveTextContent("P1");
+    await expect
+      .element(
+        screen.getByRole("button", {
+          name: `${SECOND_PARENT.name}: ${SECOND_PARENT.name} specimen`,
+        }),
+      )
+      .toHaveTextContent("P2");
   });
 
   it("should chip the attached manual groups but freeze them to a contributor", async () => {
@@ -755,9 +790,7 @@ describe("EditSamplePage", () => {
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(
-        /classify the material at least one level below its root/i,
-      );
+      .toHaveTextContent("Sample classification > Material");
   });
 
   it("should disable Publish for a pending account, complete sample or not", async () => {
@@ -774,7 +807,7 @@ describe("EditSamplePage", () => {
     await expect
       .element(tooltip)
       .toHaveTextContent(/account is not yet activated/i);
-    await expect.element(tooltip).not.toHaveTextContent(/before publishing/i);
+    await expect.element(tooltip).not.toHaveTextContent(" > ");
     await expect
       .element(screen.getByRole("button", { name: "Save", exact: true }))
       .toBeEnabled();
@@ -825,9 +858,7 @@ describe("EditSamplePage", () => {
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
-      .toHaveTextContent(
-        /classify the material at least one level below its root/i,
-      );
+      .toHaveTextContent("Sample classification > Material");
     await expect
       .element(tooltip)
       .toHaveTextContent(/account is not yet activated/i);
@@ -983,9 +1014,7 @@ describe("EditSamplePage", () => {
     save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(
-        "State whether the sample still exists before publishing.",
-      );
+      .toHaveTextContent("Curation and repository > Existence status");
     expect(calls).toEqual([]);
 
     await existence.click();
@@ -1055,7 +1084,7 @@ describe("EditSamplePage", () => {
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/give every attached file a resource type before/i);
+      .toHaveTextContent("Related URL or document > Attachment resource type");
     publish.element().closest<HTMLElement>("[tabindex]")?.blur();
 
     await screen.getByRole("tab", { name: "Related URL or document" }).click();

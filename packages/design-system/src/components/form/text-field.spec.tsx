@@ -52,6 +52,72 @@ function NullishHarness() {
   );
 }
 
+function RevealHarness({
+  description,
+  canReveal,
+}: {
+  description: string;
+  canReveal: boolean;
+}) {
+  const form = useAppForm({ defaultValues: { description } });
+  return (
+    <form>
+      <form.AppField name="description">
+        {(field) => (
+          <field.TextField
+            label="Description"
+            multiline
+            reveal={{ label: "Add a description", canReveal }}
+          />
+        )}
+      </form.AppField>
+    </form>
+  );
+}
+
+describe("TextField reveal", () => {
+  it("should render neither the link nor the field when an empty field cannot be revealed", async () => {
+    await render(<RevealHarness description="" canReveal={false} />);
+
+    await expect
+      .element(page.getByRole("button", { name: "Add a description" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(page.getByLabelText("Description"))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show and focus the field when its reveal link is clicked", async () => {
+    await render(<RevealHarness description="" canReveal />);
+
+    await page.getByRole("button", { name: "Add a description" }).click();
+
+    await expect.element(page.getByLabelText("Description")).toHaveFocus();
+    await expect
+      .element(page.getByRole("button", { name: "Add a description" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show a filled field without the reveal link", async () => {
+    await render(<RevealHarness description="Basalt" canReveal />);
+
+    await expect
+      .element(page.getByLabelText("Description"))
+      .toHaveValue("Basalt");
+    await expect
+      .element(page.getByRole("button", { name: "Add a description" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should keep a shown field while the user empties it", async () => {
+    await render(<RevealHarness description="Basalt" canReveal />);
+
+    await page.getByLabelText("Description").fill("");
+
+    await expect.element(page.getByLabelText("Description")).toHaveValue("");
+  });
+});
+
 describe("TextField", () => {
   it("should render a nullish value as an empty input", async () => {
     await render(<NullishHarness />);

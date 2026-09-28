@@ -8,7 +8,11 @@ export function SampleDescriptionFields() {
     <div className="grid gap-4">
       <form.AppField name="description.openDescription">
         {(field) => (
-          <field.TextField label={m.field_open_description()} multiline />
+          <field.TextField
+            label={m.field_open_description()}
+            multiline
+            reveal={{ label: m.reveal_open_description(), canReveal: true }}
+          />
         )}
       </form.AppField>
 

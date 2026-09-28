@@ -4,14 +4,14 @@ export type FieldSuggestion = { source: string; value: unknown };
 
 export type FieldSuggestionRule = {
   label: string;
-  noValueLabel: string;
+  sourceShortLabel: (index: number) => string;
   booleanLabel: (value: boolean) => string;
   forField: (name: string) => FieldSuggestion[];
 };
 
 export const NO_FIELD_SUGGESTIONS: FieldSuggestionRule = {
   label: "",
-  noValueLabel: "",
+  sourceShortLabel: () => "",
   booleanLabel: String,
   forField: () => [],
 };

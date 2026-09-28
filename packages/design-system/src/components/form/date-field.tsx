@@ -28,6 +28,7 @@ export function DateField({
       <Input
         id={field.name}
         type={withTime ? "datetime-local" : "date"}
+        className="sm:max-w-72"
         value={field.state.value ?? ""}
         disabled={isDisabled}
         onBlur={field.handleBlur}

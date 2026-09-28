@@ -148,6 +148,12 @@ export function SampleRelationsFields() {
                   <field.TextField
                     label={m.field_relation_description()}
                     multiline
+                    reveal={{
+                      label: m.reveal_relation_description({
+                        index: index + 1,
+                      }),
+                      canReveal: relation.identifier !== "",
+                    }}
                   />
                 )}
               </form.AppField>

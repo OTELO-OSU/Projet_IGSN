@@ -100,10 +100,15 @@ export function sampleFormPage(page: Page) {
       ).toHaveText(label);
       await openTab(label);
       const panel = page.getByRole("tabpanel");
-      await expect(panel).toContainText("This sample is a sub sample of");
-      for (const parent of parents) {
+      for (const [index, parent] of parents.entries()) {
         await expect(
-          panel.getByRole("link", { name: parent.name }),
+          panel.getByLabel(
+            parents.length > 1 ? `Parent ${index + 1}` : "Parent",
+            { exact: true },
+          ),
+        ).toHaveValue(parent.name);
+        await expect(
+          panel.getByRole("link", { name: `See the parent ${parent.name}` }),
         ).toHaveAttribute("href", `${frontendUrl}/samples/${parent.igsn}`);
       }
     },
@@ -115,9 +120,7 @@ export function sampleFormPage(page: Page) {
         "The location is inherited from the parent sample:",
       );
       await expect(panel.getByRole("link", { name: parentName })).toBeVisible();
-      await expect(
-        page.getByRole("heading", { name: "Location", exact: true }),
-      ).toHaveCount(0);
+      await expect(panel.getByLabel("Latitude")).toHaveCount(0);
     },
 
     fillPublishableFields: async ({

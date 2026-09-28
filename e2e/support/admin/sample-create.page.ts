@@ -48,7 +48,7 @@ export function sampleCreatePage(page: Page) {
         });
       await expect(
         slots.getByRole("button", { name: `${emptySource}: No value` }),
-      ).toBeDisabled();
+      ).toHaveCount(0);
     },
     expectOriented: async (explanation: string) => {
       await expect(

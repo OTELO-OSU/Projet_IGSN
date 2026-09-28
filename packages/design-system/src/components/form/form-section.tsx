@@ -1,8 +1,13 @@
 import { type ReactNode, useId } from "react";
 
 const HEADINGS = {
-  2: { Tag: "h2", className: "text-lg font-semibold" },
-  3: { Tag: "h3", className: "font-medium" },
+  2: {
+    Tag: "h2",
+    className:
+      "text-sm font-semibold tracking-wide text-muted-foreground uppercase",
+    rowClassName: "mt-4 border-b pb-1",
+  },
+  3: { Tag: "h3", className: "font-medium", rowClassName: "" },
 } as const;
 
 type FormSectionProps = {
@@ -19,10 +24,10 @@ export function FormSection({
   children,
 }: FormSectionProps) {
   const titleId = useId();
-  const { Tag, className } = HEADINGS[level];
+  const { Tag, className, rowClassName } = HEADINGS[level];
   return (
     <section className="grid gap-4" aria-labelledby={titleId}>
-      <div className="flex items-center gap-2">
+      <div className={`flex items-center gap-2 ${rowClassName}`}>
         <Tag id={titleId} className={className}>
           {title}
         </Tag>

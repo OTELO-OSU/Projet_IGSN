@@ -499,6 +499,9 @@ describe("SampleDescriptionFields", () => {
     await screen
       .getByLabelText("Orientation explanation")
       .fill("Marked north face");
+    await screen
+      .getByRole("button", { name: "Describe the sample in detail" })
+      .click();
     await screen.getByLabelText("Open description").fill("Fine-grained basalt");
     await screen.getByLabelText("Length", { exact: true }).fill("10");
     await screen.getByRole("combobox", { name: "Length unit" }).click();

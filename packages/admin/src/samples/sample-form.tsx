@@ -15,11 +15,11 @@ import {
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import { Input } from "@projet-igsn/design-system/components/ui/input";
+import { Label } from "@projet-igsn/design-system/components/ui/label";
 import {
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from "@projet-igsn/design-system/components/ui/tabs";
 import {
   Tooltip,
@@ -34,10 +34,7 @@ import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
-import {
-  type PublishableFields,
-  samplePublishBlockers,
-} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { duplicateCheckCriteria } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import {
   type CreateSample,
@@ -47,18 +44,14 @@ import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-detail
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
-import { Fragment, useState } from "react";
+import { ExternalLinkIcon } from "lucide-react";
+import { useState } from "react";
 
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { AgeFields } from "#/samples/age-fields.tsx";
-import { toAgeInput } from "#/samples/age-form.ts";
 import { CollectionDateField } from "#/samples/collection-date-field.tsx";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
-import { composeDescription } from "#/samples/compose-description.ts";
-import { composeLocation } from "#/samples/compose-location.ts";
-import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
-import { composeSyntheticDetails } from "#/samples/compose-synthetic-details.ts";
 import {
   ConfirmMenuButton,
   type ConfirmMenuAction,
@@ -73,7 +66,7 @@ import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicDetails } from "#/samples/metamorphic-details.tsx";
 import { ProvenanceStatusField } from "#/samples/provenance-status-field.tsx";
-import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
+import { publishBlockerLines } from "#/samples/publish-blocker-field-label.ts";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "#/samples/sample-attachments.tsx";
@@ -81,18 +74,23 @@ import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
-  composeProcessSteps,
   publishedSampleSchema,
   type SampleDraft,
   sampleDraftSchema,
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
 import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
+import { SampleFormTabList } from "#/samples/sample-form-tab-list.tsx";
+import {
+  parentTabLabel,
+  type SampleFormTab,
+} from "#/samples/sample-form-tabs.ts";
 import { SampleGeologicalContextFields } from "#/samples/sample-geological-context-fields.tsx";
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
 import { SampleMineralClassificationsFields } from "#/samples/sample-mineral-classifications-fields.tsx";
 import { SampleProcessStepsFields } from "#/samples/sample-process-steps-fields.tsx";
+import { samplePublishInput } from "#/samples/sample-publish-input.ts";
 import { SampleRelationsFields } from "#/samples/sample-relations-fields.tsx";
 import { SampleRepositoryFields } from "#/samples/sample-repository-fields.tsx";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
@@ -102,7 +100,6 @@ import { SampleSyntheticDetailsFields } from "#/samples/sample-synthetic-details
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 import {
-  type AttachmentMetadata,
   keptAttachmentMetadata,
   type SampleAttachmentChanges,
 } from "#/samples/use-attachment-changes.ts";
@@ -110,7 +107,7 @@ import { useCheckSampleDuplicates } from "#/samples/use-check-sample-duplicates.
 import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
-const DEFAULT_TAB = "identity";
+const DEFAULT_TAB: SampleFormTab = "identity";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
 
@@ -119,13 +116,42 @@ export type SampleFormParent = Omit<SampleParent, "id">;
 function ParentSampleLink({ parent }: { parent: SampleFormParent }) {
   return (
     <a
-      className="underline"
+      className="text-foreground underline underline-offset-2"
       href={frontendSampleUrl(parent.igsn)}
       target="_blank"
       rel="noopener noreferrer"
     >
       {parent.name}
     </a>
+  );
+}
+
+function ParentSampleField({
+  parent,
+  label,
+}: {
+  parent: SampleFormParent;
+  label: string;
+}) {
+  const id = `parent-${parent.igsn}`;
+  return (
+    <div className="flex flex-wrap items-end gap-3">
+      <div className="grid w-full gap-2 sm:w-72">
+        <Label htmlFor={id}>{label}</Label>
+        <Input id={id} value={parent.name} disabled />
+      </div>
+      <Button asChild variant="outline">
+        <a
+          href={frontendSampleUrl(parent.igsn)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={m.action_see_parent_named({ name: parent.name })}
+        >
+          <ExternalLinkIcon aria-hidden />
+          {m.action_see_parent()}
+        </a>
+      </Button>
+    </div>
   );
 }
 
@@ -204,7 +230,7 @@ export function SampleForm({
   readOnlyReason,
   manualGroupOptions = [],
 }: SampleFormProps) {
-  const [tab, setTab] = useState<string>(DEFAULT_TAB);
+  const [tab, setTab] = useState<SampleFormTab>(DEFAULT_TAB);
   const roleOnSample = useUserRoleOnSample(sampleId);
   const wasPublished = hasPermanentIgsn({ status });
   const validate = validateDraft(
@@ -284,6 +310,10 @@ export function SampleForm({
     });
   };
 
+  const keptAttachments = keptAttachmentMetadata(
+    attachments,
+    attachmentChanges,
+  );
   const draft = toSampleDraft(defaultValues);
   const { operatorUserId, operatorFirstname, operatorLastname } =
     draft.syntheticDetails;
@@ -324,12 +354,7 @@ export function SampleForm({
     onSubmit: async ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);
       if (!parsed.success) return;
-      if (
-        keptAttachmentMetadata(attachments, attachmentChanges).length >
-        UPLOAD_LIMIT
-      ) {
-        return;
-      }
+      if (keptAttachments.length > UPLOAD_LIMIT) return;
       if (meta.checkDuplicates) {
         const duplicates = await findDuplicates(parsed.data);
         if (duplicates === null) return;
@@ -365,32 +390,13 @@ export function SampleForm({
       })}
     >
       {({ canSubmit, values }) => {
-        const reasons = samplePublishBlockers(
-          {
-            nature: values.nature ?? null,
-            type: composeHierarchyValue(values.typePath),
-            material: composeHierarchyValue(values.materialPath),
-            location: composeLocation(values.location),
-            description: composeDescription(values.description),
-            age: toAgeInput(values.age),
-            existenceStatus: values.existenceStatus ?? null,
-            availabilityStatus: values.availabilityStatus ?? null,
-            scientificContext: composeScientificContext(
-              values.scientificContext,
-            ),
-            syntheticDetails: composeSyntheticDetails(
-              values.syntheticDetails,
-              composeHierarchyValue(values.materialPath),
-            ),
-            relations: values.relations.map(({ targetResourceType }) => ({
-              targetResourceType: targetResourceType || null,
-            })),
-            processSteps: composeProcessSteps(values.processSteps),
-            attachments: keptAttachmentMetadata(attachments, attachmentChanges),
-          } as PublishableFields & { attachments: AttachmentMetadata[] },
-          UPLOAD_LIMIT,
-          currentUser,
-        ).map(publishBlockerLabel);
+        const reasons = publishBlockerLines(
+          samplePublishBlockers(
+            samplePublishInput(values, keptAttachments),
+            UPLOAD_LIMIT,
+            currentUser,
+          ),
+        );
         const button = renderButton(
           isReadOnly || isPending || !canSubmit || reasons.length > 0,
         );
@@ -402,8 +408,8 @@ export function SampleForm({
             <TooltipContent>
               <p className="font-medium">{m.publish_blocked_title()}</p>
               <ul className="list-disc ps-4">
-                {reasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
+                {reasons.map(({ blocker, line }) => (
+                  <li key={blocker}>{line}</li>
                 ))}
               </ul>
             </TooltipContent>
@@ -506,7 +512,7 @@ export function SampleForm({
             event.preventDefault();
             void form.handleSubmit();
           }}
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-6 pb-20"
         >
           <form.Subscribe
             selector={(state) => ({
@@ -516,64 +522,37 @@ export function SampleForm({
           >
             {({ material, provenanceStatus }) => {
               const showSynthetic = isSyntheticMaterial(material);
-              const isTabDisabled = (value: string) =>
+              const isTabDisabled = (value: SampleFormTab) =>
                 (value === "location" && !allowsLocation(material)) ||
                 (value === "scientific-context" && !provenanceStatus);
               return (
                 <Tabs
                   value={isTabDisabled(tab) ? DEFAULT_TAB : tab}
-                  onValueChange={setTab}
+                  onValueChange={(value) => setTab(value as SampleFormTab)}
                 >
-                  <TabsList>
-                    {parents.length > 0 ? (
-                      <TabsTrigger value="parent">
-                        {hasTwoParents ? m.tab_parents() : m.tab_parent()}
-                      </TabsTrigger>
-                    ) : null}
-                    <TabsTrigger value={DEFAULT_TAB}>
-                      {m.tab_identity()}
-                    </TabsTrigger>
-                    <TabsTrigger value="classification">
-                      {m.tab_sample_classification()}
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="location"
-                      disabled={isTabDisabled("location")}
-                    >
-                      {m.tab_location()}
-                    </TabsTrigger>
-                    <TabsTrigger value="age">{m.tab_age()}</TabsTrigger>
-                    <TabsTrigger value="physical-description">
-                      {m.tab_physical_description()}
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="scientific-context"
-                      disabled={isTabDisabled("scientific-context")}
-                    >
-                      {m.tab_scientific_context()}
-                    </TabsTrigger>
-                    <TabsTrigger value="conservation">
-                      {m.tab_conservation_security()}
-                    </TabsTrigger>
-                    <TabsTrigger value="curation">
-                      {m.tab_curation_repository()}
-                    </TabsTrigger>
-                    <TabsTrigger value="related-resources">
-                      {m.tab_related_resources()}
-                    </TabsTrigger>
-                  </TabsList>
+                  <form.AppForm>
+                    <SampleFormTabList
+                      parentCount={parents.length}
+                      attachments={keptAttachments}
+                      isTabDisabled={isTabDisabled}
+                    />
+                  </form.AppForm>
 
                   {parents.length > 0 ? (
                     <TabsContent value="parent" className="grid gap-4">
-                      <p>
-                        {m.parent_sample_hint()}{" "}
+                      <FormSection title={parentTabLabel(parents.length)}>
                         {parents.map((each, index) => (
-                          <Fragment key={each.igsn}>
-                            {index > 0 ? ", " : null}
-                            <ParentSampleLink parent={each} />
-                          </Fragment>
+                          <ParentSampleField
+                            key={each.igsn}
+                            parent={each}
+                            label={
+                              parents.length > 1
+                                ? m.field_parent_numbered({ index: index + 1 })
+                                : m.field_parent()
+                            }
+                          />
                         ))}
-                      </p>
+                      </FormSection>
                     </TabsContent>
                   ) : null}
 
@@ -620,15 +599,6 @@ export function SampleForm({
                       <form.AppForm>
                         <CollectionMethodField />
                       </form.AppForm>
-
-                      <form.AppField name="collectionMethodDescription">
-                        {(field) => (
-                          <field.TextField
-                            label={m.field_collection_method_description()}
-                            multiline
-                          />
-                        )}
-                      </form.AppField>
 
                       <form.AppForm>
                         <ProvenanceStatusField />
@@ -692,10 +662,12 @@ export function SampleForm({
 
                   <TabsContent value="location" className="grid gap-4">
                     {onlyParent && allowsLocation(onlyParent.material) ? (
-                      <p>
-                        {m.location_inherited_from()}{" "}
-                        <ParentSampleLink parent={onlyParent} />
-                      </p>
+                      <FormSection title={m.section_location()}>
+                        <p className="text-muted-foreground text-sm">
+                          {m.location_inherited_from()}{" "}
+                          <ParentSampleLink parent={onlyParent} />
+                        </p>
+                      </FormSection>
                     ) : (
                       <>
                         <FormSection title={m.section_location()}>
@@ -734,11 +706,9 @@ export function SampleForm({
                     value="scientific-context"
                     className="grid gap-4"
                   >
-                    <FormSection title={m.section_scientific_context()}>
-                      <form.AppForm>
-                        <SampleScientificContextFields />
-                      </form.AppForm>
-                    </FormSection>
+                    <form.AppForm>
+                      <SampleScientificContextFields />
+                    </form.AppForm>
                   </TabsContent>
 
                   <TabsContent value="conservation" className="grid gap-4">
@@ -797,7 +767,7 @@ export function SampleForm({
             <SampleAttachmentUploadDialog changes={attachmentChanges} />
           ) : null}
 
-          <div className="flex justify-end gap-2">
+          <div className="bg-background fixed inset-x-0 bottom-0 z-40 flex flex-wrap justify-end gap-2 border-t px-6 py-3 md:left-64">
             <Button type="button" variant="ghost" onClick={onCancel}>
               {m.action_cancel()}
             </Button>

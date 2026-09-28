@@ -124,6 +124,14 @@ describe("SampleScientificContextFields", () => {
 
     await goToScientificContext(screen);
     await addRole(screen, "Researcher");
+    await screen
+      .getByLabelText(
+        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
+      )
+      .fill("Deep Biosphere Survey");
+    await screen
+      .getByRole("button", { name: "Describe the research program in detail" })
+      .click();
 
     await expect
       .poll(() => fieldLabels(screen))
@@ -141,6 +149,13 @@ describe("SampleScientificContextFields", () => {
       ]);
 
     await pickProvenance(screen, "Collection specimen");
+    await screen.getByRole("combobox", { name: "Collection origin *" }).click();
+    await screen.getByRole("option", { name: "Purchase" }).click();
+    await screen
+      .getByRole("button", {
+        name: "Describe the collection context in detail",
+      })
+      .click();
 
     await expect
       .poll(() => fieldLabels(screen))
@@ -214,6 +229,11 @@ describe("SampleScientificContextFields", () => {
     await pickProvenance(screen, "Collection specimen");
     await screen.getByRole("combobox", { name: "Collection origin *" }).click();
     await screen.getByRole("option", { name: "Purchase" }).click();
+    await screen
+      .getByRole("button", {
+        name: "Describe the collection context in detail",
+      })
+      .click();
     await screen
       .getByLabelText("Open description of the collection context")
       .fill("Bought at auction in 1902");

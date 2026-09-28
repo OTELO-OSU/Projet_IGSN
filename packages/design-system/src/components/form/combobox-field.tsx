@@ -36,18 +36,20 @@ export function ComboboxField({
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>
-      <Combobox
-        id={field.name}
-        // The Combobox primitive speaks "" for "no selection"; the form store
-        // holds nullish for it, never an empty string.
-        value={field.state.value ?? ""}
-        onChange={(value) => field.handleChange(value || undefined)}
-        onBlur={field.handleBlur}
-        disabled={isDisabled}
-        items={items}
-        {...ariaProps}
-        {...combobox}
-      />
+      <div className="sm:max-w-72">
+        <Combobox
+          id={field.name}
+          // The Combobox primitive speaks "" for "no selection"; the form store
+          // holds nullish for it, never an empty string.
+          value={field.state.value ?? ""}
+          onChange={(value) => field.handleChange(value || undefined)}
+          onBlur={field.handleBlur}
+          disabled={isDisabled}
+          items={items}
+          {...ariaProps}
+          {...combobox}
+        />
+      </div>
       <FieldError error={error} errorId={errorId} />
     </FieldRow>
   );
