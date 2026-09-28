@@ -146,7 +146,7 @@ This phase exists to land the plumbing (route, auth, multipart limits, UI) with 
 
 ## Phase 3: parse, validate, report. No writes.
 
-Shipped as planned, with a few adjustments below. See [ADR 0051](docs/adr/0051-excel-import-label-contract.md) for the workbook contract, and [plan-excel-bulk-import-phase-3.md](plan-excel-bulk-import-phase-3.md) for the detailed phase plan.
+Shipped as planned, with a few adjustments below. See [ADR 0051](docs/adr/0051-excel-import-label-contract.md) for the workbook contract.
 
 - Read the workbook with exceljs, columns matched by header name on row 2. No template version check: the template is meant to become customisable, so no version gate to keep in sync.
 - Only `Sample #` and the always-required columns (`required-columns.ts`, derived from `createSampleSchema` plus the unconditional publish blockers, hierarchies down to their publish frontier, conditional fields excluded) make the file unprocessable if missing. Any other absent column just drops that field, reported per row if still needed.
@@ -187,5 +187,5 @@ It covers every feature above (`dataValidation`, per-sheet protection, `state: '
 
 - Last release 4.4.0, October 2023; maintainers inactive. The feature set we need is 2007-era OOXML and will not change, so a frozen library is tolerable.
 - Two transitive advisories in its locked deps, `uuid@^8.3.0` and `tmp@^0.2.0`. Pin both through `pnpm.overrides` in the root `package.json`.
-- Its known parser weaknesses (prototype pollution, unbounded decompression) sit on the read path, which phase 3 walks onto. Phase 3 caps the file size and rate limits the upload, but deliberately has no unzipped-size guard: uploads are authenticated, so a crafted archive exhausting memory is an accepted risk (see `plan-excel-bulk-import-phase-3.md`). Phase 1 only writes, from our own data.
+- Its known parser weaknesses (prototype pollution, unbounded decompression) sit on the read path, which phase 3 walks onto. Phase 3 caps the file size and rate limits the upload, but deliberately has no unzipped-size guard: uploads are authenticated, so a crafted archive exhausting memory is an accepted risk (see [ADR 0051](docs/adr/0051-excel-import-label-contract.md)). Phase 1 only writes, from our own data.
 - Its workbook-level defined-name API is weak, which is why the cascade uses `OFFSET`/`MATCH` and no names at all.
