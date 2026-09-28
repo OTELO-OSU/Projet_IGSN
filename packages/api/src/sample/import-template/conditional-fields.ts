@@ -15,7 +15,7 @@ import type { Column } from "./columns.ts";
 
 import {
   DATA_SHEETS,
-  REQUIRED_MARKER,
+  plainHeader,
   TEMPLATE_MATERIAL_PATHS,
 } from "./columns.ts";
 import { labels } from "./labels.ts";
@@ -44,9 +44,7 @@ const headerOf = (path: string, level?: number) => {
   const column = DATA_SHEETS.flatMap((sheet) => sheet.columns).find(
     (candidate) => candidate.path === path && candidate.level === level,
   );
-  return column === undefined
-    ? path
-    : column.header.replace(REQUIRED_MARKER, "");
+  return column === undefined ? path : plainHeader(column);
 };
 
 const sentenceOf = (condition: ConditionalCondition) => {
