@@ -9,9 +9,11 @@ import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { SelectFilter } from "#/filters/select-filter.tsx";
 import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx";
 import { m } from "#/paraglide/messages.js";
+import { BulkEditDialog } from "#/samples/bulk-edit-dialog.tsx";
 import { ImportSamplesDialog } from "#/samples/import-samples-dialog.tsx";
 import { sampleFilterEntries } from "#/samples/sample-filters.tsx";
 import { SampleListPanel } from "#/samples/sample-list-panel.tsx";
+import { useSampleSelection } from "#/samples/use-sample-selection.ts";
 
 const searchSchema = listSamplesQuerySchema.pick({
   page: true,
@@ -44,6 +46,7 @@ const OWNERSHIP_LABEL: Record<Ownership, () => string> = {
 
 function SampleListPage() {
   const params = Route.useSearch();
+  const selection = useSampleSelection(params, false);
   const { search, ownership } = params;
   const navigate = Route.useNavigate();
 
@@ -56,6 +59,7 @@ function SampleListPage() {
         title={m.samples_title()}
         action={
           <div className="flex gap-2">
+            <BulkEditDialog exportRequest={selection.exportRequest} />
             <ImportSamplesDialog />
             <Button asChild>
               <Link to="/samples/create">{m.action_create()}</Link>
@@ -107,7 +111,7 @@ function SampleListPage() {
         ]}
       />
 
-      <SampleListPanel params={params} update={update} />
+      <SampleListPanel params={params} update={update} selection={selection} />
     </>
   );
 }

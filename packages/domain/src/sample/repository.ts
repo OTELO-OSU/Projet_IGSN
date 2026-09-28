@@ -3,6 +3,7 @@ import type { UserSampleRole } from "../user-sample/model.ts";
 import type { User } from "../user/model.ts";
 import type { ModerationScope } from "../user/moderation-scope.ts";
 import type { SampleEditLock } from "./edit-lock.ts";
+import type { ExportSamplesRequest } from "./export/export-validator.ts";
 import type { SampleLineage } from "./lineage/model.ts";
 import type { SampleParent } from "./parent/model.ts";
 import type {
@@ -49,6 +50,11 @@ export type SampleRepository = {
     scope: ModerationScope | null,
   ): Promise<SampleParent[]>;
   listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
+  listExportable(
+    request: ExportSamplesRequest,
+    userId: string,
+    scope: ModerationScope | null,
+  ): Promise<ListSamplesResult>;
   get(
     id: string,
     userId: string,

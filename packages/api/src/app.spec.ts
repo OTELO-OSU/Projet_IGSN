@@ -331,6 +331,29 @@ describe("app", () => {
       },
     );
 
+    pgTest(
+      "should throttle the samples export far below the authenticated budget, per user",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const exportFrom = (token: string) =>
+          app.request("/admin/samples/export", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ mode: "ids", ids: [] }),
+          });
+
+        await spend(
+          () => exportFrom("user-7"),
+          IMPORT_TEMPLATE_USER_BUDGET.points,
+        );
+        expect((await exportFrom("user-7")).status).toBe(429);
+        expect((await exportFrom("user-8")).status).not.toBe(429);
+      },
+    );
+
     pgTest("should let a browser read the 429 headers", async ({ db }) => {
       const app = createApp(db).app;
       const from = () =>

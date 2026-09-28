@@ -1,3 +1,4 @@
+import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 import ExcelJS from "exceljs";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -6,7 +7,6 @@ import {
   CHILD_SHEETS,
   COLUMN_GROUPS,
   DATA_SHEETS,
-  MAX_IMPORT_ROWS,
   SAMPLE_COLUMNS,
   SHEETS,
   TEMPLATE_VERSION,

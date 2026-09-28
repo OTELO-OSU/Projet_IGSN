@@ -36,6 +36,7 @@ import type { SendMail } from "../mail/send-mail.ts";
 import type { SampleAccessEnv } from "./require-sample-access.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
+import { getModerationScope } from "../auth/moderation-scope.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
 import { trySendMail } from "../mail/try-send-mail.ts";
@@ -43,6 +44,7 @@ import { hasUnattachable } from "../manual-group/has-unattachable.ts";
 import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
+import { samplesExportResponse } from "./bulk-edit/export-workbook.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
@@ -60,6 +62,7 @@ import {
   validateCheckDuplicatesBody,
   validateCollaboratorParams,
   validateCreateSampleBody,
+  validateExportBody,
   validateIdParam,
   validateImportUpload,
   validateImportTemplateQuery,
@@ -82,13 +85,19 @@ function sameGroupIds(submitted: string[], stored: string[]) {
   return asked.size === stored.length && stored.every((id) => asked.has(id));
 }
 
-function adminListQuery({
+type InstitutionalFacets =
+  | "institutionalOrganization"
+  | "institutionalOsu"
+  | "institutionalLaboratory"
+  | "bbox";
+
+function adminListQuery<Query extends Partial<ListSamplesQuery>>({
   institutionalOrganization: _organization,
   institutionalOsu: _osu,
   institutionalLaboratory: _laboratory,
   bbox: _bbox,
   ...rest
-}: ListSamplesQuery): ListSamplesQuery {
+}: Query): Omit<Query, InstitutionalFacets> {
   return rest;
 }
 
@@ -139,6 +148,18 @@ export function createSampleAdminRoutes(
       importTemplateResponse(c.req.valid("query").rows),
     )
     .post("/import", validateImportUpload, (c) => c.body(null, 202))
+    .post("/export", validateExportBody, async (c) => {
+      const request = c.req.valid("json");
+      const user = c.get("user");
+      const { data } = await repository.listExportable(
+        request.mode === "filters"
+          ? { ...request, query: adminListQuery(request.query) }
+          : request,
+        user.id,
+        request.moderated ? await getModerationScope(users, user) : null,
+      );
+      return samplesExportResponse(data);
+    })
     .use("/:id", accessibleSample)
     .use("/:id/*", accessibleSample)
     .get("/:id", validateIdParam, async (c) => {

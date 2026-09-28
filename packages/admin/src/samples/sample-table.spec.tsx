@@ -8,7 +8,10 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { type SortingState } from "@tanstack/react-table";
+import {
+  type RowSelectionState,
+  type SortingState,
+} from "@tanstack/react-table";
 import { useState } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
@@ -77,10 +80,13 @@ function renderTable(
 ) {
   function Harness() {
     const [sorting, setSorting] = useState<SortingState>([]);
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     return (
       <SampleTable
         samples={data}
         moderated={moderated}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
         sorting={sorting}
         onSortingChange={(updater) => {
           setSorting(updater);
@@ -349,6 +355,36 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByText("Edit page stub"))
       .not.toBeInTheDocument();
+  });
+
+  it("should select a row from its checkbox without opening the sample", async () => {
+    const screen = await renderTable(samples);
+    const checkbox = screen.getByRole("checkbox", {
+      name: `Select ${sample.name}`,
+    });
+
+    await checkbox.click();
+
+    await expect.element(checkbox).toBeChecked();
+    await expect
+      .element(screen.getByText("Edit page stub"))
+      .not.toBeInTheDocument();
+  });
+
+  it("should select every row of the page from the header checkbox", async () => {
+    const other = { ...sample, id: crypto.randomUUID(), name: "Granite" };
+    const screen = await renderTable([sample, other]);
+
+    await screen
+      .getByRole("checkbox", { name: "Select all samples on this page" })
+      .click();
+
+    await expect
+      .element(screen.getByRole("checkbox", { name: `Select ${sample.name}` }))
+      .toBeChecked();
+    await expect
+      .element(screen.getByRole("checkbox", { name: "Select Granite" }))
+      .toBeChecked();
   });
 
   it("should navigate to the edit page when the row is clicked", async () => {

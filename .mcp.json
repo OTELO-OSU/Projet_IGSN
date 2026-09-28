@@ -2,7 +2,11 @@
   "mcpServers": {
     "playwright": {
       "command": "pnpm",
-      "args": ["dlx", "@playwright/mcp@catalog:"]
+      "args": [
+        "dlx",
+        "@playwright/mcp@catalog:",
+        "--allowed-origins=https://marmelab.com;http://localhost:3000"
+      ]
     },
     "memnos": {
       "command": "node",

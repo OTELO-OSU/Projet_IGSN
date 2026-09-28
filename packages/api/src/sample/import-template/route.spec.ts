@@ -5,6 +5,7 @@ import {
   IMPORT_TEMPLATE_FILENAME,
   XLSX_MEDIA_TYPE,
 } from "@projet-igsn/domain/sample/import/import-validator";
+import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import ExcelJS from "exceljs";
 import { describe, expect } from "vitest";
 
@@ -12,7 +13,7 @@ import type { DB } from "../../db.ts";
 
 import { createApp } from "../../app.ts";
 import { pgTest } from "../../tests/pg-test.ts";
-import { MAX_IMPORT_ROWS, SHEETS } from "./columns.ts";
+import { SHEETS } from "./columns.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 

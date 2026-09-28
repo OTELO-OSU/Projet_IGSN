@@ -11,9 +11,11 @@ import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { institutionFilterEntry } from "#/institutional-groups/institution-tree-filter.tsx";
 import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx";
 import { m } from "#/paraglide/messages.js";
+import { BulkEditDialog } from "#/samples/bulk-edit-dialog.tsx";
 import { sampleFilterEntries } from "#/samples/sample-filters.tsx";
 import { SampleListPanel } from "#/samples/sample-list-panel.tsx";
 import { SampleOwnerFilter } from "#/samples/sample-owner-filter.tsx";
+import { useSampleSelection } from "#/samples/use-sample-selection.ts";
 
 const searchSchema = listSamplesQuerySchema.pick({
   page: true,
@@ -45,6 +47,7 @@ type SampleModerationSearch = z.infer<typeof searchSchema>;
 
 function SampleModerationPage() {
   const params = Route.useSearch();
+  const selection = useSampleSelection(params, true);
   const navigate = Route.useNavigate();
 
   const update = (next: Partial<SampleModerationSearch>) =>
@@ -54,6 +57,7 @@ function SampleModerationPage() {
     <>
       <ListHeader
         title={m.sample_moderation_title()}
+        action={<BulkEditDialog exportRequest={selection.exportRequest} />}
         filters={[
           searchFilterEntry({
             label: m.samples_search_label(),
@@ -94,7 +98,12 @@ function SampleModerationPage() {
         ]}
       />
 
-      <SampleListPanel params={params} update={update} moderated />
+      <SampleListPanel
+        params={params}
+        update={update}
+        selection={selection}
+        moderated
+      />
     </>
   );
 }
