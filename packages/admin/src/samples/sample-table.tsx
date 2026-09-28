@@ -2,6 +2,7 @@ import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-vali
 import type { ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { Checkbox } from "@projet-igsn/design-system/components/ui/checkbox";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import {
   Tooltip,
@@ -16,6 +17,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
   type OnChangeFn,
+  type RowSelectionState,
   type SortingState,
   getCoreRowModel,
   useReactTable,
@@ -73,6 +75,30 @@ function RowAction({
 
 function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
   return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          aria-label={m.samples_select_page()}
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(checked) =>
+            table.toggleAllPageRowsSelected(checked === true)
+          }
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          aria-label={m.sample_select({ name: row.original.name })}
+          checked={row.getIsSelected()}
+          onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+          onClick={(event) => event.stopPropagation()}
+        />
+      ),
+      meta: { className: "w-10" },
+    },
     {
       accessorKey: "igsn",
       header: () => m.column_igsn(),
@@ -201,6 +227,8 @@ type SampleTableProps = {
   samples: AdminSampleListItem[];
   sorting: SortingState;
   onSortingChange: OnChangeFn<SortingState>;
+  rowSelection: RowSelectionState;
+  onRowSelectionChange: OnChangeFn<RowSelectionState>;
   moderated?: boolean;
 };
 
@@ -208,6 +236,8 @@ export function SampleTable({
   samples,
   sorting,
   onSortingChange,
+  rowSelection,
+  onRowSelectionChange,
   moderated = false,
 }: SampleTableProps) {
   const navigate = useNavigate();
@@ -215,9 +245,11 @@ export function SampleTable({
     data: samples,
     columns: sampleColumns(moderated),
     getCoreRowModel: getCoreRowModel(),
+    getRowId: (sample) => sample.id,
     manualSorting: true,
-    state: { sorting },
+    state: { sorting, rowSelection },
     onSortingChange,
+    onRowSelectionChange,
   });
 
   return (

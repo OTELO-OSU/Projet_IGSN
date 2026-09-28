@@ -147,6 +147,10 @@ export function createApp(
       "/samples/import-template",
       rateLimit(rateLimitConfig, "user", IMPORT_TEMPLATE_USER_BUDGET),
     )
+    .use(
+      "/samples/export",
+      rateLimit(rateLimitConfig, "user", IMPORT_TEMPLATE_USER_BUDGET),
+    )
     .route(
       "/samples/parents",
       createSampleParentRoutes(sampleRepository, userRepository),

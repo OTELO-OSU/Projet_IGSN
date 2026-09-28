@@ -25,6 +25,7 @@ import { getSample } from "./service/get-sample.ts";
 import { insertSampleRows } from "./service/insert-sample.ts";
 import { isSampleModerated } from "./service/is-sample-moderated.ts";
 import {
+  listExportableSamples,
   listModeratedSamples,
   listPublishedSamples,
   listPublishedSamplesForService,
@@ -70,6 +71,7 @@ export function createSampleRepository(
     searchEligibleParents: tx(searchEligibleParents),
     isModerated: tx(isSampleModerated),
     listPublished: tx(listPublishedSamples),
+    listExportable: tx(listExportableSamples),
     get: tx(getSample),
     getPublicByIgsn: tx(getPublicSampleByIgsn),
     findDuplicates: tx(findDuplicateSamples),

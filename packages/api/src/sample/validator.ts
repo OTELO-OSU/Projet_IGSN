@@ -1,6 +1,8 @@
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
+import { exportSamplesRequestSchema } from "@projet-igsn/domain/sample/export/export-validator";
 import { importSamplesSchema } from "@projet-igsn/domain/sample/import/import-validator";
+import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   checkDuplicatesBodySchema,
@@ -18,7 +20,6 @@ import { z } from "zod";
 
 import { idParamSchema, validateUuidIdParam } from "../uuid-param.ts";
 import { zodValidator } from "../zod-validator.ts";
-import { MAX_IMPORT_ROWS } from "./import-template/columns.ts";
 import { uploadLimit } from "./upload-limit.ts";
 
 const igsnParamSchema = z.object({ igsn: igsnSchema });
@@ -70,6 +71,12 @@ export const validateImportTemplateQuery = zodValidator(
   "query",
   importTemplateQuerySchema,
   `"rows" must be a whole number between 1 and ${MAX_IMPORT_ROWS}`,
+);
+
+export const validateExportBody = zodValidator(
+  "json",
+  exportSamplesRequestSchema,
+  "Invalid export request",
 );
 
 export const validateListQuery = validator("query", (value, c) => {

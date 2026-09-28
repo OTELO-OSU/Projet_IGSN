@@ -1,3 +1,4 @@
+import type { ExportSamplesRequest } from "@projet-igsn/domain/sample/export/export-validator";
 import type {
   AdminListSamplesResult,
   ListSamplesResult,
@@ -5,8 +6,12 @@ import type {
 import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 
+import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { MINERAL_MATERIAL_ROOT } from "@projet-igsn/domain/sample/mineral/allows-mineral-classifications";
 import { sampleStatusSchema } from "@projet-igsn/domain/sample/sample";
 import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
+import { SYNTHETIC_MATERIAL_ROOT } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
+import { HTTPException } from "hono/http-exception";
 import { type Expression, sql, type SqlBool } from "kysely";
 
 import type { DB } from "../../db.ts";
@@ -139,6 +144,28 @@ async function listSamplesWhere(
   });
 }
 
+function adminFilters(
+  params: Pick<
+    ListSamplesQuery,
+    "institution" | "ownerId" | "existenceStatus" | "availabilityStatus"
+  >,
+): Expression<SqlBool>[] {
+  return [
+    ...(params.institution === undefined
+      ? []
+      : [institutionSampleWhere(params.institution)]),
+    ...(params.ownerId === undefined
+      ? []
+      : [assignedTo(params.ownerId, "mine")]),
+    ...(params.existenceStatus === undefined
+      ? []
+      : [sql<SqlBool>`existence_status = ${params.existenceStatus}`]),
+    ...(params.availabilityStatus === undefined
+      ? []
+      : [sql<SqlBool>`availability_status = ${params.availabilityStatus}`]),
+  ];
+}
+
 async function listWithOwners(
   db: Transactional<DB>,
   params: ListSamplesQuery,
@@ -148,21 +175,7 @@ async function listWithOwners(
   const { data, owners, total } = await listSamplesWhere(
     db,
     params,
-    [
-      ...scope,
-      ...(params.institution === undefined
-        ? []
-        : [institutionSampleWhere(params.institution)]),
-      ...(params.ownerId === undefined
-        ? []
-        : [assignedTo(params.ownerId, "mine")]),
-      ...(params.existenceStatus === undefined
-        ? []
-        : [sql<SqlBool>`existence_status = ${params.existenceStatus}`]),
-      ...(params.availabilityStatus === undefined
-        ? []
-        : [sql<SqlBool>`availability_status = ${params.availabilityStatus}`]),
-    ],
+    [...scope, ...adminFilters(params)],
     true,
   );
   return {
@@ -221,5 +234,58 @@ export async function listPublishedSamples(
   )`,
         ]),
   ]);
+  return { data, total };
+}
+
+const isOutside = (root: string) =>
+  sql<SqlBool>`(material is null or not material <@ ${root}::ltree)`;
+
+const EXPORTABLE = [
+  isPublished(),
+  isOutside(SYNTHETIC_MATERIAL_ROOT),
+  isOutside(MINERAL_MATERIAL_ROOT),
+];
+
+function reachOf(
+  request: ExportSamplesRequest,
+  userId: string,
+  scope: ModerationScope | null,
+): Expression<SqlBool> {
+  if (!request.moderated) {
+    return assignedTo(
+      userId,
+      request.mode === "filters" ? request.query.ownership : undefined,
+    );
+  }
+  if (!scope) throw new HTTPException(403, { message: "Forbidden" });
+  return moderatedSampleWhere(scope);
+}
+
+function selectionOf(request: ExportSamplesRequest): Expression<SqlBool>[] {
+  return request.mode === "ids"
+    ? [sql<SqlBool>`sample.id in (${sql.join(request.ids)})`]
+    : adminFilters(request.query);
+}
+
+export async function listExportableSamples(
+  db: Transactional<DB>,
+  request: ExportSamplesRequest,
+  userId: string,
+  scope: ModerationScope | null,
+): Promise<ListSamplesResult> {
+  const { data, total } = await listSamplesWhere(
+    db,
+    {
+      ...(request.mode === "filters" ? request.query : {}),
+      page: 1,
+      perPage: MAX_IMPORT_ROWS,
+    },
+    [...EXPORTABLE, reachOf(request, userId, scope), ...selectionOf(request)],
+  );
+  if (total > MAX_IMPORT_ROWS) {
+    throw new HTTPException(422, {
+      message: `Cannot export more than ${MAX_IMPORT_ROWS} samples`,
+    });
+  }
   return { data, total };
 }

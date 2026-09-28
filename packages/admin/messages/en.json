@@ -875,5 +875,17 @@
   "import_samples_file_too_large": "This file is larger than {max} MB.",
   "import_samples_success": "Samples successfully imported.",
   "import_samples_error": "The file could not be imported.",
-  "import_template_download_error": "The template could not be downloaded."
+  "import_template_download_error": "The template could not be downloaded.",
+  "action_bulk_edit": "Bulk edit",
+  "action_select_all": "Select all",
+  "action_clear_selection": "Clear selection",
+  "action_export": "Export",
+  "action_export_samples": "Export samples",
+  "bulk_edit_description": "Export the published samples of this list to an Excel file, to edit them in bulk.",
+  "samples_bulk_actions": "Bulk actions",
+  "samples_selected_count": "{count} selected",
+  "sample_select": "Select {name}",
+  "samples_select_page": "Select all samples on this page",
+  "export_samples_too_many": "Too many samples to export: narrow the selection.",
+  "export_samples_error": "The samples could not be exported."
 }

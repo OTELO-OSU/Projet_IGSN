@@ -2,6 +2,7 @@ import {
   IMPORT_TEMPLATE_FILENAME,
   XLSX_MEDIA_TYPE,
 } from "@projet-igsn/domain/sample/import/import-validator";
+import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import ExcelJS from "exceljs";
 
 import type { Column } from "./columns.ts";
@@ -10,7 +11,6 @@ import type { ConditionalCondition } from "./conditional-fields.ts";
 import { queueBuild } from "./build-queue.ts";
 import {
   CHILD_SHEETS,
-  MAX_IMPORT_ROWS,
   SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
   SHEETS,
@@ -35,7 +35,7 @@ type RangeValidations = {
   find: (address: string) => TemplateValidation | undefined;
 };
 
-type ExcelBuffer = Awaited<ReturnType<ExcelJS.Xlsx["writeBuffer"]>>;
+export type ExcelBuffer = Awaited<ReturnType<ExcelJS.Xlsx["writeBuffer"]>>;
 
 export const sheetValidations = (sheet: ExcelJS.Worksheet): RangeValidations =>
   (sheet as unknown as { dataValidations: RangeValidations }).dataValidations;
@@ -44,7 +44,7 @@ const GROUP_ROW = 1;
 
 const HEADER_ROW = 2;
 
-const FIRST_DATA_ROW = HEADER_ROW + 1;
+export const FIRST_DATA_ROW = HEADER_ROW + 1;
 
 const lastDataRow = (rows: number) => FIRST_DATA_ROW + rows - 1;
 
@@ -64,7 +64,7 @@ const READ_ME_LINES = [
   `A greyed cell does not apply to the row as you filled it, so leave it empty.`,
 ];
 
-const blockIdOf = (column: Column) =>
+export const blockIdOf = (column: Column) =>
   column.block === undefined
     ? undefined
     : column.level === undefined
@@ -204,7 +204,7 @@ function mergeGroupRow(sheet: ExcelJS.Worksheet, columns: readonly Column[]) {
   }
 }
 
-function addDataSheet(
+export function addDataSheet(
   book: ExcelJS.Workbook,
   name: string,
   columns: readonly Column[],
@@ -230,44 +230,52 @@ function addDataSheet(
   return sheet;
 }
 
-function addChildSheet(
+export function addChildSheet(
   book: ExcelJS.Workbook,
   name: string,
   columns: readonly Column[],
   rows: number,
+  sampleRows = rows,
+  keyHeader = SAMPLE_KEY_HEADER,
 ) {
   const sheet = addDataSheet(book, name, columns, rows);
   sheetValidations(sheet).add(dataRange("A", rows), {
     type: "list",
     allowBlank: true,
-    formulae: [`=${sampleKeyRange(rows)}`],
+    formulae: [`=${sampleKeyRange(sampleRows)}`],
     showInputMessage: true,
-    promptTitle: SAMPLE_KEY_HEADER,
-    prompt: `The number of the sample this row belongs to, taken from the ${SHEETS.samples} sheet.`,
+    promptTitle: keyHeader,
+    prompt: `The "${keyHeader}" of the sample this row belongs to, taken from the ${SHEETS.samples} sheet.`,
     showErrorMessage: true,
     errorStyle: "warning",
-    errorTitle: SAMPLE_KEY_HEADER,
-    error: `This sample number is not in the ${SHEETS.samples} sheet.`,
+    errorTitle: keyHeader,
+    error: `This "${keyHeader}" is not in the ${SHEETS.samples} sheet.`,
   });
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
     sheet.getCell(row, 2).value = { formula: sampleLookupFormula(row) };
   }
+  return sheet;
 }
 
-function addReadMeSheet(book: ExcelJS.Workbook) {
+export function addReadMeSheet(
+  book: ExcelJS.Workbook,
+  title: string,
+  lines: readonly string[],
+) {
   const sheet = book.addWorksheet(SHEETS.readMe);
   sheet.getColumn(1).width = 28;
   sheet.getColumn(2).width = 120;
-  sheet.getCell("A1").value = "IGSN sample import template";
+  sheet.getCell("A1").value = title;
   sheet.getCell("B1").value = TEMPLATE_VERSION;
   sheet.getCell("A2").value = "Generated on";
   sheet.getCell("B2").value = new Date().toISOString().slice(0, 10);
-  for (const [index, line] of READ_ME_LINES.entries()) {
+  for (const [index, line] of lines.entries()) {
     sheet.getCell(`B${index + 4}`).value = line;
   }
+  return sheet;
 }
 
-async function addVocabularySheet(book: ExcelJS.Workbook) {
+export async function addVocabularySheet(book: ExcelJS.Workbook) {
   const sheet = book.addWorksheet(SHEETS.vocabularies);
   sheet.addRows(VOCABULARY_ROWS.map((row) => [...row]));
   for (const index of [1, 2, 3]) sheet.getColumn(index).width = 52;
@@ -276,7 +284,7 @@ async function addVocabularySheet(book: ExcelJS.Workbook) {
 
 async function build(rows: number): Promise<ExcelBuffer> {
   const book = new ExcelJS.Workbook();
-  addReadMeSheet(book);
+  addReadMeSheet(book, "IGSN sample import template", READ_ME_LINES);
   const samples = addDataSheet(book, SHEETS.samples, SAMPLE_COLUMNS, rows);
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
     samples.getCell(row, 1).value = row - FIRST_DATA_ROW + 1;
@@ -294,12 +302,19 @@ export function importTemplateWorkbook(
   return queueBuild(() => build(rows));
 }
 
-export async function importTemplateResponse(rows: number): Promise<Response> {
-  return new Response(await importTemplateWorkbook(rows), {
+export function xlsxResponse(book: ExcelBuffer, filename: string): Response {
+  return new Response(book, {
     headers: {
       "Content-Type": XLSX_MEDIA_TYPE,
-      "Content-Disposition": `attachment; filename="${IMPORT_TEMPLATE_FILENAME}"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "X-Content-Type-Options": "nosniff",
     },
   });
+}
+
+export async function importTemplateResponse(rows: number): Promise<Response> {
+  return xlsxResponse(
+    await importTemplateWorkbook(rows),
+    IMPORT_TEMPLATE_FILENAME,
+  );
 }

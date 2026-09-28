@@ -14,6 +14,15 @@ export function sampleListPage(page: Page) {
     expectHidden: () =>
       expect(page.getByRole("heading", { name: "My samples" })).toBeHidden(),
     goToCreate: () => page.getByRole("link", { name: "Create" }).click(),
+    exportAllSamples: async () => {
+      await page.getByRole("button", { name: "Bulk edit" }).click();
+      const download = page.waitForEvent("download");
+      await page
+        .getByRole("dialog", { name: "Bulk edit" })
+        .getByRole("button", { name: "Export samples" })
+        .click();
+      return download;
+    },
     openSample: (name: string) =>
       page.getByRole("link", { name, exact: true }).click(),
     addSubSample: (name: string) =>
