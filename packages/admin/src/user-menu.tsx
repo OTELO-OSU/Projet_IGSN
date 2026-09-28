@@ -6,7 +6,13 @@ import {
   DropdownMenuTrigger,
 } from "@projet-igsn/design-system/components/ui/dropdown-menu";
 import { Link } from "@tanstack/react-router";
-import { ChevronDownIcon, LogOut, SettingsIcon, UserIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  CircleUserIcon,
+  LogOut,
+  UserIcon,
+  UsersRoundIcon,
+} from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 
@@ -35,9 +41,15 @@ export function UserMenu({ onSignOut }: { onSignOut: () => void }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link to="/settings">
-            <SettingsIcon />
-            {m.nav_settings()}
+          <Link to="/settings/profile">
+            <CircleUserIcon />
+            {m.nav_profile()}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/settings/groups">
+            <UsersRoundIcon />
+            {m.nav_groups()}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onSignOut}>

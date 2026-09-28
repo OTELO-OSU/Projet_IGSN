@@ -59,7 +59,7 @@
 | Camille Petit  | `camille.petit`          | none                  |
 | Luc Moreau     | `luc.moreau`             | none                  |
 
-- An ORCID sign-in only reaches the app once an account declared that iD: sign in through the institution first, set it on the Settings page, and the ORCID login then resolves to the same account (ADR 0020).
+- An ORCID sign-in only reaches the app once an account declared that iD: sign in through the institution first, set it on the Profile settings page, and the ORCID login then resolves to the same account (ADR 0020).
 - Every seed gives each sample exactly one owner, and the api adopts it by matching the token's email on first sign-in (ADR 0019).
 - `make db-seed` and the E2E reset name that owner in the seed data, and Luc Moreau owns none there, so ownership isolation stays testable.
 - The demo set round-robins over the database's `accepted` users instead, so it seeds any environment: there Luc Moreau and Nadia Leroy do own samples, and the pending Théo Roux none.

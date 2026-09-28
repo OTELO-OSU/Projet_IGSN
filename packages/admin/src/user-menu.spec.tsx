@@ -29,15 +29,18 @@ describe("UserMenu", () => {
     await expect.element(screen.getByText("Marie Dupont")).toBeInTheDocument();
   });
 
-  it("should offer the settings and the sign out once opened", async () => {
+  it("should offer the profile, the groups and the sign out once opened", async () => {
     fakeCurrentUser();
 
     const screen = await render(<UserMenu onSignOut={vi.fn()} />);
     await screen.getByRole("button", { name: /Marie Dupont/ }).click();
 
     await expect
-      .element(screen.getByRole("menuitem", { name: "Settings" }))
-      .toHaveAttribute("href", "/settings");
+      .element(screen.getByRole("menuitem", { name: "Profile" }))
+      .toHaveAttribute("href", "/settings/profile");
+    await expect
+      .element(screen.getByRole("menuitem", { name: "Groups" }))
+      .toHaveAttribute("href", "/settings/groups");
     await expect
       .element(screen.getByRole("menuitem", { name: "Sign out" }))
       .toBeVisible();

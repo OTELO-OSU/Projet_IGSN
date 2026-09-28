@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { manualGroupInvitationMail } from "./manual-group-invitation-mail.ts";
 
-const SETTINGS_URL = "http://localhost:3001/settings";
+const SETTINGS_URL = "http://localhost:3001/settings/groups";
 
 const invitation = {
   invitee: {

@@ -1,3 +1,9 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@projet-igsn/design-system/components/ui/tooltip";
+
 import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
 
@@ -16,32 +22,44 @@ export function MyManualGroups() {
 
   return (
     <ul className="grid w-full max-w-md gap-2">
-      {groups.map((group) => (
-        <li key={group.id} className="grid gap-1">
-          <div className="flex items-center justify-between gap-4">
+      {groups.map((group) => {
+        const leaveButton = (
+          <ConfirmButton
+            variant="outline"
+            size="sm"
+            disabled={!group.canLeave}
+            aria-label={m.manual_group_leave_group({ name: group.name })}
+            title={m.manual_group_leave_title()}
+            description={m.manual_group_leave_description({
+              name: group.name,
+            })}
+            confirmLabel={m.manual_group_leave_action()}
+            onConfirm={() => leaveGroup.mutate(group.id)}
+          >
+            {m.manual_group_leave_action()}
+          </ConfirmButton>
+        );
+        return (
+          <li
+            key={group.id}
+            className="flex items-center justify-between gap-4"
+          >
             <span>{group.name}</span>
-            <ConfirmButton
-              variant="outline"
-              size="sm"
-              disabled={!group.canLeave}
-              aria-label={m.manual_group_leave_group({ name: group.name })}
-              title={m.manual_group_leave_title()}
-              description={m.manual_group_leave_description({
-                name: group.name,
-              })}
-              confirmLabel={m.manual_group_leave_action()}
-              onConfirm={() => leaveGroup.mutate(group.id)}
-            >
-              {m.manual_group_leave_action()}
-            </ConfirmButton>
-          </div>
-          {!group.canLeave && (
-            <p className="text-muted-foreground text-sm">
-              {m.manual_group_leave_locked()}
-            </p>
-          )}
-        </li>
-      ))}
+            {group.canLeave ? (
+              leaveButton
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>{leaveButton}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{m.manual_group_leave_locked()}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

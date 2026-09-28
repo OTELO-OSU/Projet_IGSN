@@ -32,13 +32,12 @@ export function OrcidSettingsForm({ orcid }: { orcid: string | null }) {
         event.preventDefault();
         void form.handleSubmit();
       }}
-      className="flex max-w-md flex-col gap-4"
+      className="flex flex-col gap-4"
     >
       <form.AppField name="orcid">
         {(field) => <field.TextField label={m.field_orcid()} />}
       </form.AppField>
-      <p className="text-muted-foreground text-sm">{m.settings_orcid_hint()}</p>
-      <div>
+      <div className="bg-background fixed inset-x-0 bottom-0 z-40 flex flex-wrap justify-end gap-2 border-t px-6 py-3 md:left-64">
         <form.AppForm>
           <form.SubmitButton
             label={m.action_save()}

@@ -1,4 +1,5 @@
 import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
+import type { ReactNode } from "react";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import {
@@ -30,12 +31,16 @@ const willResetStatus = (
 export function InstitutionalGroupsForm({
   groups = EMPTY,
   save,
+  actionsClassName = "flex justify-end gap-2",
+  secondaryAction,
 }: {
   groups?: InstitutionalGroups;
   save: {
     mutate: (groups: SetInstitutionalGroups) => void;
     isPending: boolean;
   };
+  actionsClassName?: string;
+  secondaryAction?: ReactNode;
 }) {
   const form = useAppForm({
     defaultValues: {
@@ -60,13 +65,14 @@ export function InstitutionalGroupsForm({
         event.preventDefault();
         void form.handleSubmit();
       }}
-      className="grid w-full max-w-md gap-4 text-left"
+      className="grid w-full gap-4 text-left sm:max-w-72"
     >
       <form.AppForm>
         <InstitutionalGroupsFields />
       </form.AppForm>
 
-      <div>
+      <div className={actionsClassName}>
+        {secondaryAction}
         <form.Subscribe selector={(state) => state.values}>
           {(values) =>
             willResetStatus(values, groups) ? (

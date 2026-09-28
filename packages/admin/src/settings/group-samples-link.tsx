@@ -11,30 +11,32 @@ export function GroupSamplesLink() {
   const id = useId();
   const query = useMyManualGroups();
   const groups = query.data?.data ?? [];
-  const [groupId, setGroupId] = useState("");
+  const [pickedId, setPickedId] = useState("");
+  const onlyGroup = groups.length === 1 ? groups[0] : undefined;
+  const groupId = onlyGroup?.id ?? pickedId;
 
   return (
     <>
-      <div className="flex min-w-0 items-center gap-2">
-        <Label htmlFor={id} className="shrink-0">
-          {m.settings_group_samples_group()}
-        </Label>
-        <div className="min-w-0 flex-1">
-          <Combobox
-            id={id}
-            items={groups.map((group) => ({
-              value: group.id,
-              label: group.name,
-            }))}
-            value={groupId}
-            onChange={setGroupId}
-            disabled={groups.length === 0}
-            placeholder={m.settings_group_samples_placeholder()}
-            searchPlaceholder={m.settings_group_samples_search_placeholder()}
-            emptyText={m.settings_group_samples_empty()}
-          />
+      {!onlyGroup && (
+        <div className="grid gap-2">
+          <Label htmlFor={id}>{m.settings_group_samples_group()}</Label>
+          <div className="min-w-0 sm:w-72">
+            <Combobox
+              id={id}
+              items={groups.map((group) => ({
+                value: group.id,
+                label: group.name,
+              }))}
+              value={pickedId}
+              onChange={setPickedId}
+              disabled={groups.length === 0}
+              placeholder={m.settings_group_samples_placeholder()}
+              searchPlaceholder={m.settings_group_samples_search_placeholder()}
+              emptyText={m.settings_group_samples_empty()}
+            />
+          </div>
         </div>
-      </div>
+      )}
       {groupId && (
         <ShareLink
           label={m.settings_group_samples_link()}

@@ -30,6 +30,8 @@ describe("notifyManualGroupJoined", () => {
     });
 
     await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
-    expect(sendMail.mock.calls[0]?.[0].text).toContain(`${ADMIN_URL}settings`);
+    expect(sendMail.mock.calls[0]?.[0].text).toContain(
+      `${ADMIN_URL}settings/groups`,
+    );
   });
 });

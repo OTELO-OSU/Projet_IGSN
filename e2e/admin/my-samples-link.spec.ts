@@ -13,7 +13,7 @@ test.describe("my samples link", () => {
 
     await signInAsResearcher(page, RESEARCHERS.jean);
     const settings = settingsPage(page);
-    await settings.open();
+    await settings.openProfile();
     const link = await settings.mySamplesLink();
     expect(link).toContain(`${frontendUrl}/search?contributor=`);
 

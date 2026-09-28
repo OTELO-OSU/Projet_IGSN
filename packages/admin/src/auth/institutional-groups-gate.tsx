@@ -27,8 +27,16 @@ export function InstitutionalGroupsGate({
   if (isMissingGroups) {
     return (
       <CenteredScreen message={m.institutional_groups_intro()}>
-        <InstitutionalGroupsForm save={setGroups} />
-        <SignOutButton onSignOut={onSignOut} />
+        <InstitutionalGroupsForm
+          save={setGroups}
+          secondaryAction={
+            <SignOutButton
+              onSignOut={onSignOut}
+              variant="ghost"
+              size="default"
+            />
+          }
+        />
       </CenteredScreen>
     );
   }

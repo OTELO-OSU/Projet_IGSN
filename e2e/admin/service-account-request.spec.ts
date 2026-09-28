@@ -26,7 +26,7 @@ test.describe("service account request", () => {
     const settings = settingsPage(page);
 
     await signInAsResearcher(page, RESEARCHERS.jean);
-    await settings.open();
+    await settings.openProfile();
     await settings.requestServiceAccount(name, REASON, MANUAL_GROUP);
 
     const mail = await maildev(request).expectMail(
@@ -52,7 +52,7 @@ test.describe("service account request", () => {
     await account.expectVisible(name);
     await superAdminPage.context().close();
 
-    await page.goto(`${adminUrl}/settings`);
+    await page.goto(`${adminUrl}/settings/profile`);
     await adminPage(page).expectSignedIn();
     await settings.expectService(name);
     const apiKey = await settings.generateApiKey(name);

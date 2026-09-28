@@ -72,6 +72,6 @@ A dropped code stays on users and samples, in `institutional_organization`, `ins
 
 ## 6. If a laboratory changed organisme or OSU
 
-Only a code that disappeared gets a migration, and nothing revalidates a stored trio after login, the gate re-prompting on a `NULL` laboratory alone. So a laboratory that moved leaves the users holding its old trio stuck: the app keeps letting them in, while their `/settings` shows no laboratory and any save is rejected.
+Only a code that disappeared gets a migration, and nothing revalidates a stored trio after login, the gate re-prompting on a `NULL` laboratory alone. So a laboratory that moved leaves the users holding its old trio stuck: the app keeps letting them in, while their `/settings/groups` shows no laboratory and any save is rejected.
 
 - Read the `osu` and `organizationRors` changes in the step 4 diff, then clear the three columns for the users of a laboratory that moved, the same way the generated migration does for a dropped one.

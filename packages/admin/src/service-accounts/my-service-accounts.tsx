@@ -1,3 +1,4 @@
+import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { useState } from "react";
 
@@ -21,11 +22,10 @@ export function MyServiceAccounts() {
     });
 
   return (
-    <>
-      <h2 className="text-xl font-bold">{m.settings_services_title()}</h2>
-      <p className="text-muted-foreground text-sm">
-        {m.settings_services_hint()}
-      </p>
+    <FormSection
+      title={m.settings_services_title()}
+      description={m.settings_services_hint()}
+    >
       {accounts.length > 0 && (
         <ul className="grid w-full max-w-md gap-2">
           {accounts.map((account) => {
@@ -76,6 +76,6 @@ export function MyServiceAccounts() {
       <div>
         <RequestServiceAccountDialog />
       </div>
-    </>
+    </FormSection>
   );
 }

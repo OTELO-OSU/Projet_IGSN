@@ -30,7 +30,7 @@ test.describe("institutional groups", () => {
     await samples.expectVisible();
     await groups.expectNotShown();
 
-    await settings.open();
+    await settings.openGroups();
     await settings.setInstitution({
       organization: "Université Grenoble Alpes",
       osu: "Observatoire des Sciences de l’Univers de Grenoble",

@@ -45,7 +45,7 @@ test.describe("manual groups", () => {
     await maildev(request).expectMail(
       RESEARCHERS.jean.email,
       `Nadia Leroy added you to the group "${name}"`,
-      ["/settings"],
+      ["/settings/groups"],
     );
 
     await group.detach("Jean Martin");
@@ -130,7 +130,7 @@ test.describe("manual groups", () => {
       RESEARCHERS.pierre,
     );
     const settings = settingsPage(memberPage);
-    await settings.open();
+    await settings.openGroups();
 
     await settings.expectManualGroup(first);
     await settings.expectManualGroup(second);
@@ -174,7 +174,7 @@ test.describe("manual groups", () => {
       RESEARCHERS.jean,
     );
     const settings = settingsPage(memberPage);
-    await settings.open();
+    await settings.openGroups();
     await settings.expectManualGroup(name);
 
     const list = sampleListPage(memberPage);
@@ -197,7 +197,7 @@ test.describe("manual groups", () => {
     await edit.expectManualGroupFrozen(name);
     const igsn = await edit.publicPageIgsn();
 
-    await settings.open();
+    await settings.openProfile();
     const link = await settings.groupSamplesLink(name);
     expect(link).toContain(`${frontendUrl}/search?manualGroup=`);
 
@@ -281,7 +281,7 @@ test.describe("manual groups", () => {
     await list.expectVisible();
 
     const settings = settingsPage(memberPage);
-    await settings.open();
+    await settings.openGroups();
     await settings.expectManualGroupLeaveLocked(attached);
     await settings.leaveManualGroup(other);
     await settings.expectManualGroup(attached);

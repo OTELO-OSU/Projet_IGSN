@@ -38,4 +38,36 @@ describe("FormSection", () => {
       .element(page.getByRole("button", { name: "Enable" }))
       .toBeVisible();
   });
+
+  it("should describe the section with its description, rendered under the title", async () => {
+    await render(
+      <FormSection title="Services" description="Machine accounts you own">
+        <span>Section content</span>
+      </FormSection>,
+    );
+
+    const region = page.getByRole("region", { name: "Services" });
+    await expect
+      .element(region)
+      .toHaveAccessibleDescription("Machine accounts you own");
+    const heading = page.getByRole("heading", { name: "Services" }).element();
+    const description = page.getByText("Machine accounts you own").element();
+    expect(
+      heading.compareDocumentPosition(description) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("should leave the section undescribed without a description", async () => {
+    await render(
+      <FormSection title="Services">
+        <span>Section content</span>
+      </FormSection>,
+    );
+
+    await expect
+      .element(page.getByRole("region", { name: "Services" }))
+      .not.toHaveAttribute("aria-describedby");
+    await expect.element(page.getByRole("paragraph")).not.toBeInTheDocument();
+  });
 });
