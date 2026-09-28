@@ -11,6 +11,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import {
   BotIcon,
   Building2Icon,
+  ChevronsLeftIcon,
   FlaskConicalIcon,
   GlobeIcon,
   MountainIcon,
@@ -25,12 +26,15 @@ import { m } from "#/paraglide/messages.js";
 
 import { UserMenu } from "../user-menu.tsx";
 import { useCurrentUser } from "./use-current-user.ts";
+import { useSidebarCollapsed } from "./use-sidebar-collapsed.ts";
 
 const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
 
 const SAMPLE_MODERATION_PATH = "/samples/moderation";
 
 const GROUPS_NAV_ID = "nav-institutional-groups";
+
+const SIDEBAR_NAV_ID = "sidebar-nav";
 
 const SERVICE_ACCOUNTS_PATH = "/service-accounts";
 
@@ -49,7 +53,7 @@ const GROUPS_NAV = [
 ] as const;
 
 const navLinkClass =
-  "hover:bg-accent aria-[current=page]:bg-accent flex items-center gap-2 rounded-md p-2 text-sm [&>svg]:size-4 [&>svg]:shrink-0";
+  "hover:bg-accent aria-[current=page]:bg-accent flex items-center gap-2 overflow-hidden rounded-md px-3 py-2 text-sm whitespace-nowrap [&>svg]:size-4 [&>svg]:shrink-0";
 
 function NavItem({
   to,
@@ -57,12 +61,14 @@ function NavItem({
   Icon,
   label,
   isCurrent,
+  isCollapsed,
 }: {
   to: LinkProps["to"];
   search?: LinkProps["search"];
   Icon: LucideIcon;
   label: string;
   isCurrent: boolean;
+  isCollapsed: boolean;
 }) {
   return (
     <li>
@@ -73,7 +79,11 @@ function NavItem({
         aria-current={isCurrent ? "page" : undefined}
       >
         <Icon />
-        {label}
+        <span
+          className={`transition-opacity motion-reduce:transition-none ${isCollapsed ? "md:opacity-0" : ""}`}
+        >
+          {label}
+        </span>
       </Link>
     </li>
   );
@@ -92,94 +102,124 @@ export function AppLayout({
   const isSampleModerationSection = pathname.startsWith(SAMPLE_MODERATION_PATH);
   const isSamplesSection = pathname === "/" || pathname === "/samples/create";
 
+  const [isCollapsed, toggleCollapsed] = useSidebarCollapsed();
+  const hasSidebar = me !== undefined && canModerateSamples(me);
+
   return (
-    <div className="flex min-h-screen w-full flex-col md:flex-row">
-      <aside className="flex flex-col gap-2 border-b p-2 md:w-64 md:shrink-0 md:border-r md:border-b-0">
-        <Link
-          to="/"
-          className="px-2 py-1 text-xl font-bold"
-          search={listSearch}
-        >
-          {m.app_title()}
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="flex h-16 items-center justify-between gap-4 border-b pr-6">
+        <Link to="/" search={listSearch} className="flex h-full items-center">
+          <img
+            src={`${import.meta.env.BASE_URL}logo-igsn.png`}
+            alt={m.app_title()}
+            className="h-full w-auto"
+          />
         </Link>
-        <nav>
-          <ul className="flex flex-wrap gap-1 md:flex-col">
-            <NavItem
-              to="/"
-              search={listSearch}
-              Icon={MountainIcon}
-              label={m.nav_samples()}
-              isCurrent={isSamplesSection}
-            />
-            {me && canModerateSamples(me) && (
-              <NavItem
-                to={SAMPLE_MODERATION_PATH}
-                search={listSearch}
-                Icon={ShieldCheckIcon}
-                label={m.nav_sample_moderation()}
-                isCurrent={isSampleModerationSection}
+        <div className="flex items-center gap-4">
+          <Button asChild variant="ghost" size="sm">
+            <a href={FRONTEND_URL}>
+              <GlobeIcon />
+              {m.nav_public_site()}
+            </a>
+          </Button>
+          <UserMenu onSignOut={onSignOut} />
+        </div>
+      </header>
+      <div className="flex w-full flex-1 flex-col md:flex-row">
+        {hasSidebar && (
+          <aside
+            className={`flex flex-col gap-2 border-b p-2 motion-reduce:transition-none md:shrink-0 md:overflow-hidden md:border-r md:border-b-0 md:transition-[width] md:duration-500 md:ease-in-out ${isCollapsed ? "md:w-14" : "md:w-64"}`}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden size-10 self-end md:inline-flex"
+              aria-label={isCollapsed ? m.nav_expand() : m.nav_collapse()}
+              aria-expanded={!isCollapsed}
+              aria-controls={SIDEBAR_NAV_ID}
+              onClick={toggleCollapsed}
+            >
+              <ChevronsLeftIcon
+                className={`transition-transform duration-500 ease-in-out ${isCollapsed ? "rotate-180" : ""}`}
               />
-            )}
-            {me && canModerateUsers(me) && (
-              <NavItem
-                to="/users"
-                search={listSearch}
-                Icon={UsersIcon}
-                label={m.nav_users()}
-                isCurrent={isUsersSection}
-              />
-            )}
-            {me?.superAdmin && (
-              <li>
-                <p id={GROUPS_NAV_ID} className="p-2 text-sm font-medium">
-                  {m.nav_institutional_groups()}
-                </p>
-                <ul aria-labelledby={GROUPS_NAV_ID} className="md:pl-3">
-                  {GROUPS_NAV.map(({ to, Icon, label }) => (
-                    <NavItem
-                      key={to}
-                      to={to}
-                      Icon={Icon}
-                      label={label()}
-                      isCurrent={pathname.startsWith(to)}
-                    />
-                  ))}
-                </ul>
-              </li>
-            )}
-            {me?.superAdmin && (
-              <NavItem
-                to={SERVICE_ACCOUNTS_PATH}
-                search={listSearch}
-                Icon={BotIcon}
-                label={m.nav_service_accounts()}
-                isCurrent={pathname.startsWith(SERVICE_ACCOUNTS_PATH)}
-              />
-            )}
-            {me && canAdminManualGroups(me) && (
-              <NavItem
-                to="/manual-groups"
-                search={listSearch}
-                Icon={UsersRoundIcon}
-                label={m.nav_manual_groups()}
-                isCurrent={pathname.startsWith("/manual-groups")}
-              />
-            )}
-          </ul>
-        </nav>
-      </aside>
-      <div className="flex min-h-screen w-full min-w-0 flex-1 flex-col">
-        <header className="border-b">
-          <div className="flex items-center justify-between gap-4 px-6 py-4">
-            <Button asChild variant="outline" size="sm">
-              <a href={FRONTEND_URL}>
-                <GlobeIcon />
-                {m.nav_public_site()}
-              </a>
             </Button>
-            <UserMenu onSignOut={onSignOut} />
-          </div>
-        </header>
+            <nav id={SIDEBAR_NAV_ID}>
+              <ul className="flex flex-wrap gap-1 md:flex-col md:flex-nowrap">
+                <NavItem
+                  to="/"
+                  search={listSearch}
+                  Icon={MountainIcon}
+                  label={m.nav_samples()}
+                  isCurrent={isSamplesSection}
+                  isCollapsed={isCollapsed}
+                />
+                <NavItem
+                  to={SAMPLE_MODERATION_PATH}
+                  search={listSearch}
+                  Icon={ShieldCheckIcon}
+                  label={m.nav_sample_moderation()}
+                  isCurrent={isSampleModerationSection}
+                  isCollapsed={isCollapsed}
+                />
+                {canModerateUsers(me) && (
+                  <NavItem
+                    to="/users"
+                    search={listSearch}
+                    Icon={UsersIcon}
+                    label={m.nav_users()}
+                    isCurrent={isUsersSection}
+                    isCollapsed={isCollapsed}
+                  />
+                )}
+                {me.superAdmin && (
+                  <li>
+                    <p
+                      id={GROUPS_NAV_ID}
+                      className={`px-3 py-2 text-sm font-medium whitespace-nowrap transition-opacity motion-reduce:transition-none ${isCollapsed ? "md:opacity-0" : ""}`}
+                    >
+                      {m.nav_institutional_groups()}
+                    </p>
+                    <ul
+                      aria-labelledby={GROUPS_NAV_ID}
+                      className={isCollapsed ? undefined : "md:pl-3"}
+                    >
+                      {GROUPS_NAV.map(({ to, Icon, label }) => (
+                        <NavItem
+                          key={to}
+                          to={to}
+                          Icon={Icon}
+                          label={label()}
+                          isCurrent={pathname.startsWith(to)}
+                          isCollapsed={isCollapsed}
+                        />
+                      ))}
+                    </ul>
+                  </li>
+                )}
+                {me.superAdmin && (
+                  <NavItem
+                    to={SERVICE_ACCOUNTS_PATH}
+                    search={listSearch}
+                    Icon={BotIcon}
+                    label={m.nav_service_accounts()}
+                    isCurrent={pathname.startsWith(SERVICE_ACCOUNTS_PATH)}
+                    isCollapsed={isCollapsed}
+                  />
+                )}
+                {canAdminManualGroups(me) && (
+                  <NavItem
+                    to="/manual-groups"
+                    search={listSearch}
+                    Icon={UsersRoundIcon}
+                    label={m.nav_manual_groups()}
+                    isCurrent={pathname.startsWith("/manual-groups")}
+                    isCollapsed={isCollapsed}
+                  />
+                )}
+              </ul>
+            </nav>
+          </aside>
+        )}
         <main className="flex w-full min-w-0 flex-col gap-4 p-6">
           {me?.status === "pending" && (
             <p

@@ -38,6 +38,7 @@ beforeAll(() => page.viewport(1024, 768));
 
 beforeEach(() => {
   pathname = "/";
+  localStorage.clear();
 });
 
 describe("AppLayout", () => {
@@ -104,29 +105,39 @@ describe("AppLayout", () => {
     ).toHaveLength(0);
   });
 
-  it("should list only the samples resource for a plain researcher", async () => {
+  it("should show a plain researcher the logo but no sidebar", async () => {
     fakeCurrentUser();
 
     const screen = await renderLayout();
-    const nav = screen.getByRole("navigation");
 
     await expect
-      .element(nav.getByRole("link", { name: "My samples" }))
+      .element(
+        screen
+          .getByRole("banner")
+          .getByRole("link", { name: "IGSN Dashboard" }),
+      )
+      .toBeInTheDocument();
+    expect(screen.getByRole("navigation").elements()).toHaveLength(0);
+  });
+
+  it("should let a manager collapse the menu and keep it collapsed", async () => {
+    fakeCurrentUser({ superAdmin: true });
+
+    const screen = await renderLayout();
+    await screen.getByRole("button", { name: "Collapse menu" }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Expand menu" }))
+      .toHaveAttribute("aria-expanded", "false");
+    await expect
+      .element(screen.getByRole("link", { name: "Users" }))
+      .toBeInTheDocument();
+
+    const remounted = await renderLayout();
+
+    await expect
+      .element(remounted.getByRole("button", { name: "Expand menu" }))
       .toBeVisible();
-    expect(
-      nav.getByRole("link", { name: "Sample moderation" }).elements(),
-    ).toHaveLength(0);
-    expect(nav.getByRole("link", { name: "Users" }).elements()).toHaveLength(0);
-    expect(
-      nav.getByRole("link", { name: "Organizations" }).elements(),
-    ).toHaveLength(0);
-    expect(nav.getByRole("link", { name: "OSUs" }).elements()).toHaveLength(0);
-    expect(
-      nav.getByRole("link", { name: "Laboratories" }).elements(),
-    ).toHaveLength(0);
-    expect(
-      nav.getByRole("link", { name: "Manual groups" }).elements(),
-    ).toHaveLength(0);
   });
 
   it("should offer a way back to the public site", async () => {

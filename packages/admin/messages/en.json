@@ -10,6 +10,8 @@
   "user_name_error": "Could not load your account.",
   "nav_settings": "Settings",
   "nav_public_site": "Go to public site",
+  "nav_collapse": "Collapse menu",
+  "nav_expand": "Expand menu",
   "settings_title": "Settings",
   "field_orcid": "ORCID iD",
   "field_orcid_invalid": "Invalid ORCID iD: expected the form 0000-0002-1825-0097",

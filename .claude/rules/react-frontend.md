@@ -23,7 +23,8 @@ paths:
 ## App shell
 
 - Each app owns one shared shell in the root route: a `<header>` landmark and a `<main>` landmark wrapping the route `Outlet`.
-- Keep `<main>` full-bleed (`w-full`) and let each page own its width wrapper (`mx-auto w-full max-w-6xl`), so a page can go edge-to-edge when its design needs it.
+- Keep `<main>` full-bleed (`w-full`), never centered or capped by the shell (no `mx-auto`/`max-w-*`).
+- `admin` pages use that full width; only a `frontend` page may add its own width wrapper (`mx-auto w-full max-w-6xl`).
 - Pages MUST NOT declare their own `<header>`/`<main>`: one of each landmark per document.
 
 ## State management
