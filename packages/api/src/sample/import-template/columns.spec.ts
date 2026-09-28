@@ -1,10 +1,8 @@
-import type { z } from "zod";
-
-import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import { describe, expect, it } from "vitest";
 
 import type { Column } from "./columns.ts";
 
+import { COLUMN_KINDS } from "./column-kind.ts";
 import {
   CHILD_SHEETS,
   DATA_SHEETS,
@@ -12,54 +10,6 @@ import {
   SAMPLE_COLUMNS,
   SHEETS,
 } from "./columns.ts";
-
-type SchemaDefinition = {
-  type: string;
-  innerType?: z.ZodType;
-  out?: z.ZodType;
-  getter?: () => z.ZodType;
-  shape?: Record<string, z.ZodType>;
-  options?: readonly z.ZodType[];
-  element?: z.ZodType;
-};
-
-const WRAPPERS = [
-  "optional",
-  "nullable",
-  "default",
-  "prefault",
-  "nonoptional",
-  "readonly",
-  "catch",
-];
-
-const definitionOf = (schema: z.ZodType): SchemaDefinition =>
-  (schema as unknown as { _zod: { def: SchemaDefinition } })._zod.def;
-
-function leafPaths(schema: z.ZodType, prefix: string): string[] {
-  const definition = definitionOf(schema);
-  if (definition.innerType && WRAPPERS.includes(definition.type)) {
-    return leafPaths(definition.innerType, prefix);
-  }
-  if (definition.type === "pipe" && definition.out) {
-    return leafPaths(definition.out, prefix);
-  }
-  if (definition.type === "lazy" && definition.getter) {
-    return leafPaths(definition.getter(), prefix);
-  }
-  if (definition.type === "object" && definition.shape) {
-    return Object.entries(definition.shape).flatMap(([key, value]) =>
-      leafPaths(value, prefix ? `${prefix}.${key}` : key),
-    );
-  }
-  if (definition.type === "union" && definition.options) {
-    return definition.options.flatMap((option) => leafPaths(option, prefix));
-  }
-  if (definition.type === "array" && definition.element) {
-    return leafPaths(definition.element, prefix);
-  }
-  return [prefix];
-}
 
 const DEFERRED_FIELDS = [
   "parentIds",
@@ -181,7 +131,7 @@ describe("import template columns", () => {
     const covered = [...pathsOf(columns), ...COVERED_BY_REGION_LEVEL_2];
 
     expect(unique(covered)).toEqual(
-      unique(leafPaths(createSampleSchema, "").filter(isTemplated)),
+      unique([...COLUMN_KINDS.keys()].filter(isTemplated)),
     );
   });
 });
