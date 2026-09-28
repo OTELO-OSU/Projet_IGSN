@@ -4,6 +4,7 @@ import type {
   SampleEditLockResponse,
   SampleLocked,
 } from "@projet-igsn/domain/sample/edit-lock";
+import type { InvalidImport } from "@projet-igsn/domain/sample/import/import-report";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   AdminListSamplesResponse,
@@ -46,6 +47,7 @@ import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { samplesExportResponse } from "./bulk-edit/export-workbook.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
+import { validateImport } from "./import-template/validate-import.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
@@ -147,7 +149,14 @@ export function createSampleAdminRoutes(
     .get("/import-template", validateImportTemplateQuery, (c) =>
       importTemplateResponse(c.req.valid("query").rows),
     )
-    .post("/import", validateImportUpload, (c) => c.body(null, 202))
+    .post("/import", validateImportUpload, async (c) => {
+      const issues = await validateImport(
+        await c.req.valid("form").file.arrayBuffer(),
+      );
+      if (issues.length === 0) return c.body(null, 202);
+      const body: InvalidImport = { error: "Invalid import", issues };
+      return c.json(body, 422);
+    })
     .post("/export", validateExportBody, async (c) => {
       const request = c.req.valid("json");
       const user = c.get("user");

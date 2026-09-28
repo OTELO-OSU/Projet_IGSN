@@ -102,3 +102,34 @@ describe("dateRangeSchema", () => {
     ]);
   });
 });
+
+describe("dateRangeSchema on a malformed bound", () => {
+  it.each([
+    [
+      "a day range typed as text",
+      { precision: "day", start: "demain", end: "demain" },
+    ],
+    [
+      "a text start before a valid end",
+      { precision: "day", start: "demain", end: "2014-10-01" },
+    ],
+    [
+      "an hour range with a future day but no valid time",
+      {
+        precision: "hour",
+        start: "2999-01-01T8h",
+        end: "2999-01-01T9h",
+        timeZone: "Europe/Paris",
+      },
+    ],
+  ])(
+    "should report only the format of %s, neither order nor future",
+    (_, dateRange) => {
+      const codes = schema
+        .safeParse(dateRange)
+        .error?.issues.map(({ code }) => code);
+
+      expect([...new Set(codes)]).toEqual(["invalid_format"]);
+    },
+  );
+});

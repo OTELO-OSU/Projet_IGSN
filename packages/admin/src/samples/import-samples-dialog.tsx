@@ -18,6 +18,7 @@ import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { FileDropZone } from "#/samples/file-drop-zone.tsx";
+import { ImportReport } from "#/samples/import-report.tsx";
 import { useDownloadImportTemplate } from "#/samples/use-download-import-template.ts";
 import { useImportSamples } from "#/samples/use-import-samples.ts";
 
@@ -37,9 +38,14 @@ export function ImportSamplesDialog() {
   const importSamples = useImportSamples();
   const error = fileError(file);
 
+  function pick(picked: File | null) {
+    setFile(picked);
+    importSamples.reset();
+  }
+
   function close() {
     setIsOpen(false);
-    setFile(null);
+    pick(null);
   }
 
   return (
@@ -73,7 +79,7 @@ export function ImportSamplesDialog() {
           browseLabel={m.import_samples_choose_file()}
           accept=".xlsx"
           isInline
-          onFiles={([picked]) => setFile(picked ?? null)}
+          onFiles={([picked]) => pick(picked ?? null)}
         />
         {file ? (
           <div className="grid gap-1 text-sm">
@@ -87,6 +93,9 @@ export function ImportSamplesDialog() {
             ) : null}
           </div>
         ) : null}
+        {importSamples.data?.length ? (
+          <ImportReport issues={importSamples.data} />
+        ) : null}
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="ghost">
@@ -98,7 +107,15 @@ export function ImportSamplesDialog() {
             type="button"
             disabled={!file || error !== null || importSamples.isPending}
             onClick={() => {
-              if (file) importSamples.mutate({ file }, { onSuccess: close });
+              if (!file) return;
+              importSamples.mutate(
+                { file },
+                {
+                  onSuccess: (issues) => {
+                    if (issues.length === 0) close();
+                  },
+                },
+              );
             }}
           >
             <UploadIcon aria-hidden />

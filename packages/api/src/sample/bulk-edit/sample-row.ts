@@ -2,17 +2,10 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import type { Column } from "../import-template/columns.ts";
 
-import { VOCABULARY_BLOCKS } from "../import-template/vocabulary-sheet.ts";
+import { labelOf } from "../import-template/resolve-label.ts";
 import { blockIdOf } from "../import-template/workbook.ts";
 
 export type Cell = string | number | null;
-
-const LABELS = new Map(
-  VOCABULARY_BLOCKS.map((block) => [
-    block.id,
-    new Map(block.rows.map(([key, label, path]) => [path || key, label])),
-  ]),
-);
 
 const REGION_PATHS = new Set([
   "location.region.kind",
@@ -66,7 +59,7 @@ function cellOf(column: Column, value: unknown): Cell {
     column.level === undefined
       ? code
       : segments.slice(0, column.level).join(".");
-  return LABELS.get(blockId)?.get(key) ?? key;
+  return labelOf(blockId, key) ?? key;
 }
 
 export const sampleRow = (sample: Sample, columns: readonly Column[]): Cell[] =>
