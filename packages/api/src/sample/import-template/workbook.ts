@@ -236,7 +236,6 @@ export function addChildSheet(
   columns: readonly Column[],
   rows: number,
   sampleRows = rows,
-  keyHeader = SAMPLE_KEY_HEADER,
 ) {
   const sheet = addDataSheet(book, name, columns, rows);
   sheetValidations(sheet).add(dataRange("A", rows), {
@@ -244,12 +243,12 @@ export function addChildSheet(
     allowBlank: true,
     formulae: [`=${sampleKeyRange(sampleRows)}`],
     showInputMessage: true,
-    promptTitle: keyHeader,
-    prompt: `The "${keyHeader}" of the sample this row belongs to, taken from the ${SHEETS.samples} sheet.`,
+    promptTitle: SAMPLE_KEY_HEADER,
+    prompt: `The "${SAMPLE_KEY_HEADER}" of the sample this row belongs to, taken from the ${SHEETS.samples} sheet.`,
     showErrorMessage: true,
     errorStyle: "warning",
-    errorTitle: keyHeader,
-    error: `This "${keyHeader}" is not in the ${SHEETS.samples} sheet.`,
+    errorTitle: SAMPLE_KEY_HEADER,
+    error: `This "${SAMPLE_KEY_HEADER}" is not in the ${SHEETS.samples} sheet.`,
   });
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
     sheet.getCell(row, 2).value = { formula: sampleLookupFormula(row) };
@@ -275,11 +274,11 @@ export function addReadMeSheet(
   return sheet;
 }
 
-export async function addVocabularySheet(book: ExcelJS.Workbook) {
+export function addVocabularySheet(book: ExcelJS.Workbook) {
   const sheet = book.addWorksheet(SHEETS.vocabularies);
   sheet.addRows(VOCABULARY_ROWS.map((row) => [...row]));
   for (const index of [1, 2, 3]) sheet.getColumn(index).width = 52;
-  await sheet.protect("", {});
+  return sheet;
 }
 
 async function build(rows: number): Promise<ExcelBuffer> {
@@ -292,7 +291,7 @@ async function build(rows: number): Promise<ExcelBuffer> {
   for (const child of CHILD_SHEETS) {
     addChildSheet(book, child.name, child.columns, rows);
   }
-  await addVocabularySheet(book);
+  await addVocabularySheet(book).protect("", {});
   return book.xlsx.writeBuffer();
 }
 

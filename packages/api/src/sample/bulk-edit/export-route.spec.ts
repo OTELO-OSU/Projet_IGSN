@@ -43,7 +43,7 @@ describe("POST /admin/samples/export", () => {
         mediaType: res.headers.get("Content-Type"),
         disposition: res.headers.get("Content-Disposition"),
         sniff: res.headers.get("X-Content-Type-Options"),
-        igsn: book.getWorksheet(SHEETS.samples)?.getCell("A3").value,
+        key: book.getWorksheet(SHEETS.samples)?.getCell("A3").value,
       }).toEqual({
         status: 200,
         mediaType: XLSX_MEDIA_TYPE,
@@ -51,7 +51,7 @@ describe("POST /admin/samples/export", () => {
           /^attachment; filename="igsn-samples-export-\d{4}-\d{2}-\d{2}\.xlsx"$/,
         ),
         sniff: "nosniff",
-        igsn: sample.igsn,
+        key: `sample-${sample.internalNumber}`,
       });
     },
     30_000,

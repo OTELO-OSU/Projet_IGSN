@@ -43,11 +43,16 @@ const rowOf = (name: string, row: number) => {
   );
 };
 
-const lockedHeadersOf = (name: string, row: number) => {
+const greyedHeadersOf = (name: string, row: number) => {
   const cells = sheetOf(name).getRow(row);
-  return headersOf(name).filter(
-    (_, index) => cells.getCell(index + 1).protection?.locked !== false,
-  );
+  return headersOf(name).filter((_, index) => {
+    const fill = cells.getCell(index + 1).fill;
+    return (
+      fill?.type === "pattern" &&
+      fill.pattern === "solid" &&
+      fill.fgColor?.argb === "FFD9D9D9"
+    );
+  });
 };
 
 const materialLevels = () =>
@@ -59,21 +64,25 @@ beforeAll(async () => {
 }, 30_000);
 
 describe("samples export workbook", () => {
-  it("should key the Samples sheet by IGSN with the parent IGSN beside the name and no metadata column", () => {
+  it("should key the Samples sheet by Sample # with the IGSN and parent IGSN after the name and no metadata column", () => {
     const headers = headersOf(SHEETS.samples);
 
     expect({
-      leading: headers.slice(0, 3),
+      leading: headers.slice(0, 4),
       metadata: headers.filter((header) =>
-        /^(Sample #|Status|Owner|Collaborator|Created|Updated|Published|Synthe)/.test(
+        /^(Status|Owner|Collaborator|Created|Updated|Published|Synthe)/.test(
           header,
         ),
       ),
-    }).toEqual({ leading: ["IGSN", "Name", "Parent IGSN"], metadata: [] });
+    }).toEqual({
+      leading: ["Sample #", "Name", "IGSN", "Parent IGSN"],
+      metadata: [],
+    });
   });
 
   it("should write a sample's codes as the labels the dropdowns offer and leave an unset value empty", () => {
     expect(rowOf(SHEETS.samples, FIRST_DATA_ROW)).toMatchObject({
+      "Sample #": "sample-7",
       IGSN: FIELD_SAMPLE.igsn,
       Name: FIELD_SAMPLE.name,
       "Parent IGSN": FIELD_SAMPLE.parents[0]?.igsn,
@@ -93,8 +102,8 @@ describe("samples export workbook", () => {
     });
   });
 
-  it("should protect every sheet and lock only the identifiers, the fields frozen by publication and the frozen material levels of each row", () => {
-    const always = ["IGSN", "Parent IGSN", "Provenance status"];
+  it("should protect no sheet and grey only the identifiers, the fields frozen by publication and the frozen material levels of each row", () => {
+    const always = ["Sample #", "IGSN", "Parent IGSN", "Provenance status"];
     const collector = ["Collector first name", "Collector last name"];
 
     expect({
@@ -102,11 +111,11 @@ describe("samples export workbook", () => {
         .filter(
           (sheet) =>
             (sheet as unknown as { sheetProtection?: { sheet?: boolean } })
-              .sheetProtection?.sheet !== true,
+              .sheetProtection?.sheet === true,
         )
         .map((sheet) => sheet.name),
-      fieldSample: lockedHeadersOf(SHEETS.samples, FIRST_DATA_ROW).sort(),
-      rootOnly: lockedHeadersOf(SHEETS.samples, FIRST_DATA_ROW + 1).sort(),
+      fieldSample: greyedHeadersOf(SHEETS.samples, FIRST_DATA_ROW).sort(),
+      rootOnly: greyedHeadersOf(SHEETS.samples, FIRST_DATA_ROW + 1).sort(),
     }).toEqual({
       protectedSheets: [],
       fieldSample: [
@@ -119,7 +128,7 @@ describe("samples export workbook", () => {
     });
   });
 
-  it("should write one child row per value keyed by the sample's IGSN, the sample's own readings on its first row", () => {
+  it("should write one child row per value keyed by the sample's internal ID, the sample's own readings on its first row", () => {
     const storage = SHEETS.storageConditions;
     const [first, second] = [FIRST_DATA_ROW, FIRST_DATA_ROW + 1].map((row) =>
       rowOf(storage, row),
@@ -127,38 +136,28 @@ describe("samples export workbook", () => {
 
     expect({
       first: {
-        key: first?.IGSN,
+        key: first?.["Sample #"],
         value: first?.["Storage condition"],
         reading: first?.["Temperature value"],
       },
       second: {
-        key: second?.IGSN,
+        key: second?.["Sample #"],
         value: second?.["Storage condition"],
         reading: second?.["Temperature value"],
       },
-      locked: lockedHeadersOf(storage, FIRST_DATA_ROW),
+      greyed: greyedHeadersOf(storage, FIRST_DATA_ROW),
     }).toEqual({
       first: {
-        key: FIELD_SAMPLE.igsn,
+        key: "sample-7",
         value: "Temperature controlled",
         reading: 4,
       },
       second: {
-        key: FIELD_SAMPLE.igsn,
+        key: "sample-7",
         value: "Pressure controlled",
         reading: null,
       },
-      locked: ["IGSN", "Sample name (filled automatically)"],
+      greyed: ["Sample #", "Sample name (filled automatically)"],
     });
-  });
-
-  it("should leave empty child rows open to add a value to a sample", () => {
-    const storage = SHEETS.storageConditions;
-    const last = sheetOf(storage).rowCount;
-
-    expect({
-      key: rowOf(storage, last).IGSN,
-      locked: lockedHeadersOf(storage, last),
-    }).toEqual({ key: null, locked: ["Sample name (filled automatically)"] });
   });
 });

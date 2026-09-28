@@ -1,5 +1,6 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import {
   FROZEN_FORM_FIELDS,
@@ -12,7 +13,11 @@ import type { Column } from "../import-template/columns.ts";
 import type { Cell } from "./sample-row.ts";
 
 import { queueBuild } from "../import-template/build-queue.ts";
-import { SHEETS } from "../import-template/columns.ts";
+import {
+  CHILD_SHEETS,
+  SAMPLE_KEY_HEADER,
+  SHEETS,
+} from "../import-template/columns.ts";
 import {
   addChildSheet,
   addDataSheet,
@@ -22,28 +27,24 @@ import {
   FIRST_DATA_ROW,
   xlsxResponse,
 } from "../import-template/workbook.ts";
-import {
-  EXPORT_CHILD_SHEETS,
-  EXPORT_KEY_HEADER,
-  EXPORT_SAMPLE_COLUMNS,
-} from "./export-columns.ts";
+import { EXPORT_SAMPLE_COLUMNS } from "./export-columns.ts";
 import { childRows, sampleRow } from "./sample-row.ts";
 
 type ExportRow = { sample: Sample; cells: readonly Cell[] };
 
 const KEY_COLUMNS = 2;
 
-const LOCKED_PATHS = new Set(["igsn", "parents.igsn", ...FROZEN_FORM_FIELDS]);
+const FROZEN_PATHS = new Set(["igsn", "parents.igsn", ...FROZEN_FORM_FIELDS]);
 
 const READ_ME_LINES = [
-  `One published sample per row on the "${SHEETS.samples}" sheet, from row ${FIRST_DATA_ROW}, identified by its "${EXPORT_KEY_HEADER}".`,
-  `A row on ${EXPORT_CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} belongs to the sample whose "${EXPORT_KEY_HEADER}" it carries, one value per row, and a value is added on an empty row picking that "${EXPORT_KEY_HEADER}".`,
-  `A locked cell holds an identifier or a value frozen since publication, so it cannot be edited.`,
+  `One published sample per row on the "${SHEETS.samples}" sheet, from row ${FIRST_DATA_ROW}, identified by its "${SAMPLE_KEY_HEADER}", its internal ID, so do not edit it.`,
+  `A row on ${CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} belongs to the sample whose "${SAMPLE_KEY_HEADER}" it picks, one value per row, and a value is added on an empty row picking that "${SAMPLE_KEY_HEADER}".`,
+  `A greyed cell holds an identifier or a value frozen since publication, so the server will refuse to change it.`,
   `The "${SHEETS.vocabularies}" sheet lists every value the dropdowns offer, with the code the registry stores.`,
 ];
 
-function isLocked(column: Column, sample: Sample): boolean {
-  if (column.path === undefined || LOCKED_PATHS.has(column.path)) return true;
+function isFrozen(column: Column, sample: Sample): boolean {
+  if (column.path === undefined || FROZEN_PATHS.has(column.path)) return true;
   const provenance = sample.scientificContext?.provenanceStatus;
   if (
     provenance !== undefined &&
@@ -57,6 +58,12 @@ function isLocked(column: Column, sample: Sample): boolean {
   );
 }
 
+const FROZEN_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FFD9D9D9" },
+};
+
 function fill(
   sheet: ExcelJS.Worksheet,
   columns: readonly Column[],
@@ -68,32 +75,19 @@ function fill(
       const cell = row.getCell(column + 1);
       const value = cells[column];
       if (value !== null && value !== undefined) cell.value = value;
-      if (!isLocked(definition, sample)) cell.protection = { locked: false };
+      if (isFrozen(definition, sample)) cell.fill = FROZEN_FILL;
     }
   }
 }
 
-function unlockBlankRows(
-  sheet: ExcelJS.Worksheet,
-  columns: readonly Column[],
-  firstRow: number,
-) {
-  const open = columns.flatMap((column, index) =>
-    column.path === "igsn" ||
-    (column.path !== undefined && !LOCKED_PATHS.has(column.path))
-      ? [index + 1]
-      : [],
-  );
-  for (let row = firstRow; row < firstRow + MAX_IMPORT_ROWS; row++) {
-    for (const column of open) {
-      sheet.getCell(row, column).protection = { locked: false };
-    }
-  }
-}
+const keyOf = (sample: Sample): Cell =>
+  sample.internalNumber === null
+    ? null
+    : formatInternalId(sample.internalNumber);
 
 async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
   const book = new ExcelJS.Workbook();
-  const sheets = [addReadMeSheet(book, "IGSN samples export", READ_ME_LINES)];
+  addReadMeSheet(book, "IGSN samples export", READ_ME_LINES);
   const sampleRows = Math.max(1, samples.length);
   const samplesSheet = addDataSheet(
     book,
@@ -106,15 +100,14 @@ async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
     EXPORT_SAMPLE_COLUMNS,
     samples.map((sample) => ({
       sample,
-      cells: sampleRow(sample, EXPORT_SAMPLE_COLUMNS),
+      cells: sampleRow(sample, EXPORT_SAMPLE_COLUMNS).with(0, keyOf(sample)),
     })),
   );
-  sheets.push(samplesSheet);
-  for (const child of EXPORT_CHILD_SHEETS) {
+  for (const child of CHILD_SHEETS) {
     const rows = samples.flatMap((sample) =>
       childRows(sample, child.columns.slice(KEY_COLUMNS)).map((cells) => ({
         sample,
-        cells: [sample.igsn, null, ...cells],
+        cells: [keyOf(sample), null, ...cells],
       })),
     );
     const sheet = addChildSheet(
@@ -123,14 +116,10 @@ async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
       child.columns,
       rows.length + MAX_IMPORT_ROWS,
       sampleRows,
-      EXPORT_KEY_HEADER,
     );
     fill(sheet, child.columns, rows);
-    unlockBlankRows(sheet, child.columns, FIRST_DATA_ROW + rows.length);
-    sheets.push(sheet);
   }
-  await addVocabularySheet(book);
-  await Promise.all(sheets.map((sheet) => sheet.protect("", {})));
+  addVocabularySheet(book);
   return book.xlsx.writeBuffer();
 }
 
