@@ -13,14 +13,6 @@ export function sampleModerationPage(page: Page) {
       expect(
         page.getByRole("heading", { name: "Sample moderation", level: 1 }),
       ).toBeVisible(),
-    showColumn: async (label: string) => {
-      await page.getByRole("button", { name: "Columns" }).click();
-      await page.getByRole("checkbox", { name: label }).check();
-      await page.keyboard.press("Escape");
-      await expect(
-        page.getByRole("columnheader", { name: label, exact: true }),
-      ).toBeVisible();
-    },
     expectSampleRowWithOwnerStatus: (name: string, status: string) =>
       expect(
         sampleRow(page, name).getByRole("cell", { name: status }),

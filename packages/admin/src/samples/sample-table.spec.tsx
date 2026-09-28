@@ -234,6 +234,22 @@ describe("SampleTable", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should keep the columns picked on the samples list off the moderation list", async () => {
+    const first = await renderTable(samples);
+    await first.getByRole("button", { name: "Columns" }).click();
+    await first.getByRole("checkbox", { name: "Published" }).click();
+    await first.unmount();
+
+    const screen = await renderTable(samples, vi.fn(), true);
+
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Type" }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Published" }))
+      .not.toBeInTheDocument();
+  });
+
   it("should drop a stored column the table no longer offers", async () => {
     showColumns("bogus");
     const screen = await renderTable(samples);
@@ -365,8 +381,7 @@ describe("SampleTable", () => {
       .toBeInTheDocument();
   });
 
-  it("should render the owner account status when asked for it", async () => {
-    showColumns("owner");
+  it("should show the owner with its account status by default on the moderation list", async () => {
     const screen = await renderTable(samples, vi.fn(), true);
     await expect
       .element(screen.getByRole("cell", { name: /Marie Curie\s*Active/ }))

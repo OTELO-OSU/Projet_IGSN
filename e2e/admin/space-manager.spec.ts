@@ -193,7 +193,6 @@ test.describe("space manager", () => {
     await signInAsResearcher(page, RESEARCHERS.marie);
     await moderation.open();
     await moderation.expectVisible();
-    await moderation.showColumn("Owner");
     await moderation.expectSampleRowWithOwnerStatus(target.name, "Active");
 
     await moderation.openSample(target.name);

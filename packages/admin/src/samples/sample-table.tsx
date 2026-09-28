@@ -310,7 +310,10 @@ export function SampleTable({
   moderated = false,
 }: SampleTableProps) {
   const navigate = useNavigate();
-  const { columns, saveColumns } = useSampleColumns(PICKABLE_COLUMN_IDS);
+  const { columns, saveColumns } = useSampleColumns(
+    PICKABLE_COLUMN_IDS,
+    moderated,
+  );
   const table = useReactTable({
     data: samples,
     columns: sampleColumns(moderated),
