@@ -30,7 +30,6 @@ import {
   searchTermSchema,
   truncatedTextSchema,
 } from "../search/search-tokens.ts";
-import { TEXTURES, textureSchema } from "../texture/vocabulary.ts";
 import { sampleTypeSchema, SAMPLE_TYPE_HIERARCHY } from "../type/vocabulary.ts";
 
 export const CORE_FILTER_PARAM = {
@@ -41,7 +40,6 @@ export const CORE_FILTER_PARAM = {
   mineralogy: "mineralClassification",
   collectionMethod: "collectionMethod",
   natureOfSample: "nature",
-  texture: "texture",
   projectName: "researchProgramName",
   chiefScientist: "chiefScientist",
   hostingInstitution: "hostInstitution",
@@ -100,10 +98,6 @@ export function coreFilterFields() {
     natureOfSample: natureSchema.optional().meta({
       enum: [...NATURES],
       description: "Nature of the sample.",
-    }),
-    texture: textureSchema.optional().meta({
-      enum: [...TEXTURES],
-      description: "Texture of the sample.",
     }),
     projectName: textFilter(
       "Name of the research program, matched on a fragment, case and accents ignored, truncated past 200 characters.",

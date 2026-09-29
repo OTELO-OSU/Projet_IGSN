@@ -13,6 +13,7 @@ import { SearchField } from "@projet-igsn/design-system/components/ui/search-fie
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { filterLaboratoriesByOrgAndOsu } from "@projet-igsn/domain/institutional-group/filter-laboratories-by-org-and-osu";
 import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
+import { allowsMineralClassifications } from "@projet-igsn/domain/sample/mineral/allows-mineral-classifications";
 import {
   facetParamKeys,
   SAMPLE_FACETS,
@@ -37,7 +38,7 @@ export const FACET_SECTIONS: readonly {
   },
   {
     title: m.facet_section_type,
-    keys: ["material", "mineralClassification", "texture", "collectionMethod"],
+    keys: ["material", "mineralClassification", "collectionMethod"],
   },
   {
     title: m.facet_section_author,
@@ -222,6 +223,14 @@ export function SampleFacets({
           <FacetSection key={section.title()} title={section.title()}>
             {section.keys.map((key) => {
               const facet = byKey.get(key);
+              if (
+                key === "mineralClassification" &&
+                !allowsMineralClassifications(
+                  values.material as string | undefined,
+                )
+              ) {
+                return null;
+              }
               return facet ? renderFacet(facet) : null;
             })}
           </FacetSection>

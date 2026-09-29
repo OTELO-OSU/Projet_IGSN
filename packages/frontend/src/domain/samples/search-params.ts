@@ -41,6 +41,7 @@ export type SearchParams = z.infer<typeof searchParamsSchema>;
 const NARROWER_FACETS: Record<string, readonly string[]> = {
   institutionalOrganization: ["institutionalOsu", "institutionalLaboratory"],
   institutionalOsu: ["institutionalLaboratory"],
+  material: ["mineralClassification"],
 };
 
 export function clearDependents(key: string): Record<string, undefined> {

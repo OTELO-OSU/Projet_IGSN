@@ -12,7 +12,6 @@ export const FACET_COLUMN: Record<string, string> = {
   material: "material",
   collectionMethod: "collection_method",
   nature: "nature",
-  texture: "texture",
   researchProgramName: "sc_research_program_name",
   hostInstitution: "sc_host_institution",
   institutionalOrganization: "institutional_organization",

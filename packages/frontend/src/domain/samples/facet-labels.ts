@@ -9,7 +9,6 @@ import {
   materialPathLabel,
   mineralClassificationLabel,
   natureLabel,
-  textureLabel,
   typeLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
@@ -20,7 +19,6 @@ const FACET_LABEL: Record<string, () => string> = {
   mineralClassification: m.sample_section_mineral_classifications,
   collectionMethod: m.sample_field_collection_method,
   nature: m.sample_field_nature,
-  texture: m.sample_field_texture,
   researchProgramName: m.facet_research_program_name,
   chiefScientist: m.facet_chief_scientist,
   hostInstitution: m.facet_host_institution,
@@ -42,7 +40,6 @@ const FACET_VALUE_LABEL: Record<string, (code: string) => string> = {
   mineralClassification: mineralClassificationLabel,
   collectionMethod: collectionMethodLabel,
   nature: natureLabel as (code: string) => string,
-  texture: textureLabel as (code: string) => string,
   hostInstitution: organizationLabel,
   institutionalOrganization: organizationLabel,
   institutionalOsu: osuLabel,
