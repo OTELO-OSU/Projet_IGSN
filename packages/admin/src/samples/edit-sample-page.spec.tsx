@@ -36,7 +36,7 @@ vi.mock("react-oidc-context", () => ({
 }));
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
-const DATACITE_ERROR = "422 Unprocessable Entity";
+const DATACITE_ERROR = "DataCite registration failed (HTTP 422)";
 const LOCK_EXPIRY = "2026-07-01T10:15:00.000Z";
 
 type LockHolder = {
@@ -625,7 +625,7 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("alert"))
       .toHaveTextContent(
-        `DataCite registration failed: ${DATACITE_ERROR}. Fix the sample if needed and publish again.`,
+        `Publication failed: ${DATACITE_ERROR}. Publish to retry; if the problem persists, contact an administrator.`,
       );
     await expect
       .element(screen.getByRole("button", { name: "Publish", exact: true }))

@@ -119,7 +119,7 @@ describe("drainPublishingQueue", () => {
       // Act
       await drainPublishingQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
       // Assert
-      const error = "500 DataCite is down";
+      const error = "DataCite registration failed (HTTP 500)";
       expect(await rowsOf(db, ids)).toEqual([
         { id: ids[0], status: "publish_failed", publishing_error: error },
         { id: ids[1], status: "publish_failed", publishing_error: error },

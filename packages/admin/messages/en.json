@@ -160,7 +160,7 @@
   "status_withdrawn": "Withdrawn",
   "status_publishing": "Publishing",
   "status_publish_failed": "Publish failed",
-  "sample_publish_failed_alert": "DataCite registration failed: {error}. Fix the sample if needed and publish again.",
+  "sample_publish_failed_alert": "Publication failed: {error}. Publish to retry; if the problem persists, contact an administrator.",
   "action_status_options": "More actions",
   "withdraw_sample_title": "Withdraw sample",
   "withdraw_sample_warning": "Your changes are saved, then the sample leaves search results and its public page shows only minimal information. It keeps its IGSN and can be republished later.",

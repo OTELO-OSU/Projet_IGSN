@@ -40,7 +40,12 @@ export async function syncDoi(
       signal: AbortSignal.timeout(SYNC_TIMEOUT_MS),
     });
     if (!response.ok)
-      throw new Error(`${response.status} ${await response.text()}`);
+      throw new Error(
+        `DataCite registration failed (HTTP ${response.status})`,
+        {
+          cause: await response.text(),
+        },
+      );
   } catch (error) {
     console.error("DOI sync failed", { doi: record.doi, error });
     throw new HTTPException(502, { message: "DOI sync failed", cause: error });

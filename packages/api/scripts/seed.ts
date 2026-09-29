@@ -390,12 +390,14 @@ export async function insertSamples(
           id,
           igsn,
           status,
+          publishingError,
           ...create
         }) => {
           const permanent = hasPermanentIgsn({ status });
           return {
             id,
             status,
+            publishing_error: publishingError ?? null,
             igsn: igsn ?? null,
             location_id: located.has(id) ? id : null,
             publication_year: permanent ? SEED_PUBLICATION_YEAR : null,
@@ -499,6 +501,7 @@ const sampleRowSchema = sampleSchema
     syntheticDetails: true,
     age: true,
     igsn: true,
+    publishingError: true,
   })
   .partial({
     type: true,
@@ -520,6 +523,7 @@ const sampleRowSchema = sampleSchema
     syntheticDetails: true,
     age: true,
     igsn: true,
+    publishingError: true,
   })
   .extend({
     status: sampleStatusSchema.default("draft"),
@@ -563,7 +567,13 @@ type SeedCollaborator = NonNullable<SeedSample["collaborators"]>[number];
 
 function parseSampleRow(row: SampleRow): z.output<typeof sampleRowSchema> {
   const parsed = sampleRowSchema.parse(row);
-  const { id: _id, igsn: _igsn, status, ...create } = parsed;
+  const {
+    id: _id,
+    igsn: _igsn,
+    status,
+    publishingError: _publishingError,
+    ...create
+  } = parsed;
   const wasPublished = hasPermanentIgsn({ status });
   const result = (
     wasPublished ? publishedSampleSchema : createSampleSchema
@@ -766,6 +776,40 @@ export const SEED_SAMPLES: SeedSample[] = [
     repository: SEED_REPOSITORY,
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a71"),
     status: "tombstone",
+  },
+  {
+    id: "00000000-0000-7000-8000-000000000008",
+    name: "Import failed andesite",
+    owner: "jean",
+    nature: "hand_sample",
+    type: "core.piece",
+    material: "rock_and_sediment.rock.igneous.volcanic.intermediate.andesite",
+    collectionMethod: "blasting",
+    location: {
+      position: { type: "point", longitude: 2.75, latitude: 45.63 },
+    },
+    description: {
+      collectionDate: {
+        precision: "day",
+        start: "2026-05-10",
+        end: "2026-05-10",
+      },
+    },
+    existenceStatus: "exists",
+    availabilityStatus: "available",
+    scientificContext: {
+      provenanceStatus: "field_sample",
+      funderOrganizations: ["02feahw73"],
+      researchProgramName: "Chaîne des Puys Survey",
+      chiefScientistFirstname: "Jean",
+      chiefScientistLastname: "Dupont",
+      hostInstitution: ["02rx3b187"],
+      collectorFirstname: "Claire",
+      collectorLastname: "Martin",
+    },
+    repository: SEED_REPOSITORY,
+    status: "publish_failed",
+    publishingError: "DataCite registration failed (HTTP 500)",
   },
   {
     id: "00000000-0000-7000-8000-000000000006",
