@@ -1639,6 +1639,30 @@ const COLLECTION_SPECIMEN_CONTEXT: SampleRow["scientificContext"] = {
 
 const PUBLISHED_ROWS = [...PUBLISHED, ...LINEAGE];
 
+const FAILED_IMPORTS = [
+  {
+    name: "Failed import andesite",
+    material: "rock_and_sediment.rock.igneous.volcanic.intermediate.andesite",
+    position: point(2.75, 45.63),
+    collectedOn: "2026-05-10",
+    publishingError: "DataCite registration failed (HTTP 500)",
+  },
+  {
+    name: "Failed import rhyolite",
+    material: "rock_and_sediment.rock.igneous.volcanic.felsic.rhyolite",
+    position: point(2.97, 45.53),
+    collectedOn: "2026-05-11",
+    publishingError: "DataCite registration timed out",
+  },
+  {
+    name: "Failed import basalt",
+    material: "rock_and_sediment.rock.igneous.volcanic.mafic.basalt",
+    position: point(2.84, 45.77),
+    collectedOn: "2026-05-12",
+    publishingError: "DataCite registration failed (HTTP 502)",
+  },
+];
+
 export const DEMO_SAMPLES: SampleRow[] = [
   ...[...PUBLISHED_ROWS, ...DRAFTS].map((row, index) => {
     const id = demoId(index);
@@ -1662,24 +1686,26 @@ export const DEMO_SAMPLES: SampleRow[] = [
         : {}),
     };
   }),
-  {
-    id: demoId(PUBLISHED_ROWS.length + DRAFTS.length),
-    name: "Failed import andesite",
-    nature: "hand_sample",
-    type: "individual_sample",
-    material: "rock_and_sediment.rock.igneous.volcanic.intermediate.andesite",
-    location: {
-      position: point(2.75, 45.63),
-      region: { kind: "country", country: "FR" },
-    },
-    description: on("2026-05-10"),
-    existenceStatus: "exists",
-    availabilityStatus: "available",
-    scientificContext: FIELD_SAMPLE_CONTEXT,
-    repository: DEMO_REPOSITORY,
-    status: "publish_failed",
-    publishingError: "DataCite registration failed (HTTP 500)",
-  },
+  ...FAILED_IMPORTS.map(
+    (failed, index): SampleRow => ({
+      id: demoId(PUBLISHED_ROWS.length + DRAFTS.length + index),
+      name: failed.name,
+      nature: "hand_sample",
+      type: "individual_sample",
+      material: failed.material,
+      location: {
+        position: failed.position,
+        region: { kind: "country", country: "FR" },
+      },
+      description: on(failed.collectedOn),
+      existenceStatus: "exists",
+      availabilityStatus: "available",
+      scientificContext: FIELD_SAMPLE_CONTEXT,
+      repository: DEMO_REPOSITORY,
+      status: "publish_failed",
+      publishingError: failed.publishingError,
+    }),
+  ),
 ];
 
 const DEMO_ROLES: SampleAdditionalRole[] = [

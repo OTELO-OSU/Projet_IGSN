@@ -97,6 +97,25 @@ export function createSampleRepository(
         }
         return samples.length;
       }),
+    retryFailedPublications: (userId) =>
+      withTransaction(db, async (trx) => {
+        const { numUpdatedRows } = await trx
+          .updateTable("sample")
+          .set({ status: "publishing" })
+          .where("status", "=", "publish_failed")
+          .where((eb) =>
+            eb.exists(
+              eb
+                .selectFrom("user_sample")
+                .select("user_sample.sample_id")
+                .whereRef("user_sample.sample_id", "=", "sample.id")
+                .where("user_sample.user_id", "=", userId)
+                .where("user_sample.role", "in", ["owner", "editor"]),
+            ),
+          )
+          .executeTakeFirst();
+        return Number(numUpdatedRows);
+      }),
     createPublished: (input, ownerId, groups) =>
       withTransaction(db, async (trx) => {
         const id = await insertOwnedSample(trx, input, ownerId, groups);

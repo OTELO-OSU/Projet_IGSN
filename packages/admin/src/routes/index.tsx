@@ -11,6 +11,7 @@ import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx"
 import { m } from "#/paraglide/messages.js";
 import { BulkEditDialog } from "#/samples/bulk-edit-dialog.tsx";
 import { ImportSamplesDialog } from "#/samples/import-samples-dialog.tsx";
+import { RetryPublicationButton } from "#/samples/retry-publication-button.tsx";
 import { sampleFilterEntries } from "#/samples/sample-filters.tsx";
 import { SampleListPanel } from "#/samples/sample-list-panel.tsx";
 import { useSampleSelection } from "#/samples/use-sample-selection.ts";
@@ -61,6 +62,7 @@ function SampleListPage() {
           <div className="flex gap-2">
             <BulkEditDialog exportRequest={selection.exportRequest} />
             <ImportSamplesDialog />
+            <RetryPublicationButton />
             <Button asChild>
               <Link to="/samples/create">{m.action_create()}</Link>
             </Button>

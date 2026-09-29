@@ -219,6 +219,11 @@ export function createSampleAdminRoutes(
       );
       return samplesExportResponse(data);
     })
+    .post("/retry-publication", async (c) =>
+      c.json({
+        count: await repository.retryFailedPublications(c.get("user").id),
+      }),
+    )
     .use("/:id", accessibleSample)
     .use("/:id/*", accessibleSample)
     .get("/:id", validateIdParam, async (c) => {
