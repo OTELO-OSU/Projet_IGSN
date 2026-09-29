@@ -917,6 +917,11 @@
   "import_samples_datacite_down": "DataCite is unreachable. Nothing was imported, try again later.",
   "import_samples_error": "The file could not be imported.",
   "import_template_download_error": "The template could not be downloaded.",
+  "import_template_reserve_label": "Reserve internal IDs",
+  "import_template_reserve_count_label": "Number of internal IDs",
+  "import_template_reserve_download": "Download template with reserved IDs",
+  "import_template_reserve_count_hint": "Up to {max} IDs. Reserve generously: an unused ID is never reissued, and a new reservation starts a new range.",
+  "import_template_reserve_count_invalid": "Enter a number from 1 to {max}.",
   "action_bulk_edit": "Bulk edit",
   "action_select_all": "Select all",
   "action_clear_selection": "Clear selection",
@@ -946,5 +951,11 @@
   "import_issue_duplicate_sample_key": "This Sample # is already used by another row.",
   "import_issue_unknown_sample_key": "This Sample # matches no row of the Samples sheet.",
   "import_issue_not_applicable": "This cell does not apply to this sample and must stay empty.",
-  "import_issue_duplicate_value": "This value differs from the one already given for the same sample."
+  "import_issue_duplicate_value": "This value differs from the one already given for the same sample.",
+  "import_issue_unavailable_internal_id": "This internal ID is not available.",
+  "import_report_unavailable_internal_ids": "Some reserved internal IDs in this file are not available anymore.",
+  "import_report_contact_admin": "Notify the administrators",
+  "import_report_contact_admin_hint": "The unavailable internal IDs will be sent to the administrators.",
+  "import_report_contact_admin_sent": "Your request for these internal IDs was sent to the administrators.",
+  "import_report_contact_admin_error": "The request could not be sent."
 }

@@ -15,14 +15,22 @@ import { createApp } from "../../app.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { provisionUser } from "../../tests/provision-user.ts";
 import { stubDataCite } from "../../tests/stub-datacite.ts";
+import { createSampleRepository } from "../repository.ts";
 import { SHEETS } from "./columns.ts";
-import { cleanBook } from "./import-fixture.ts";
+import { CLEAN_SAMPLE, cleanBook, fill } from "./import-fixture.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 
 const download = (db: Kysely<DB>, query = "") =>
   createApp(db).app.request(`/admin/samples/import-template${query}`, {
     headers: authHeader,
+  });
+
+const reserve = (db: Kysely<DB>, body: unknown, headers = authHeader) =>
+  createApp(db).app.request("/admin/samples/import-template/reservation", {
+    method: "POST",
+    headers: { ...headers, "content-type": "application/json" },
+    body: JSON.stringify(body),
   });
 
 const upload = (db: Kysely<DB>, file?: File) => {
@@ -81,6 +89,43 @@ describe("import template route", () => {
   );
 });
 
+describe("import template reservation route", () => {
+  pgTest(
+    "should answer a template of the requested rows, each Sample # holding its reserved internal ID",
+    async ({ db }) => {
+      const res = await reserve(db, { count: 3 });
+      const book = new ExcelJS.Workbook();
+      await book.xlsx.load(await res.arrayBuffer());
+      const samples = book.getWorksheet(SHEETS.samples)!;
+      const internalIds = [3, 4, 5].map((row) =>
+        Number(samples.getCell(row, 1).text.replace("sample-", "")),
+      );
+
+      expect({
+        status: res.status,
+        sampleRows: samples.rowCount - 2,
+        consecutive: internalIds.map((n) => n - internalIds[0]!),
+      }).toEqual({ status: 200, sampleRows: 3, consecutive: [0, 1, 2] });
+    },
+    30_000,
+  );
+
+  pgTest("should refuse an anonymous reservation", async ({ db }) => {
+    const res = await reserve(db, { count: 3 }, {} as typeof authHeader);
+
+    expect(res.status).toBe(401);
+  });
+
+  pgTest.for([0, MAX_IMPORT_ROWS + 1])(
+    "should refuse reserving %d internal IDs",
+    async (count, { db }) => {
+      const res = await reserve(db, { count });
+
+      expect(res.status).toBe(400);
+    },
+  );
+});
+
 const cleanFile = async () =>
   new File(
     [new Uint8Array(await (await cleanBook()).xlsx.writeBuffer())],
@@ -115,6 +160,42 @@ describe("import upload route", () => {
       expect(await queuedSamples(db)).toEqual([
         { status: "publishing", user_id: caller.id, role: "owner" },
       ]);
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should queue a sample under the internal ID reserved in its Sample #",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+      const [reserved] =
+        await createSampleRepository(db).reserveInternalNumbers(1);
+      const book = await cleanBook();
+      fill(book, SHEETS.samples, 4, {
+        ...CLEAN_SAMPLE,
+        "Sample #": `sample-${reserved}`,
+      });
+
+      const res = await upload(
+        db,
+        new File(
+          [new Uint8Array(await book.xlsx.writeBuffer())],
+          IMPORT_TEMPLATE_FILENAME,
+          { type: XLSX_MEDIA_TYPE },
+        ),
+      );
+
+      expect({
+        status: res.status,
+        internalNumbers: (
+          await db
+            .selectFrom("sample")
+            .select("internal_number")
+            .where("status", "=", "publishing")
+            .orderBy("internal_number")
+            .execute()
+        ).map(({ internal_number }) => internal_number),
+      }).toEqual({ status: 200, internalNumbers: [reserved, null] });
     },
     30_000,
   );

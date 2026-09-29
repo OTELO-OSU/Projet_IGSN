@@ -17,21 +17,39 @@ const FUTURE = "date must not be in the future";
 
 const ORDER = "date range start must not be after end";
 
+const UNAVAILABLE = 404;
+
+const validate = (bytes: ArrayBuffer) =>
+  validateImport(bytes, (numbers) =>
+    Promise.resolve(new Set(numbers.filter((n) => n === UNAVAILABLE))),
+  );
+
 const bytesOf = async (book: ExcelJS.Workbook) =>
   new Uint8Array(await book.xlsx.writeBuffer()).buffer;
 
-const issuesOf = async (bytes: ArrayBuffer) =>
-  (await validateImport(bytes)).issues;
+const issuesOf = async (bytes: ArrayBuffer) => (await validate(bytes)).issues;
+
+const withKey = (book: ExcelJS.Workbook, row: number, key: string) =>
+  fill(book, SHEETS.samples, row, { ...CLEAN_SAMPLE, "Sample #": key });
 
 describe("validateImport", () => {
   it("should answer the parsed samples of a publishable file", async () => {
-    const { issues, samples } = await validateImport(
-      await bytesOf(await cleanBook()),
-    );
+    const book = await cleanBook();
+    withKey(book, 4, "sample-8");
+    const { issues, samples } = await validate(await bytesOf(book));
 
-    expect({ issues, names: samples.map(({ name }) => name) }).toEqual({
+    expect({
+      issues,
+      samples: samples.map(({ input, internalNumber }) => ({
+        name: input.name,
+        internalNumber,
+      })),
+    }).toEqual({
       issues: [],
-      names: [CLEAN_SAMPLE.Name],
+      samples: [
+        { name: CLEAN_SAMPLE.Name, internalNumber: null },
+        { name: CLEAN_SAMPLE.Name, internalNumber: 8 },
+      ],
     });
   });
 
@@ -274,5 +292,30 @@ describe("validateImport", () => {
         code: "existence_status_missing",
       },
     ]);
+  });
+
+  it.each([`sample-${UNAVAILABLE}`, `Sample-${UNAVAILABLE}`])(
+    "should report a Sample # holding an unavailable internal ID, whatever its case (%s)",
+    async (key) => {
+      const book = await cleanBook();
+      withKey(book, 4, key);
+
+      expect(await issuesOf(await bytesOf(book))).toEqual([
+        {
+          sheet: SHEETS.samples,
+          row: 4,
+          column: "Sample #",
+          value: key,
+          code: "unavailable_internal_id",
+        },
+      ]);
+    },
+  );
+
+  it("should accept a Sample # holding an available internal ID", async () => {
+    const book = await cleanBook();
+    withKey(book, 4, "sample-8");
+
+    expect(await issuesOf(await bytesOf(book))).toEqual([]);
   });
 });

@@ -19,6 +19,7 @@ import { useState } from "react";
 import { m } from "#/paraglide/messages.js";
 import { FileDropZone } from "#/samples/file-drop-zone.tsx";
 import { ImportReport } from "#/samples/import-report.tsx";
+import { ReserveInternalIdsDialog } from "#/samples/reserve-internal-ids-dialog.tsx";
 import { useDownloadImportTemplate } from "#/samples/use-download-import-template.ts";
 import { useImportSamples } from "#/samples/use-import-samples.ts";
 
@@ -56,23 +57,24 @@ export function ImportSamplesDialog() {
       <DialogTrigger asChild>
         <Button variant="outline">{m.action_import()}</Button>
       </DialogTrigger>
-      <DialogContent closeLabel={m.action_close()}>
+      <DialogContent className="sm:max-w-3xl" closeLabel={m.action_close()}>
         <DialogHeader>
           <DialogTitle>{m.import_samples_title()}</DialogTitle>
         </DialogHeader>
-        <div className="flex items-start gap-4">
-          <DialogDescription className="flex-1">
+        <div className="grid gap-4">
+          <DialogDescription>
             {m.import_samples_description()}
           </DialogDescription>
           <Button
             type="button"
             variant="outline"
             disabled={downloadTemplate.isPending}
-            onClick={() => downloadTemplate.mutate()}
+            onClick={() => downloadTemplate.mutate(undefined)}
           >
             <FileDownIcon aria-hidden />
             {m.action_download_template()}
           </Button>
+          <ReserveInternalIdsDialog />
         </div>
         <FileDropZone
           hint={m.import_samples_drop_hint()}

@@ -23,6 +23,25 @@ function resetAndSeed(): SeededSample[] {
   return JSON.parse(lastLine) as SeededSample[];
 }
 
+export function lastInternalNumber(): number {
+  const out = execFileSync(
+    "docker",
+    [
+      "exec",
+      "igsn-e2e-postgres-1",
+      "psql",
+      "-U",
+      "igsn",
+      "-d",
+      "igsn",
+      "-tAc",
+      "select max(internal_number) from sample",
+    ],
+    { encoding: "utf8" },
+  );
+  return Number(out.trim());
+}
+
 export function sampleNamed(samples: SeededSample[], name: string) {
   const sample = samples.find((s) => s.name === name);
   if (!sample?.igsn) throw new Error(`seed must publish "${name}"`);

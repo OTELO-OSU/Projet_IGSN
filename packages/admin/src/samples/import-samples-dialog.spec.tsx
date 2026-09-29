@@ -39,6 +39,14 @@ async function openDialog() {
   };
 }
 
+async function openReserveDialog() {
+  const { screen, dialog } = await openDialog();
+  await dialog.getByRole("button", { name: "Reserve internal IDs" }).click();
+  return {
+    reserveDialog: screen.getByRole("dialog", { name: "Reserve internal IDs" }),
+  };
+}
+
 function drop(target: Element, file: File) {
   const dataTransfer = new DataTransfer();
   dataTransfer.items.add(file);
@@ -100,6 +108,59 @@ describe("ImportSamplesDialog", () => {
     expect(savedNames).toEqual([IMPORT_TEMPLATE_FILENAME]);
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
       "template-bytes",
+    );
+  });
+
+  it("should require a count before reserving internal IDs", async () => {
+    const posted: unknown[] = [];
+    worker.use(
+      http.post(
+        "*/admin/samples/import-template/reservation",
+        ({ request }) => {
+          posted.push(request.url);
+          return new HttpResponse("reserved-bytes");
+        },
+      ),
+    );
+    const { reserveDialog } = await openReserveDialog();
+
+    await reserveDialog.getByLabelText("Number of internal IDs").clear();
+    await reserveDialog
+      .getByRole("button", { name: "Download template with reserved IDs" })
+      .click();
+
+    await expect
+      .element(reserveDialog.getByRole("alert"))
+      .toHaveTextContent("Enter a number from 1 to 500.");
+    expect(posted).toEqual([]);
+  });
+
+  it("should post the reserved count and save the template it answers", async () => {
+    const posted: unknown[] = [];
+    worker.use(
+      http.post(
+        "*/admin/samples/import-template/reservation",
+        async ({ request }) => {
+          posted.push(await request.json());
+          return new HttpResponse("reserved-bytes");
+        },
+      ),
+    );
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:test");
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const { reserveDialog } = await openReserveDialog();
+
+    await reserveDialog.getByLabelText("Number of internal IDs").fill("3");
+    await reserveDialog
+      .getByRole("button", { name: "Download template with reserved IDs" })
+      .click();
+
+    await expect.poll(() => posted).toEqual([{ count: 3 }]);
+    await expect.poll(() => createObjectURL.mock.calls.length).toBe(1);
+    expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
+      "reserved-bytes",
     );
   });
 

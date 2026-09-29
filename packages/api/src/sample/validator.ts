@@ -1,7 +1,11 @@
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { exportSamplesRequestSchema } from "@projet-igsn/domain/sample/export/export-validator";
-import { importSamplesSchema } from "@projet-igsn/domain/sample/import/import-validator";
+import {
+  importSamplesSchema,
+  internalIdRequestSchema,
+  reserveInternalIdsSchema,
+} from "@projet-igsn/domain/sample/import/import-validator";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
@@ -71,6 +75,18 @@ export const validateImportTemplateQuery = zodValidator(
   "query",
   importTemplateQuerySchema,
   `"rows" must be a whole number between 1 and ${MAX_IMPORT_ROWS}`,
+);
+
+export const validateReserveInternalIdsBody = zodValidator(
+  "json",
+  reserveInternalIdsSchema,
+  `"count" must be a whole number between 1 and ${MAX_IMPORT_ROWS}`,
+);
+
+export const validateInternalIdRequestBody = zodValidator(
+  "json",
+  internalIdRequestSchema,
+  "Invalid internal ID request",
 );
 
 export const validateExportBody = zodValidator(

@@ -5,7 +5,8 @@ import { writeFile } from "node:fs/promises";
 import { importSamplesPage } from "../support/admin/import-samples.page";
 import { sampleListPage, sampleRow } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
-import { test } from "../support/db";
+import { templateInternalIds } from "../support/admin/template-internal-ids";
+import { lastInternalNumber, test } from "../support/db";
 
 test.describe("sample import", () => {
   test("a researcher uploads the empty template and reads why it was refused", async ({
@@ -59,5 +60,23 @@ test.describe("sample import", () => {
         }),
       ).toBeVisible({ timeout: 2_000 });
     }).toPass({ timeout: 30_000 });
+  });
+
+  test("a researcher reserves internal IDs following the last published sample", async ({
+    page,
+  }, testInfo) => {
+    await signInAsResearcher(page, RESEARCHERS.jean);
+    await sampleListPage(page).expectVisible();
+    const last = lastInternalNumber();
+
+    const importSamples = importSamplesPage(page);
+    await importSamples.open();
+    const template = await importSamples.reserveInternalIds(3, testInfo);
+
+    expect(await templateInternalIds(template)).toEqual([
+      `sample-${last + 1}`,
+      `sample-${last + 2}`,
+      `sample-${last + 3}`,
+    ]);
   });
 });

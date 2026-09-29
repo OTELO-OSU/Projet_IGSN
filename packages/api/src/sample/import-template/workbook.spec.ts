@@ -22,9 +22,9 @@ const FIRST_DATA_ROW = 3;
 
 let book: ExcelJS.Workbook;
 
-const loaded = async (rows?: number) => {
+const loaded = async (rows?: number, internalIds?: readonly number[]) => {
   const source = new ExcelJS.Workbook();
-  await source.xlsx.load(await importTemplateWorkbook(rows));
+  await source.xlsx.load(await importTemplateWorkbook(rows, internalIds));
   return source;
 };
 
@@ -181,6 +181,16 @@ describe("import template workbook", () => {
         lookup: sampleLookupFormula(FIRST_DATA_ROW),
       })),
     );
+  });
+
+  it("should fill the Sample # of each row with its reserved internal ID", async () => {
+    const reserved = await loaded(2, [349, 350]);
+
+    expect(
+      valuesOf(sheetOf(reserved, SHEETS.samples).getColumn(1).values).slice(
+        HEADER_ROW,
+      ),
+    ).toEqual(["sample-349", "sample-350"]);
   });
 
   it.each([

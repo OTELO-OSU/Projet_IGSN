@@ -29,6 +29,11 @@ export type AdminListSamplesResult = {
   total: number;
 };
 
+export type ImportedSample = {
+  input: CreateSample;
+  internalNumber: number | null;
+};
+
 export type SampleRepository = {
   listAssignedTo(
     params: ListSamplesQuery,
@@ -66,7 +71,7 @@ export type SampleRepository = {
   ): Promise<SuspectedDuplicate[]>;
   getPublicLineage(igsn: string): Promise<SampleLineage | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
-  createPublishing(inputs: CreateSample[], owner: User): Promise<number>;
+  createPublishing(samples: ImportedSample[], owner: User): Promise<number>;
   createPublished(
     input: CreateSample,
     ownerId: string,
@@ -83,4 +88,6 @@ export type SampleRepository = {
   getEditLock(id: string): Promise<SampleEditLock | null>;
   acquireEditLock(id: string, userId: string): Promise<SampleEditLock | null>;
   releaseEditLock(id: string, userId: string): Promise<void>;
+  reserveInternalNumbers(count: number): Promise<number[]>;
+  unavailableInternalNumbers(numbers: number[]): Promise<Set<number>>;
 };
