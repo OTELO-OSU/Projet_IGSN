@@ -11,29 +11,32 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@projet-igsn/design-system/components/ui/dialog";
+import { HierarchyInput } from "@projet-igsn/design-system/components/ui/hierarchy-input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { MultiCombobox } from "@projet-igsn/design-system/components/ui/multi-combobox";
-import { hierarchyLevelItems } from "@projet-igsn/design-system/lib/hierarchy";
+import {
+  composeHierarchyValue,
+  toHierarchyPath,
+} from "@projet-igsn/design-system/lib/hierarchy";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
-import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
+import {
+  MATERIAL_HIERARCHY,
+  MATERIAL_ROOTS,
+} from "@projet-igsn/domain/sample/material/classification";
 import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 import { ArrowLeftIcon, FileDownIcon } from "lucide-react";
 import { useState } from "react";
 
 import { useAttachableManualGroups } from "#/manual-groups/use-attachable-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
+import { HIERARCHY_FIELD_LABELS } from "#/samples/hierarchy-field-labels.ts";
 import {
   materialPathLabel,
   provenanceStatusLabel,
 } from "#/samples/sample-labels.ts";
 import { useDownloadImportTemplate } from "#/samples/use-download-import-template.ts";
 
-const MATERIAL_ITEMS = hierarchyLevelItems(
-  MATERIAL_HIERARCHY,
-  "rock_and_sediment",
-  materialPathLabel,
-);
 const PROVENANCE_ITEMS = toComboboxItems(
   PROVENANCE_STATUSES,
   provenanceStatusLabel,
@@ -46,8 +49,9 @@ export function CustomizeTemplateDialog({
   open: boolean;
   onBack: () => void;
 }) {
-  const [materialLevel1, setMaterialLevel1] = useState("");
-  const [materialLevel2, setMaterialLevel2] = useState("");
+  const [materialPath, setMaterialPath] = useState<string[]>(() =>
+    toHierarchyPath(MATERIAL_ROOTS[0]),
+  );
   const [groupIds, setGroupIds] = useState<string[]>([]);
   const [provenanceValue, setProvenanceValue] = useState("");
   const groups = useAttachableManualGroups().data?.data ?? [];
@@ -55,15 +59,8 @@ export function CustomizeTemplateDialog({
   const provenanceStatus = PROVENANCE_STATUSES.find(
     (status) => status === provenanceValue,
   );
-  const isRefused = !isMassImportableMaterial(materialLevel1);
-  const level2Items =
-    materialLevel1 && !isRefused
-      ? hierarchyLevelItems(
-          MATERIAL_HIERARCHY,
-          materialLevel1,
-          materialPathLabel,
-        )
-      : [];
+  const material = composeHierarchyValue(materialPath);
+  const isRefused = material !== null && !isMassImportableMaterial(material);
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => (isOpen ? null : onBack())}>
@@ -76,41 +73,25 @@ export function CustomizeTemplateDialog({
             <Label htmlFor="customize-template-material">
               {m.customize_template_material_label()}
             </Label>
-            <Combobox
+            <HierarchyInput
               id="customize-template-material"
-              items={MATERIAL_ITEMS}
-              value={materialLevel1}
-              onChange={(next) => {
-                setMaterialLevel1(next);
-                setMaterialLevel2("");
-              }}
+              hierarchy={MATERIAL_HIERARCHY}
+              translate={materialPathLabel}
+              value={materialPath}
+              onChange={setMaterialPath}
               placeholder={m.material_placeholder()}
               searchPlaceholder={m.material_search_placeholder()}
               emptyText={m.material_empty()}
+              stopLabel={HIERARCHY_FIELD_LABELS.stopLabel}
+              removeLabel={HIERARCHY_FIELD_LABELS.removeLabel}
             />
           </div>
-          {isRefused ? (
+          {material !== null && isRefused ? (
             <p role="alert" className="text-destructive text-sm">
               {m.customize_template_mineral_error({
-                material: materialPathLabel(materialLevel1),
+                material: materialPathLabel(material),
               })}
             </p>
-          ) : null}
-          {level2Items.length > 0 ? (
-            <div className="grid gap-2">
-              <Label htmlFor="customize-template-material-level-2">
-                {materialPathLabel(materialLevel1)}
-              </Label>
-              <Combobox
-                id="customize-template-material-level-2"
-                items={level2Items}
-                value={materialLevel2}
-                onChange={setMaterialLevel2}
-                placeholder={m.material_placeholder()}
-                searchPlaceholder={m.material_search_placeholder()}
-                emptyText={m.material_empty()}
-              />
-            </div>
           ) : null}
           <div className="grid gap-2">
             <Label htmlFor="customize-template-groups">
@@ -168,7 +149,7 @@ export function CustomizeTemplateDialog({
               downloadTemplate.mutate(
                 {
                   provenanceStatus,
-                  materialPath: materialLevel2 || materialLevel1 || undefined,
+                  materialPath: material ?? undefined,
                   manualGroupIds: groupIds,
                 },
                 { onSuccess: () => onBack() },

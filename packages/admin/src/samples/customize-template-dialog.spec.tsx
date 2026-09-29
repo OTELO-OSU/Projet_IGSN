@@ -27,11 +27,20 @@ async function openDialog() {
     await dialog.getByRole("combobox", { name: combobox, exact: true }).click();
     await screen.getByRole("option", { name: option, exact: true }).click();
   };
+  const pickMaterial = async (...levels: string[]) => {
+    await dialog
+      .getByRole("combobox", { name: "Material", exact: true })
+      .click();
+    for (const level of levels) {
+      await screen.getByRole("option", { name: level, exact: true }).click();
+    }
+  };
   return {
     screen,
     dialog,
     onBack,
     pick,
+    pickMaterial,
     download: dialog.getByRole("button", { name: "Download this template" }),
   };
 }
@@ -49,10 +58,10 @@ describe("CustomizeTemplateDialog", () => {
   it.each(["Mineral", "Synthetic rock / mineral"])(
     "should refuse the mass import of %s",
     async (material) => {
-      const { dialog, download, pick } = await openDialog();
+      const { dialog, download, pick, pickMaterial } = await openDialog();
       await pick(/^Provenance status/, "Field sample");
 
-      await pick("Material", material);
+      await pickMaterial(material);
 
       await expect
         .element(dialog.getByRole("alert"))
@@ -62,40 +71,6 @@ describe("CustomizeTemplateDialog", () => {
       await expect.element(download).toBeDisabled();
     },
   );
-
-  it("should offer the chosen material's children in a second select named after it", async () => {
-    const { screen, dialog, pick } = await openDialog();
-
-    await pick("Material", "Rock");
-    await dialog.getByRole("combobox", { name: "Rock", exact: true }).click();
-
-    expect(
-      screen
-        .getByRole("option")
-        .elements()
-        .map((option) => option.textContent),
-    ).toEqual([
-      "Igneous",
-      "Metamorphic",
-      "Sedimentary",
-      "Hydrothermal",
-      "Xenolithic rock",
-      "Unknown",
-      "Other",
-    ]);
-  });
-
-  it("should reset the second level when the material changes", async () => {
-    const { dialog, pick } = await openDialog();
-    await pick("Material", "Rock");
-    await pick("Rock", "Igneous");
-
-    await pick("Material", "Sediment");
-
-    await expect
-      .element(dialog.getByRole("combobox", { name: "Sediment", exact: true }))
-      .toHaveTextContent("Select a material");
-  });
 
   it("should download the template customized with the chosen material, group and provenance, then go back", async () => {
     const requested: URLSearchParams[] = [];
@@ -114,9 +89,9 @@ describe("CustomizeTemplateDialog", () => {
         savedNames.push(this.download);
       },
     );
-    const { download, onBack, pick } = await openDialog();
-    await pick("Material", "Rock");
-    await pick("Rock", "Igneous");
+    const { download, onBack, pick, pickMaterial } = await openDialog();
+    await pickMaterial("Rock", "Igneous");
+    await userEvent.keyboard("{Escape}");
     await pick("Manual groups", GROUP.name);
     await userEvent.keyboard("{Escape}");
     await pick(/^Provenance status/, "Field sample");
@@ -133,5 +108,27 @@ describe("CustomizeTemplateDialog", () => {
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
       "customized-bytes",
     );
+  });
+
+  it("should download the template with the root material when it is left untouched", async () => {
+    const requested: URLSearchParams[] = [];
+    worker.use(
+      http.get("*/admin/samples/import-template", ({ request }) => {
+        requested.push(new URL(request.url).searchParams);
+        return new HttpResponse("customized-bytes");
+      }),
+    );
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const { download, pick } = await openDialog();
+    await pick(/^Provenance status/, "Field sample");
+
+    await download.click();
+
+    await expect.poll(() => requested.length).toBe(1);
+    expect(Object.fromEntries(requested[0]!)).toEqual({
+      materialPath: "rock_and_sediment",
+      provenanceStatus: "field_sample",
+    });
   });
 });
