@@ -586,6 +586,41 @@ function parseSampleRow(row: SampleRow): z.output<typeof sampleRowSchema> {
   return parsed;
 }
 
+const publishedAsh = (
+  id: string,
+  name: string,
+  nature: SeedSample["nature"],
+  position?: { longitude: number; latitude: number },
+): SeedSample => ({
+  id,
+  name,
+  owner: "pierre",
+  nature,
+  type: "individual_sample",
+  material: "rock_and_sediment.sediment.volcano_detritic.ash",
+  collectionMethod: "manual",
+  ...(position
+    ? { location: { position: { type: "point", ...position } } }
+    : {}),
+  description: {
+    collectionDate: {
+      precision: "day",
+      start: "2025-05-20",
+      end: "2025-05-20",
+    },
+  },
+  existenceStatus: "exists",
+  availabilityStatus: "available",
+  scientificContext: {
+    provenanceStatus: "collection_specimen",
+    collectionOrigin: "scientific_expedition",
+    collectionContextDescription: "Volcanic ash reference collection",
+  },
+  repository: SEED_REPOSITORY,
+  igsn: generateIgsnSuffix(id),
+  status: "published",
+});
+
 export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000001",
@@ -826,6 +861,27 @@ export const SEED_SAMPLES: SeedSample[] = [
     material: "rock_and_sediment.sediment",
     type: "core",
   },
+  publishedAsh(
+    "00000000-0000-7000-8000-000000000101",
+    "Vesuvius Ash",
+    "powder",
+    { longitude: 14.43, latitude: 40.82 },
+  ),
+  publishedAsh(
+    "00000000-0000-7000-8000-000000000102",
+    "Etna Ash",
+    "rock_chips",
+    { longitude: 15.0, latitude: 37.75 },
+  ),
+  publishedAsh("00000000-0000-7000-8000-000000000103", "Fuji Ash", "powder", {
+    longitude: 138.73,
+    latitude: 35.36,
+  }),
+  publishedAsh(
+    "00000000-0000-7000-8000-000000000104",
+    "Nowhere Ash",
+    "rock_chips",
+  ),
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

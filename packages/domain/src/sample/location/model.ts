@@ -17,7 +17,7 @@ const verticalMetaShape = {
   system: verticalReferenceSystemSchema.nullish(),
 };
 
-const positionSchema = z.discriminatedUnion("type", [
+export const positionSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("point"),
     longitude: longitudeSchema,

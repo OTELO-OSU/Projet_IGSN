@@ -14,12 +14,12 @@ import {
 import {
   OsmTileLayer,
   WORLD_BOUNDS,
-  toBoundsList,
+  areaHalves,
+  singleBoundsOrWorld,
 } from "#/domain/samples/search-location-map.tsx";
 import { m } from "#/paraglide/messages.js";
 
 type Position = NonNullable<Location["position"]>;
-type Area = Extract<Position, { type: "area" }>;
 
 const ZOOM = 5;
 const DOT = { color: "#dc2626", fillColor: "#dc2626", fillOpacity: 1 };
@@ -35,14 +35,6 @@ const asPoint = (position: Position): Position =>
       }
     : position;
 
-const areaHalves = (area: Area) =>
-  toBoundsList({
-    west: area.westLongitude,
-    south: area.southLatitude,
-    east: area.eastLongitude,
-    north: area.northLatitude,
-  });
-
 function fittedBounds(
   shape: Exclude<Position, { type: "point" }>,
 ): LatLngBoundsExpression {
@@ -52,8 +44,7 @@ function fittedBounds(
       [shape.endLatitude, shape.endLongitude],
     ];
   }
-  const [half, ...rest] = areaHalves(shape);
-  return half && rest.length === 0 ? half : WORLD_BOUNDS;
+  return singleBoundsOrWorld(areaHalves(shape));
 }
 
 export function SampleShape({ position }: { position: Position }) {

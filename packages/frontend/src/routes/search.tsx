@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { facetParamKeys } from "@projet-igsn/domain/sample/search/facets";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
@@ -15,6 +17,10 @@ import {
   listSamplesQueryOptions,
   useListSamples,
 } from "#/domain/samples/hook/list-samples.ts";
+import {
+  ResultsMapButton,
+  ResultsMapDialog,
+} from "#/domain/samples/results-map-dialog.tsx";
 import { SampleFacets } from "#/domain/samples/sample-facets.tsx";
 import { SearchBanner } from "#/domain/samples/search-banner.tsx";
 import { SearchCompose } from "#/domain/samples/search-compose.tsx";
@@ -41,7 +47,9 @@ export const Route = createFileRoute("/search")({
     const params = searchQueryParams(deps);
     if (!params) throw redirect({ to: "/" });
     return Promise.all([
-      context.queryClient.ensureQueryData(listSamplesQueryOptions(params)),
+      deps.map
+        ? undefined
+        : context.queryClient.ensureQueryData(listSamplesQueryOptions(params)),
       context.queryClient.ensureQueryData(listManualGroupsQueryOptions()),
       context.queryClient.ensureQueryData(
         listPublicUsersQueryOptions(deps.contributor),
@@ -58,6 +66,11 @@ function SearchPage() {
   const params = searchQueryParams(search);
   const { data: manualGroups } = useListManualGroups();
   const { data: contributors } = useListPublicUsers(search.contributor);
+  const setMap = (open: boolean) =>
+    navigate({
+      resetScroll: false,
+      search: (prev) => ({ ...prev, map: open ? true : undefined }),
+    });
 
   return (
     <div>
@@ -110,14 +123,32 @@ function SearchPage() {
               })
             }
           />
-          {params ? <Results params={params} /> : null}
+          {params && !search.map ? (
+            <Results
+              params={params}
+              actions={<ResultsMapButton onClick={() => setMap(true)} />}
+            />
+          ) : null}
+          {params ? (
+            <ResultsMapDialog
+              open={!!search.map}
+              onOpenChange={setMap}
+              params={params}
+            />
+          ) : null}
         </div>
       </div>
     </div>
   );
 }
 
-function Results({ params }: { params: ListSamplesParams }) {
+function Results({
+  params,
+  actions,
+}: {
+  params: ListSamplesParams;
+  actions?: ReactNode;
+}) {
   const navigate = Route.useNavigate();
   const { data } = useListSamples(params);
   const { fields, saveFields } = useCardFields();
@@ -144,6 +175,7 @@ function Results({ params }: { params: ListSamplesParams }) {
         navigate({ search: (prev) => ({ ...prev, perPage, page: 1 }) })
       }
       onFieldsChange={saveFields}
+      actions={actions}
     />
   );
 }

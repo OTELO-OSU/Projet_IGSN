@@ -47,6 +47,7 @@
 - `existenceStatus` and `availabilityStatus` are top-level params, not `SAMPLE_FACETS` entries: the registry is the public facet contract, and these two stay admin-only, off the sidebar and the Core `/service` contract.
 - The status filter, the `sort: "status"` order (`array_position` over `sampleStatusSchema.options`, so the enum order is the sort order) and the admin badge all read the `status` column.
 - `searchable` (`domain/sample/path/tree-node.ts`) is the public search-facet policy alone; the admin collection-method filter (`admin/src/samples/collection-method-tree-nodes.ts`) offers every hierarchy level regardless of that flag.
+- The public `GET /samples/map` (`api/src/sample/service/map-sample.ts`) shares the same filters as the public list, via `sampleFilters`/`publishedScope` in `list-sample.ts`, and clusters server-side with Postgis `ST_SnapToGrid`, a cell floored so a whole-world viewport never exceeds ~64x64 clusters.
 
 ## Publish constraints
 

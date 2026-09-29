@@ -85,7 +85,9 @@ function facetFilter(
   }
 }
 
-function numericAgeFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
+function numericAgeFilters(
+  params: Partial<ListSamplesQuery>,
+): Expression<SqlBool>[] {
   const unit = params.ageUnit ?? "ma";
   return [
     ...(params.ageMin != null
@@ -97,14 +99,16 @@ function numericAgeFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
   ];
 }
 
-export function personFacetValues(params: ListSamplesQuery): string[] {
+export function personFacetValues(params: Partial<ListSamplesQuery>): string[] {
   const values: Record<string, unknown> = params;
   return Object.keys(PERSON_FACET_COLUMNS)
     .map((key) => values[key])
     .filter((value) => typeof value === "string");
 }
 
-export function facetFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
+export function facetFilters(
+  params: Partial<ListSamplesQuery>,
+): Expression<SqlBool>[] {
   const values: Record<string, unknown> = params;
 
   return [

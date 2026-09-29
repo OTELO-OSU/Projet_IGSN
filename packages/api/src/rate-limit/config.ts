@@ -3,6 +3,7 @@ import { z } from "zod";
 export type RateLimitScope = "ip" | "user";
 
 export const PUBLIC_IP_BUDGET = { points: 50, duration: 60 } as const;
+export const MAP_IP_BUDGET = { points: 300, duration: 60 } as const;
 export const AUTHENTICATED_USER_BUDGET = { points: 100, duration: 60 } as const;
 export const CONTACT_MAIL_IP_BUDGET = { points: 5, duration: 3600 } as const;
 export const MAIL_REQUEST_USER_BUDGET = {

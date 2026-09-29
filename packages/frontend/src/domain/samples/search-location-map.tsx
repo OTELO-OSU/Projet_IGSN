@@ -1,3 +1,5 @@
+import type { Location } from "@projet-igsn/domain/sample/location/model";
+
 import "leaflet/dist/leaflet.css";
 import {
   type Bbox,
@@ -43,6 +45,23 @@ export function toBoundsList(bbox: Bbox): LatLngBoundsExpression[] {
     [south, west],
     [north, east],
   ]);
+}
+
+type Area = Extract<NonNullable<Location["position"]>, { type: "area" }>;
+
+export const areaHalves = (area: Area): LatLngBoundsExpression[] =>
+  toBoundsList({
+    west: area.westLongitude,
+    south: area.southLatitude,
+    east: area.eastLongitude,
+    north: area.northLatitude,
+  });
+
+export function singleBoundsOrWorld(
+  boundsList: LatLngBoundsExpression[],
+): LatLngBoundsExpression {
+  const [half, ...rest] = boundsList;
+  return half && rest.length === 0 ? half : WORLD_BOUNDS;
 }
 
 function parseBoundsList(bbox: string | undefined): LatLngBoundsExpression[] {

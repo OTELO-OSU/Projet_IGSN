@@ -79,6 +79,32 @@ function isPublished(): Expression<SqlBool> {
   return sql<SqlBool>`status = 'published'`;
 }
 
+export function sampleFilters(
+  params: Partial<ListSamplesQuery>,
+): Expression<SqlBool>[] {
+  return [
+    ...(params.search === undefined ? [] : searchFilters(params.search)),
+    ...(params.bbox === undefined ? [] : [withinBbox(params.bbox)]),
+    ...(params.viewport === undefined ? [] : [withinBbox(params.viewport)]),
+    ...facetFilters(params),
+  ];
+}
+
+export function publishedScope(
+  params: Pick<ListSamplesQuery, "includeSubSamples">,
+): Expression<SqlBool>[] {
+  return [
+    isPublished(),
+    ...(params.includeSubSamples === true
+      ? []
+      : [
+          sql<SqlBool>`not exists (
+    select 1 from sample_parent where sample_parent.sample_id = sample.id
+  )`,
+        ]),
+  ];
+}
+
 function isNotTombstone(): Expression<SqlBool> {
   return sql<SqlBool>`status <> 'tombstone'`;
 }
@@ -99,9 +125,7 @@ async function listSamplesWhere(
     await applyFuzzyThreshold(trx, [search, ...personFacetValues(params)]);
 
     const filters = [
-      ...(search === undefined ? [] : searchFilters(search)),
-      ...(params.bbox === undefined ? [] : [withinBbox(params.bbox)]),
-      ...facetFilters(params),
+      ...sampleFilters(params),
       ...(params.status === undefined ? [] : [hasStatus(params.status)]),
       ...scope,
     ];
@@ -224,16 +248,11 @@ export async function listPublishedSamples(
   db: Transactional<DB>,
   params: ListSamplesQuery,
 ): Promise<ListSamplesResult> {
-  const { data, total } = await listSamplesWhere(db, params, [
-    isPublished(),
-    ...(params.includeSubSamples === true
-      ? []
-      : [
-          sql<SqlBool>`not exists (
-    select 1 from sample_parent where sample_parent.sample_id = sample.id
-  )`,
-        ]),
-  ]);
+  const { data, total } = await listSamplesWhere(
+    db,
+    params,
+    publishedScope(params),
+  );
   return { data, total };
 }
 

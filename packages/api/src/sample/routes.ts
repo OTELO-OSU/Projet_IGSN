@@ -21,6 +21,7 @@ import {
   validateIgsnAttachmentParams,
   validateIgsnParam,
   validatePublicListQuery,
+  validatePublicMapQuery,
 } from "./validator.ts";
 
 export function createSampleRoutes(
@@ -40,6 +41,9 @@ export function createSampleRoutes(
       };
       return c.json(body);
     })
+    .get("/map", validatePublicMapQuery, async (c) =>
+      c.json(await repository.mapPublished(c.req.valid("query"))),
+    )
     .get("/:igsn", validateIgsnParam, async (c) => {
       const sample = await repository.getPublicByIgsn(
         c.req.valid("param").igsn,
