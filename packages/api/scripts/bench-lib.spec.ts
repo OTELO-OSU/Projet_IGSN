@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { nearestRank, seededMix, summarizeByKind } from "./bench-lib.ts";
+import {
+  nearestRank,
+  parseEndpoints,
+  seededMix,
+  summarizeByKind,
+} from "./bench-lib.ts";
 
 describe("nearestRank", () => {
   it.each([
@@ -66,5 +71,19 @@ describe("summarizeByKind", () => {
       ["search", 2, "1.00", "100.0", "300.0", "300.0", "300.0", 1],
       ["map", 2, "1.00", "10.0", "20.0", "20.0", "20.0", 0],
     ]);
+  });
+});
+
+describe("parseEndpoints", () => {
+  it.each([
+    { value: "list,facets", expected: ["list", "facets"] },
+    { value: "list facets", expected: ["list", "facets"] },
+    { value: "facets", expected: ["facets"] },
+  ])("should read $value", ({ value, expected }) => {
+    expect(parseEndpoints(value)).toEqual(expected);
+  });
+
+  it.each(["", "list,map"])("should reject %j", (value) => {
+    expect(() => parseEndpoints(value)).toThrow(/--endpoints/);
   });
 });

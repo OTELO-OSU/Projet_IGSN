@@ -3,6 +3,7 @@ import { Label } from "@projet-igsn/design-system/components/ui/label";
 import {
   composeHierarchyValue,
   type Hierarchy,
+  hierarchyPathLabel,
   isPathSearchable,
   toHierarchyPath,
 } from "@projet-igsn/design-system/lib/hierarchy";
@@ -12,6 +13,7 @@ import { m } from "#/paraglide/messages.js";
 
 type HierarchyFacetProps = {
   hierarchy: Hierarchy;
+  counts: Record<string, number> | undefined;
   translate: (code: string) => string;
   label: string;
   value: string | undefined;
@@ -23,6 +25,7 @@ type HierarchyFacetProps = {
 
 export function HierarchyFacet({
   hierarchy,
+  counts,
   translate,
   label,
   value,
@@ -32,16 +35,31 @@ export function HierarchyFacet({
   emptyText,
 }: HierarchyFacetProps) {
   const id = useId();
+  const selected = toHierarchyPath(value ?? null);
+  const countByLabelCode = new Map(
+    Object.entries(counts ?? {}).map(([path, count]) => [
+      hierarchyPathLabel(hierarchy, path, (code) => code),
+      count,
+    ]),
+  );
+  const withCount = (code: string) => {
+    const count = countByLabelCode.get(code);
+    return count ? `${translate(code)} (${count})` : translate(code);
+  };
   return (
     <div className="space-y-1">
       <Label htmlFor={id}>{label}</Label>
       <HierarchyInput
         id={id}
         hierarchy={hierarchy}
-        translate={translate}
-        value={toHierarchyPath(value ?? null)}
+        translate={withCount}
+        value={selected}
         onChange={(path) => onChange(composeHierarchyValue(path) ?? undefined)}
-        isSelectable={(path) => isPathSearchable(hierarchy, path)}
+        isSelectable={(path) =>
+          selected.includes(path) ||
+          (isPathSearchable(hierarchy, path) &&
+            (!counts || (counts[path] ?? 0) > 0))
+        }
         placeholder={placeholder}
         searchPlaceholder={searchPlaceholder}
         emptyText={emptyText}

@@ -17,6 +17,7 @@ import {
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { addParentOwnerAsContributor } from "./service/add-parent-owner-as-contributor.ts";
+import { countPublishedFacets } from "./service/count-facets.ts";
 import { deleteSample } from "./service/delete-sample.ts";
 import { findDuplicateSamples } from "./service/find-duplicate-samples.ts";
 import { getEditLock } from "./service/get-edit-lock.ts";
@@ -80,6 +81,7 @@ export function createSampleRepository(
     isModerated: tx(isSampleModerated),
     listPublished: tx(listPublishedSamples),
     mapPublished: tx(mapPublishedSamples),
+    countPublishedFacets: tx(countPublishedFacets),
     listExportable: tx(listExportableSamples),
     get: tx(getSample),
     getPublicByIgsn: tx(getPublicSampleByIgsn),

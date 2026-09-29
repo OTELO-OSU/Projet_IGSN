@@ -49,7 +49,7 @@ export const FACET_JOIN: Record<string, { table: string; column: string }> = {
   },
 };
 
-function facetFilter(
+export function facetFilter(
   facet: (typeof SAMPLE_FACETS)[number],
   value: string,
 ): Expression<SqlBool> | undefined {
