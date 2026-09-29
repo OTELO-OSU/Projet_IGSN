@@ -24,6 +24,7 @@ export function TextField({
   hint,
   placeholder,
   reveal,
+  isFullWidth = false,
 }: {
   label: string;
   multiline?: boolean;
@@ -33,6 +34,7 @@ export function TextField({
   hint?: string;
   placeholder?: string;
   reveal?: { label: string; canReveal: boolean };
+  isFullWidth?: boolean;
 }) {
   const field = useFieldContext<string | number | null | undefined>();
   const hintId = hint ? `${field.name}-hint` : undefined;
@@ -41,14 +43,14 @@ export function TextField({
   const [isBadInput, setIsBadInput] = useState(false);
   const Control = multiline ? Textarea : Input;
   const row = (
-    <FieldRow>
+    <FieldRow isFullWidth={isFullWidth}>
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>
       <Control
         id={field.name}
         {...(number ? { type: "number", step: "any" } : {})}
-        className="sm:max-w-72"
+        className={isFullWidth ? undefined : "sm:max-w-72"}
         placeholder={placeholder}
         value={isBadInput ? "" : (field.state.value ?? "")}
         disabled={isDisabled}

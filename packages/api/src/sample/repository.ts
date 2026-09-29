@@ -33,8 +33,10 @@ import {
 } from "./service/list-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import { releaseEditLock } from "./service/release-edit-lock.ts";
+import { reserveInternalNumbers } from "./service/reserve-internal-numbers.ts";
 import { searchEligibleParents } from "./service/search-eligible-parents.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
+import { unavailableInternalNumbers } from "./service/unavailable-internal-numbers.ts";
 import { updateSample } from "./service/update-sample.ts";
 
 async function insertOwnedSample(
@@ -83,18 +85,17 @@ export function createSampleRepository(
           await insertOwnedSample(trx, input, owner.id, owner),
         ),
       ),
-    createPublishing: (inputs, owner) =>
+    createPublishing: (samples, owner) =>
       withTransaction(db, async (trx) => {
-        const ids: string[] = [];
-        for (const input of inputs) {
-          ids.push(await insertOwnedSample(trx, input, owner.id, owner));
+        for (const { input, internalNumber } of samples) {
+          const id = await insertOwnedSample(trx, input, owner.id, owner);
+          await trx
+            .updateTable("sample")
+            .set({ status: "publishing", internal_number: internalNumber })
+            .where("id", "=", id)
+            .execute();
         }
-        await trx
-          .updateTable("sample")
-          .set({ status: "publishing" })
-          .where("id", "in", ids)
-          .execute();
-        return ids.length;
+        return samples.length;
       }),
     createPublished: (input, ownerId, groups) =>
       withTransaction(db, async (trx) => {
@@ -111,5 +112,7 @@ export function createSampleRepository(
     getEditLock: tx(getEditLock),
     acquireEditLock: tx(acquireEditLock),
     releaseEditLock: tx(releaseEditLock),
+    reserveInternalNumbers: tx(reserveInternalNumbers),
+    unavailableInternalNumbers: tx(unavailableInternalNumbers),
   };
 }

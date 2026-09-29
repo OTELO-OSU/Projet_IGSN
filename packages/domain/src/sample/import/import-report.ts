@@ -12,6 +12,7 @@ export const importIssueCodeSchema = z.enum([
   "unknown_sample_key",
   "not_applicable",
   "duplicate_value",
+  "unavailable_internal_id",
 ]);
 export type ImportIssueCode = z.infer<typeof importIssueCodeSchema>;
 

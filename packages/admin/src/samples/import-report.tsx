@@ -1,6 +1,11 @@
 import type { ImportIssue } from "@projet-igsn/domain/sample/import/import-report";
 
 import {
+  Alert,
+  AlertDescription,
+} from "@projet-igsn/design-system/components/ui/alert";
+import { Button } from "@projet-igsn/design-system/components/ui/button";
+import {
   Table,
   TableBody,
   TableCell,
@@ -13,10 +18,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { CircleAlertIcon, SendIcon } from "lucide-react";
 import { useId } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { importIssueLabel } from "#/samples/import-issue-label.ts";
+import { useRequestInternalIds } from "#/samples/use-request-internal-ids.ts";
 
 const issueKey = ({ row, column, code, message }: ImportIssue) =>
   `${row}|${column}|${code}|${message}`;
@@ -39,15 +46,50 @@ function IssueValue({ value = "" }: { value?: string }) {
 
 export function ImportReport({ issues }: { issues: ImportIssue[] }) {
   const id = useId();
+  const requestInternalIds = useRequestInternalIds();
+  const unavailableInternalIds = issues.flatMap(({ code, value }) =>
+    code === "unavailable_internal_id" && value !== undefined ? [value] : [],
+  );
   return (
     <section
       aria-labelledby={`${id}-intro`}
       tabIndex={0}
       className="grid max-h-80 gap-4 overflow-auto text-sm"
     >
-      <p id={`${id}-intro`} className="text-destructive">
-        {m.import_report_intro()}
-      </p>
+      <Alert variant="destructive">
+        <CircleAlertIcon aria-hidden />
+        <AlertDescription className="flex items-center justify-between gap-4">
+          <div id={`${id}-intro`} className="grid gap-1">
+            <p>{m.import_report_intro()}</p>
+            {unavailableInternalIds.length > 0 ? (
+              <p>{m.import_report_unavailable_internal_ids()}</p>
+            ) : null}
+          </div>
+          {unavailableInternalIds.length > 0 ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="shrink-0"
+                  disabled={requestInternalIds.isPending}
+                  onClick={() =>
+                    requestInternalIds.mutate({
+                      internalIds: unavailableInternalIds,
+                    })
+                  }
+                >
+                  <SendIcon aria-hidden />
+                  {m.import_report_contact_admin()}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                {m.import_report_contact_admin_hint()}
+              </TooltipContent>
+            </Tooltip>
+          ) : null}
+        </AlertDescription>
+      </Alert>
       {[
         ...Map.groupBy(
           issues,

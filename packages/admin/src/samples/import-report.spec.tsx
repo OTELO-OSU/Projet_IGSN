@@ -1,5 +1,9 @@
 import type { ImportIssue } from "@projet-igsn/domain/sample/import/import-report";
 
+import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
+import { HttpResponse, http } from "msw";
+
+import { worker } from "../../test/msw.ts";
 import { render } from "../../test/render.tsx";
 import { ImportReport } from "./import-report.tsx";
 
@@ -129,5 +133,75 @@ describe("ImportReport", () => {
     expect(
       cellTexts(screen.getByRole("table", { name: "Samples" }).element())[1],
     ).toEqual(["3", "", value, "Invalid value."]);
+  });
+
+  it("should not offer to contact the administrator without an unavailable internal ID", async () => {
+    const screen = await render(
+      <ImportReport
+        issues={[
+          {
+            sheet: "Samples",
+            row: 3,
+            column: "Sample #",
+            value: "sample-7",
+            code: "duplicate_sample_key",
+          },
+        ]}
+      />,
+    );
+
+    await expect.element(screen.getByRole("table")).toBeVisible();
+    expect(
+      screen
+        .getByRole("button", { name: "Notify the administrators" })
+        .elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should send the unavailable internal IDs to the administrator and confirm", async () => {
+    const posted: unknown[] = [];
+    worker.use(
+      http.post(
+        "*/admin/samples/import/internal-id-request",
+        async ({ request }) => {
+          posted.push(await request.json());
+          return new HttpResponse(null, { status: 204 });
+        },
+      ),
+    );
+    const internalIdIssue = (
+      row: number,
+      value: string,
+      code: ImportIssue["code"],
+    ): ImportIssue => ({
+      sheet: "Samples",
+      row,
+      column: "Sample #",
+      value,
+      code,
+    });
+    const screen = await render(
+      <>
+        <ImportReport
+          issues={[
+            internalIdIssue(3, "sample-7", "unavailable_internal_id"),
+            internalIdIssue(4, "sample-8", "duplicate_sample_key"),
+            internalIdIssue(5, "sample-9", "unavailable_internal_id"),
+          ]}
+        />
+        <Toaster />
+      </>,
+    );
+
+    await screen
+      .getByRole("button", { name: "Notify the administrators" })
+      .click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent(
+        "Your request for these internal IDs was sent to the administrators.",
+      );
+    expect(posted).toEqual([{ internalIds: ["sample-7", "sample-9"] }]);
   });
 });

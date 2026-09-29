@@ -1,3 +1,4 @@
+import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import {
   IMPORT_TEMPLATE_FILENAME,
   XLSX_MEDIA_TYPE,
@@ -55,6 +56,7 @@ const READ_ME_LINES = [
   `Row ${GROUP_ROW} groups the columns as the declaration form's tabs do and row ${HEADER_ROW} names them.`,
   `Fill one sample per row on the "${SHEETS.samples}" sheet, from row ${FIRST_DATA_ROW}.`,
   `"${SAMPLE_KEY_HEADER}" numbers those rows: it is filled for you, so do not edit it.`,
+  `A "${SAMPLE_KEY_HEADER}" reserved when downloading this template becomes that sample's internal ID; a plain number gets the next free one on import.`,
   `A row on ${CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} picks that number in its own "${SAMPLE_KEY_HEADER}" list, and the name beside it fills itself.`,
   `Those sheets take one value per row, so a sample with three of them has three rows.`,
   `Dropdowns are a guide, not a rule: the server validates the whole file on upload and refuses it as a whole.`,
@@ -281,12 +283,18 @@ export function addVocabularySheet(book: ExcelJS.Workbook) {
   return sheet;
 }
 
-async function build(rows: number): Promise<ExcelBuffer> {
+async function build(
+  rows: number,
+  internalIds: readonly number[],
+): Promise<ExcelBuffer> {
   const book = new ExcelJS.Workbook();
   addReadMeSheet(book, "IGSN sample import template", READ_ME_LINES);
   const samples = addDataSheet(book, SHEETS.samples, SAMPLE_COLUMNS, rows);
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
-    samples.getCell(row, 1).value = row - FIRST_DATA_ROW + 1;
+    const index = row - FIRST_DATA_ROW;
+    const internalId = internalIds[index];
+    samples.getCell(row, 1).value =
+      internalId === undefined ? index + 1 : formatInternalId(internalId);
   }
   for (const child of CHILD_SHEETS) {
     addChildSheet(book, child.name, child.columns, rows);
@@ -297,8 +305,9 @@ async function build(rows: number): Promise<ExcelBuffer> {
 
 export function importTemplateWorkbook(
   rows: number = MAX_IMPORT_ROWS,
+  internalIds: readonly number[] = [],
 ): Promise<ExcelBuffer> {
-  return queueBuild(() => build(rows));
+  return queueBuild(() => build(rows, internalIds));
 }
 
 export function xlsxResponse(book: ExcelBuffer, filename: string): Response {
@@ -311,9 +320,12 @@ export function xlsxResponse(book: ExcelBuffer, filename: string): Response {
   });
 }
 
-export async function importTemplateResponse(rows: number): Promise<Response> {
+export async function importTemplateResponse(
+  rows: number,
+  internalIds?: readonly number[],
+): Promise<Response> {
   return xlsxResponse(
-    await importTemplateWorkbook(rows),
+    await importTemplateWorkbook(rows, internalIds),
     IMPORT_TEMPLATE_FILENAME,
   );
 }

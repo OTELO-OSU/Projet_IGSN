@@ -1,17 +1,23 @@
 import type { ImportIssue } from "@projet-igsn/domain/sample/import/import-report";
-import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+import type { ImportedSample } from "@projet-igsn/domain/sample/repository";
 import type ExcelJS from "exceljs";
 
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { parseInternalId } from "@projet-igsn/domain/sample/parse-internal-id";
 
 import type { TemplateLayout } from "./template-layout.ts";
 
 import { queueBuild } from "./build-queue.ts";
 import { buildSampleInputs } from "./build-sample-inputs.ts";
-import { DATA_SHEETS, plainHeader, SHEETS } from "./columns.ts";
+import {
+  DATA_SHEETS,
+  plainHeader,
+  SAMPLE_KEY_HEADER,
+  SHEETS,
+} from "./columns.ts";
 import { openWorkbook } from "./open-workbook.ts";
-import { cellValue, readRows } from "./read-rows.ts";
+import { cellValue, type RawRow, readRows, textOf } from "./read-rows.ts";
 import { templateLayout } from "./template-layout.ts";
 import { validateSamples } from "./validate-samples.ts";
 
@@ -91,12 +97,17 @@ function byPosition(a: ImportIssue, b: ImportIssue): number {
   return p[0] - q[0] || p[1] - q[1] || p[2] - q[2];
 }
 
-type ValidatedImport = { issues: ImportIssue[]; samples: CreateSample[] };
+type ValidatedImport = { issues: ImportIssue[]; samples: ImportedSample[] };
 
 const rejected = (issues: ImportIssue[]): ValidatedImport => ({
   issues,
   samples: [],
 });
+
+const internalNumberOf = ({ cells }: RawRow) => {
+  const key = cells[SAMPLE_KEY_HEADER];
+  return key === undefined ? undefined : parseInternalId(textOf(key));
+};
 
 function validateRows(parsed: ReturnType<typeof readRows>): ValidatedImport {
   const built = buildSampleInputs(parsed);
@@ -107,11 +118,46 @@ function validateRows(parsed: ReturnType<typeof readRows>): ValidatedImport {
       ...built.issues,
       ...issues.filter((issue) => !reported.has(fieldOf(issue))),
     ],
-    samples: inputs,
+    samples: inputs.map((input, index) => ({
+      input,
+      internalNumber: internalNumberOf(parsed.samples[index]!) ?? null,
+    })),
   };
 }
 
-export function validateImport(bytes: ArrayBuffer): Promise<ValidatedImport> {
+type UnavailableInternalNumbers = (numbers: number[]) => Promise<Set<number>>;
+
+async function internalIdIssues(
+  parsed: ReturnType<typeof readRows>,
+  unavailableInternalNumbers: UnavailableInternalNumbers,
+): Promise<ImportIssue[]> {
+  const keyed = parsed.samples.flatMap((sample) => {
+    const internalNumber = internalNumberOf(sample);
+    return internalNumber === undefined
+      ? []
+      : [{ row: sample.row, internalNumber }];
+  });
+  const unavailable = await unavailableInternalNumbers([
+    ...new Set(keyed.map(({ internalNumber }) => internalNumber)),
+  ]);
+  return keyed.flatMap(({ row, internalNumber }): ImportIssue[] =>
+    unavailable.has(internalNumber)
+      ? [
+          {
+            sheet: SHEETS.samples,
+            row,
+            column: SAMPLE_KEY_HEADER,
+            code: "unavailable_internal_id",
+          },
+        ]
+      : [],
+  );
+}
+
+export function validateImport(
+  bytes: ArrayBuffer,
+  unavailableInternalNumbers: UnavailableInternalNumbers,
+): Promise<ValidatedImport> {
   return queueBuild(async () => {
     const book = await openWorkbook(bytes);
     if (book === undefined) return rejected([{ code: "unreadable_file" }]);
@@ -124,7 +170,10 @@ export function validateImport(bytes: ArrayBuffer): Promise<ValidatedImport> {
       return rejected([{ sheet: SHEETS.samples, code: "too_many_rows" }]);
     const validated = validateRows(parsed);
     return {
-      issues: validated.issues
+      issues: [
+        ...validated.issues,
+        ...(await internalIdIssues(parsed, unavailableInternalNumbers)),
+      ]
         .map((issue) => withValue(book, layout, issue))
         .sort(byPosition),
       samples: validated.samples,

@@ -15,6 +15,11 @@ type ParsedSample = RawRow & { children: ChildRow[] };
 
 export type ParsedRows = { samples: ParsedSample[]; orphans: ChildRow[] };
 
+const normalized = (header: string, value: Cell): Cell =>
+  header === SAMPLE_KEY_HEADER && typeof value === "string"
+    ? value.toLowerCase()
+    : value;
+
 export const textOf = (cell: Cell) =>
   cell instanceof Date ? cell.toISOString() : cell;
 
@@ -44,7 +49,10 @@ function sheetRows(
     rows.push({
       row: number,
       cells: Object.fromEntries(
-        filled.map(({ column, value }) => [plainHeader(column), value]),
+        filled.map(({ column, value }) => {
+          const header = plainHeader(column);
+          return [header, normalized(header, value)];
+        }),
       ),
     });
   });

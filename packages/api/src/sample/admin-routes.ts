@@ -52,6 +52,7 @@ import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { samplesExportResponse } from "./bulk-edit/export-workbook.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
+import { internalIdRequestMail } from "./import-template/internal-id-request-mail.ts";
 import { validateImport } from "./import-template/validate-import.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
@@ -73,8 +74,10 @@ import {
   validateIdParam,
   validateImportUpload,
   validateImportTemplateQuery,
+  validateInternalIdRequestBody,
   validateListQuery,
   validateRequestDeletionBody,
+  validateReserveInternalIdsBody,
   validateStatusBody,
   validateUpdateSampleBody,
 } from "./validator.ts";
@@ -154,9 +157,21 @@ export function createSampleAdminRoutes(
     .get("/import-template", validateImportTemplateQuery, (c) =>
       importTemplateResponse(c.req.valid("query").rows),
     )
+    .post(
+      "/import-template/reservation",
+      validateReserveInternalIdsBody,
+      async (c) => {
+        const { count } = c.req.valid("json");
+        return importTemplateResponse(
+          count,
+          await repository.reserveInternalNumbers(count),
+        );
+      },
+    )
     .post("/import", validateImportUpload, async (c) => {
       const { issues, samples } = await validateImport(
         await c.req.valid("form").file.arrayBuffer(),
+        (numbers) => repository.unavailableInternalNumbers(numbers),
       );
       if (issues.length > 0) {
         const body: InvalidImport = { error: "Invalid import", issues };
@@ -168,6 +183,30 @@ export function createSampleAdminRoutes(
       const count = await repository.createPublishing(samples, c.get("user"));
       return c.json({ count } satisfies ImportAccepted, 200);
     })
+    .post(
+      "/import/internal-id-request",
+      requireActiveSession,
+      validateInternalIdRequestBody,
+      (c) => {
+        if (mail) {
+          const requester = c.get("user");
+          const { internalIds } = c.req.valid("json");
+          // ponytail: fire and forget; a retry queue if a lost request ever matters.
+          void notifySuperAdmins(
+            users,
+            () =>
+              internalIdRequestMail({
+                requester,
+                internalIds,
+                adminUrl: mail.adminUrl,
+              }),
+            mail.sendMail,
+            "Could not mail the internal ID request",
+          );
+        }
+        return c.body(null, 204);
+      },
+    )
     .post("/export", validateExportBody, async (c) => {
       const request = c.req.valid("json");
       const user = c.get("user");

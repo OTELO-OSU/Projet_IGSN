@@ -1,17 +1,40 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
+async function saveDownload(
+  page: Page,
+  testInfo: TestInfo,
+  click: () => Promise<void>,
+) {
+  const download = page.waitForEvent("download");
+  await click();
+  const file = await download;
+  const path = testInfo.outputPath(file.suggestedFilename());
+  await file.saveAs(path);
+  return path;
+}
+
 export function importSamplesPage(page: Page) {
   const dialog = page.getByRole("dialog", { name: "Import samples" });
   return {
     open: () =>
       page.getByRole("button", { name: "Import", exact: true }).click(),
-    downloadTemplate: async (testInfo: TestInfo) => {
-      const download = page.waitForEvent("download");
-      await dialog.getByRole("button", { name: "Download template" }).click();
-      const file = await download;
-      const path = testInfo.outputPath(file.suggestedFilename());
-      await file.saveAs(path);
-      return path;
+    downloadTemplate: (testInfo: TestInfo) =>
+      saveDownload(page, testInfo, () =>
+        dialog.getByRole("button", { name: "Download template" }).click(),
+      ),
+    reserveInternalIds: async (count: number, testInfo: TestInfo) => {
+      await dialog
+        .getByRole("button", { name: "Reserve internal IDs" })
+        .click();
+      const reserve = page.getByRole("dialog", {
+        name: "Reserve internal IDs",
+      });
+      await reserve.getByLabel("Number of internal IDs").fill(String(count));
+      return saveDownload(page, testInfo, () =>
+        reserve
+          .getByRole("button", { name: "Download template with reserved IDs" })
+          .click(),
+      );
     },
     upload: (path: string) =>
       dialog.locator('input[type="file"]').setInputFiles(path),

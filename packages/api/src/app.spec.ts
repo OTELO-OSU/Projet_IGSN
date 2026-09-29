@@ -361,6 +361,58 @@ describe("app", () => {
     );
 
     pgTest(
+      "should throttle the internal ID reservation on the import template's budget, per user",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const reserveFrom = (token: string) =>
+          app.request("/admin/samples/import-template/reservation", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ count: 0 }),
+          });
+
+        await spend(
+          () => reserveFrom("user-11"),
+          IMPORT_TEMPLATE_USER_BUDGET.points,
+        );
+        expect(
+          (
+            await app.request("/admin/samples/import-template?rows=0", {
+              headers: { Authorization: "Bearer user-11" },
+            })
+          ).status,
+        ).toBe(429);
+        expect((await reserveFrom("user-12")).status).not.toBe(429);
+      },
+    );
+
+    pgTest(
+      "should throttle the internal ID request on the mail request budget, per user",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const requestFrom = (token: string) =>
+          app.request("/admin/samples/import/internal-id-request", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ internalIds: [] }),
+          });
+
+        await spend(
+          () => requestFrom("user-13"),
+          MAIL_REQUEST_USER_BUDGET.points,
+        );
+        expect((await requestFrom("user-13")).status).toBe(429);
+        expect((await requestFrom("user-14")).status).not.toBe(429);
+      },
+    );
+
+    pgTest(
       "should throttle the samples export far below the authenticated budget, per user",
       async ({ db }) => {
         const app = createApp(db).app;

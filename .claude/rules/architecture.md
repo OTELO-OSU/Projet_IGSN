@@ -32,6 +32,10 @@
 - An accepted user requests one from the Services section of admin Settings, where the owner alone rotates its API key (SHA-256 hash at rest, shown once), and `/service` is the resulting machine mount, `GET /service/samples` reading publicly (redacted, every published sample, `?editable=true` ignored) or with a valid key (unredacted, narrowed to the account's own `managerScope` on `?editable=true`), `POST /service/samples` creating and publishing one owned by the account's owner and snapshotting the account's own trio, 403 for writing with a missing or unknown key, or reading with an unknown one; see ADR 0036.
 - `POST /admin/samples/export` (`api/src/sample/bulk-edit/`) answers the published, non-synthetic, non-mineral samples of a list, its current `filters` or checked `ids`, as an editable xlsx, reusing the import template's builder (`import-template/workbook.ts`), capped at `MAX_IMPORT_ROWS` (422 above).
 - The export's reach follows the calling list: `assignedTo` for `moderated: false`, the caller's moderation scope (403 without one) for `moderated: true`, never a union.
+- `internal_number` is drawn from one global sequence, `sample_internal_number_seq`, by every publish path.
+- `POST /admin/samples/import-template/reservation` locks `sample` and advances that sequence by `count`, pre-filling the template's `Sample #` with those `sample-N`, so every later publish skips the range.
+- A reserved ID never expires and anyone may use it.
+- `POST /admin/samples/import` queues a row whose `Sample #` holds an available `sample-N` under that internal number, `publishSample` keeping it.
 
 ## Server-side sorting and filtering
 
