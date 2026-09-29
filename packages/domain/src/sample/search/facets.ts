@@ -30,7 +30,6 @@ import {
   strunzPathSchema,
 } from "../mineral/mineral-hierarchy.ts";
 import { NATURES, natureSchema } from "../nature.ts";
-import { TEXTURES, textureSchema } from "../texture/vocabulary.ts";
 import { sampleTypeSchema, SAMPLE_TYPE_HIERARCHY } from "../type/vocabulary.ts";
 import { truncatedTextSchema } from "./search-tokens.ts";
 
@@ -91,7 +90,6 @@ export const SAMPLE_FACETS: readonly SampleFacet[] = [
     schema: collectionMethodSchema,
   },
   { key: "nature", kind: "enum", values: NATURES },
-  { key: "texture", kind: "enum", values: TEXTURES },
   { key: "researchProgramName", kind: "text" },
   { key: "chiefScientist", kind: "text" },
   {
@@ -154,7 +152,6 @@ export function facetQueryFields() {
     mineralClassification: optionalFilter(strunzPathSchema),
     collectionMethod: optionalFilter(collectionMethodSchema),
     nature: optionalFilter(natureSchema),
-    texture: optionalFilter(textureSchema),
     researchProgramName: textFilter(),
     chiefScientist: textFilter(),
     hostInstitution: optionalFilter(organizationRorSchema),
