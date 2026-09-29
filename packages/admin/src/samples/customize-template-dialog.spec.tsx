@@ -42,6 +42,7 @@ async function openDialog() {
     pick,
     pickMaterial,
     download: dialog.getByRole("button", { name: "Download this template" }),
+    reserve: dialog.getByRole("button", { name: "Reserve internal IDs" }),
   };
 }
 
@@ -53,6 +54,15 @@ describe("CustomizeTemplateDialog", () => {
     await pick(/^Provenance status/, "Field sample");
 
     await expect.element(download).toBeEnabled();
+  });
+
+  it("should keep Reserve internal IDs disabled until a provenance is chosen", async () => {
+    const { reserve, pick } = await openDialog();
+    await expect.element(reserve).toBeDisabled();
+
+    await pick(/^Provenance status/, "Field sample");
+
+    await expect.element(reserve).toBeEnabled();
   });
 
   it.each(["Mineral", "Synthetic rock / mineral"])(
@@ -107,6 +117,51 @@ describe("CustomizeTemplateDialog", () => {
     expect(savedNames).toEqual([IMPORT_TEMPLATE_FILENAME]);
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
       "customized-bytes",
+    );
+  });
+
+  it("should post the reserved count with the chosen material, group and provenance, save the answered template, then go back", async () => {
+    const posted: unknown[] = [];
+    worker.use(
+      http.post(
+        "*/admin/samples/import-template/reservation",
+        async ({ request }) => {
+          posted.push(await request.json());
+          return new HttpResponse("reserved-bytes");
+        },
+      ),
+    );
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:test");
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const { screen, onBack, pick, pickMaterial, reserve } = await openDialog();
+    await pickMaterial("Rock", "Igneous");
+    await userEvent.keyboard("{Escape}");
+    await pick("Manual groups", GROUP.name);
+    await userEvent.keyboard("{Escape}");
+    await pick(/^Provenance status/, "Field sample");
+
+    await reserve.click();
+    const reserveDialog = screen.getByRole("dialog", {
+      name: "Reserve internal IDs",
+    });
+    await reserveDialog.getByLabelText("Number of internal IDs").fill("3");
+    await reserveDialog
+      .getByRole("button", { name: "Download template with reserved IDs" })
+      .click();
+
+    await expect.poll(() => onBack.mock.calls.length).toBe(1);
+    expect(posted).toEqual([
+      {
+        count: 3,
+        provenanceStatus: "field_sample",
+        materialPath: "rock_and_sediment.rock.igneous",
+        manualGroupIds: [GROUP.id],
+      },
+    ]);
+    expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
+      "reserved-bytes",
     );
   });
 

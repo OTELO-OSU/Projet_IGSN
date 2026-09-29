@@ -31,6 +31,7 @@ import { useState } from "react";
 import { useAttachableManualGroups } from "#/manual-groups/use-attachable-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import { HIERARCHY_FIELD_LABELS } from "#/samples/hierarchy-field-labels.ts";
+import { ReserveInternalIdsDialog } from "#/samples/reserve-internal-ids-dialog.tsx";
 import {
   materialPathLabel,
   provenanceStatusLabel,
@@ -61,6 +62,13 @@ export function CustomizeTemplateDialog({
   );
   const material = composeHierarchyValue(materialPath);
   const isRefused = material !== null && !isMassImportableMaterial(material);
+  const customization = provenanceStatus
+    ? {
+        provenanceStatus,
+        materialPath: material ?? undefined,
+        manualGroupIds: groupIds,
+      }
+    : undefined;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => (isOpen ? null : onBack())}>
@@ -134,6 +142,11 @@ export function CustomizeTemplateDialog({
             </Label>
           </div>
         </div>
+        <ReserveInternalIdsDialog
+          customization={customization}
+          disabled={!provenanceStatus || isRefused}
+          onDownloaded={onBack}
+        />
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={onBack}>
             <ArrowLeftIcon aria-hidden />
@@ -145,15 +158,10 @@ export function CustomizeTemplateDialog({
               !provenanceStatus || isRefused || downloadTemplate.isPending
             }
             onClick={() => {
-              if (!provenanceStatus) return;
-              downloadTemplate.mutate(
-                {
-                  provenanceStatus,
-                  materialPath: material ?? undefined,
-                  manualGroupIds: groupIds,
-                },
-                { onSuccess: () => onBack() },
-              );
+              if (!customization) return;
+              downloadTemplate.mutate(customization, {
+                onSuccess: () => onBack(),
+              });
             }}
           >
             <FileDownIcon aria-hidden />

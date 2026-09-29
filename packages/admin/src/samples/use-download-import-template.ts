@@ -40,7 +40,9 @@ export function useDownloadImportTemplate() {
   const apiFetch = useApiClient();
   return useMutation({
     mutationFn: async (
-      request?: ReserveInternalIds | ImportTemplateCustomization,
+      request?:
+        | (ReserveInternalIds & Partial<ImportTemplateCustomization>)
+        | ImportTemplateCustomization,
     ) => {
       const res = await (request && "count" in request
         ? apiFetch(
@@ -48,7 +50,7 @@ export function useDownloadImportTemplate() {
             {
               method: "POST",
               headers: { "content-type": "application/json" },
-              body: JSON.stringify(request satisfies ReserveInternalIds),
+              body: JSON.stringify(request),
             },
           )
         : apiFetch(customizedTemplateUrl(request)));
