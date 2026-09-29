@@ -1,3 +1,4 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type {
@@ -34,6 +35,7 @@ import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
 import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 
 import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
@@ -126,6 +128,25 @@ export function createSampleAdminRoutes(
   const accessibleSample = requireSampleAccess(repository, users);
   const unlockedSample = requireEditLock(repository);
 
+  const templateManualGroups = async (
+    userId: string,
+    manualGroupIds: string[] | undefined,
+  ): Promise<ManualGroup[] | undefined> => {
+    if (manualGroupIds === undefined) {
+      return undefined;
+    }
+    const attachable = await manualGroups.listAttachableForUser(userId);
+    if (
+      hasUnattachable(
+        manualGroupIds,
+        attachable.map((group) => group.id),
+      )
+    ) {
+      throw new HTTPException(422, { message: NOT_ATTACHABLE.error });
+    }
+    return attachable.filter((group) => manualGroupIds.includes(group.id));
+  };
+
   return new Hono<SampleAdminEnv>()
     .get("/", validateListQuery, async (c) => {
       const { data, total } = await repository.listAssignedTo(
@@ -156,24 +177,11 @@ export function createSampleAdminRoutes(
     })
     .get("/import-template", validateImportTemplateQuery, async (c) => {
       const { rows, manualGroupIds, ...customization } = c.req.valid("query");
-      if (manualGroupIds === undefined) {
-        return importTemplateResponse(rows, undefined, customization);
-      }
-      const attachable = await manualGroups.listAttachableForUser(
-        c.get("user").id,
-      );
-      if (
-        hasUnattachable(
-          manualGroupIds,
-          attachable.map((group) => group.id),
-        )
-      ) {
-        return c.json(NOT_ATTACHABLE, 422);
-      }
       return importTemplateResponse(rows, undefined, {
         ...customization,
-        manualGroups: attachable.filter((group) =>
-          manualGroupIds.includes(group.id),
+        manualGroups: await templateManualGroups(
+          c.get("user").id,
+          manualGroupIds,
         ),
       });
     })
@@ -181,10 +189,15 @@ export function createSampleAdminRoutes(
       "/import-template/reservation",
       validateReserveInternalIdsBody,
       async (c) => {
-        const { count } = c.req.valid("json");
+        const { count, manualGroupIds, ...customization } = c.req.valid("json");
+        const templateGroups = await templateManualGroups(
+          c.get("user").id,
+          manualGroupIds,
+        );
         return importTemplateResponse(
           count,
           await repository.reserveInternalNumbers(count),
+          { ...customization, manualGroups: templateGroups },
         );
       },
     )

@@ -65,6 +65,13 @@ export const validateCheckDuplicatesBody = zodValidator(
   "Invalid duplicate criteria",
 );
 
+const templatePrefillFields = {
+  provenanceStatus: z.enum(PROVENANCE_STATUSES).optional(),
+  materialPath: templateMaterialPathSchema
+    .refine(isMassImportableMaterial)
+    .optional(),
+};
+
 const importTemplateQuerySchema = z.object({
   rows: z.coerce
     .number()
@@ -72,10 +79,7 @@ const importTemplateQuerySchema = z.object({
     .min(1)
     .max(MAX_IMPORT_ROWS)
     .default(MAX_IMPORT_ROWS),
-  provenanceStatus: z.enum(PROVENANCE_STATUSES).optional(),
-  materialPath: templateMaterialPathSchema
-    .refine(isMassImportableMaterial)
-    .optional(),
+  ...templatePrefillFields,
   manualGroupIds: z
     .string()
     .transform((ids) => ids.split(","))
@@ -89,9 +93,14 @@ export const validateImportTemplateQuery = zodValidator(
   "Invalid import template parameters",
 );
 
+const reserveInternalIdsBodySchema = reserveInternalIdsSchema.extend({
+  ...templatePrefillFields,
+  manualGroupIds: z.array(z.uuid()).optional(),
+});
+
 export const validateReserveInternalIdsBody = zodValidator(
   "json",
-  reserveInternalIdsSchema,
+  reserveInternalIdsBodySchema,
   `"count" must be a whole number between 1 and ${MAX_IMPORT_ROWS}`,
 );
 

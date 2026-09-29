@@ -189,6 +189,77 @@ describe("import template reservation route", () => {
       expect(res.status).toBe(400);
     },
   );
+
+  pgTest(
+    "should answer the reserved template customized with the requested pre-fills and groups",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      await db.insertInto("manual_group").values(GROUP).execute();
+      await db
+        .insertInto("manual_group_member")
+        .values({ group_id: GROUP.id, user_id: caller.id })
+        .execute();
+
+      const res = await reserve(db, {
+        count: 2,
+        provenanceStatus: "field_sample",
+        materialPath: "rock_and_sediment.rock.igneous",
+        manualGroupIds: [GROUP.id],
+      });
+      const book = new ExcelJS.Workbook();
+      await book.xlsx.load(await res.arrayBuffer());
+      const samples = sheetOf(book, SHEETS.samples);
+      const internalIds = [3, 4].map((row) =>
+        Number(samples.getCell(row, 1).text.replace("sample-", "")),
+      );
+      const prefillOf = (header: string) =>
+        samples.getCell(3, columnOf(samples, header)).value;
+
+      expect({
+        status: res.status,
+        consecutive: internalIds.map((n) => n - internalIds[0]!),
+        provenance: prefillOf("Provenance status"),
+        material: prefillOf("Material (level 3)"),
+        groups: sheetOf(book, SHEETS.readMe).getCell("C2").value,
+      }).toEqual({
+        status: 200,
+        consecutive: [0, 1],
+        provenance: "Field sample",
+        material: "Igneous",
+        groups: GROUP.name,
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should answer 422 for a reserved template naming a manual group the caller cannot attach",
+    async ({ db }) => {
+      await provisionUser(db, "test-token", { status: "accepted" });
+      await db.insertInto("manual_group").values(GROUP).execute();
+
+      const res = await reserve(db, { count: 1, manualGroupIds: [GROUP.id] });
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: { error: "Manual group not attachable to this sample" },
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse reserving a template pre-filled with a mineral material",
+    async ({ db }) => {
+      const res = await reserve(db, {
+        count: 1,
+        materialPath: "rock_and_sediment.mineral",
+      });
+
+      expect(res.status).toBe(400);
+    },
+  );
 });
 
 const cleanFile = async () =>
