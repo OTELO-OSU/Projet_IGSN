@@ -13,6 +13,7 @@ export const importIssueCodeSchema = z.enum([
   "not_applicable",
   "duplicate_value",
   "unavailable_internal_id",
+  "unknown_manual_group",
 ]);
 export type ImportIssueCode = z.infer<typeof importIssueCodeSchema>;
 
