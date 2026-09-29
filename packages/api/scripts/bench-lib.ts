@@ -102,3 +102,23 @@ export function appendCsv(
     existsSync(file) ? lines : `${header.join(",")}\n${lines}`,
   );
 }
+
+export const ENDPOINT_PATHS = {
+  list: "samples",
+  facets: "samples/facets",
+} as const;
+
+export type Endpoint = keyof typeof ENDPOINT_PATHS;
+
+export function parseEndpoints(value: string): Endpoint[] {
+  const endpoints = value.split(/[ ,]+/).filter(Boolean);
+  const unknown = endpoints.filter(
+    (endpoint) => !Object.hasOwn(ENDPOINT_PATHS, endpoint),
+  );
+  if (endpoints.length === 0 || unknown.length > 0) {
+    throw new Error(
+      `--endpoints takes ${Object.keys(ENDPOINT_PATHS).join(" and/or ")}, got "${value}"`,
+    );
+  }
+  return endpoints as Endpoint[];
+}

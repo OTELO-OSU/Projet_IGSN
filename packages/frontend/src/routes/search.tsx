@@ -13,6 +13,7 @@ import {
   listManualGroupsQueryOptions,
   useListManualGroups,
 } from "#/domain/manual-groups/hook/list-manual-groups.ts";
+import { useListSampleFacetCounts } from "#/domain/samples/hook/list-sample-facet-counts.ts";
 import {
   listSamplesQueryOptions,
   useListSamples,
@@ -71,6 +72,7 @@ function SearchPage() {
       resetScroll: false,
       search: (prev) => ({ ...prev, map: open ? true : undefined }),
     });
+  const { data: counts } = useListSampleFacetCounts(params ?? {});
 
   return (
     <div>
@@ -100,6 +102,7 @@ function SearchPage() {
             values={search as SampleFilters}
             manualGroups={manualGroups}
             contributors={contributors}
+            counts={counts}
             onChange={(key, value) =>
               navigate({
                 resetScroll: false,

@@ -49,6 +49,7 @@
 - The status filter, the `sort: "status"` order (`array_position` over `sampleStatusSchema.options`, so the enum order is the sort order) and the admin badge all read the `status` column.
 - `searchable` (`domain/sample/path/tree-node.ts`) is the public search-facet policy alone; the admin collection-method filter (`admin/src/samples/collection-method-tree-nodes.ts`) offers every hierarchy level regardless of that flag.
 - The public `GET /samples/map` (`api/src/sample/service/map-sample.ts`) shares the same filters as the public list, via `sampleFilters`/`publishedScope` in `list-sample.ts`, and clusters server-side with Postgis `ST_SnapToGrid`, a cell floored so a whole-world viewport never exceeds ~64x64 clusters.
+- `GET /samples/facets` (`api/src/sample/service/count-facets.ts`) answers each `enum`/`hierarchy`/`linked` facet's disjunctive counts (own filter ignored, a hierarchy node counting its descendants) in one pass over the published, non-sub-sample scope, reusing `facetFilter` and `sampleFilters`/`publishedScope` from the list query.
 
 ## Publish constraints
 

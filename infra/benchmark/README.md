@@ -1,6 +1,6 @@
-# Results list benchmark host
+# Search benchmark host
 
-- A temporary AWS host timing the public results list (`GET /samples`) on Postgres capped at 2 CPUs and 8 GB with the api pool capped at 2 connections, writing CSVs to compare runs.
+- A temporary AWS host timing the public results list (`GET /samples`) and its facet counts (`GET /samples/facets`) on Postgres capped at 2 CPUs and 8 GB with the api pool capped at 2 connections, writing CSVs to compare runs.
 - Standalone: its own local OpenTofu state in `tf/`, security group and compose stack, outside the compose parity rule.
 - It bills by the hour, CPU credits unlimited: run `make benchmark-destroy` when done.
 
@@ -21,8 +21,9 @@ From the repository root, each SSH call opening :22 to your IP alone and closing
 
 On the host, under `tmux new -s bench` so a dropped session does not stop the run, each size reseeded first:
 
-- `make grid` (`SIZES`, `RUNS`): 1 warm-up and `RUNS` timed calls of `listPublishedSamples` per case, with an `EXPLAIN ANALYZE` of each statement.
-- `make concurrency` (`SIZES`, `USERS`, `DURATION`): `USERS` virtual users sending `GET /samples` back to back for `DURATION` seconds.
+- `make grid` (`SIZES`, `RUNS`, `ENDPOINTS`): 1 warm-up and `RUNS` timed calls of `listPublishedSamples` (`list`) and `countPublishedFacets` (`facets`) per case, with an `EXPLAIN ANALYZE` of each statement.
+- `make concurrency` (`SIZES`, `USERS`, `DURATION`, `ENDPOINTS`): `USERS` virtual users loading search pages back to back for `DURATION` seconds, each page sending `GET /samples` (`list`) and `GET /samples/facets` (`facets`) at once, as the search page does.
+- `ENDPOINTS` defaults to `list facets`; `ENDPOINTS=list` or `ENDPOINTS=facets` times one alone.
 
 ## Cases
 
@@ -32,6 +33,7 @@ On the host, under `tmux new -s bench` so a dropped session does not stop the ru
 ## Results
 
 - One `benchmark-results/<UTC timestamp>/` per run: `conditions.csv`, then `grid.csv`, `explain.csv` and `plans/` or `concurrency.csv` and `concurrency-summary.csv`.
+- Each timing CSV has an `endpoint` column.
 - Percentiles are nearest-rank.
 
 ## Cleaning up by hand

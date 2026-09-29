@@ -1,5 +1,8 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+export const withOptionalCount = (label: string) =>
+  new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( \\(\\d+\\))?$`);
+
 export const pickHierarchyLevel = (
   page: Page,
   combobox: Locator,
@@ -7,10 +10,9 @@ export const pickHierarchyLevel = (
   scope: Locator | Page = page,
 ) => {
   const chip = scope.getByRole("button", {
-    name: `Remove ${label}`,
-    exact: true,
+    name: withOptionalCount(`Remove ${label}`),
   });
-  const option = page.getByRole("option", { name: label, exact: true });
+  const option = page.getByRole("option", { name: withOptionalCount(label) });
   return expect(async () => {
     if (!(await chip.isVisible())) {
       if (!(await option.isVisible())) await combobox.click();

@@ -1,5 +1,6 @@
 import {
   listSamplesResponseSchema,
+  sampleFacetCountsResponseSchema,
   sampleResponseSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
 import { testClient } from "hono/testing";
@@ -112,6 +113,24 @@ describe("public sample routes", () => {
       meta: { total: 1 },
     });
   });
+
+  pgTest(
+    "should count the published samples per facet value",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      await createPublishedSample(client, "Grès de Fontainebleau");
+      await createSample(client, "Basalte du Massif Central");
+      // Act
+      const res = await client.samples.facets.$get({
+        query: { page: "1", perPage: "10" },
+      });
+      // Assert
+      expect(res.status).toBe(200);
+      const { data } = sampleFacetCountsResponseSchema.parse(await res.json());
+      expect(data.nature).toEqual({ powder: 1 });
+    },
+  );
 
   pgTest.for(["GRES", "facies"])(
     "should filter published samples on %j, ignoring case and diacritics",

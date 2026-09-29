@@ -7,6 +7,7 @@ TS := $(shell date -u +%Y%m%dT%H%M%SZ)
 RUNS ?= 30
 USERS ?= 1 5 10 20
 DURATION ?= 30
+ENDPOINTS ?= list facets
 grid: SIZES ?= 10000 50000 100000 200000
 concurrency: SIZES ?= 50000 100000 200000
 
@@ -18,7 +19,7 @@ RUNNER = $(COMPOSE) exec -T runner pnpm
 define RESET
 $(COMPOSE) stop api
 $(COMPOSE) up -d --wait postgres
-$(SQL) "drop schema public cascade; create schema public;"
+$(COMPOSE) exec -T postgres psql -U igsn -d postgres -v ON_ERROR_STOP=1 -c "drop database igsn with (force)" -c "create database igsn"
 $(RUNNER) migrate
 $(RUNNER) seed:bench --count $(1)
 $(SQL) "vacuum analyze"
@@ -71,19 +72,19 @@ conditions: ## Write the host, Postgres and build conditions to results/TS/condi
 		cat build.csv
 	} >$(DIR)/conditions.csv
 
-grid: conditions ## Time every case at each of SIZES, RUNS timed calls each, with EXPLAIN plans
-	printf 'runs,%s\nsizes,%s\n' '$(RUNS)' '$(SIZES)' >>$(DIR)/conditions.csv
+grid: conditions ## Time every case of each of ENDPOINTS at each of SIZES, RUNS timed calls each, with EXPLAIN plans
+	printf 'runs,%s\nsizes,%s\nendpoints,%s\n' '$(RUNS)' '$(SIZES)' '$(ENDPOINTS)' >>$(DIR)/conditions.csv
 	for size in $(SIZES); do
 		$(call RESET,$$size)
-		$(RUNNER) bench:grid --size $$size --runs $(RUNS) --out /$(DIR)
+		$(RUNNER) bench:grid --size $$size --runs $(RUNS) --endpoints '$(ENDPOINTS)' --out /$(DIR)
 	done
 
-concurrency: conditions ## Run the seeded list mix through the api at each of SIZES for each of USERS, DURATION seconds each
-	printf 'duration_s,%s\nusers,%s\nsizes,%s\n' '$(DURATION)' '$(USERS)' '$(SIZES)' >>$(DIR)/conditions.csv
+concurrency: conditions ## Run the seeded mix against ENDPOINTS together through the api at each of SIZES for each of USERS, DURATION seconds each
+	printf 'duration_s,%s\nusers,%s\nsizes,%s\nendpoints,%s\n' '$(DURATION)' '$(USERS)' '$(SIZES)' '$(ENDPOINTS)' >>$(DIR)/conditions.csv
 	for size in $(SIZES); do
 		$(call RESET,$$size)
 		$(START)
-		$(RUNNER) bench:concurrency --size $$size --users '$(USERS)' --duration $(DURATION) --url http://api:8080 --out /$(DIR)
+		$(RUNNER) bench:concurrency --size $$size --users '$(USERS)' --duration $(DURATION) --endpoints '$(ENDPOINTS)' --url http://api:8080 --out /$(DIR)
 	done
 
 .PHONY: help up reset conditions grid concurrency
