@@ -18,6 +18,14 @@ export async function insertParent(
   const created = await insertSample(db, { ...publishableSample, name });
   await insertSampleOwner(db, created.id, ownerId);
   if (status === "draft") return created;
+  if (status === "publishing" || status === "publish_failed") {
+    await db
+      .updateTable("sample")
+      .set({ status })
+      .where("id", "=", created.id)
+      .execute();
+    return { ...created, status };
+  }
   const published = await publishSample(
     db,
     created.id,

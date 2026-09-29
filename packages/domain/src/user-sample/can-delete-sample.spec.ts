@@ -15,6 +15,12 @@ describe("canDeleteSample", () => {
     [null, "published", false],
     ["owner", "withdrawn", false],
     ["editor", "withdrawn", false],
+    ["owner", "publishing", false],
+    ["editor", "publishing", false],
+    ["owner", "publish_failed", true],
+    ["editor", "publish_failed", true],
+    ["contributor", "publish_failed", false],
+    [null, "publish_failed", false],
   ] as [UserSampleRole | null, SampleStatus, boolean][])(
     "should answer, for the %s on a %s sample, %s",
     (role, status, expected) => {

@@ -93,8 +93,8 @@ export function ImportSamplesDialog() {
             ) : null}
           </div>
         ) : null}
-        {importSamples.data?.length ? (
-          <ImportReport issues={importSamples.data} />
+        {importSamples.data?.issues.length ? (
+          <ImportReport issues={importSamples.data.issues} />
         ) : null}
         <DialogFooter>
           <DialogClose asChild>
@@ -111,7 +111,7 @@ export function ImportSamplesDialog() {
               importSamples.mutate(
                 { file },
                 {
-                  onSuccess: (issues) => {
+                  onSuccess: ({ issues }) => {
                     if (issues.length === 0) close();
                   },
                 },

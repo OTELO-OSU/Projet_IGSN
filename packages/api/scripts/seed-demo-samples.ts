@@ -1639,14 +1639,14 @@ const COLLECTION_SPECIMEN_CONTEXT: SampleRow["scientificContext"] = {
 
 const PUBLISHED_ROWS = [...PUBLISHED, ...LINEAGE];
 
-export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED_ROWS, ...DRAFTS].map(
-  (row, index) => {
+export const DEMO_SAMPLES: SampleRow[] = [
+  ...[...PUBLISHED_ROWS, ...DRAFTS].map((row, index) => {
     const id = demoId(index);
     const published = index < PUBLISHED_ROWS.length;
     return {
       ...row,
       id,
-      status: published ? "published" : "draft",
+      status: published ? ("published" as const) : ("draft" as const),
       ...(published
         ? {
             igsn: generateIgsnSuffix(id),
@@ -1661,8 +1661,26 @@ export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED_ROWS, ...DRAFTS].map(
           }
         : {}),
     };
+  }),
+  {
+    id: demoId(PUBLISHED_ROWS.length + DRAFTS.length),
+    name: "Failed import andesite",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock_and_sediment.rock.igneous.volcanic.intermediate.andesite",
+    location: {
+      position: point(2.75, 45.63),
+      region: { kind: "country", country: "FR" },
+    },
+    description: on("2026-05-10"),
+    existenceStatus: "exists",
+    availabilityStatus: "available",
+    scientificContext: FIELD_SAMPLE_CONTEXT,
+    repository: DEMO_REPOSITORY,
+    status: "publish_failed",
+    publishingError: "DataCite registration failed (HTTP 500)",
   },
-);
+];
 
 const DEMO_ROLES: SampleAdditionalRole[] = [
   {

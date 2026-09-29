@@ -33,6 +33,7 @@ const TECHNICAL = {
   doiPrefix: DOI_PREFIX,
   internalNumber: 7,
   status: "published",
+  publishingError: null,
   createdAt: new Date("2024-06-02T10:00:00.000Z"),
   publishedAt: new Date("2024-06-03T10:00:00.000Z"),
   updatedAt: new Date("2024-06-04T10:00:00.000Z"),

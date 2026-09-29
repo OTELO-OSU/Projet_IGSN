@@ -83,6 +83,19 @@ export function createSampleRepository(
           await insertOwnedSample(trx, input, owner.id, owner),
         ),
       ),
+    createPublishing: (inputs, owner) =>
+      withTransaction(db, async (trx) => {
+        const ids: string[] = [];
+        for (const input of inputs) {
+          ids.push(await insertOwnedSample(trx, input, owner.id, owner));
+        }
+        await trx
+          .updateTable("sample")
+          .set({ status: "publishing" })
+          .where("id", "in", ids)
+          .execute();
+        return ids.length;
+      }),
     createPublished: (input, ownerId, groups) =>
       withTransaction(db, async (trx) => {
         const id = await insertOwnedSample(trx, input, ownerId, groups);

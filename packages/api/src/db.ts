@@ -158,6 +158,7 @@ type SampleTable = {
   institutional_osu: string | null;
   institutional_laboratory: string | null;
   status: Generated<SampleStatus>;
+  publishing_error: string | null;
   created_at: Generated<Date>;
   published_at: Generated<Date | null>;
   updated_at: Generated<Date>;

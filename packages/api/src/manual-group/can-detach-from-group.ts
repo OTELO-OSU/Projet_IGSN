@@ -1,5 +1,6 @@
 import type { Expression } from "kysely";
 
+import { PERMANENT_IGSN_STATUSES } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { expressionBuilder } from "kysely";
 
 import type { DB } from "../db.ts";
@@ -20,7 +21,7 @@ function ownsIgsnBearingSampleInGroup(
       )
       .select("sample.id")
       .where("sample_manual_group.group_id", "=", groupId)
-      .where("sample.status", "<>", "draft")
+      .where("sample.status", "in", PERMANENT_IGSN_STATUSES)
       .where("user_sample.user_id", "=", userId)
       .where("user_sample.role", "=", "owner"),
   );

@@ -38,6 +38,7 @@ const validSample = {
   doiPrefix: null,
   internalNumber: null,
   status: "draft",
+  publishingError: null,
   createdAt: "2026-07-02T10:00:00.000Z",
   updatedAt: "2026-07-02T10:00:00.000Z",
 };
@@ -93,6 +94,7 @@ describe("sampleSchema", () => {
       institutionalOsu: null,
       institutionalLaboratory: null,
       status: "draft",
+      publishingError: null,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
       updatedAt: new Date("2026-07-02T10:00:00.000Z"),
     });

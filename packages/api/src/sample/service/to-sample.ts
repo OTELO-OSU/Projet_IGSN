@@ -369,6 +369,7 @@ export function toSample(row: SampleRow): Sample {
     institutionalOsu: row.institutional_osu,
     institutionalLaboratory: row.institutional_laboratory,
     status: row.status,
+    publishingError: row.publishing_error,
     createdAt: row.created_at,
     publishedAt: row.published_at,
     updatedAt: row.updated_at,

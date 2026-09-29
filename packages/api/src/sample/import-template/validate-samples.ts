@@ -9,7 +9,10 @@ import {
   samplePublishBlockers,
   toPublishableFields,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
-import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
+import {
+  type CreateSample,
+  createSampleSchema,
+} from "@projet-igsn/domain/sample/sample";
 
 import type { SampleCandidate } from "./build-sample-inputs.ts";
 import type { Column } from "./columns.ts";
@@ -130,16 +133,22 @@ function keptFieldBlockers(
     }));
 }
 
-export function validateSamples(
-  samples: readonly SampleCandidate[],
-): ImportIssue[] {
-  return samples.flatMap((sample) => {
+export function validateSamples(samples: readonly SampleCandidate[]): {
+  issues: ImportIssue[];
+  inputs: CreateSample[];
+} {
+  const issues: ImportIssue[] = [];
+  const inputs: CreateSample[] = [];
+  for (const sample of samples) {
     const parsed = publishedSampleSchema.safeParse(sample.input);
-    return parsed.success
+    const found = parsed.success
       ? droppedIssues(sample, parsed.data)
       : [
           ...parsed.error.issues.map((issue) => issueOf(sample, issue)),
           ...keptFieldBlockers(sample, parsed.error.issues),
         ];
-  });
+    issues.push(...found);
+    if (parsed.success && found.length === 0) inputs.push(parsed.data);
+  }
+  return { issues, inputs };
 }

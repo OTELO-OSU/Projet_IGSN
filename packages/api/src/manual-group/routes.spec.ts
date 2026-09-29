@@ -369,13 +369,18 @@ describe("admin manual group routes", () => {
     },
   );
 
-  pgTest(
-    "should delete a group attached to a draft sample, detaching it and keeping the sample",
-    async ({ db }) => {
+  pgTest.for(["draft", "publishing", "publish_failed"] as const)(
+    "should delete a group attached to a %s sample, detaching it and keeping the sample",
+    async (status, { db }) => {
       // Arrange
       await insertGroup(db, MASSIF, "Massif Central 2026 94c");
       const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
       const sample = await insertSampleInGroup(db, curie.id, MASSIF);
+      await db
+        .updateTable("sample")
+        .set({ status })
+        .where("id", "=", sample)
+        .execute();
       const client = await asSuperAdmin(db);
       // Act
       const res = await client.admin["manual-groups"][":id"].$delete(
@@ -481,6 +486,34 @@ describe("admin manual group routes", () => {
         ["marie.curie-94c@univ-lorraine.fr", false],
         ["pierre.dupont-94c@univ-lorraine.fr", true],
       ]);
+    },
+  );
+
+  pgTest.for(["publishing", "publish_failed"] as const)(
+    "should keep a member owning a %s sample of the group detachable",
+    async (status, { db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr");
+      await insertMember(db, MASSIF, curie.id);
+      const sample = await insertSampleInGroup(db, curie.id, MASSIF);
+      await db
+        .updateTable("sample")
+        .set({ status })
+        .where("id", "=", sample)
+        .execute();
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["manual-groups"][":id"].members.$get(
+        { param: { id: MASSIF } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(
+        manualGroupMembersResponseSchema
+          .parse(await res.json())
+          .data.map(({ canDetach }) => canDetach),
+      ).toEqual([true]);
     },
   );
 

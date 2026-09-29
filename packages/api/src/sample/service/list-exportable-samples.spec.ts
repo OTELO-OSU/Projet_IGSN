@@ -1,5 +1,6 @@
 import type { ExportSamplesRequest } from "@projet-igsn/domain/sample/export/export-validator";
-import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
+import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 import type { Kysely } from "kysely";
 
@@ -31,7 +32,7 @@ async function sampleOf(
     ownerId,
     laboratory = null,
   }: {
-    status?: Sample["status"];
+    status?: "draft" | SetSampleStatusBody["status"];
     material?: CreateSample["material"];
     ownerId?: string;
     laboratory?: string | null;

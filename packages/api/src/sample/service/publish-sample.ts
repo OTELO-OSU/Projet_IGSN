@@ -21,6 +21,7 @@ export async function publishSample(
     .updateTable("sample")
     .set({
       status,
+      publishing_error: null,
       igsn: generateIgsnSuffix(id),
       doi_prefix: sql`coalesce(doi_prefix, ${config?.prefix ?? null})`,
       publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,

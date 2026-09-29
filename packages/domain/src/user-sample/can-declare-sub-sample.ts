@@ -7,6 +7,8 @@ export function canDeclareSubSample(
 ): boolean {
   switch (sample.status) {
     case "draft":
+    case "publishing":
+    case "publish_failed":
       return false;
     case "published":
       return true;

@@ -10,6 +10,7 @@ export function canUpdateSample(
 ): boolean {
   return (
     sample.status !== "tombstone" &&
+    sample.status !== "publishing" &&
     (isSampleEditor(role) ||
       (role === "contributor" && !hasPermanentIgsn(sample)))
   );

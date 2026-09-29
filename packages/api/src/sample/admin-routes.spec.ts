@@ -1435,6 +1435,55 @@ describe("admin sample routes", () => {
         expect(res.status).toBe(409);
       },
     );
+
+    pgTest(
+      "should answer 409 when publishing a sample still publishing",
+      async ({ db }) => {
+        // Arrange
+        const client = testClient(createApp(db).app);
+        const data = await createSample(db, client, publishableSample);
+        await db
+          .updateTable("sample")
+          .set({ status: "publishing" })
+          .where("id", "=", data.id)
+          .execute();
+        // Act
+        const res = await client.admin.samples[":id"].publish.$post(
+          { param: { id: data.id } },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(409);
+      },
+    );
+
+    pgTest(
+      "should publish a sample whose background publish failed and clear its error",
+      async ({ db }) => {
+        // Arrange
+        const client = testClient(createApp(db).app);
+        const data = await createSample(db, client, publishableSample);
+        await db
+          .updateTable("sample")
+          .set({ status: "publish_failed", publishing_error: "503 down" })
+          .where("id", "=", data.id)
+          .execute();
+        // Act
+        const res = await client.admin.samples[":id"].publish.$post(
+          { param: { id: data.id } },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        await expect(
+          db
+            .selectFrom("sample")
+            .select(["status", "publishing_error"])
+            .where("id", "=", data.id)
+            .executeTakeFirstOrThrow(),
+        ).resolves.toEqual({ status: "published", publishing_error: null });
+      },
+    );
   });
 
   describe("validation", () => {
@@ -3289,7 +3338,7 @@ describe("admin sample routes", () => {
         status = "draft",
       }: {
         role?: "owner" | "contributor" | "moderator";
-        status?: SampleStatus;
+        status?: "draft" | SetSampleStatusBody["status"];
       } = {},
     ) {
       const caller = await insertUser(db, authenticatedCallerEmail);
