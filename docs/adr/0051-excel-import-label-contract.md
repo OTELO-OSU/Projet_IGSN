@@ -38,6 +38,8 @@ The template download can be customized by provenance status, material path (up 
 - A sample row equal to its pre-fill is blank, so an untouched pre-filled row is not a sample.
 - Child rows keyed to a blank row are `unknown_sample_key` orphans.
 - Manual groups are only recorded in `C1` and `C2`; the import applies none of them yet.
+- `POST /admin/samples/import-template/reservation` takes the same optional customization as the download, so reserved `Sample #` IDs land in the customized workbook.
+- A manual group that cannot be attached is a 422 before the sequence advances, burning no numbers.
 
 ## Rejected option
 
