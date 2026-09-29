@@ -247,6 +247,7 @@ describe("clearDependents", () => {
       { institutionalOsu: undefined, institutionalLaboratory: undefined },
     ],
     ["institutionalOsu", { institutionalLaboratory: undefined }],
+    ["material", { mineralClassification: undefined }],
     ["nature", {}],
   ])("should clear the facets narrower than %s", (key, expected) => {
     expect(clearDependents(key)).toStrictEqual(expected);

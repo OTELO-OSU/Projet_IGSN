@@ -12,6 +12,7 @@ import {
 
 const LORRAINE = "04vfs2w97";
 const TYPE_FACET = "Type";
+const MINERAL_CLASSIFICATION_FACET = "Strunz-Mindat (2026) Classifications";
 
 async function renderFacets(
   values: FacetValues = {},
@@ -114,16 +115,31 @@ describe("SampleFacets", () => {
   });
 
   it("should report a picked Strunz category of the mineral classification facet", async () => {
-    const { screen, onChange } = await renderFacets();
+    const { screen, onChange } = await renderFacets({
+      material: "rock_and_sediment.mineral",
+    });
 
     await screen
-      .getByRole("combobox", { name: "Strunz-Mindat (2026) Classifications" })
+      .getByRole("combobox", { name: MINERAL_CLASSIFICATION_FACET })
       .click();
     await screen
       .getByRole("option", { name: "Silicates", exact: true })
       .click();
 
     expect(onChange).toHaveBeenCalledWith("mineralClassification", "9");
+  });
+
+  it("should hide the mineral classification facet until a mineral material is picked", async () => {
+    const { screen } = await renderFacets();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Nature" }))
+      .toBeVisible();
+    expect(
+      screen
+        .getByRole("combobox", { name: MINERAL_CLASSIFICATION_FACET })
+        .elements(),
+    ).toEqual([]);
   });
 
   it("should report an age bound on blur", async () => {
