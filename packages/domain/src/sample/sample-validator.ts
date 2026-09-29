@@ -130,6 +130,14 @@ export const listSamplesQuerySchema = z.object({
 
 export type ListSamplesQuery = z.infer<typeof listSamplesQuerySchema>;
 
+export const retryPublicationResponseSchema = z.object({
+  count: z.number().int(),
+});
+
+export type RetryPublicationResponse = z.infer<
+  typeof retryPublicationResponseSchema
+>;
+
 export const listSamplesResponseSchema = z.object({
   data: z.array(sampleSchema),
   meta: z.object({ total: z.number() }),
