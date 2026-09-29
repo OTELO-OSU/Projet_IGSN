@@ -7,6 +7,7 @@ import {
   reserveInternalIdsSchema,
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { sampleMapQuerySchema } from "@projet-igsn/domain/sample/map/model";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   checkDuplicatesBodySchema,
@@ -117,6 +118,12 @@ export const validatePublicListQuery = validator("query", (value, c) => {
   }
   return parsed.data;
 });
+
+export const validatePublicMapQuery = zodValidator(
+  "query",
+  sampleMapQuerySchema,
+  "Invalid query parameters",
+);
 
 function sampleBodyValidator<
   S extends typeof createSampleSchema | typeof updateSampleBodySchema,

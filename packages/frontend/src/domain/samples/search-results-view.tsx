@@ -1,4 +1,5 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { ReactNode } from "react";
 
 import { FieldPicker } from "@projet-igsn/design-system/components/ui/field-picker";
 import {
@@ -14,6 +15,16 @@ import {
 import { SampleList } from "#/domain/samples/sample-list.tsx";
 import { m } from "#/paraglide/messages.js";
 
+export function ResultsCount({ total }: { total: number }) {
+  return (
+    <p className="text-muted-foreground">
+      {total === 1
+        ? m.search_results_count_one()
+        : m.search_results_count({ count: total })}
+    </p>
+  );
+}
+
 export function SearchResultsView({
   samples,
   total,
@@ -26,6 +37,7 @@ export function SearchResultsView({
   onPageChange,
   onPerPageChange,
   onFieldsChange,
+  actions,
 }: {
   samples: Sample[];
   total: number;
@@ -38,23 +50,23 @@ export function SearchResultsView({
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
   onFieldsChange: (fields: string[]) => void;
+  actions?: ReactNode;
 }) {
   if (total === 0) {
     return (
-      <p role="status" className="text-muted-foreground text-center">
-        {emptyMessage}
-      </p>
+      <div className="flex flex-col items-center gap-4">
+        <p role="status" className="text-muted-foreground text-center">
+          {emptyMessage}
+        </p>
+        {actions}
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-1">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <p className="text-muted-foreground">
-          {total === 1
-            ? m.search_results_count_one()
-            : m.search_results_count({ count: total })}
-        </p>
+        <ResultsCount total={total} />
         <div className="flex items-center gap-4">
           <PageSizeSelect
             perPage={perPage}
@@ -74,8 +86,10 @@ export function SearchResultsView({
               onFieldsChange(selectedCardFields(next).map((field) => field.key))
             }
             triggerLabel={m.card_fields_add()}
+            triggerVariant="ghost"
             legend={m.card_fields_legend()}
           />
+          {actions}
         </div>
       </div>
       <SampleList samples={samples} query={query} fields={fields} />

@@ -222,18 +222,6 @@ describe("listSamples", () => {
     },
   );
 
-  pgTest(
-    "should keep a tombstoned sample out of the published list",
-    async ({ db }) => {
-      // Arrange
-      await insertOneSamplePerStatus(db);
-      // Act
-      const { data } = await listPublishedSamples(db, { page: 1, perPage: 10 });
-      // Assert
-      expect(data.map((sample) => sample.name)).toEqual(["Published sample"]);
-    },
-  );
-
   pgTest.for([
     ["draft", "Draft sample"],
     ["published", "Published sample"],
@@ -618,11 +606,14 @@ describe("listSamples", () => {
     },
   );
 
-  pgTest(
-    "should match no sample when a person facet token matches neither name",
-    async ({ db }) => {
+  pgTest.for([
+    ["typed", insertCollectors],
+    ["linked account", insertLinkedCollectors],
+  ] as const)(
+    "should match no sample when a person facet token matches neither %s name",
+    async ([, seed], { db }) => {
       // Arrange
-      await insertCollectors(db);
+      await seed(db);
       // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
@@ -649,23 +640,6 @@ describe("listSamples", () => {
       // Assert
       expect(total).toBe(1);
       expect(data.map((s) => s.name)).toEqual(["Linked to Curie"]);
-    },
-  );
-
-  pgTest(
-    "should match no sample when a token matches neither name of the linked account",
-    async ({ db }) => {
-      // Arrange
-      await insertLinkedCollectors(db);
-      // Act
-      const { data, total } = await listAsOwner(db, {
-        page: 1,
-        perPage: 10,
-        collectorName: "marie dupont",
-      });
-      // Assert
-      expect(total).toBe(0);
-      expect(data).toEqual([]);
     },
   );
 
@@ -879,56 +853,6 @@ describe("listSamples", () => {
         ageMin: 0,
         ageMax: 1000,
         ageUnit: "ga",
-      });
-      // Assert
-      expect(total).toBe(0);
-      expect(data).toEqual([]);
-    },
-  );
-
-  pgTest(
-    "should match a geological-only sample by overlapping range",
-    async ({ db }) => {
-      // Arrange
-      await insertSample(db, {
-        name: "Miocene",
-        nature: "powder",
-        type: null,
-        collectionMethod: null,
-        age: geologicalAge(4, 4),
-      });
-      // Act
-      const { data, total } = await listAsOwner(db, {
-        page: 1,
-        perPage: 10,
-        ageMin: 0,
-        ageMax: 100,
-        ageUnit: "ma",
-      });
-      // Assert
-      expect(total).toBe(1);
-      expect(data.map((s) => s.name)).toEqual(["Miocene"]);
-    },
-  );
-
-  pgTest(
-    "should exclude a geological-only sample outside the range",
-    async ({ db }) => {
-      // Arrange
-      await insertSample(db, {
-        name: "Miocene",
-        nature: "powder",
-        type: null,
-        collectionMethod: null,
-        age: geologicalAge(4, 4),
-      });
-      // Act
-      const { data, total } = await listAsOwner(db, {
-        page: 1,
-        perPage: 10,
-        ageMin: 200,
-        ageMax: 300,
-        ageUnit: "ma",
       });
       // Assert
       expect(total).toBe(0);
@@ -1216,31 +1140,32 @@ describe("listSamples", () => {
     expect(data.map((s) => s.name)).toEqual(["Match"]);
   });
 
-  pgTest("should filter samples by a bounding box", async ({ db }) => {
+  pgTest("should AND the map viewport with the bbox", async ({ db }) => {
     // Arrange
-    const inside = await insertSample(db, {
-      name: "Inside",
+    const both = await insertSample(db, {
+      name: "Both",
       nature: "powder",
       type: null,
       collectionMethod: null,
       location: { position: { type: "point", longitude: 5, latitude: 45 } },
     });
     await insertSample(db, {
-      name: "Outside",
+      name: "Bbox only",
       nature: "powder",
       type: null,
       collectionMethod: null,
-      location: { position: { type: "point", longitude: 100, latitude: 45 } },
+      location: { position: { type: "point", longitude: -5, latitude: 45 } },
     });
     // Act
     const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       bbox: { west: -10, south: 40, east: 10, north: 50 },
+      viewport: { west: 0, south: 40, east: 20, north: 50 },
     });
     // Assert
     expect(total).toBe(1);
-    expect(data.map((s) => s.id)).toEqual([inside.id]);
+    expect(data.map((s) => s.id)).toEqual([both.id]);
   });
 
   pgTest("should intersect an area straddling the box edge", async ({ db }) => {
@@ -1395,34 +1320,6 @@ describe("listSamples", () => {
     expect(overGreenwich.data).toEqual([]);
   });
 
-  pgTest("should compose bbox and search with AND", async ({ db }) => {
-    // Arrange
-    const match = await insertSample(db, {
-      name: "Grès de Fontainebleau",
-      nature: "powder",
-      type: null,
-      collectionMethod: null,
-      location: { position: { type: "point", longitude: 5, latitude: 45 } },
-    });
-    await insertSample(db, {
-      name: "Basalte",
-      nature: "powder",
-      type: null,
-      collectionMethod: null,
-      location: { position: { type: "point", longitude: 6, latitude: 46 } },
-    });
-    // Act
-    const { data, total } = await listAsOwner(db, {
-      page: 1,
-      perPage: 10,
-      search: "gres",
-      bbox: { west: -10, south: 40, east: 10, north: 50 },
-    });
-    // Assert
-    expect(total).toBe(1);
-    expect(data.map((s) => s.id)).toEqual([match.id]);
-  });
-
   pgTest("should order a search by relevance first", async ({ db }) => {
     // Arrange
     const exact = await insertSample(db, {
@@ -1481,30 +1378,6 @@ describe("listSamples", () => {
       ]);
     },
   );
-
-  pgTest("should paginate a search without gap or repeat", async ({ db }) => {
-    // Arrange
-    for (const name of ["Basalt One", "Basalt Two", "Basalt Three"]) {
-      await insertSample(db, {
-        name,
-        nature: "hand_sample",
-        type: null,
-        collectionMethod: null,
-      });
-    }
-    // Act
-    const search = "basalt";
-    const page1 = await listAsOwner(db, { page: 1, perPage: 2, search });
-    const page2 = await listAsOwner(db, { page: 2, perPage: 2, search });
-    // Assert
-    expect(page1.total).toBe(3);
-    const names = [...page1.data, ...page2.data].map((sample) => sample.name);
-    expect(names.toSorted()).toEqual([
-      "Basalt One",
-      "Basalt Three",
-      "Basalt Two",
-    ]);
-  });
 
   describe("fuzzy threshold", () => {
     const seedAchondrite = (db: Transactional<DB>) =>

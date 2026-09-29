@@ -1,5 +1,6 @@
 import type { Kysely } from "kysely";
 
+import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
@@ -17,11 +18,12 @@ import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { createManualGroupRoutes } from "./manual-group/routes.ts";
 import {
   CONTACT_MAIL_IP_BUDGET,
+  MAP_IP_BUDGET,
   IMPORT_TEMPLATE_USER_BUDGET,
   MAIL_REQUEST_USER_BUDGET,
   loadRateLimitConfig,
 } from "./rate-limit/config.ts";
-import { rateLimit } from "./rate-limit/middleware.ts";
+import { type RateLimitEnv, rateLimit } from "./rate-limit/middleware.ts";
 import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
 import { createSampleParentRoutes } from "./sample/parent-routes.ts";
@@ -77,8 +79,16 @@ export function createApp(
     createInstitutionalGroupRepository(database);
   const serviceAccountRepository = createServiceAccountRepository(database);
 
-  const publicSampleRoutes = new Hono()
-    .use("*", rateLimit(rateLimitConfig, "ip"))
+  const publicRateLimit = rateLimit(rateLimitConfig, "ip");
+  const mapRateLimit = rateLimit(rateLimitConfig, "ip", MAP_IP_BUDGET);
+  const publicSampleRoutes = new Hono<RateLimitEnv>()
+    .use("*", (c, next) =>
+      c.req.path.endsWith("/samples/map") ||
+      (c.req.path.endsWith("/samples") &&
+        bboxSchema.safeParse(c.req.query("viewport")).success)
+        ? mapRateLimit(c, next)
+        : publicRateLimit(c, next),
+    )
     .use(
       "/:igsn/contact",
       rateLimit(rateLimitConfig, "ip", CONTACT_MAIL_IP_BUDGET),

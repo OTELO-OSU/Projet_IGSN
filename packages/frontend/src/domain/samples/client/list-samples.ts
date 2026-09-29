@@ -15,23 +15,38 @@ export type ListSamplesParams = {
   search?: string;
   filters?: SampleFilters;
   bbox?: string;
+  viewport?: string;
 };
 export type ListSamplesResult = { data: Sample[]; total: number };
 
+export type SearchFilters = Omit<ListSamplesParams, "page" | "perPage">;
+
+export function searchFilterParams({
+  search,
+  filters,
+  bbox,
+  viewport,
+}: SearchFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (bbox) params.set("bbox", bbox);
+  if (viewport) params.set("viewport", viewport);
+  for (const [key, value] of Object.entries(filters ?? {})) {
+    if (value !== undefined && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  return params;
+}
+
 export async function listSamples(
-  { page, perPage, search, filters, bbox }: ListSamplesParams,
+  { page, perPage, ...filters }: ListSamplesParams,
   fetchFn: typeof fetch = apiFetch,
 ): Promise<ListSamplesResult> {
   const url = new URL("samples", baseApiUrl);
+  url.search = searchFilterParams(filters).toString();
   url.searchParams.set("page", String(page));
   url.searchParams.set("perPage", String(perPage));
-  if (search) url.searchParams.set("search", search);
-  if (bbox) url.searchParams.set("bbox", bbox);
-  for (const [key, value] of Object.entries(filters ?? {})) {
-    if (value !== undefined && value !== "") {
-      url.searchParams.set(key, String(value));
-    }
-  }
 
   const res = await fetchFn(url);
   if (!res.ok) {

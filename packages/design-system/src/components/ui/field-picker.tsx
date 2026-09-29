@@ -18,12 +18,14 @@ export function FieldPicker({
   selected,
   onSelectedChange,
   triggerLabel,
+  triggerVariant = "secondary",
   legend,
 }: {
   fields: readonly PickerField[];
   selected: readonly string[];
   onSelectedChange: (keys: string[]) => void;
   triggerLabel: string;
+  triggerVariant?: "secondary" | "ghost";
   legend: string;
 }) {
   function toggle(key: string, checked: boolean) {
@@ -35,7 +37,7 @@ export function FieldPicker({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button type="button" variant="secondary">
+        <Button type="button" variant={triggerVariant} className="text-primary">
           <PlusIcon aria-hidden />
           {triggerLabel}
         </Button>

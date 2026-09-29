@@ -126,6 +126,7 @@ export const listSamplesQuerySchema = z.object({
   institution: institutionFilterSchema.optional().catch(undefined),
   ...facetQueryFields(),
   bbox: bboxSchema.optional().catch(undefined),
+  viewport: bboxSchema.optional().catch(undefined),
 });
 
 export type ListSamplesQuery = z.infer<typeof listSamplesQuerySchema>;

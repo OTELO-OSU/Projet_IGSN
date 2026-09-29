@@ -33,6 +33,7 @@ export const searchParamsSchema = z.object({
   engine: searchEngineSchema.optional().catch(undefined),
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: z.undefined().or(pageSizeSchema(PER_PAGE)).optional(),
+  map: z.literal(true).optional().catch(undefined),
   ...facetQueryFields(),
 });
 

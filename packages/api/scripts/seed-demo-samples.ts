@@ -1309,6 +1309,25 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2025-03-19"),
   },
+  {
+    name: "Vercors Limestone Traverse",
+    nature: "rock_chips",
+    type: "individual_sample",
+    material:
+      "rock_and_sediment.rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.limestone",
+    collectionMethod: "manual",
+    location: {
+      position: {
+        type: "line",
+        startLongitude: 5.45,
+        startLatitude: 45.0,
+        endLongitude: 5.65,
+        endLatitude: 45.15,
+      },
+      region: { kind: "country", country: "FR" },
+    },
+    description: on("2025-07-02"),
+  },
 ];
 
 const MONT_DORE: DemoRow["location"] = {

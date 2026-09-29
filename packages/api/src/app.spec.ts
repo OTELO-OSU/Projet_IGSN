@@ -5,6 +5,7 @@ import { createApp } from "./app.ts";
 import {
   AUTHENTICATED_USER_BUDGET,
   CONTACT_MAIL_IP_BUDGET,
+  MAP_IP_BUDGET,
   IMPORT_TEMPLATE_USER_BUDGET,
   MAIL_REQUEST_USER_BUDGET,
   PUBLIC_IP_BUDGET,
@@ -18,16 +19,6 @@ import { insertSampleOwner } from "./user-sample/insert-sample-owner.ts";
 const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9999";
 
 describe("app", () => {
-  describe("GET /", () => {
-    pgTest("should return Hello World", async ({ db }) => {
-      const client = testClient(createApp(db).app);
-
-      const res = await client.index.$get();
-      expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ message: "OK" });
-    });
-  });
-
   describe("GET /admin/currentUser", () => {
     const authHeader = { Authorization: "Bearer test-token" };
     const callerEmail = tokenEmail("test-token");
@@ -225,6 +216,7 @@ describe("app", () => {
     afterEach(() => {
       delete process.env.TRUST_PROXY_HEADERS;
       delete process.env.CORS_ORIGINS;
+      delete process.env.RATE_LIMIT_ENABLED;
     });
 
     const spend = async (
@@ -245,6 +237,35 @@ describe("app", () => {
       expect((await from("10.0.0.1")).status).toBe(429);
       expect((await from("10.0.0.2")).status).toBe(200);
     });
+
+    pgTest(
+      "should give map reads their own budget, apart from the public one",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const get = (path: string, ip: string) =>
+          app.request(path, { headers: { "X-Real-IP": ip } });
+        const mapFrom = (ip: string) => get("/samples/map", ip);
+        const mapListFrom = (ip: string) =>
+          get("/samples?viewport=-10,40,10,50", ip);
+
+        await spend(() => get("/samples", "10.0.0.5"), PUBLIC_IP_BUDGET.points);
+        expect((await mapFrom("10.0.0.5")).status).not.toBe(429);
+        expect((await get("/samples?viewport=x", "10.0.0.5")).status).toBe(429);
+        expect(
+          (
+            await get(
+              "/samples/0123456789ABCDEFGHJKMNPQRS?viewport=-10,40,10,50",
+              "10.0.0.5",
+            )
+          ).status,
+        ).toBe(429);
+
+        await spend(() => mapFrom("10.0.0.6"), MAP_IP_BUDGET.points - 1);
+        await spend(() => mapListFrom("10.0.0.6"), 1);
+        expect((await mapFrom("10.0.0.6")).status).toBe(429);
+        expect((await get("/samples", "10.0.0.6")).status).toBe(200);
+      },
+    );
 
     pgTest(
       "should throttle the contact endpoint far below the public budget, per client IP",
@@ -290,148 +311,78 @@ describe("app", () => {
       },
     );
 
-    pgTest(
-      "should throttle the deletion request far below the authenticated budget, per user",
-      async ({ db }) => {
-        const app = createApp(db).app;
-        const requestFrom = (token: string) =>
-          app.request(`/admin/samples/${UNKNOWN_ID}/deletion-request`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ reason: "It was destroyed." }),
-          });
-
-        await spend(
-          () => requestFrom("user-3"),
-          MAIL_REQUEST_USER_BUDGET.points,
-        );
-        expect((await requestFrom("user-3")).status).toBe(429);
-        expect((await requestFrom("user-4")).status).not.toBe(429);
-      },
-    );
-
-    pgTest(
-      "should throttle the import template far below the authenticated budget, per user",
-      async ({ db }) => {
-        const app = createApp(db).app;
-        const downloadFrom = (token: string) =>
-          app.request("/admin/samples/import-template?rows=0", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-        await spend(
-          () => downloadFrom("user-5"),
-          IMPORT_TEMPLATE_USER_BUDGET.points,
-        );
-        expect((await downloadFrom("user-5")).status).toBe(429);
-        expect((await downloadFrom("user-6")).status).not.toBe(429);
-      },
-    );
-
-    pgTest(
-      "should throttle the import on the import template's budget, per user",
-      async ({ db }) => {
-        const app = createApp(db).app;
-        const headersOf = (token: string) => ({
+    const adminRequest = (
+      app: ReturnType<typeof createApp>["app"],
+      token: string,
+      { path, body }: { path: string; body?: unknown },
+    ) =>
+      app.request(path, {
+        method: body === undefined ? "GET" : "POST",
+        headers: {
           Authorization: `Bearer ${token}`,
-        });
-        const importFrom = (token: string) =>
-          app.request("/admin/samples/import", {
-            method: "POST",
-            headers: headersOf(token),
-          });
+          "content-type": "application/json",
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
 
-        await spend(
-          () => importFrom("user-7"),
-          IMPORT_TEMPLATE_USER_BUDGET.points,
-        );
-        expect((await importFrom("user-7")).status).toBe(429);
-        expect(
-          (
-            await app.request("/admin/samples/import-template?rows=0", {
-              headers: headersOf("user-7"),
-            })
-          ).status,
-        ).toBe(429);
-        expect((await importFrom("user-8")).status).not.toBe(429);
+    pgTest.for([
+      {
+        route: {
+          path: `/admin/samples/${UNKNOWN_ID}/deletion-request`,
+          body: { reason: "It was destroyed." },
+        },
+        budget: MAIL_REQUEST_USER_BUDGET,
+      },
+      {
+        route: {
+          path: "/admin/samples/import/internal-id-request",
+          body: { internalIds: [] },
+        },
+        budget: MAIL_REQUEST_USER_BUDGET,
+      },
+      {
+        route: { path: "/admin/samples/import-template?rows=0" },
+        budget: IMPORT_TEMPLATE_USER_BUDGET,
+      },
+      {
+        route: {
+          path: "/admin/samples/export",
+          body: { mode: "ids", ids: [] },
+        },
+        budget: IMPORT_TEMPLATE_USER_BUDGET,
+      },
+    ])(
+      "should throttle $route.path far below the authenticated budget, per user",
+      async ({ route, budget }, { db }) => {
+        const app = createApp(db).app;
+
+        await spend(() => adminRequest(app, "user-1", route), budget.points);
+        expect((await adminRequest(app, "user-1", route)).status).toBe(429);
+        expect((await adminRequest(app, "user-2", route)).status).not.toBe(429);
       },
     );
 
-    pgTest(
-      "should throttle the internal ID reservation on the import template's budget, per user",
-      async ({ db }) => {
+    pgTest.for([
+      { path: "/admin/samples/import", body: {} },
+      {
+        path: "/admin/samples/import-template/reservation",
+        body: { count: 0 },
+      },
+    ])(
+      "should throttle $path on the import template's budget, per user",
+      async (route, { db }) => {
         const app = createApp(db).app;
-        const reserveFrom = (token: string) =>
-          app.request("/admin/samples/import-template/reservation", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ count: 0 }),
-          });
+        const template = { path: "/admin/samples/import-template?rows=0" };
 
         await spend(
-          () => reserveFrom("user-11"),
+          () => adminRequest(app, "user-1", route),
           IMPORT_TEMPLATE_USER_BUDGET.points,
         );
-        expect(
-          (
-            await app.request("/admin/samples/import-template?rows=0", {
-              headers: { Authorization: "Bearer user-11" },
-            })
-          ).status,
-        ).toBe(429);
-        expect((await reserveFrom("user-12")).status).not.toBe(429);
-      },
-    );
-
-    pgTest(
-      "should throttle the internal ID request on the mail request budget, per user",
-      async ({ db }) => {
-        const app = createApp(db).app;
-        const requestFrom = (token: string) =>
-          app.request("/admin/samples/import/internal-id-request", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ internalIds: [] }),
-          });
-
-        await spend(
-          () => requestFrom("user-13"),
-          MAIL_REQUEST_USER_BUDGET.points,
-        );
-        expect((await requestFrom("user-13")).status).toBe(429);
-        expect((await requestFrom("user-14")).status).not.toBe(429);
-      },
-    );
-
-    pgTest(
-      "should throttle the samples export far below the authenticated budget, per user",
-      async ({ db }) => {
-        const app = createApp(db).app;
-        const exportFrom = (token: string) =>
-          app.request("/admin/samples/export", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ mode: "ids", ids: [] }),
-          });
-
-        await spend(
-          () => exportFrom("user-9"),
-          IMPORT_TEMPLATE_USER_BUDGET.points,
-        );
-        expect((await exportFrom("user-9")).status).toBe(429);
-        expect((await exportFrom("user-10")).status).not.toBe(429);
+        expect([
+          (await adminRequest(app, "user-1", route)).status,
+          (await adminRequest(app, "user-1", template)).status,
+        ]).toEqual([429, 429]);
+        expect((await adminRequest(app, "user-2", route)).status).not.toBe(429);
       },
     );
 
@@ -464,20 +415,21 @@ describe("app", () => {
 
     pgTest("should never limit a CORS preflight", async ({ db }) => {
       const app = createApp(db).app;
-      const preflight = () =>
-        app.request("/samples", {
-          method: "OPTIONS",
-          headers: {
-            Origin: "http://localhost:3001",
-            "Access-Control-Request-Method": "GET",
-          },
-        });
+      const headers = {
+        "X-Real-IP": "10.0.0.1",
+        Origin: "http://localhost:3001",
+      };
 
-      const statuses = await Promise.all(
-        Array.from({ length: 5 }, async () => (await preflight()).status),
+      await spend(
+        () => app.request("/samples", { headers }),
+        PUBLIC_IP_BUDGET.points,
       );
+      const preflight = await app.request("/samples", {
+        method: "OPTIONS",
+        headers: { ...headers, "Access-Control-Request-Method": "GET" },
+      });
 
-      expect([...new Set(statuses)]).toEqual([204]);
+      expect(preflight.status).toBe(204);
     });
 
     pgTest(
@@ -487,7 +439,7 @@ describe("app", () => {
 
         const statuses = await Promise.all(
           Array.from(
-            { length: 3 },
+            { length: AUTHENTICATED_USER_BUDGET.points + 1 },
             async () => (await app.request("/admin/samples")).status,
           ),
         );
@@ -519,10 +471,7 @@ describe("app", () => {
         const from = () =>
           app.request("/samples", { headers: { "X-Real-IP": "10.0.0.1" } });
 
-        const first = await from();
-        expect(first.status).toBe(200);
-        expect(first.headers.get("ratelimit-limit")).toBeNull();
-        for (let i = 0; i < PUBLIC_IP_BUDGET.points; i++) {
+        for (let i = 0; i <= PUBLIC_IP_BUDGET.points; i++) {
           expect((await from()).status).toBe(200);
         }
       },

@@ -31,6 +31,7 @@ import {
   listPublishedSamplesForService,
   listSamplesAssignedTo,
 } from "./service/list-sample.ts";
+import { mapPublishedSamples } from "./service/map-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import { releaseEditLock } from "./service/release-edit-lock.ts";
 import { reserveInternalNumbers } from "./service/reserve-internal-numbers.ts";
@@ -73,6 +74,7 @@ export function createSampleRepository(
     searchEligibleParents: tx(searchEligibleParents),
     isModerated: tx(isSampleModerated),
     listPublished: tx(listPublishedSamples),
+    mapPublished: tx(mapPublishedSamples),
     listExportable: tx(listExportableSamples),
     get: tx(getSample),
     getPublicByIgsn: tx(getPublicSampleByIgsn),

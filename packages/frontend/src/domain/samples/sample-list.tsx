@@ -44,10 +44,14 @@ export function SampleList({
   samples,
   query = "",
   fields,
+  onHoverSample,
+  singleColumn = false,
 }: {
   samples: CardSample[];
   query?: string;
   fields?: string[];
+  onHoverSample?: (sample: CardSample | undefined) => void;
+  singleColumn?: boolean;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
   const extraFields = selectedCardFields(fields);
@@ -74,7 +78,10 @@ export function SampleList({
   }, [query, samples]);
 
   return (
-    <ul ref={listRef} className="grid gap-4 sm:grid-cols-2">
+    <ul
+      ref={listRef}
+      className={singleColumn ? "grid gap-4" : "grid gap-4 sm:grid-cols-2"}
+    >
       {samples.map((sample) => {
         const { igsn, internalNumber, name, location } = sample;
         if (igsn === null) {
@@ -85,7 +92,13 @@ export function SampleList({
         const place = locationText(location);
         const collector = collectorText(sample);
         return (
-          <li key={igsn}>
+          <li
+            key={igsn}
+            onMouseEnter={() => onHoverSample?.(sample)}
+            onMouseLeave={() => onHoverSample?.(undefined)}
+            onFocus={() => onHoverSample?.(sample)}
+            onBlur={() => onHoverSample?.(undefined)}
+          >
             <Link
               to="/samples/$igsn"
               params={{ igsn }}

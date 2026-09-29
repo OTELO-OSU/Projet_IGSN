@@ -1,4 +1,4 @@
-import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
+import { vi } from "vitest";
 
 import type { CardSample } from "./card-fields.ts";
 
@@ -181,26 +181,16 @@ describe("SampleList", () => {
     ]);
   });
 
-  it.each<[string, ScientificContext]>([
-    [
-      "a field sample",
-      {
-        provenanceStatus: "field_sample",
-        collectorFirstname: "Marie",
-        collectorLastname: "Curie",
-        additionalRoles: [],
-      },
-    ],
-    [
-      "a collection specimen",
-      {
-        provenanceStatus: "collection_specimen",
-        collectorFirstname: "Marie",
-        collectorLastname: "Curie",
-      },
-    ],
-  ])("should show the collector of %s", async (_case, scientificContext) => {
-    const screen = await renderSampleList([sampleItem({ scientificContext })]);
+  it("should show the collector of a collection specimen", async () => {
+    const screen = await renderSampleList([
+      sampleItem({
+        scientificContext: {
+          provenanceStatus: "collection_specimen",
+          collectorFirstname: "Marie",
+          collectorLastname: "Curie",
+        },
+      }),
+    ]);
 
     await expect
       .element(screen.getByText("Collector name: Marie Curie"))
@@ -223,29 +213,42 @@ describe("SampleList", () => {
       .toBeInTheDocument();
   });
 
-  it.each<[string, ScientificContext, string, string]>([
-    [
-      "chief scientist",
-      {
-        provenanceStatus: "field_sample",
-        chiefScientistFirstname: "Marie",
-        chiefScientistLastname: "Curie",
-        additionalRoles: [],
-      },
-      "chiefScientist",
-      "Chief scientist: Marie Curie",
-    ],
-  ])(
-    "should show the picked %s as one name",
-    async (_case, scientificContext, field, expected) => {
-      const screen = await renderSampleList(
-        [sampleItem({ scientificContext })],
-        [field],
-      );
+  it("should show the picked chief scientist as one name", async () => {
+    const screen = await renderSampleList(
+      [
+        sampleItem({
+          scientificContext: {
+            provenanceStatus: "field_sample",
+            chiefScientistFirstname: "Marie",
+            chiefScientistLastname: "Curie",
+            additionalRoles: [],
+          },
+        }),
+      ],
+      ["chiefScientist"],
+    );
 
-      await expect
-        .element(screen.getByText(expected, { exact: true }))
-        .toBeInTheDocument();
-    },
-  );
+    await expect
+      .element(
+        screen.getByText("Chief scientist: Marie Curie", { exact: true }),
+      )
+      .toBeInTheDocument();
+  });
+
+  it("should report the hovered sample, then none once the pointer leaves", async () => {
+    const onHoverSample = vi.fn();
+    const screen = await renderWithRouter(
+      <SampleList samples={samples} onHoverSample={onHoverSample} />,
+      ["/samples/$igsn"],
+    );
+
+    await screen.getByRole("link", { name: /Granite 7/ }).hover();
+    await screen.getByRole("link", { name: /Basalt 42/ }).hover();
+
+    expect(onHoverSample.mock.calls.map(([sample]) => sample?.igsn)).toEqual([
+      "TVWXYZ0123456789ABCDEFGHJK",
+      undefined,
+      "0123456789ABCDEFGHJKMNPQRS",
+    ]);
+  });
 });

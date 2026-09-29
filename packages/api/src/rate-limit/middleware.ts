@@ -10,7 +10,7 @@ import type { RateLimitConfig, RateLimitScope } from "./config.ts";
 import { AUTHENTICATED_USER_BUDGET, PUBLIC_IP_BUDGET } from "./config.ts";
 import { createRateLimiter } from "./limiter.ts";
 
-type RateLimitEnv = { Variables: { jwtPayload: KeycloakClaims } };
+export type RateLimitEnv = { Variables: { jwtPayload: KeycloakClaims } };
 
 const BUDGET = {
   ip: PUBLIC_IP_BUDGET,
