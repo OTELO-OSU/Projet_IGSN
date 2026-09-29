@@ -8,5 +8,9 @@ export function canDeleteSample(
   role: UserSampleRole | null,
   sample: { status: SampleStatus },
 ): boolean {
-  return isSampleEditor(role) && !hasPermanentIgsn(sample);
+  return (
+    sample.status !== "publishing" &&
+    isSampleEditor(role) &&
+    !hasPermanentIgsn(sample)
+  );
 }

@@ -19,7 +19,18 @@ describe("toPublicSample", () => {
     expect(toPublicSample(withdrawn)).toEqual(toWithdrawnSample(withdrawn));
   });
 
-  it.each(["draft", "tombstone"] as SampleStatus[])(
+  it("should keep the publishing error out of a published view", () => {
+    expect(
+      toPublicSample({ ...sample, publishingError: null }),
+    ).not.toHaveProperty("publishingError");
+  });
+
+  it.each([
+    "draft",
+    "publishing",
+    "publish_failed",
+    "tombstone",
+  ] as SampleStatus[])(
     "should refuse a public view of a %s sample",
     (status) => {
       expect(() => toPublicSample({ ...sample, status })).toThrow();

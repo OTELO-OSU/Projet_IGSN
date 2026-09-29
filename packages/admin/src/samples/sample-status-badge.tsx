@@ -9,6 +9,14 @@ export const SAMPLE_STATUS: Record<
   { className: string; label: () => string }
 > = {
   draft: { className: "", label: m.status_draft },
+  publishing: {
+    className: "bg-blue-100 text-blue-800",
+    label: m.status_publishing,
+  },
+  publish_failed: {
+    className: "bg-red-100 text-red-800",
+    label: m.status_publish_failed,
+  },
   published: {
     className: "bg-green-100 text-green-800",
     label: m.status_published,

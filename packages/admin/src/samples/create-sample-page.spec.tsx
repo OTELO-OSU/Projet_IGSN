@@ -101,6 +101,7 @@ const PARENT = {
   internalNumber: null,
   status: "published",
   createdAt: "2026-06-01T00:00:00.000Z",
+  publishingError: null,
   updatedAt: "2026-07-01T10:00:00.000Z",
 };
 
@@ -209,6 +210,7 @@ function fakeApi(
         internalNumber: null,
         status: "draft",
         createdAt: "2026-07-06T00:00:00.000Z",
+        publishingError: null,
         updatedAt: "2026-07-06T00:00:00.000Z",
       };
       calls.push("POST samples");

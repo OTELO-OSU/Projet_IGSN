@@ -7,12 +7,14 @@ import {
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import ExcelJS from "exceljs";
-import { describe, expect } from "vitest";
+import { afterEach, describe, expect, vi } from "vitest";
 
 import type { DB } from "../../db.ts";
 
 import { createApp } from "../../app.ts";
 import { pgTest } from "../../tests/pg-test.ts";
+import { provisionUser } from "../../tests/provision-user.ts";
+import { stubDataCite } from "../../tests/stub-datacite.ts";
 import { SHEETS } from "./columns.ts";
 import { cleanBook } from "./import-fixture.ts";
 
@@ -79,24 +81,53 @@ describe("import template route", () => {
   );
 });
 
+const cleanFile = async () =>
+  new File(
+    [new Uint8Array(await (await cleanBook()).xlsx.writeBuffer())],
+    IMPORT_TEMPLATE_FILENAME,
+    { type: XLSX_MEDIA_TYPE },
+  );
+
+const queuedSamples = (db: Kysely<DB>) =>
+  db
+    .selectFrom("sample")
+    .innerJoin("user_sample", "user_sample.sample_id", "sample.id")
+    .select(["sample.status", "user_sample.user_id", "user_sample.role"])
+    .execute();
+
 describe("import upload route", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete process.env.DATACITE_API_HOST;
+  });
+
   pgTest(
-    "should accept a publishable file",
+    "should queue every sample of a publishable file for publishing under the caller",
     async ({ db }) => {
-      const book = await cleanBook();
+      const caller = await provisionUser(db, "test-token");
 
-      const res = await upload(
-        db,
-        new File(
-          [new Uint8Array(await book.xlsx.writeBuffer())],
-          IMPORT_TEMPLATE_FILENAME,
-          {
-            type: XLSX_MEDIA_TYPE,
-          },
-        ),
-      );
+      const res = await upload(db, await cleanFile());
 
-      expect(res.status).toBe(202);
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 200,
+        body: { count: 1 },
+      });
+      expect(await queuedSamples(db)).toEqual([
+        { status: "publishing", user_id: caller.id, role: "owner" },
+      ]);
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should answer 503 and queue nothing when DataCite does not answer",
+    async ({ db }) => {
+      stubDataCite(new Response("", { status: 503 }));
+
+      const res = await upload(db, await cleanFile());
+
+      expect(res.status).toBe(503);
+      expect(await queuedSamples(db)).toEqual([]);
     },
     30_000,
   );

@@ -257,6 +257,16 @@ function EditSamplePage() {
         </div>
       ) : null}
 
+      {status === "publish_failed" && query.data.publishingError ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {m.sample_publish_failed_alert({
+              error: query.data.publishingError,
+            })}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       {rejection ? (
         <Alert variant="destructive">
           <AlertDescription>{rejection}</AlertDescription>

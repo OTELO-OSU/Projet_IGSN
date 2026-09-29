@@ -135,9 +135,9 @@ describe("the public sample lineage", () => {
     },
   );
 
-  pgTest(
-    "should hide a draft descendant and everything below it",
-    async ({ db }) => {
+  pgTest.for(["draft", "publishing", "publish_failed"] as const)(
+    "should hide a %s descendant and everything below it",
+    async (status, { db }) => {
       // Arrange
       const ownerId = await owner(db);
       const root = await insertLineageSample(db, ownerId, "Root");
@@ -146,7 +146,7 @@ describe("the public sample lineage", () => {
         ownerId,
         "Draft child",
         [root.id],
-        "draft",
+        status,
       );
       await insertLineageSample(db, ownerId, "Published grandchild", [
         hidden.id,
@@ -234,9 +234,9 @@ describe("the public sample lineage", () => {
     },
   );
 
-  pgTest(
-    "should hide a draft ancestor and everything above it",
-    async ({ db }) => {
+  pgTest.for(["draft", "publishing", "publish_failed"] as const)(
+    "should hide a %s ancestor and everything above it",
+    async (status, { db }) => {
       // Arrange
       const ownerId = await owner(db);
       const grandparent = await insertLineageSample(
@@ -249,7 +249,7 @@ describe("the public sample lineage", () => {
         ownerId,
         "Draft parent",
         [grandparent.id],
-        "draft",
+        status,
       );
       const root = await insertLineageSample(db, ownerId, "Root", [draft.id]);
       // Act

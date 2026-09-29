@@ -30,3 +30,6 @@ export const invalidImportSchema = z.object({
   issues: z.array(importIssueSchema),
 });
 export type InvalidImport = z.infer<typeof invalidImportSchema>;
+
+export const importAcceptedSchema = z.object({ count: z.number().int() });
+export type ImportAccepted = z.infer<typeof importAcceptedSchema>;

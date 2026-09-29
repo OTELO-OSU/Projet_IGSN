@@ -6,6 +6,7 @@ import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-vali
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
 import { allowedAvailabilityStatuses } from "@projet-igsn/domain/sample/curation/allowed-availability-statuses";
+import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -35,6 +36,7 @@ vi.mock("react-oidc-context", () => ({
 }));
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
+const DATACITE_ERROR = "422 Unprocessable Entity";
 const LOCK_EXPIRY = "2026-07-01T10:15:00.000Z";
 
 type LockHolder = {
@@ -194,10 +196,11 @@ function fakeApi(
     ...economic,
     manualGroups: [FOSSIL_TEAM],
     parents: sampleParents,
-    igsn: status === "draft" ? null : IGSN,
+    igsn: hasPermanentIgsn({ status }) ? IGSN : null,
     doiPrefix: null,
     internalNumber: status === "draft" ? null : 42,
     status,
+    publishingError: status === "publish_failed" ? DATACITE_ERROR : null,
     createdAt: "2026-06-01T00:00:00.000Z",
     updatedAt: "2026-07-01T10:00:00.000Z",
   };
@@ -615,6 +618,27 @@ describe("EditSamplePage", () => {
       expect(document.querySelectorAll('span[tabindex="0"]')).toHaveLength(0);
     },
   );
+
+  it("should explain a failed publication and offer publishing again", async () => {
+    const { screen } = await renderEditPage("publish_failed");
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(
+        `DataCite registration failed: ${DATACITE_ERROR}. Fix the sample if needed and publish again.`,
+      );
+    await expect
+      .element(screen.getByRole("button", { name: "Publish", exact: true }))
+      .toBeVisible();
+  });
+
+  it("should hold a sample read-only while it is being published", async () => {
+    const { screen } = await renderEditPage("publishing");
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save", exact: true }))
+      .toBeDisabled();
+  });
 
   it("should disable saving for a contributor on a published sample and explain why", async () => {
     const { screen } = await renderEditPageAsContributor("published");

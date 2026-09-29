@@ -20,18 +20,32 @@ const ORDER = "date range start must not be after end";
 const bytesOf = async (book: ExcelJS.Workbook) =>
   new Uint8Array(await book.xlsx.writeBuffer()).buffer;
 
+const issuesOf = async (bytes: ArrayBuffer) =>
+  (await validateImport(bytes)).issues;
+
 describe("validateImport", () => {
+  it("should answer the parsed samples of a publishable file", async () => {
+    const { issues, samples } = await validateImport(
+      await bytesOf(await cleanBook()),
+    );
+
+    expect({ issues, names: samples.map(({ name }) => name) }).toEqual({
+      issues: [],
+      names: [CLEAN_SAMPLE.Name],
+    });
+  });
+
   it("should answer unreadable_file for bytes that are no workbook", async () => {
-    expect(
-      await validateImport(new TextEncoder().encode("a,b\n1,2").buffer),
-    ).toEqual([{ code: "unreadable_file" }]);
+    expect(await issuesOf(new TextEncoder().encode("a,b\n1,2").buffer)).toEqual(
+      [{ code: "unreadable_file" }],
+    );
   });
 
   it("should stop at a structural issue before reading any row", async () => {
     const book = await templateBook();
     deleteColumn(book, SHEETS.samples, "Nature");
 
-    expect(await validateImport(await bytesOf(book))).toEqual([
+    expect(await issuesOf(await bytesOf(book))).toEqual([
       { sheet: SHEETS.samples, column: "Nature", code: "missing_column" },
     ]);
   });
@@ -45,7 +59,7 @@ describe("validateImport", () => {
       fill(book, SHEETS.samples, row, { Name: `Sample ${row}` });
     }
 
-    expect(await validateImport(await bytesOf(book))).toEqual([
+    expect(await issuesOf(await bytesOf(book))).toEqual([
       { sheet: SHEETS.samples, code },
     ]);
   });
@@ -80,7 +94,7 @@ describe("validateImport", () => {
     });
     const future = { code: "collection_date_future", message: FUTURE };
     const format = { code: "invalid_format", message: expect.any(String) };
-    expect(await validateImport(await bytesOf(book))).toEqual([
+    expect(await issuesOf(await bytesOf(book))).toEqual([
       {
         ...at(3, "Material (level 1)", "Rock and sediment"),
         code: "custom",
@@ -114,7 +128,7 @@ describe("validateImport", () => {
     const book = await cleanBook();
     fill(book, SHEETS.samples, 3, { Nature: "Handy sample" });
 
-    expect(await validateImport(await bytesOf(book))).toEqual([
+    expect(await issuesOf(await bytesOf(book))).toEqual([
       {
         sheet: SHEETS.samples,
         row: 3,
@@ -131,7 +145,7 @@ describe("validateImport", () => {
     fill(book, SHEETS.relations, 4, { "Sample #": 7, Title: "Paper" });
     fill(book, SHEETS.samples, 3, { Latitude: 95 });
 
-    expect(await validateImport(await bytesOf(book))).toEqual([
+    expect(await issuesOf(await bytesOf(book))).toEqual([
       {
         sheet: SHEETS.samples,
         row: 3,
@@ -160,7 +174,7 @@ describe("validateImport", () => {
       Longitude: "east",
     });
 
-    expect(await validateImport(await bytesOf(book))).toEqual([
+    expect(await issuesOf(await bytesOf(book))).toEqual([
       {
         sheet: SHEETS.samples,
         row: 3,
@@ -196,7 +210,7 @@ describe("validateImport", () => {
       const book = await cleanBook();
       fill(book, SHEETS.samples, 3, { [column]: ` ${value} ` });
 
-      expect(await validateImport(await bytesOf(book))).toEqual([
+      expect(await issuesOf(await bytesOf(book))).toEqual([
         {
           sheet: SHEETS.samples,
           row: 3,
@@ -235,7 +249,7 @@ describe("validateImport", () => {
         "Collection date time zone": timeZone,
       });
 
-      expect(await validateImport(await bytesOf(book))).toEqual([
+      expect(await issuesOf(await bytesOf(book))).toEqual([
         {
           sheet: SHEETS.samples,
           row: 3,
@@ -252,7 +266,7 @@ describe("validateImport", () => {
     const book = await cleanBook();
     fill(book, SHEETS.samples, 3, { "Existence status": null });
 
-    expect(await validateImport(await bytesOf(book))).toEqual([
+    expect(await issuesOf(await bytesOf(book))).toEqual([
       {
         sheet: SHEETS.samples,
         row: 3,

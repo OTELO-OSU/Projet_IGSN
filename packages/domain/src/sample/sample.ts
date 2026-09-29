@@ -60,6 +60,8 @@ export const nameSchema = z.string().trim().min(1);
 
 export const sampleStatusSchema = z.enum([
   "draft",
+  "publishing",
+  "publish_failed",
   "published",
   "withdrawn",
   "tombstone",
@@ -119,6 +121,7 @@ export const sampleSchema = z.object({
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
   status: sampleStatusSchema,
+  publishingError: z.string().nullable(),
   createdAt: z.coerce.date(),
   publishedAt: z.coerce.date().nullable().optional(),
   updatedAt: z.coerce.date(),

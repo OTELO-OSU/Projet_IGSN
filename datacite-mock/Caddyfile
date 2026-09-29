@@ -4,6 +4,11 @@
 		path /dois/*
 	}
 	respond @dois 201
+	@doisList {
+		method GET
+		path /dois
+	}
+	respond @doisList 200
 	respond / 200
 	respond 404
 }

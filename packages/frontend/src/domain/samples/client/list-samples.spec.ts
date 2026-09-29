@@ -34,6 +34,7 @@ const sampleJson = {
   internalNumber: 42,
   doiPrefix: null,
   status: "published",
+  publishingError: null,
   createdAt: iso,
   updatedAt: iso,
 };

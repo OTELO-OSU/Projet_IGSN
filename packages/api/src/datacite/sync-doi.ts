@@ -43,6 +43,6 @@ export async function syncDoi(
       throw new Error(`${response.status} ${await response.text()}`);
   } catch (error) {
     console.error("DOI sync failed", { doi: record.doi, error });
-    throw new HTTPException(502, { message: "DOI sync failed" });
+    throw new HTTPException(502, { message: "DOI sync failed", cause: error });
   }
 }

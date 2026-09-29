@@ -4,15 +4,22 @@ import { describe, expect, it } from "vitest";
 
 import { buildSampleInputs } from "./build-sample-inputs.ts";
 import { SHEETS } from "./columns.ts";
-import { cleanBook, deleteColumn, fill } from "./import-fixture.ts";
+import {
+  CLEAN_SAMPLE,
+  cleanBook,
+  deleteColumn,
+  fill,
+} from "./import-fixture.ts";
 import { readRows } from "./read-rows.ts";
 import { templateLayout } from "./template-layout.ts";
 import { validateSamples } from "./validate-samples.ts";
 
-const issuesOf = (book: ExcelJS.Workbook) =>
+const validated = (book: ExcelJS.Workbook) =>
   validateSamples(
     buildSampleInputs(readRows(book, templateLayout(book).layout)).samples,
   );
+
+const issuesOf = (book: ExcelJS.Workbook) => validated(book).issues;
 
 const COLLECTION_SPECIMEN = {
   Name: "Specimen 2",
@@ -32,6 +39,19 @@ const COLLECTION_SPECIMEN = {
 describe("validateSamples", () => {
   it("should find nothing to report on a publishable file", async () => {
     expect(issuesOf(await cleanBook())).toEqual([]);
+  });
+
+  it("should keep the parsed input of each sample with no issue alone", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.samples, 4, {
+      ...CLEAN_SAMPLE,
+      Name: "Basalt 2",
+      "Existence status": null,
+    });
+
+    expect(validated(book).inputs.map(({ name }) => name)).toEqual([
+      CLEAN_SAMPLE.Name,
+    ]);
   });
 
   it.each<[string, (book: ExcelJS.Workbook) => void, object[]]>([

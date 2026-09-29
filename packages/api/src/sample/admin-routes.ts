@@ -4,7 +4,10 @@ import type {
   SampleEditLockResponse,
   SampleLocked,
 } from "@projet-igsn/domain/sample/edit-lock";
-import type { InvalidImport } from "@projet-igsn/domain/sample/import/import-report";
+import type {
+  ImportAccepted,
+  InvalidImport,
+} from "@projet-igsn/domain/sample/import/import-report";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   AdminListSamplesResponse,
@@ -39,6 +42,8 @@ import type { SampleAccessEnv } from "./require-sample-access.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { getModerationScope } from "../auth/moderation-scope.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
+import { checkDataCite } from "../datacite/check-datacite.ts";
+import { dataCiteConfig } from "../datacite/config.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
 import { trySendMail } from "../mail/try-send-mail.ts";
 import { hasUnattachable } from "../manual-group/has-unattachable.ts";
@@ -150,12 +155,18 @@ export function createSampleAdminRoutes(
       importTemplateResponse(c.req.valid("query").rows),
     )
     .post("/import", validateImportUpload, async (c) => {
-      const issues = await validateImport(
+      const { issues, samples } = await validateImport(
         await c.req.valid("form").file.arrayBuffer(),
       );
-      if (issues.length === 0) return c.body(null, 202);
-      const body: InvalidImport = { error: "Invalid import", issues };
-      return c.json(body, 422);
+      if (issues.length > 0) {
+        const body: InvalidImport = { error: "Invalid import", issues };
+        return c.json(body, 422);
+      }
+      if (!(await checkDataCite(dataCiteConfig()))) {
+        return c.json({ error: "DataCite unavailable" }, 503);
+      }
+      const count = await repository.createPublishing(samples, c.get("user"));
+      return c.json({ count } satisfies ImportAccepted, 200);
     })
     .post("/export", validateExportBody, async (c) => {
       const request = c.req.valid("json");
@@ -498,7 +509,7 @@ export function createSampleAdminRoutes(
       if (!status.success) {
         return c.json({ error: "Invalid publish status" }, 400);
       }
-      if (hasPermanentIgsn(sample)) {
+      if (sample.status === "publishing" || hasPermanentIgsn(sample)) {
         return c.json({ error: "Sample is already published" }, 409);
       }
       // ponytail: the guard's read and publish are separate transactions. Read and publish in one txn if that race matters.

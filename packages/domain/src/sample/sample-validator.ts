@@ -160,7 +160,9 @@ export type EligibleParentsResponse = z.infer<
 
 export const publicSampleResponseSchema = z.object({
   data: z.discriminatedUnion("status", [
-    sampleSchema.extend({ status: z.literal("published") }),
+    sampleSchema
+      .omit({ publishingError: true })
+      .extend({ status: z.literal("published") }),
     withdrawnSampleSchema,
   ]),
 });

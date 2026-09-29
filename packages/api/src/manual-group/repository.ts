@@ -7,6 +7,7 @@ import {
   myManualGroupSchema,
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { manualGroupSchema } from "@projet-igsn/domain/manual-group/model";
+import { PERMANENT_IGSN_STATUSES } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { groupManagerSchema } from "@projet-igsn/domain/user/user-validator";
 import { HTTPException } from "hono/http-exception";
 import { v7 as uuidv7 } from "uuid";
@@ -140,7 +141,7 @@ export function createManualGroupRepository(
       withTransaction(db, async (trx) => {
         const withIgsn = await sampleGroups(trx)
           .select("sample.id")
-          .where("sample.status", "<>", "draft")
+          .where("sample.status", "in", PERMANENT_IGSN_STATUSES)
           .where("sample_manual_group.group_id", "=", id)
           .limit(1)
           .executeTakeFirst();

@@ -1,29 +1,38 @@
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
+import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import {
   IMPORT_MAX_BYTES,
   IMPORT_TEMPLATE_FILENAME,
   XLSX_MEDIA_TYPE,
 } from "@projet-igsn/domain/sample/import/import-validator";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
+import { render } from "vitest-browser-react";
 
 import { worker } from "../../test/msw.ts";
-import { render } from "../../test/render.tsx";
 import { ImportSamplesDialog } from "./import-samples-dialog.tsx";
 
 const xlsx = (name = "samples.xlsx", size = 4) =>
   new File([new Uint8Array(size)], name, { type: XLSX_MEDIA_TYPE });
 
+const SAMPLE_LIST_KEY = ["samples", { moderated: false }];
+
 async function openDialog() {
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(SAMPLE_LIST_KEY, { data: [], meta: { total: 0 } });
   const screen = await render(
-    <>
-      <ImportSamplesDialog />
-      <Toaster />
-    </>,
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <ImportSamplesDialog />
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>,
   );
   await screen.getByRole("button", { name: "Import" }).click();
   const dialog = screen.getByRole("dialog", { name: "Import samples" });
   return {
+    queryClient,
     screen,
     dialog,
     importButton: dialog.getByRole("button", { name: "Import" }),
@@ -127,25 +136,30 @@ describe("ImportSamplesDialog", () => {
     },
   );
 
-  it("should post the file as form data, confirm and close", async () => {
+  it("should post the file as form data, confirm the count, close and refresh the list", async () => {
     const posted: unknown[] = [];
     worker.use(
       http.post("*/admin/samples/import", async ({ request }) => {
         const file = (await request.formData()).get("file") as File;
         posted.push({ name: file.name, type: file.type });
-        return new HttpResponse(null, { status: 202 });
+        return HttpResponse.json({ count: 3 });
       }),
     );
-    const { screen, dialog, importButton } = await openDialog();
+    const { queryClient, screen, dialog, importButton } = await openDialog();
     await dialog.getByLabelText("choose one").upload([xlsx()]);
 
     await importButton.click();
 
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
-      .toHaveTextContent("Samples successfully imported.");
+      .toHaveTextContent(
+        "3 samples imported. Publication is running in the background.",
+      );
     expect(screen.getByRole("dialog").elements()).toHaveLength(0);
     expect(posted).toEqual([{ name: "samples.xlsx", type: XLSX_MEDIA_TYPE }]);
+    expect(queryClient.getQueryState(SAMPLE_LIST_KEY)?.isInvalidated).toBe(
+      true,
+    );
   });
 
   it("should report an invalid file in the open dialog without a toast, until another file is picked", async () => {
@@ -184,9 +198,13 @@ describe("ImportSamplesDialog", () => {
     expect(screen.getByRole("table").elements()).toHaveLength(0);
   });
 
-  it.each([415, 500])(
+  it.each([
+    [415, "The file could not be imported."],
+    [500, "The file could not be imported."],
+    [503, "DataCite is unreachable. Nothing was imported, try again later."],
+  ])(
     "should keep the dialog open with its file when the api answers %i",
-    async (status) => {
+    async (status, message) => {
       worker.use(
         http.post(
           "*/admin/samples/import",
@@ -200,7 +218,7 @@ describe("ImportSamplesDialog", () => {
 
       await expect
         .element(screen.getByRole("region", { name: /notifications/i }))
-        .toHaveTextContent("The file could not be imported.");
+        .toHaveTextContent(message);
       await expect.element(dialog.getByText("samples.xlsx")).toBeVisible();
     },
   );

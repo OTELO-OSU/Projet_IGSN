@@ -2,6 +2,7 @@ import type { SampleLineage } from "@projet-igsn/domain/sample/lineage/model";
 import type { RawBuilder } from "kysely";
 
 import { sampleLineageSchema } from "@projet-igsn/domain/sample/lineage/model";
+import { PERMANENT_IGSN_STATUSES } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { sql } from "kysely";
 
 import type { DB } from "../../db.ts";
@@ -39,7 +40,7 @@ export async function getSampleLineage(
     .executeTakeFirst();
   if (!root) return null;
 
-  // ADR 0033: a published sample names its relatives whatever their status, draft excepted.
+  // ADR 0033: a published sample names its relatives whatever their status, one without a permanent IGSN excepted.
   const rows = (await db
     .withRecursive(
       "ancestor(parent_id, child_id, generation, igsn, name, tombstone)",
@@ -49,7 +50,7 @@ export async function getSampleLineage(
           .innerJoin("sample", (join) =>
             join
               .onRef("sample.id", "=", "sample_parent.parent_id")
-              .on("sample.status", "<>", "draft"),
+              .on("sample.status", "in", PERMANENT_IGSN_STATUSES),
           )
           .select(lineageColumns(sql`-1`))
           .where("sample_parent.sample_id", "=", root.id)
@@ -64,7 +65,7 @@ export async function getSampleLineage(
               .innerJoin("sample", (join) =>
                 join
                   .onRef("sample.id", "=", "sample_parent.parent_id")
-                  .on("sample.status", "<>", "draft"),
+                  .on("sample.status", "in", PERMANENT_IGSN_STATUSES),
               )
               .select(lineageColumns(sql`ancestor.generation - 1`)),
           ),
@@ -77,7 +78,7 @@ export async function getSampleLineage(
           .innerJoin("sample", (join) =>
             join
               .onRef("sample.id", "=", "sample_parent.sample_id")
-              .on("sample.status", "<>", "draft"),
+              .on("sample.status", "in", PERMANENT_IGSN_STATUSES),
           )
           .select(lineageColumns(sql`1`))
           .where("sample_parent.parent_id", "=", root.id)
@@ -92,7 +93,7 @@ export async function getSampleLineage(
               .innerJoin("sample", (join) =>
                 join
                   .onRef("sample.id", "=", "sample_parent.sample_id")
-                  .on("sample.status", "<>", "draft"),
+                  .on("sample.status", "in", PERMANENT_IGSN_STATUSES),
               )
               .select(lineageColumns(sql`descendant.generation + 1`)),
           ),

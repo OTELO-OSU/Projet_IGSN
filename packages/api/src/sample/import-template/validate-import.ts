@@ -1,4 +1,5 @@
 import type { ImportIssue } from "@projet-igsn/domain/sample/import/import-report";
+import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type ExcelJS from "exceljs";
 
 import { formatDate } from "@projet-igsn/domain/date/format-date";
@@ -90,30 +91,43 @@ function byPosition(a: ImportIssue, b: ImportIssue): number {
   return p[0] - q[0] || p[1] - q[1] || p[2] - q[2];
 }
 
-function validationIssues(parsed: ReturnType<typeof readRows>): ImportIssue[] {
+type ValidatedImport = { issues: ImportIssue[]; samples: CreateSample[] };
+
+const rejected = (issues: ImportIssue[]): ValidatedImport => ({
+  issues,
+  samples: [],
+});
+
+function validateRows(parsed: ReturnType<typeof readRows>): ValidatedImport {
   const built = buildSampleInputs(parsed);
   const reported = new Set(built.issues.map(fieldOf));
-  return [
-    ...built.issues,
-    ...validateSamples(built.samples).filter(
-      (issue) => !reported.has(fieldOf(issue)),
-    ),
-  ];
+  const { issues, inputs } = validateSamples(built.samples);
+  return {
+    issues: [
+      ...built.issues,
+      ...issues.filter((issue) => !reported.has(fieldOf(issue))),
+    ],
+    samples: inputs,
+  };
 }
 
-export function validateImport(bytes: ArrayBuffer): Promise<ImportIssue[]> {
+export function validateImport(bytes: ArrayBuffer): Promise<ValidatedImport> {
   return queueBuild(async () => {
     const book = await openWorkbook(bytes);
-    if (book === undefined) return [{ code: "unreadable_file" }];
+    if (book === undefined) return rejected([{ code: "unreadable_file" }]);
     const { layout, issues } = templateLayout(book);
-    if (issues.length > 0) return issues;
+    if (issues.length > 0) return rejected(issues);
     const parsed = readRows(book, layout);
     if (parsed.samples.length === 0)
-      return [{ sheet: SHEETS.samples, code: "no_sample" }];
+      return rejected([{ sheet: SHEETS.samples, code: "no_sample" }]);
     if (parsed.samples.length > MAX_IMPORT_ROWS)
-      return [{ sheet: SHEETS.samples, code: "too_many_rows" }];
-    return validationIssues(parsed)
-      .map((issue) => withValue(book, layout, issue))
-      .sort(byPosition);
+      return rejected([{ sheet: SHEETS.samples, code: "too_many_rows" }]);
+    const validated = validateRows(parsed);
+    return {
+      issues: validated.issues
+        .map((issue) => withValue(book, layout, issue))
+        .sort(byPosition),
+      samples: validated.samples,
+    };
   });
 }

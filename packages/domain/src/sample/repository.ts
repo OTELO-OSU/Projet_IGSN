@@ -66,6 +66,7 @@ export type SampleRepository = {
   ): Promise<SuspectedDuplicate[]>;
   getPublicLineage(igsn: string): Promise<SampleLineage | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
+  createPublishing(inputs: CreateSample[], owner: User): Promise<number>;
   createPublished(
     input: CreateSample,
     ownerId: string,
