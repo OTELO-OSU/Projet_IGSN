@@ -15,7 +15,7 @@ import { useApiClient } from "#/use-api-client.ts";
 export type ImportTemplateCustomization = {
   provenanceStatus: ProvenanceStatus;
   materialPath?: string;
-  manualGroupIds: string[];
+  manualGroupId?: string;
 };
 
 function customizedTemplateUrl(
@@ -27,11 +27,8 @@ function customizedTemplateUrl(
   if (customization.materialPath) {
     url.searchParams.set("materialPath", customization.materialPath);
   }
-  if (customization.manualGroupIds.length > 0) {
-    url.searchParams.set(
-      "manualGroupIds",
-      customization.manualGroupIds.join(","),
-    );
+  if (customization.manualGroupId) {
+    url.searchParams.set("manualGroupId", customization.manualGroupId);
   }
   return url;
 }

@@ -13,7 +13,6 @@ import {
 } from "@projet-igsn/design-system/components/ui/dialog";
 import { HierarchyInput } from "@projet-igsn/design-system/components/ui/hierarchy-input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
-import { MultiCombobox } from "@projet-igsn/design-system/components/ui/multi-combobox";
 import {
   composeHierarchyValue,
   toHierarchyPath,
@@ -53,7 +52,7 @@ export function CustomizeTemplateDialog({
   const [materialPath, setMaterialPath] = useState<string[]>(() =>
     toHierarchyPath(MATERIAL_ROOTS[0]),
   );
-  const [groupIds, setGroupIds] = useState<string[]>([]);
+  const [groupId, setGroupId] = useState("");
   const [provenanceValue, setProvenanceValue] = useState("");
   const groups = useAttachableManualGroups().data?.data ?? [];
   const downloadTemplate = useDownloadImportTemplate();
@@ -66,7 +65,7 @@ export function CustomizeTemplateDialog({
     ? {
         provenanceStatus,
         materialPath: material ?? undefined,
-        manualGroupIds: groupIds,
+        manualGroupId: groupId || undefined,
       }
     : undefined;
 
@@ -102,23 +101,20 @@ export function CustomizeTemplateDialog({
             </p>
           ) : null}
           <div className="grid gap-2">
-            <Label htmlFor="customize-template-groups">
-              {m.customize_template_groups_label()}
+            <Label htmlFor="customize-template-group">
+              {m.customize_template_group_label()}
             </Label>
-            <MultiCombobox
-              id="customize-template-groups"
+            <Combobox
+              id="customize-template-group"
               items={groups.map((group) => ({
                 value: group.id,
                 label: group.name,
               }))}
-              values={groupIds}
-              onChange={setGroupIds}
+              value={groupId}
+              onChange={setGroupId}
               placeholder={m.manual_group_placeholder()}
               searchPlaceholder={m.manual_groups_search_placeholder()}
               emptyText={m.manual_groups_empty()}
-              removeLabel={(label) =>
-                m.manual_group_detach_member({ name: label })
-              }
             />
           </div>
           <div className="grid gap-2">

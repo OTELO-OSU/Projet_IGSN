@@ -21,6 +21,7 @@ const IMPORT_ISSUE_LABELS: Record<ImportIssueCode, () => string> = {
   not_applicable: m.import_issue_not_applicable,
   duplicate_value: m.import_issue_duplicate_value,
   unavailable_internal_id: m.import_issue_unavailable_internal_id,
+  unknown_manual_group: m.import_issue_unknown_manual_group,
 };
 
 export function importIssueLabel({ code, message }: ImportIssue): string {

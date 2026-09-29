@@ -102,8 +102,7 @@ describe("CustomizeTemplateDialog", () => {
     const { download, onBack, pick, pickMaterial } = await openDialog();
     await pickMaterial("Rock", "Igneous");
     await userEvent.keyboard("{Escape}");
-    await pick("Manual groups", GROUP.name);
-    await userEvent.keyboard("{Escape}");
+    await pick("Manual group", GROUP.name);
     await pick(/^Provenance status/, "Field sample");
 
     await download.click();
@@ -111,7 +110,7 @@ describe("CustomizeTemplateDialog", () => {
     await expect.poll(() => onBack.mock.calls.length).toBe(1);
     expect(Object.fromEntries(requested[0]!)).toEqual({
       materialPath: "rock_and_sediment.rock.igneous",
-      manualGroupIds: GROUP.id,
+      manualGroupId: GROUP.id,
       provenanceStatus: "field_sample",
     });
     expect(savedNames).toEqual([IMPORT_TEMPLATE_FILENAME]);
@@ -138,8 +137,7 @@ describe("CustomizeTemplateDialog", () => {
     const { screen, onBack, pick, pickMaterial, reserve } = await openDialog();
     await pickMaterial("Rock", "Igneous");
     await userEvent.keyboard("{Escape}");
-    await pick("Manual groups", GROUP.name);
-    await userEvent.keyboard("{Escape}");
+    await pick("Manual group", GROUP.name);
     await pick(/^Provenance status/, "Field sample");
 
     await reserve.click();
@@ -157,7 +155,7 @@ describe("CustomizeTemplateDialog", () => {
         count: 3,
         provenanceStatus: "field_sample",
         materialPath: "rock_and_sediment.rock.igneous",
-        manualGroupIds: [GROUP.id],
+        manualGroupId: GROUP.id,
       },
     ]);
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
