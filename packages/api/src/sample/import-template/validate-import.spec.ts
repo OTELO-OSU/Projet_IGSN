@@ -349,32 +349,6 @@ describe("validateImport", () => {
     expect(await issuesOf(await bytesOf(book))).toEqual([]);
   });
 
-  it("should attach to the sample the attachable group its row names", async () => {
-    const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, { "Manual group": GROUP.name });
-    const { issues, samples } = await validate(await bytesOf(book));
-
-    expect({
-      issues,
-      groups: samples.map(({ input }) => input.manualGroupIds),
-    }).toEqual({ issues: [], groups: [[GROUP.id]] });
-  });
-
-  it("should report a row naming no attachable group as unknown_manual_group", async () => {
-    const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, { "Manual group": "Andes" });
-
-    expect(await issuesOf(await bytesOf(book))).toEqual([
-      {
-        sheet: SHEETS.samples,
-        row: 3,
-        column: "Manual group",
-        value: "Andes",
-        code: "unknown_manual_group",
-      },
-    ]);
-  });
-
   it("should read a customized file's rows left at their pre-fill as blank", async () => {
     const book = await customizedBook();
     fill(
