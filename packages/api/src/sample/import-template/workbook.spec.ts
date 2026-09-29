@@ -1,3 +1,5 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 import ExcelJS from "exceljs";
@@ -32,10 +34,16 @@ const loaded = async (
   rows?: number,
   internalIds?: readonly number[],
   customization?: TemplateCustomization,
+  manualGroups?: readonly ManualGroup[],
 ) => {
   const source = new ExcelJS.Workbook();
   await source.xlsx.load(
-    await importTemplateWorkbook(rows, internalIds, customization),
+    await importTemplateWorkbook(
+      rows,
+      internalIds,
+      customization,
+      manualGroups,
+    ),
   );
   return source;
 };
@@ -87,6 +95,32 @@ const letterOf = (path: string) =>
   sheet(SHEETS.samples).getColumn(
     SAMPLE_COLUMNS.findIndex((column) => column.path === path) + 1,
   ).letter;
+
+const GROUPS = [
+  { id: "0190c9a0-0000-7000-8000-000000000001", name: "Alps" },
+  { id: "0190c9a0-0000-7000-8000-000000000002", name: "Pyrenees" },
+];
+
+const manualGroupDropdownOf = (source: ExcelJS.Workbook) => {
+  const samples = sheetOf(source, SHEETS.samples);
+  const index = SAMPLE_COLUMNS.findIndex(
+    (column) => column.path === "manualGroupIds",
+  );
+  const address = `${samples.getColumn(index + 1).letter}${FIRST_DATA_ROW}`;
+  const range = sheetValidations(samples)
+    .find(address)
+    ?.formulae?.[0]?.match(/\$B\$(\d+):\$B\$(\d+)$/);
+  if (!range) return undefined;
+  const vocabularies = sheetOf(source, SHEETS.vocabularies);
+  const [first, last] = [Number(range[1]), Number(range[2])];
+  return {
+    title: vocabularies.getCell(first - 1, 1).value,
+    labels: Array.from(
+      { length: last - first + 1 },
+      (_, offset) => vocabularies.getCell(first + offset, 2).value,
+    ),
+  };
+};
 
 const sampleKeyValidation = (
   source: ExcelJS.Workbook,
@@ -291,6 +325,16 @@ describe("import template workbook", () => {
     expect(tooLong).toEqual([]);
   });
 
+  it("should offer the requester's manual group names in the Manual group dropdown, from a block appended to the Vocabularies sheet, and no dropdown to a requester without one", async () => {
+    expect({
+      withGroups: manualGroupDropdownOf(await loaded(1, [], {}, GROUPS)),
+      withoutGroups: manualGroupDropdownOf(book),
+    }).toEqual({
+      withGroups: { title: "Manual group", labels: ["Alps", "Pyrenees"] },
+      withoutGroups: undefined,
+    });
+  });
+
   it("should cascade the material level 2 dropdown off the level 2 vocabulary block", () => {
     const samples = sheet(SHEETS.samples);
     const index = SAMPLE_COLUMNS.findIndex(
@@ -314,12 +358,9 @@ describe("import template workbook", () => {
 describe("customized import template workbook", () => {
   const rows = 3;
   const lastRow = FIRST_DATA_ROW + rows - 1;
-  const groups = [
-    { id: "0190c9a0-0000-7000-8000-000000000001", name: "Alps" },
-    { id: "0190c9a0-0000-7000-8000-000000000002", name: "Pyrenees" },
-  ];
   const prefilled = {
     "Provenance status": "Field sample",
+    "Manual group": "Alps",
     "Material (level 1)": "Rock and sediment",
     "Material (level 2)": "Rock",
     "Material (level 3)": "Igneous",
@@ -339,11 +380,16 @@ describe("customized import template workbook", () => {
   };
 
   beforeAll(async () => {
-    customized = await loaded(rows, [], {
-      provenanceStatus: "field_sample",
-      materialPath: "rock_and_sediment.rock.igneous",
-      manualGroups: groups,
-    });
+    customized = await loaded(
+      rows,
+      [],
+      {
+        provenanceStatus: "field_sample",
+        materialPath: "rock_and_sediment.rock.igneous",
+        manualGroup: GROUPS[0],
+      },
+      GROUPS,
+    );
   }, 30_000);
 
   it("should write each pre-fill label, greyed, in the first and last data rows", () => {
@@ -370,10 +416,13 @@ describe("customized import template workbook", () => {
       undefined;
 
     expect(
-      ["Provenance status", "Material (level 3)", "Material (level 4)"].map(
-        validated,
-      ),
-    ).toEqual([false, false, true]);
+      [
+        "Provenance status",
+        "Manual group",
+        "Material (level 3)",
+        "Material (level 4)",
+      ].map(validated),
+    ).toEqual([false, false, false, true]);
   });
 
   it("should drop the columns whose condition no row can meet", () => {
@@ -411,19 +460,19 @@ describe("customized import template workbook", () => {
     ]);
   });
 
-  it("should record the customization codes in Read me C1 and the group names in C2", () => {
+  it("should record the customization codes and the manual group label in Read me C1 alone", () => {
     const readMe = sheetOf(customized, SHEETS.readMe);
 
     expect({
       stored: JSON.parse(readMe.getCell("C1").text),
-      names: readMe.getCell("C2").value,
+      c2: readMe.getCell("C2").value,
     }).toEqual({
       stored: {
         provenanceStatus: "field_sample",
         materialPath: "rock_and_sediment.rock.igneous",
-        manualGroupIds: groups.map((group) => group.id),
+        manualGroupLabel: "Alps",
       },
-      names: "Alps, Pyrenees",
+      c2: null,
     });
   });
 

@@ -19,9 +19,14 @@ const ORDER = "date range start must not be after end";
 
 const UNAVAILABLE = 404;
 
+const GROUP = { id: "0190c9a0-0000-7000-8000-000000000001", name: "Alps" };
+
 const validate = (bytes: ArrayBuffer) =>
-  validateImport(bytes, (numbers) =>
-    Promise.resolve(new Set(numbers.filter((n) => n === UNAVAILABLE))),
+  validateImport(
+    bytes,
+    (numbers) =>
+      Promise.resolve(new Set(numbers.filter((n) => n === UNAVAILABLE))),
+    () => Promise.resolve([GROUP]),
   );
 
 const bytesOf = async (book: ExcelJS.Workbook) =>
@@ -31,6 +36,7 @@ const issuesOf = async (bytes: ArrayBuffer) => (await validate(bytes)).issues;
 
 const PREFILLED_HEADERS = [
   "Provenance status",
+  "Manual group",
   "Material (level 1)",
   "Material (level 2)",
   "Material (level 3)",
@@ -39,10 +45,16 @@ const PREFILLED_HEADERS = [
 const customizedBook = async () => {
   const book = new ExcelJS.Workbook();
   await book.xlsx.load(
-    await importTemplateWorkbook(3, [], {
-      provenanceStatus: "field_sample",
-      materialPath: "rock_and_sediment.rock.igneous",
-    }),
+    await importTemplateWorkbook(
+      3,
+      [],
+      {
+        provenanceStatus: "field_sample",
+        materialPath: "rock_and_sediment.rock.igneous",
+        manualGroup: GROUP,
+      },
+      [GROUP],
+    ),
   );
   return book;
 };
@@ -337,6 +349,32 @@ describe("validateImport", () => {
     expect(await issuesOf(await bytesOf(book))).toEqual([]);
   });
 
+  it("should attach to the sample the attachable group its row names", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.samples, 3, { "Manual group": GROUP.name });
+    const { issues, samples } = await validate(await bytesOf(book));
+
+    expect({
+      issues,
+      groups: samples.map(({ input }) => input.manualGroupIds),
+    }).toEqual({ issues: [], groups: [[GROUP.id]] });
+  });
+
+  it("should report a row naming no attachable group as unknown_manual_group", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.samples, 3, { "Manual group": "Andes" });
+
+    expect(await issuesOf(await bytesOf(book))).toEqual([
+      {
+        sheet: SHEETS.samples,
+        row: 3,
+        column: "Manual group",
+        value: "Andes",
+        code: "unknown_manual_group",
+      },
+    ]);
+  });
+
   it("should read a customized file's rows left at their pre-fill as blank", async () => {
     const book = await customizedBook();
     fill(
@@ -351,7 +389,10 @@ describe("validateImport", () => {
     );
     const { issues, samples } = await validate(await bytesOf(book));
 
-    expect({ issues, count: samples.length }).toEqual({ issues: [], count: 1 });
+    expect({
+      issues,
+      groups: samples.map(({ input }) => input.manualGroupIds),
+    }).toEqual({ issues: [], groups: [[GROUP.id]] });
   });
 
   it("should answer no_sample for a customized file left untouched", async () => {

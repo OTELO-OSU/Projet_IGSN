@@ -1,3 +1,4 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { ImportIssue } from "@projet-igsn/domain/sample/import/import-report";
 import type { ImportedSample } from "@projet-igsn/domain/sample/repository";
 import type ExcelJS from "exceljs";
@@ -110,8 +111,11 @@ const internalNumberOf = ({ cells }: RawRow) => {
   return key === undefined ? undefined : parseInternalId(textOf(key));
 };
 
-function validateRows(parsed: ReturnType<typeof readRows>): ValidatedImport {
-  const built = buildSampleInputs(parsed);
+function validateRows(
+  parsed: ReturnType<typeof readRows>,
+  manualGroups: readonly ManualGroup[],
+): ValidatedImport {
+  const built = buildSampleInputs(parsed, manualGroups);
   const reported = new Set(built.issues.map(fieldOf));
   const { issues, inputs } = validateSamples(built.samples);
   return {
@@ -146,6 +150,8 @@ function withoutPrefilledRows(
 
 type UnavailableInternalNumbers = (numbers: number[]) => Promise<Set<number>>;
 
+type AttachableManualGroups = () => Promise<readonly ManualGroup[]>;
+
 async function internalIdIssues(
   parsed: ReturnType<typeof readRows>,
   unavailableInternalNumbers: UnavailableInternalNumbers,
@@ -176,6 +182,7 @@ async function internalIdIssues(
 export function validateImport(
   bytes: ArrayBuffer,
   unavailableInternalNumbers: UnavailableInternalNumbers,
+  attachableManualGroups: AttachableManualGroups,
 ): Promise<ValidatedImport> {
   return queueBuild(async () => {
     const book = await openWorkbook(bytes);
@@ -190,7 +197,7 @@ export function validateImport(
       return rejected([{ sheet: SHEETS.samples, code: "no_sample" }]);
     if (parsed.samples.length > MAX_IMPORT_ROWS)
       return rejected([{ sheet: SHEETS.samples, code: "too_many_rows" }]);
-    const validated = validateRows(parsed);
+    const validated = validateRows(parsed, await attachableManualGroups());
     return {
       issues: [
         ...validated.issues,

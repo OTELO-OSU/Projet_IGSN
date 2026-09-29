@@ -10,6 +10,7 @@ import type { Column } from "./columns.ts";
 import type { ConditionalCondition } from "./conditional-fields.ts";
 
 import {
+  MANUAL_GROUP_PATH,
   plainHeader,
   SAMPLE_COLUMNS,
   SHEETS,
@@ -21,13 +22,8 @@ import { labels } from "./labels.ts";
 export type TemplateCustomization = {
   provenanceStatus?: ProvenanceStatus;
   materialPath?: string;
-  manualGroups?: readonly ManualGroup[];
+  manualGroup?: ManualGroup;
 };
-
-type Prefilled = Pick<
-  TemplateCustomization,
-  "provenanceStatus" | "materialPath"
->;
 
 export const templateMaterialPathSchema = z
   .string()
@@ -36,10 +32,12 @@ export const templateMaterialPathSchema = z
 const storedCustomizationSchema = z.object({
   provenanceStatus: z.enum(PROVENANCE_STATUSES).optional(),
   materialPath: templateMaterialPathSchema.optional(),
-  manualGroupIds: z.array(z.uuid()).optional(),
+  manualGroupLabel: z.string().optional(),
 });
 
-type StoredCustomization = z.infer<typeof storedCustomizationSchema>;
+export type StoredCustomization = z.infer<typeof storedCustomizationSchema>;
+
+type Prefilled = Pick<StoredCustomization, "provenanceStatus" | "materialPath">;
 
 const PROVENANCE_PATH = "scientificContext.provenanceStatus";
 
@@ -50,30 +48,23 @@ const levelOf = (path: string) => path.split(".").length;
 const ancestorAt = (path: string, level: number) =>
   path.split(".").slice(0, level).join(".");
 
+export const storedCustomizationOf = ({
+  manualGroup,
+  ...prefilled
+}: TemplateCustomization): StoredCustomization => ({
+  ...prefilled,
+  manualGroupLabel: manualGroup?.name,
+});
+
 export function writeCustomization(
   sheet: ExcelJS.Worksheet,
-  { provenanceStatus, materialPath, manualGroups }: TemplateCustomization,
+  stored: StoredCustomization,
 ): void {
-  sheet.getCell("C1").value = JSON.stringify({
-    provenanceStatus,
-    materialPath,
-    manualGroupIds: manualGroups?.map((group) => group.id),
-  } satisfies StoredCustomization);
-  if (manualGroups !== undefined && manualGroups.length > 0) {
-    sheet.getCell("C2").value = manualGroups
-      .map((group) => group.name)
-      .join(", ");
-  }
+  sheet.getCell("C1").value = JSON.stringify(stored);
 }
 
-export const hasCustomization = ({
-  provenanceStatus,
-  materialPath,
-  manualGroups = [],
-}: TemplateCustomization): boolean =>
-  provenanceStatus !== undefined ||
-  materialPath !== undefined ||
-  manualGroups.length > 0;
+export const hasCustomization = (stored: StoredCustomization): boolean =>
+  Object.values(stored).some((value) => value !== undefined);
 
 const parsedJson = (text: string): unknown => {
   try {
@@ -93,10 +84,12 @@ export function readCustomization(
 }
 
 export const prefillOf =
-  ({ provenanceStatus, materialPath }: Prefilled) =>
+  ({ provenanceStatus, materialPath, manualGroupLabel }: StoredCustomization) =>
   (column: Column): string | undefined => {
     if (column.path === PROVENANCE_PATH && provenanceStatus !== undefined)
       return labels.provenanceStatusLabel(provenanceStatus);
+    if (column.path === MANUAL_GROUP_PATH && manualGroupLabel !== undefined)
+      return manualGroupLabel;
     if (
       column.path === MATERIAL_PATH &&
       materialPath !== undefined &&

@@ -72,10 +72,11 @@ describe("import template customization", () => {
     },
   );
 
-  it("should pre-fill the provenance status and each material level down to the fixed depth with its label", () => {
+  it("should pre-fill the provenance status, the manual group and each material level down to the fixed depth with its label", () => {
     const prefill = prefillOf({
       provenanceStatus: "field_sample",
       materialPath: "rock_and_sediment.rock.igneous",
+      manualGroupLabel: "Alps",
     });
 
     expect(
@@ -85,6 +86,7 @@ describe("import template customization", () => {
       }),
     ).toEqual([
       ["Provenance status", "Field sample"],
+      ["Manual group", "Alps"],
       ["Material (level 1)", "Rock and sediment"],
       ["Material (level 2)", "Rock"],
       ["Material (level 3)", "Igneous"],

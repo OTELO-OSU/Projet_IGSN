@@ -1,3 +1,5 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import {
   IMPORT_TEMPLATE_FILENAME,
@@ -8,7 +10,11 @@ import ExcelJS from "exceljs";
 
 import type { Column } from "./columns.ts";
 import type { ConditionalCondition } from "./conditional-fields.ts";
-import type { TemplateCustomization } from "./customization.ts";
+import type {
+  StoredCustomization,
+  TemplateCustomization,
+} from "./customization.ts";
+import type { BlockPlacement } from "./vocabulary-sheet.ts";
 
 import { queueBuild } from "./build-queue.ts";
 import {
@@ -29,9 +35,18 @@ import {
   droppedColumnsOf,
   hasCustomization,
   prefillOf,
+  storedCustomizationOf,
   writeCustomization,
 } from "./customization.ts";
-import { BLOCK_PLACEMENTS, VOCABULARY_ROWS } from "./vocabulary-sheet.ts";
+import {
+  BLOCK_PLACEMENTS,
+  manualGroupBlock,
+  VOCABULARY_BLOCKS,
+  VOCABULARY_ROWS,
+  vocabularyLayout,
+} from "./vocabulary-sheet.ts";
+
+type Placements = Readonly<Record<string, BlockPlacement>>;
 
 type TemplateValidation = Omit<ExcelJS.DataValidation, "type" | "formulae"> & {
   type: ExcelJS.DataValidation["type"] | "any";
@@ -110,10 +125,10 @@ function vocabularyValidationOf(
   sheet: ExcelJS.Worksheet,
   columns: readonly Column[],
   column: Column,
+  placements: Placements,
 ): TemplateValidation | undefined {
   const blockId = blockIdOf(column);
-  const placement =
-    blockId === undefined ? undefined : BLOCK_PLACEMENTS[blockId];
+  const placement = blockId === undefined ? undefined : placements[blockId];
   if (placement === undefined) return undefined;
   const { title, keyRange, labelAnchor, labelRange } = placement;
   let formula = `=${labelRange}`;
@@ -141,8 +156,9 @@ function validationOf(
   sheet: ExcelJS.Worksheet,
   columns: readonly Column[],
   column: Column,
+  placements: Placements,
 ): TemplateValidation | undefined {
-  const base = vocabularyValidationOf(sheet, columns, column);
+  const base = vocabularyValidationOf(sheet, columns, column, placements);
   const condition =
     column.path === undefined ? undefined : conditionalPromptOf(column.path);
   if (condition === undefined) return base;
@@ -227,6 +243,7 @@ export function addDataSheet(
   columns: readonly Column[],
   rows: number,
   prefill?: (column: Column) => string | undefined,
+  placements: Placements = BLOCK_PLACEMENTS,
 ) {
   const sheet = book.addWorksheet(name);
   sheet.columns = columns.map((column) => ({
@@ -246,7 +263,7 @@ export function addDataSheet(
       }
       continue;
     }
-    const validation = validationOf(sheet, columns, column);
+    const validation = validationOf(sheet, columns, column, placements);
     if (validation === undefined) continue;
     sheetValidations(sheet).add(
       dataRange(columnLetter(sheet, index), rows),
@@ -301,16 +318,19 @@ export function addReadMeSheet(
   return sheet;
 }
 
-export function addVocabularySheet(book: ExcelJS.Workbook) {
+export function addVocabularySheet(
+  book: ExcelJS.Workbook,
+  rows: typeof VOCABULARY_ROWS = VOCABULARY_ROWS,
+) {
   const sheet = book.addWorksheet(SHEETS.vocabularies);
-  sheet.addRows(VOCABULARY_ROWS.map((row) => [...row]));
+  sheet.addRows(rows.map((row) => [...row]));
   for (const index of [1, 2, 3]) sheet.getColumn(index).width = 52;
   return sheet;
 }
 
 const keptColumnsOf = (
   columns: readonly Column[],
-  customization: TemplateCustomization,
+  customization: StoredCustomization,
 ) => {
   const dropped = droppedColumnsOf(columns, customization);
   return columns.filter((column) => !dropped.includes(column));
@@ -320,21 +340,28 @@ async function build(
   rows: number,
   internalIds: readonly number[],
   customization: TemplateCustomization,
+  manualGroups: readonly ManualGroup[],
 ): Promise<ExcelBuffer> {
   const book = new ExcelJS.Workbook();
-  const isCustomized = hasCustomization(customization);
+  const stored = storedCustomizationOf(customization);
+  const isCustomized = hasCustomization(stored);
   const readMe = addReadMeSheet(
     book,
     "IGSN sample import template",
     isCustomized ? [...READ_ME_LINES, CUSTOMIZED_READ_ME_LINE] : READ_ME_LINES,
   );
-  if (isCustomized) writeCustomization(readMe, customization);
+  if (isCustomized) writeCustomization(readMe, stored);
+  const vocabulary = vocabularyLayout([
+    ...VOCABULARY_BLOCKS,
+    manualGroupBlock(manualGroups),
+  ]);
   const samples = addDataSheet(
     book,
     SHEETS.samples,
-    keptColumnsOf(SAMPLE_COLUMNS, customization),
+    keptColumnsOf(SAMPLE_COLUMNS, stored),
     rows,
-    prefillOf(customization),
+    prefillOf(stored),
+    vocabulary.placements,
   );
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
     const index = row - FIRST_DATA_ROW;
@@ -343,11 +370,11 @@ async function build(
       internalId === undefined ? index + 1 : formatInternalId(internalId);
   }
   for (const child of CHILD_SHEETS) {
-    const columns = keptColumnsOf(child.columns, customization);
+    const columns = keptColumnsOf(child.columns, stored);
     if (columns.every((column) => column.path === undefined)) continue;
     addChildSheet(book, child.name, columns, rows);
   }
-  await addVocabularySheet(book).protect("", {});
+  await addVocabularySheet(book, vocabulary.rows).protect("", {});
   return book.xlsx.writeBuffer();
 }
 
@@ -355,8 +382,11 @@ export function importTemplateWorkbook(
   rows: number = MAX_IMPORT_ROWS,
   internalIds: readonly number[] = [],
   customization: TemplateCustomization = {},
+  manualGroups: readonly ManualGroup[] = [],
 ): Promise<ExcelBuffer> {
-  return queueBuild(() => build(rows, internalIds, customization));
+  return queueBuild(() =>
+    build(rows, internalIds, customization, manualGroups),
+  );
 }
 
 export function xlsxResponse(book: ExcelBuffer, filename: string): Response {
@@ -371,11 +401,17 @@ export function xlsxResponse(book: ExcelBuffer, filename: string): Response {
 
 export async function importTemplateResponse(
   rows: number,
-  internalIds?: readonly number[],
-  customization?: TemplateCustomization,
+  internalIds: readonly number[] | undefined,
+  customization: TemplateCustomization,
+  manualGroups: readonly ManualGroup[],
 ): Promise<Response> {
   return xlsxResponse(
-    await importTemplateWorkbook(rows, internalIds, customization),
+    await importTemplateWorkbook(
+      rows,
+      internalIds,
+      customization,
+      manualGroups,
+    ),
     IMPORT_TEMPLATE_FILENAME,
   );
 }

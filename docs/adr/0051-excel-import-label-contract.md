@@ -31,13 +31,16 @@ Phase 3 of the Excel bulk import parses and validates the workbook a researcher 
 
 ## Amendment: customized template
 
-The template download can be customized by provenance status, material path (up to 2 levels, never mineral or synthetic) and manual groups; two additions extend the contract.
+The template download can be customized by provenance status, material path (up to 2 levels, never mineral or synthetic) and one manual group; these additions extend the contract.
 
-- The workbook records the customization on the Read me sheet: `C1` holds JSON of codes `{provenanceStatus, materialPath, manualGroupIds}`, `C2` the group names for humans.
-- Upload reads `C1` back and recomputes the pre-filled labels from its codes; dropped columns need nothing, since headers match by name.
+- The workbook records the customization on the Read me sheet: `C1` holds JSON `{provenanceStatus, materialPath, manualGroupLabel}`, codes for the first two and the group's label for the third, since group labels come from no static map.
+- Upload reads `C1` back and recomputes the pre-filled labels from it; dropped columns need nothing, since headers match by name.
 - A sample row equal to its pre-fill is blank, so an untouched pre-filled row is not a sample.
 - Child rows keyed to a blank row are `unknown_sample_key` orphans.
-- Manual groups are only recorded in `C1` and `C2`; the import applies none of them yet.
+- Every template carries a "Manual group" column on `Samples`, one group per sample, its dropdown reading a block appended to `Vocabularies` per request from the requester's attachable groups by label.
+- A chosen group pre-fills that column, fixed like the other pre-fills.
+- Upload resolves a filled "Manual group" label against the importer's attachable groups, never the requester's, and attaches it to the created sample.
+- A label naming none of them rejects its row with `unknown_manual_group`.
 - `POST /admin/samples/import-template/reservation` takes the same optional customization as the download, so reserved `Sample #` IDs land in the customized workbook.
 - A manual group that cannot be attached is a 422 before the sequence advances, burning no numbers.
 

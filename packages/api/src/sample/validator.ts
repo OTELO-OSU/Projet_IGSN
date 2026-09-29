@@ -70,6 +70,7 @@ const templatePrefillFields = {
   materialPath: templateMaterialPathSchema
     .refine(isMassImportableMaterial)
     .optional(),
+  manualGroupId: z.uuid().optional(),
 };
 
 const importTemplateQuerySchema = z.object({
@@ -80,11 +81,6 @@ const importTemplateQuerySchema = z.object({
     .max(MAX_IMPORT_ROWS)
     .default(MAX_IMPORT_ROWS),
   ...templatePrefillFields,
-  manualGroupIds: z
-    .string()
-    .transform((ids) => ids.split(","))
-    .pipe(z.array(z.uuid()))
-    .optional(),
 });
 
 export const validateImportTemplateQuery = zodValidator(
@@ -95,7 +91,6 @@ export const validateImportTemplateQuery = zodValidator(
 
 const reserveInternalIdsBodySchema = reserveInternalIdsSchema.extend({
   ...templatePrefillFields,
-  manualGroupIds: z.array(z.uuid()).optional(),
 });
 
 export const validateReserveInternalIdsBody = zodValidator(

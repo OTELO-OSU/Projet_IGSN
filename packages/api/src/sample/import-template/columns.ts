@@ -54,6 +54,10 @@ export const SAMPLE_LOOKUP_HEADER = "Sample name (filled automatically)";
 
 export const REQUIRED_MARKER = " *";
 
+export const MANUAL_GROUP_PATH = "manualGroupIds";
+
+export const MANUAL_GROUP_BLOCK = "manual_group";
+
 export const plainHeader = (column: Column): string =>
   column.header.replace(REQUIRED_MARKER, "");
 
@@ -133,6 +137,7 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
     field("Collection date start", "description.collectionDate.start"),
     field("Collection date end", "description.collectionDate.end"),
     field("Collection date time zone", "description.collectionDate.timeZone"),
+    field("Manual group", MANUAL_GROUP_PATH, MANUAL_GROUP_BLOCK),
   ]),
   ...grouped("Sample classification", [
     ...tree("material", "material", "Material", TEMPLATE_MATERIAL_PATHS),
