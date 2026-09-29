@@ -121,6 +121,7 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
       "scientificContext.researchProgramDescription",
       "scientificContext.platformType",
       "scientificContext.launchPlatformName",
+      "scientificContext.additionalRoles",
     ],
     condition: {
       path: "scientificContext.provenanceStatus",

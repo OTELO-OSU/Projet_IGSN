@@ -6,6 +6,7 @@ import {
   internalIdRequestSchema,
   reserveInternalIdsSchema,
 } from "@projet-igsn/domain/sample/import/import-validator";
+import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
@@ -18,12 +19,14 @@ import {
   setSampleStatusBodySchema,
   updateSampleBodySchema,
 } from "@projet-igsn/domain/sample/sample-validator";
+import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 import { addCollaboratorBodySchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { validator } from "hono/validator";
 import { z } from "zod";
 
 import { idParamSchema, validateUuidIdParam } from "../uuid-param.ts";
 import { zodValidator } from "../zod-validator.ts";
+import { templateMaterialPathSchema } from "./import-template/customization.ts";
 import { uploadLimit } from "./upload-limit.ts";
 
 const igsnParamSchema = z.object({ igsn: igsnSchema });
@@ -69,12 +72,21 @@ const importTemplateQuerySchema = z.object({
     .min(1)
     .max(MAX_IMPORT_ROWS)
     .default(MAX_IMPORT_ROWS),
+  provenanceStatus: z.enum(PROVENANCE_STATUSES).optional(),
+  materialPath: templateMaterialPathSchema
+    .refine(isMassImportableMaterial)
+    .optional(),
+  manualGroupIds: z
+    .string()
+    .transform((ids) => ids.split(","))
+    .pipe(z.array(z.uuid()))
+    .optional(),
 });
 
 export const validateImportTemplateQuery = zodValidator(
   "query",
   importTemplateQuerySchema,
-  `"rows" must be a whole number between 1 and ${MAX_IMPORT_ROWS}`,
+  "Invalid import template parameters",
 );
 
 export const validateReserveInternalIdsBody = zodValidator(

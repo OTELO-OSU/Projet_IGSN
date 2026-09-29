@@ -10,13 +10,25 @@ import {
   DialogTrigger,
 } from "@projet-igsn/design-system/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@projet-igsn/design-system/components/ui/dropdown-menu";
+import {
   IMPORT_MAX_BYTES,
   importSamplesSchema,
 } from "@projet-igsn/domain/sample/import/import-validator";
-import { CircleXIcon, FileDownIcon, UploadIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  CircleXIcon,
+  FileDownIcon,
+  UploadIcon,
+} from "lucide-react";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
+import { CustomizeTemplateDialog } from "#/samples/customize-template-dialog.tsx";
 import { FileDropZone } from "#/samples/file-drop-zone.tsx";
 import { ImportReport } from "#/samples/import-report.tsx";
 import { ReserveInternalIdsDialog } from "#/samples/reserve-internal-ids-dialog.tsx";
@@ -34,6 +46,7 @@ const fileError = (file: File | null): string | null => {
 
 export function ImportSamplesDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCustomizing, setIsCustomizing] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const downloadTemplate = useDownloadImportTemplate();
   const importSamples = useImportSamples();
@@ -46,85 +59,106 @@ export function ImportSamplesDialog() {
 
   function close() {
     setIsOpen(false);
+    setIsCustomizing(false);
     pick(null);
   }
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => (open ? setIsOpen(true) : close())}
-    >
-      <DialogTrigger asChild>
-        <Button variant="outline">{m.action_import()}</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl" closeLabel={m.action_close()}>
-        <DialogHeader>
-          <DialogTitle>{m.import_samples_title()}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4">
-          <DialogDescription>
-            {m.import_samples_description()}
-          </DialogDescription>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={downloadTemplate.isPending}
-            onClick={() => downloadTemplate.mutate(undefined)}
-          >
-            <FileDownIcon aria-hidden />
-            {m.action_download_template()}
-          </Button>
-          <ReserveInternalIdsDialog />
-        </div>
-        <FileDropZone
-          hint={m.import_samples_drop_hint()}
-          browseLabel={m.import_samples_choose_file()}
-          accept=".xlsx"
-          isInline
-          onFiles={([picked]) => pick(picked ?? null)}
-        />
-        {file ? (
-          <div className="grid gap-1 text-sm">
-            <span className="truncate" title={file.name}>
-              {file.name}
-            </span>
-            {error ? (
-              <p role="alert" className="text-destructive">
-                {error}
-              </p>
-            ) : null}
+    <>
+      <Dialog
+        open={isOpen && !isCustomizing}
+        onOpenChange={(open) => (open ? setIsOpen(true) : close())}
+      >
+        <DialogTrigger asChild>
+          <Button variant="outline">{m.action_import()}</Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-3xl" closeLabel={m.action_close()}>
+          <DialogHeader>
+            <DialogTitle>{m.import_samples_title()}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <DialogDescription>
+              {m.import_samples_description()}
+            </DialogDescription>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={downloadTemplate.isPending}
+                >
+                  <FileDownIcon aria-hidden />
+                  {m.action_download_template()}
+                  <ChevronDownIcon aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onSelect={() => downloadTemplate.mutate(undefined)}
+                >
+                  {m.import_template_complete()}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsCustomizing(true)}>
+                  {m.import_template_customized()}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <ReserveInternalIdsDialog />
           </div>
-        ) : null}
-        {importSamples.data?.issues.length ? (
-          <ImportReport issues={importSamples.data.issues} />
-        ) : null}
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="ghost">
-              <CircleXIcon aria-hidden />
-              {m.action_cancel()}
-            </Button>
-          </DialogClose>
-          <Button
-            type="button"
-            disabled={!file || error !== null || importSamples.isPending}
-            onClick={() => {
-              if (!file) return;
-              importSamples.mutate(
-                { file },
-                {
-                  onSuccess: ({ issues }) => {
-                    if (issues.length === 0) close();
+          <FileDropZone
+            hint={m.import_samples_drop_hint()}
+            browseLabel={m.import_samples_choose_file()}
+            accept=".xlsx"
+            isInline
+            onFiles={([picked]) => pick(picked ?? null)}
+          />
+          {file ? (
+            <div className="grid gap-1 text-sm">
+              <span className="truncate" title={file.name}>
+                {file.name}
+              </span>
+              {error ? (
+                <p role="alert" className="text-destructive">
+                  {error}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          {importSamples.data?.issues.length ? (
+            <ImportReport issues={importSamples.data.issues} />
+          ) : null}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="ghost">
+                <CircleXIcon aria-hidden />
+                {m.action_cancel()}
+              </Button>
+            </DialogClose>
+            <Button
+              type="button"
+              disabled={!file || error !== null || importSamples.isPending}
+              onClick={() => {
+                if (!file) return;
+                importSamples.mutate(
+                  { file },
+                  {
+                    onSuccess: ({ issues }) => {
+                      if (issues.length === 0) close();
+                    },
                   },
-                },
-              );
-            }}
-          >
-            <UploadIcon aria-hidden />
-            {m.action_import()}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+                );
+              }}
+            >
+              <UploadIcon aria-hidden />
+              {m.action_import()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <CustomizeTemplateDialog
+        open={isOpen && isCustomizing}
+        onBack={() => setIsCustomizing(false)}
+      />
+    </>
   );
 }

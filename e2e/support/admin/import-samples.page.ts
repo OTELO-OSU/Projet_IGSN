@@ -18,10 +18,12 @@ export function importSamplesPage(page: Page) {
   return {
     open: () =>
       page.getByRole("button", { name: "Import", exact: true }).click(),
-    downloadTemplate: (testInfo: TestInfo) =>
-      saveDownload(page, testInfo, () =>
-        dialog.getByRole("button", { name: "Download template" }).click(),
-      ),
+    downloadTemplate: async (testInfo: TestInfo) => {
+      await dialog.getByRole("button", { name: "Download template" }).click();
+      return saveDownload(page, testInfo, () =>
+        page.getByRole("menuitem", { name: "Complete template" }).click(),
+      );
+    },
     reserveInternalIds: async (count: number, testInfo: TestInfo) => {
       await dialog
         .getByRole("button", { name: "Reserve internal IDs" })

@@ -8,6 +8,7 @@ import ExcelJS from "exceljs";
 
 import type { Column } from "./columns.ts";
 import type { ConditionalCondition } from "./conditional-fields.ts";
+import type { TemplateCustomization } from "./customization.ts";
 
 import { queueBuild } from "./build-queue.ts";
 import {
@@ -24,6 +25,12 @@ import {
   conditionOf,
   driverIndexOf,
 } from "./conditional-fields.ts";
+import {
+  droppedColumnsOf,
+  hasCustomization,
+  prefillOf,
+  writeCustomization,
+} from "./customization.ts";
 import { BLOCK_PLACEMENTS, VOCABULARY_ROWS } from "./vocabulary-sheet.ts";
 
 type TemplateValidation = Omit<ExcelJS.DataValidation, "type" | "formulae"> & {
@@ -65,6 +72,8 @@ const READ_ME_LINES = [
   `A header ending in "*" must be filled before the sample can be published.`,
   `A greyed cell does not apply to the row as you filled it, so leave it empty.`,
 ];
+
+const CUSTOMIZED_READ_ME_LINE = `A grey pre-filled column was fixed when this template was generated, so do not edit it.`;
 
 export const blockIdOf = (column: Column): string | undefined =>
   column.block === undefined
@@ -156,6 +165,12 @@ const GREY_FILL = {
   },
 } as const satisfies Partial<ExcelJS.Style>;
 
+export const FROZEN_FILL: ExcelJS.Fill = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FFD9D9D9" },
+};
+
 const greyFormula = (letter: string, condition: ConditionalCondition) => {
   const cell = `$${letter}${FIRST_DATA_ROW}`;
   const applies = `OR(${condition.values
@@ -211,6 +226,7 @@ export function addDataSheet(
   name: string,
   columns: readonly Column[],
   rows: number,
+  prefill?: (column: Column) => string | undefined,
 ) {
   const sheet = book.addWorksheet(name);
   sheet.columns = columns.map((column) => ({
@@ -221,6 +237,15 @@ export function addDataSheet(
   sheet.views = [{ state: "frozen", xSplit: 1, ySplit: HEADER_ROW }];
   mergeGroupRow(sheet, columns);
   for (const [index, column] of columns.entries()) {
+    const label = prefill?.(column);
+    if (label !== undefined) {
+      for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
+        const cell = sheet.getCell(row, index + 1);
+        cell.value = label;
+        cell.fill = FROZEN_FILL;
+      }
+      continue;
+    }
     const validation = validationOf(sheet, columns, column);
     if (validation === undefined) continue;
     sheetValidations(sheet).add(
@@ -283,13 +308,34 @@ export function addVocabularySheet(book: ExcelJS.Workbook) {
   return sheet;
 }
 
+const keptColumnsOf = (
+  columns: readonly Column[],
+  customization: TemplateCustomization,
+) => {
+  const dropped = droppedColumnsOf(columns, customization);
+  return columns.filter((column) => !dropped.includes(column));
+};
+
 async function build(
   rows: number,
   internalIds: readonly number[],
+  customization: TemplateCustomization,
 ): Promise<ExcelBuffer> {
   const book = new ExcelJS.Workbook();
-  addReadMeSheet(book, "IGSN sample import template", READ_ME_LINES);
-  const samples = addDataSheet(book, SHEETS.samples, SAMPLE_COLUMNS, rows);
+  const isCustomized = hasCustomization(customization);
+  const readMe = addReadMeSheet(
+    book,
+    "IGSN sample import template",
+    isCustomized ? [...READ_ME_LINES, CUSTOMIZED_READ_ME_LINE] : READ_ME_LINES,
+  );
+  if (isCustomized) writeCustomization(readMe, customization);
+  const samples = addDataSheet(
+    book,
+    SHEETS.samples,
+    keptColumnsOf(SAMPLE_COLUMNS, customization),
+    rows,
+    prefillOf(customization),
+  );
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
     const index = row - FIRST_DATA_ROW;
     const internalId = internalIds[index];
@@ -297,7 +343,9 @@ async function build(
       internalId === undefined ? index + 1 : formatInternalId(internalId);
   }
   for (const child of CHILD_SHEETS) {
-    addChildSheet(book, child.name, child.columns, rows);
+    const columns = keptColumnsOf(child.columns, customization);
+    if (columns.every((column) => column.path === undefined)) continue;
+    addChildSheet(book, child.name, columns, rows);
   }
   await addVocabularySheet(book).protect("", {});
   return book.xlsx.writeBuffer();
@@ -306,8 +354,9 @@ async function build(
 export function importTemplateWorkbook(
   rows: number = MAX_IMPORT_ROWS,
   internalIds: readonly number[] = [],
+  customization: TemplateCustomization = {},
 ): Promise<ExcelBuffer> {
-  return queueBuild(() => build(rows, internalIds));
+  return queueBuild(() => build(rows, internalIds, customization));
 }
 
 export function xlsxResponse(book: ExcelBuffer, filename: string): Response {
@@ -323,9 +372,10 @@ export function xlsxResponse(book: ExcelBuffer, filename: string): Response {
 export async function importTemplateResponse(
   rows: number,
   internalIds?: readonly number[],
+  customization?: TemplateCustomization,
 ): Promise<Response> {
   return xlsxResponse(
-    await importTemplateWorkbook(rows, internalIds),
+    await importTemplateWorkbook(rows, internalIds, customization),
     IMPORT_TEMPLATE_FILENAME,
   );
 }

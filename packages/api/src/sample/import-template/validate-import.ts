@@ -16,6 +16,7 @@ import {
   SAMPLE_KEY_HEADER,
   SHEETS,
 } from "./columns.ts";
+import { prefilledHeaderLabelsOf, readCustomization } from "./customization.ts";
 import { openWorkbook } from "./open-workbook.ts";
 import { cellValue, type RawRow, readRows, textOf } from "./read-rows.ts";
 import { templateLayout } from "./template-layout.ts";
@@ -125,6 +126,24 @@ function validateRows(parsed: ReturnType<typeof readRows>): ValidatedImport {
   };
 }
 
+function withoutPrefilledRows(
+  parsed: ReturnType<typeof readRows>,
+  prefilled: ReadonlyMap<string, string>,
+): ReturnType<typeof readRows> {
+  const isPrefilled = ({ cells }: RawRow) =>
+    Object.entries(cells).every(
+      ([header, cell]) =>
+        header === SAMPLE_KEY_HEADER || prefilled.get(header) === textOf(cell),
+    );
+  return {
+    samples: parsed.samples.filter((sample) => !isPrefilled(sample)),
+    orphans: [
+      ...parsed.orphans,
+      ...parsed.samples.filter(isPrefilled).flatMap(({ children }) => children),
+    ],
+  };
+}
+
 type UnavailableInternalNumbers = (numbers: number[]) => Promise<Set<number>>;
 
 async function internalIdIssues(
@@ -163,7 +182,10 @@ export function validateImport(
     if (book === undefined) return rejected([{ code: "unreadable_file" }]);
     const { layout, issues } = templateLayout(book);
     if (issues.length > 0) return rejected(issues);
-    const parsed = readRows(book, layout);
+    const parsed = withoutPrefilledRows(
+      readRows(book, layout),
+      prefilledHeaderLabelsOf(readCustomization(book)),
+    );
     if (parsed.samples.length === 0)
       return rejected([{ sheet: SHEETS.samples, code: "no_sample" }]);
     if (parsed.samples.length > MAX_IMPORT_ROWS)

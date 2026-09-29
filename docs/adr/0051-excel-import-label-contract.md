@@ -24,10 +24,20 @@ Phase 3 of the Excel bulk import parses and validates the workbook a researcher 
 ## Consequences
 
 - Widening or renaming a template column is a `columns.ts` change alone; no second header-position map to keep in sync.
-- Customising the template (a later goal) needs no parser change, since nothing pins a version.
+- Customising the template needed no version gate; see the amendment below.
 - `required-columns.ts` must stay derived from the domain (`createSampleSchema`, `samplePublishBlockers`, the hierarchy completeness helpers), never a hand-maintained list, or it silently drifts from what actually blocks publication.
 - Every parse and validation dependency (exceljs, the vocabulary blocks, the publish blockers) stays in `api`; `admin` carries none of it.
 - The server parses the upload with no unzipped-size guard: uploads are authenticated and rate limited to 5 per minute, so a crafted archive exhausting the api's memory is an accepted risk rather than a JSZip-mirroring archive check.
+
+## Amendment: customized template
+
+The template download can be customized by provenance status, material path (up to 2 levels, never mineral or synthetic) and manual groups; two additions extend the contract.
+
+- The workbook records the customization on the Read me sheet: `C1` holds JSON of codes `{provenanceStatus, materialPath, manualGroupIds}`, `C2` the group names for humans.
+- Upload reads `C1` back and recomputes the pre-filled labels from its codes; dropped columns need nothing, since headers match by name.
+- A sample row equal to its pre-fill is blank, so an untouched pre-filled row is not a sample.
+- Child rows keyed to a blank row are `unknown_sample_key` orphans.
+- Manual groups are only recorded in `C1` and `C2`; the import applies none of them yet.
 
 ## Rejected option
 

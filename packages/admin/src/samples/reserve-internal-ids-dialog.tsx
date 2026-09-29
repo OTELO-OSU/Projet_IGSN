@@ -33,7 +33,7 @@ export function ReserveInternalIdsDialog() {
     defaultValues: { count: 250 } as Partial<ReserveInternalIds>,
     validators: { onSubmit: validateCount },
     onSubmit: ({ value }) =>
-      downloadTemplate.mutate(value.count, {
+      downloadTemplate.mutate(reserveInternalIdsSchema.parse(value), {
         onSuccess: () => setIsOpen(false),
       }),
   });

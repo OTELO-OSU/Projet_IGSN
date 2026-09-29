@@ -17,9 +17,17 @@ import { provisionUser } from "../../tests/provision-user.ts";
 import { stubDataCite } from "../../tests/stub-datacite.ts";
 import { createSampleRepository } from "../repository.ts";
 import { SHEETS } from "./columns.ts";
-import { CLEAN_SAMPLE, cleanBook, fill } from "./import-fixture.ts";
+import {
+  CLEAN_SAMPLE,
+  cleanBook,
+  columnOf,
+  fill,
+  sheetOf,
+} from "./import-fixture.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
+
+const GROUP = { id: "01890a5d-ac96-774b-82d4-b302099a9f11", name: "Alps 2026" };
 
 const download = (db: Kysely<DB>, query = "") =>
   createApp(db).app.request(`/admin/samples/import-template${query}`, {
@@ -79,13 +87,70 @@ describe("import template route", () => {
     expect(res.status).toBe(401);
   });
 
-  pgTest.for(["0", "1.5", String(MAX_IMPORT_ROWS + 1)])(
-    "should refuse the rows parameter %s",
-    async (rows, { db }) => {
-      const res = await download(db, `?rows=${rows}`);
+  pgTest.for([
+    "rows=0",
+    "rows=1.5",
+    `rows=${MAX_IMPORT_ROWS + 1}`,
+    "provenanceStatus=lost",
+    "materialPath=rock_and_sediment.mineral",
+    "materialPath=rock_and_sediment.nope",
+    `manualGroupIds=${GROUP.id},nope`,
+  ])("should refuse the parameter %s", async (query, { db }) => {
+    const res = await download(db, `?${query}`);
 
-      expect(res.status).toBe(400);
+    expect(res.status).toBe(400);
+  });
+
+  pgTest(
+    "should answer 422 for a manual group the caller cannot attach",
+    async ({ db }) => {
+      await provisionUser(db, "test-token", { status: "accepted" });
+      await db.insertInto("manual_group").values(GROUP).execute();
+
+      const res = await download(db, `?manualGroupIds=${GROUP.id}`);
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: { error: "Manual group not attachable to this sample" },
+      });
     },
+  );
+
+  pgTest(
+    "should answer the template customized with the requested pre-fills and groups",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      await db.insertInto("manual_group").values(GROUP).execute();
+      await db
+        .insertInto("manual_group_member")
+        .values({ group_id: GROUP.id, user_id: caller.id })
+        .execute();
+
+      const res = await download(
+        db,
+        `?rows=1&provenanceStatus=field_sample&materialPath=rock_and_sediment.rock.igneous&manualGroupIds=${GROUP.id}`,
+      );
+      const book = new ExcelJS.Workbook();
+      await book.xlsx.load(await res.arrayBuffer());
+      const samples = sheetOf(book, SHEETS.samples);
+      const prefillOf = (header: string) =>
+        samples.getCell(3, columnOf(samples, header)).value;
+
+      expect({
+        status: res.status,
+        provenance: prefillOf("Provenance status"),
+        material: prefillOf("Material (level 3)"),
+        groups: sheetOf(book, SHEETS.readMe).getCell("C2").value,
+      }).toEqual({
+        status: 200,
+        provenance: "Field sample",
+        material: "Igneous",
+        groups: GROUP.name,
+      });
+    },
+    30_000,
   );
 });
 

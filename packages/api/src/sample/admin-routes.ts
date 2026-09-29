@@ -154,9 +154,29 @@ export function createSampleAdminRoutes(
         data: await repository.findDuplicates(criteria, exclude),
       });
     })
-    .get("/import-template", validateImportTemplateQuery, (c) =>
-      importTemplateResponse(c.req.valid("query").rows),
-    )
+    .get("/import-template", validateImportTemplateQuery, async (c) => {
+      const { rows, manualGroupIds, ...customization } = c.req.valid("query");
+      if (manualGroupIds === undefined) {
+        return importTemplateResponse(rows, undefined, customization);
+      }
+      const attachable = await manualGroups.listAttachableForUser(
+        c.get("user").id,
+      );
+      if (
+        hasUnattachable(
+          manualGroupIds,
+          attachable.map((group) => group.id),
+        )
+      ) {
+        return c.json(NOT_ATTACHABLE, 422);
+      }
+      return importTemplateResponse(rows, undefined, {
+        ...customization,
+        manualGroups: attachable.filter((group) =>
+          manualGroupIds.includes(group.id),
+        ),
+      });
+    })
     .post(
       "/import-template/reservation",
       validateReserveInternalIdsBody,

@@ -3,6 +3,8 @@ import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-detail
 import ExcelJS from "exceljs";
 import { beforeAll, describe, expect, it } from "vitest";
 
+import type { TemplateCustomization } from "./customization.ts";
+
 import {
   CHILD_SHEETS,
   COLUMN_GROUPS,
@@ -12,7 +14,11 @@ import {
   TEMPLATE_VERSION,
 } from "./columns.ts";
 import { BLOCK_PLACEMENTS } from "./vocabulary-sheet.ts";
-import { importTemplateWorkbook, sheetValidations } from "./workbook.ts";
+import {
+  FROZEN_FILL,
+  importTemplateWorkbook,
+  sheetValidations,
+} from "./workbook.ts";
 
 const GROUP_ROW = 1;
 
@@ -22,9 +28,15 @@ const FIRST_DATA_ROW = 3;
 
 let book: ExcelJS.Workbook;
 
-const loaded = async (rows?: number, internalIds?: readonly number[]) => {
+const loaded = async (
+  rows?: number,
+  internalIds?: readonly number[],
+  customization?: TemplateCustomization,
+) => {
   const source = new ExcelJS.Workbook();
-  await source.xlsx.load(await importTemplateWorkbook(rows, internalIds));
+  await source.xlsx.load(
+    await importTemplateWorkbook(rows, internalIds, customization),
+  );
   return source;
 };
 
@@ -296,5 +308,126 @@ describe("import template workbook", () => {
       placement?.keyRange,
       placement?.keyRange,
     ]);
+  });
+});
+
+describe("customized import template workbook", () => {
+  const rows = 3;
+  const lastRow = FIRST_DATA_ROW + rows - 1;
+  const groups = [
+    { id: "0190c9a0-0000-7000-8000-000000000001", name: "Alps" },
+    { id: "0190c9a0-0000-7000-8000-000000000002", name: "Pyrenees" },
+  ];
+  const prefilled = {
+    "Provenance status": "Field sample",
+    "Material (level 1)": "Rock and sediment",
+    "Material (level 2)": "Rock",
+    "Material (level 3)": "Igneous",
+  };
+  let customized: ExcelJS.Workbook;
+
+  const samples = () => sheetOf(customized, SHEETS.samples);
+
+  const addressOf = (header: string, row: number) => {
+    const headers = valuesOf(samples().getRow(HEADER_ROW).values);
+    const index = headers.findIndex(
+      (value) =>
+        typeof value === "string" && value.replace(" *", "") === header,
+    );
+    if (index < 0) throw new Error(`missing column ${header}`);
+    return `${samples().getColumn(index + 1).letter}${row}`;
+  };
+
+  beforeAll(async () => {
+    customized = await loaded(rows, [], {
+      provenanceStatus: "field_sample",
+      materialPath: "rock_and_sediment.rock.igneous",
+      manualGroups: groups,
+    });
+  }, 30_000);
+
+  it("should write each pre-fill label, greyed, in the first and last data rows", () => {
+    const cellsAt = (row: number) =>
+      Object.keys(prefilled).map((header) => {
+        const cell = samples().getCell(addressOf(header, row));
+        return [header, cell.value, cell.fill];
+      });
+
+    expect([cellsAt(FIRST_DATA_ROW), cellsAt(lastRow)]).toEqual(
+      [FIRST_DATA_ROW, lastRow].map(() =>
+        Object.entries(prefilled).map(([header, label]) => [
+          header,
+          label,
+          FROZEN_FILL,
+        ]),
+      ),
+    );
+  });
+
+  it("should offer no dropdown on a fixed cell but keep one on the next material level", () => {
+    const validated = (header: string) =>
+      sheetValidations(samples()).find(addressOf(header, FIRST_DATA_ROW)) !==
+      undefined;
+
+    expect(
+      ["Provenance status", "Material (level 3)", "Material (level 4)"].map(
+        validated,
+      ),
+    ).toEqual([false, false, true]);
+  });
+
+  it("should drop the columns whose condition no row can meet", () => {
+    const dropped = new Set([
+      "scientificContext.collectionOrigin",
+      "scientificContext.collectionContextDescription",
+      "metamorphicFacies",
+      "metamorphicFabric",
+    ]);
+
+    expect(
+      valuesOf(samples().getRow(HEADER_ROW).values).filter(
+        (value) => typeof value === "string",
+      ),
+    ).toEqual(
+      SAMPLE_COLUMNS.filter(
+        (column) => column.path === undefined || !dropped.has(column.path),
+      ).map((column) => column.header),
+    );
+  });
+
+  it("should omit the child sheets a collection specimen leaves without a column", async () => {
+    const specimen = await loaded(1, [], {
+      provenanceStatus: "collection_specimen",
+    });
+
+    expect(specimen.worksheets.map((worksheet) => worksheet.name)).toEqual([
+      SHEETS.readMe,
+      SHEETS.samples,
+      SHEETS.relations,
+      SHEETS.rightsHolders,
+      SHEETS.elementsOfInterest,
+      SHEETS.storageConditions,
+      SHEETS.vocabularies,
+    ]);
+  });
+
+  it("should record the customization codes in Read me C1 and the group names in C2", () => {
+    const readMe = sheetOf(customized, SHEETS.readMe);
+
+    expect({
+      stored: JSON.parse(readMe.getCell("C1").text),
+      names: readMe.getCell("C2").value,
+    }).toEqual({
+      stored: {
+        provenanceStatus: "field_sample",
+        materialPath: "rock_and_sediment.rock.igneous",
+        manualGroupIds: groups.map((group) => group.id),
+      },
+      names: "Alps, Pyrenees",
+    });
+  });
+
+  it("should record no customization in an uncustomized template", () => {
+    expect(sheet(SHEETS.readMe).getCell("C1").value).toBeNull();
   });
 });
