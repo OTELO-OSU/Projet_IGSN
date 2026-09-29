@@ -212,28 +212,27 @@ Every controlled vocabulary (nature, texture, the four hierarchies, ROR/OSU/labo
 
 `status`, `sort`, `order`, `ownership`, `ownerId` and `institution` are deliberately not exposed: the list stays published-only, ordered by IGSN, and unscoped by ownership beyond `editable`.
 
-| Core param                | internal param              | Core location                                        |
-| ------------------------- | --------------------------- | ---------------------------------------------------- |
-| `search`                  | `search`                    | (no Core field)                                      |
-| `bbox`                    | `bbox`                      | `production.location.geometry`                       |
-| `sampleObjectType`        | `type`                      | `classification.sampleObjectTypes[0]`                |
-| `materialCategory`        | `material`                  | `classification.materialCategories[0]`               |
-| `collectionMethod`        | `collectionMethod`          | `production.collectionMethod`                        |
-| `natureOfSample`          | `nature`                    | `classification.natureOfSample`                      |
-| `texture`                 | `texture`                   | `classification.contextCategories` (`otelo:texture`) |
-| `projectName`             | `researchProgramName`       | `production.projects[0].name`                        |
-| `chiefScientist`          | `chiefScientist`            | `responsibility[]` role `ChiefScientist`             |
-| `hostingInstitution`      | `hostInstitution`           | `responsibility[]` role `HostingInstitution`         |
-| `collector`               | `collectorName`             | `responsibility[]` role `Collector`                  |
-| `numericAgeMin`           | `ageMin`                    | `extensions.geology.numericAge.min`                  |
-| `numericAgeMax`           | `ageMax`                    | `extensions.geology.numericAge.max`                  |
-| `numericAgeUnit`          | `ageUnit`                   | `extensions.geology.numericAge.unit`                 |
-| `affiliationOrganization` | `institutionalOrganization` | `responsibility[].agent.affiliations` (ROR)          |
-| `affiliationOsu`          | `institutionalOsu`          | affiliation `urn:otelo:osu:<code>`                   |
-| `affiliationLaboratory`   | `institutionalLaboratory`   | affiliation `urn:otelo:laboratory:<code>`            |
-| `manualGroup`             | `manualGroup`               | `manualGroups[].id`                                  |
-| `contributor`             | `contributor`               | (no Core field)                                      |
-| `mineralogy`              | `mineralClassification`     | `extensions.geology.mineralogy[].id`                 |
+| Core param                | internal param              | Core location                                |
+| ------------------------- | --------------------------- | -------------------------------------------- |
+| `search`                  | `search`                    | (no Core field)                              |
+| `bbox`                    | `bbox`                      | `production.location.geometry`               |
+| `sampleObjectType`        | `type`                      | `classification.sampleObjectTypes[0]`        |
+| `materialCategory`        | `material`                  | `classification.materialCategories[0]`       |
+| `collectionMethod`        | `collectionMethod`          | `production.collectionMethod`                |
+| `natureOfSample`          | `nature`                    | `classification.natureOfSample`              |
+| `projectName`             | `researchProgramName`       | `production.projects[0].name`                |
+| `chiefScientist`          | `chiefScientist`            | `responsibility[]` role `ChiefScientist`     |
+| `hostingInstitution`      | `hostInstitution`           | `responsibility[]` role `HostingInstitution` |
+| `collector`               | `collectorName`             | `responsibility[]` role `Collector`          |
+| `numericAgeMin`           | `ageMin`                    | `extensions.geology.numericAge.min`          |
+| `numericAgeMax`           | `ageMax`                    | `extensions.geology.numericAge.max`          |
+| `numericAgeUnit`          | `ageUnit`                   | `extensions.geology.numericAge.unit`         |
+| `affiliationOrganization` | `institutionalOrganization` | `responsibility[].agent.affiliations` (ROR)  |
+| `affiliationOsu`          | `institutionalOsu`          | affiliation `urn:otelo:osu:<code>`           |
+| `affiliationLaboratory`   | `institutionalLaboratory`   | affiliation `urn:otelo:laboratory:<code>`    |
+| `manualGroup`             | `manualGroup`               | `manualGroups[].id`                          |
+| `contributor`             | `contributor`               | (no Core field)                              |
+| `mineralogy`              | `mineralClassification`     | `extensions.geology.mineralogy[].id`         |
 
 `CORE_PATH_BY_FIELD`/`toCorePath` (see [Error-path translation](#error-path-translation)) could not drive this rename: it is lossy, since `material`, `texture`, `metamorphicFacies` and `resourceType` all resolve to `classification.contextCategories`, and `chiefScientist`, `collectorName` and `hostInstitution` all resolve to `responsibility`. `CORE_FILTER_PARAM` is hand-written instead.
 

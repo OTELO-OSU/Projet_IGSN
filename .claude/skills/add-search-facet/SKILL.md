@@ -18,7 +18,7 @@ Follow TDD (spec first).
 
 - `hierarchy`: a dot-path vocabulary (type, material, collection method).
   Matches at-or-under the picked node (ltree `<@`).
-- `enum`: a flat controlled vocabulary (nature, texture). Matches by equality.
+- `enum`: a flat controlled vocabulary (nature). Matches by equality.
 - `text`: a free-text scientific-context field. Matches by unaccent ILIKE.
 - `numericRange`: the age range. Not a generic column filter; it compares
   against dedicated comparable columns (`annum_min`, `annum_max`, generated
