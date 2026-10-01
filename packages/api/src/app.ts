@@ -161,6 +161,7 @@ export function createApp(
     .use("/samples/import-template", importRateLimit)
     .use("/samples/import-template/reservation", importRateLimit)
     .use("/samples/import", importRateLimit)
+    .use("/samples/bulk-edit", importRateLimit)
     .use(
       "/samples/import/internal-id-request",
       rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),

@@ -34,6 +34,7 @@ import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-samp
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
+import { canPublishSamples } from "@projet-igsn/domain/user/can-publish-samples";
 import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -53,7 +54,9 @@ import { hasUnattachable } from "../manual-group/has-unattachable.ts";
 import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
+import { bulkEditTargets } from "./bulk-edit/bulk-edit-targets.ts";
 import { samplesExportResponse } from "./bulk-edit/export-workbook.ts";
+import { validateBulkEdit } from "./bulk-edit/validate-bulk-edit.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
 import { internalIdRequestMail } from "./import-template/internal-id-request-mail.ts";
 import { validateImport } from "./import-template/validate-import.ts";
@@ -230,6 +233,25 @@ export function createSampleAdminRoutes(
         parents: [...parents.values()],
         parentIds: samples.flatMap(({ input }) => input.parentIds ?? []),
       });
+      return c.json({ count } satisfies ImportAccepted, 200);
+    })
+    .post("/bulk-edit", validateImportUpload, async (c) => {
+      const user = c.get("user");
+      if (!canPublishSamples(user)) {
+        return c.json({ error: "Forbidden" }, 403);
+      }
+      const { issues, samples } = await validateBulkEdit(
+        await c.req.valid("form").file.arrayBuffer(),
+        (numbers) => bulkEditTargets(repository, users, user, numbers),
+      );
+      if (issues.length > 0) {
+        const body: InvalidImport = { error: "Invalid import", issues };
+        return c.json(body, 422);
+      }
+      if (!(await checkDataCite(dataCiteConfig()))) {
+        return c.json({ error: "DataCite unavailable" }, 503);
+      }
+      const count = await repository.updatePublishing(samples);
       return c.json({ count } satisfies ImportAccepted, 200);
     })
     .post(

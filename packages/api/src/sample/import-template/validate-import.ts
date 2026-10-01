@@ -11,7 +11,10 @@ import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under"
 import type { TemplateLayout } from "./template-layout.ts";
 
 import { queueBuild } from "./build-queue.ts";
-import { buildSampleInputs } from "./build-sample-inputs.ts";
+import {
+  buildSampleInputs,
+  type SampleCandidate,
+} from "./build-sample-inputs.ts";
 import {
   DATA_SHEETS,
   plainHeader,
@@ -20,7 +23,13 @@ import {
 } from "./columns.ts";
 import { prefilledHeaderLabelsOf, readCustomization } from "./customization.ts";
 import { openWorkbook } from "./open-workbook.ts";
-import { cellValue, type RawRow, readRows, textOf } from "./read-rows.ts";
+import {
+  cellValue,
+  type ParsedRows,
+  type RawRow,
+  readRows,
+  textOf,
+} from "./read-rows.ts";
 import {
   INHERITED_PATHS,
   type ResolveParentsByIgsn,
@@ -59,7 +68,7 @@ const templateColumnOf = (
     ? undefined
     : TEMPLATE_COLUMNS.get(sheet)?.byHeader.get(header);
 
-function withValue(
+export function withValue(
   book: ExcelJS.Workbook,
   layout: TemplateLayout,
   issue: ImportIssue,
@@ -100,19 +109,18 @@ function positionOf({
   ];
 }
 
-function byPosition(a: ImportIssue, b: ImportIssue): number {
+export function byPosition(a: ImportIssue, b: ImportIssue): number {
   const [p, q] = [positionOf(a), positionOf(b)];
   return p[0] - q[0] || p[1] - q[1] || p[2] - q[2];
 }
 
 type ValidatedImport = { issues: ImportIssue[]; samples: ImportedSample[] };
 
-const rejected = (issues: ImportIssue[]): ValidatedImport => ({
-  issues,
-  samples: [],
-});
+export const rejected = (
+  issues: ImportIssue[],
+): { issues: ImportIssue[]; samples: [] } => ({ issues, samples: [] });
 
-const internalNumberOf = ({ cells }: RawRow) => {
+export const internalNumberOf = ({ cells }: RawRow) => {
   const key = cells[SAMPLE_KEY_HEADER];
   return key === undefined ? undefined : parseInternalId(textOf(key));
 };
@@ -122,10 +130,13 @@ const isInheritedField = ({ sheet, column }: ImportIssue) =>
     isPathAtOrUnder(templateColumnOf(sheet, column)?.column.path, path),
   );
 
-async function validateRows(
-  parsed: ReturnType<typeof readRows>,
+export async function validateRows(
+  parsed: ParsedRows,
   manualGroups: readonly ManualGroup[],
   resolveParentsByIgsn: ResolveParentsByIgsn,
+  prepare: (candidate: SampleCandidate, index: number) => SampleCandidate = (
+    candidate,
+  ) => candidate,
 ): Promise<ValidatedImport> {
   const built = buildSampleInputs(parsed, manualGroups);
   const parents = await resolveImportParents(
@@ -134,7 +145,7 @@ async function validateRows(
   );
   const reported = new Set([...built.issues, ...parents.issues].map(fieldOf));
   const unresolved = new Set(parents.issues.map(({ row }) => row));
-  const { issues, inputs } = validateSamples(parents.samples);
+  const { issues, inputs } = validateSamples(parents.samples.map(prepare));
   return {
     issues: [
       ...built.issues,
@@ -175,7 +186,7 @@ type UnavailableInternalNumbers = (numbers: number[]) => Promise<Set<number>>;
 type AttachableManualGroups = () => Promise<readonly ManualGroup[]>;
 
 async function internalIdIssues(
-  parsed: ReturnType<typeof readRows>,
+  parsed: ParsedRows,
   unavailableInternalNumbers: UnavailableInternalNumbers,
 ): Promise<ImportIssue[]> {
   const keyed = parsed.samples.flatMap((sample) => {

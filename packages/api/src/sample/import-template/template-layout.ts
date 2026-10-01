@@ -37,7 +37,11 @@ function headerNumbers(sheet: ExcelJS.Worksheet): Map<string, number[]> {
   return numbers;
 }
 
-const isMandatory = (sheet: string, column: Column) =>
+type IsMandatory = (sheet: string, column: Column) => boolean;
+
+type DataSheet = { name: string; columns: readonly Column[] };
+
+const isImportMandatory: IsMandatory = (sheet, column) =>
   column.header === SAMPLE_KEY_HEADER ||
   (sheet === SHEETS.samples && REQUIRED_SAMPLE_COLUMNS.includes(column));
 
@@ -45,6 +49,7 @@ function sheetLayout(
   name: string,
   columns: readonly Column[],
   sheet: ExcelJS.Worksheet,
+  isMandatory: IsMandatory,
 ): { columns: LayoutColumn[]; issues: ImportIssue[] } {
   const numbers = headerNumbers(sheet);
   const present: LayoutColumn[] = [];
@@ -71,7 +76,11 @@ function sheetLayout(
   return { columns: present, issues };
 }
 
-export function templateLayout(book: ExcelJS.Workbook): {
+export function templateLayout(
+  book: ExcelJS.Workbook,
+  sheets: readonly DataSheet[] = DATA_SHEETS,
+  isMandatory: IsMandatory = isImportMandatory,
+): {
   layout: TemplateLayout;
   issues: ImportIssue[];
 } {
@@ -81,14 +90,14 @@ export function templateLayout(book: ExcelJS.Workbook): {
       issues: [{ sheet: SHEETS.samples, code: "missing_sheet" }],
     };
   }
-  const sheets = DATA_SHEETS.flatMap(({ name, columns }) => {
+  const present = sheets.flatMap(({ name, columns }) => {
     const sheet = book.getWorksheet(name);
     return sheet === undefined
       ? []
-      : [{ name, ...sheetLayout(name, columns, sheet) }];
+      : [{ name, ...sheetLayout(name, columns, sheet, isMandatory) }];
   });
   return {
-    layout: sheets.map(({ name, columns }) => ({ name, columns })),
-    issues: sheets.flatMap((sheet) => sheet.issues),
+    layout: present.map(({ name, columns }) => ({ name, columns })),
+    issues: present.flatMap((sheet) => sheet.issues),
   };
 }

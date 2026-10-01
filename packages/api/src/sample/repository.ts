@@ -31,6 +31,7 @@ import {
   listPublishedSamplesForService,
   listSamplesAssignedTo,
 } from "./service/list-sample.ts";
+import { listSamplesByInternalNumbers } from "./service/list-samples-by-internal-numbers.ts";
 import { mapPublishedSamples } from "./service/map-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import { releaseEditLock } from "./service/release-edit-lock.ts";
@@ -94,6 +95,19 @@ export function createSampleRepository(
           await trx
             .updateTable("sample")
             .set({ status: "publishing", internal_number: internalNumber })
+            .where("id", "=", id)
+            .execute();
+        }
+        return samples.length;
+      }),
+    listByInternalNumbers: tx(listSamplesByInternalNumbers),
+    updatePublishing: (samples) =>
+      withTransaction(db, async (trx) => {
+        for (const { id, input } of samples) {
+          await updateSample(trx, id, input);
+          await trx
+            .updateTable("sample")
+            .set({ status: "publishing" })
             .where("id", "=", id)
             .execute();
         }

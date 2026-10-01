@@ -17,6 +17,12 @@ export const importIssueCodeSchema = z.enum([
   "multiple_parent_igsns",
   "location_inherited_from_parent",
   "collection_date_inherited_from_parent",
+  "unknown_sample",
+  "sample_not_published",
+  "synthetic_sample",
+  "sample_not_editable",
+  "sample_locked",
+  "frozen_field",
 ]);
 export type ImportIssueCode = z.infer<typeof importIssueCodeSchema>;
 

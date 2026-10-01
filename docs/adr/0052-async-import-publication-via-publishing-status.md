@@ -23,7 +23,9 @@ One permanent worker (`api/src/sample/service/publishing-worker.ts`), started on
 
 Idempotence rests on two facts: `generateIgsnSuffix(id)` is deterministic from the row's uuid, and the DataCite `PUT` is idempotent, so a crash between the `PUT` and the commit re-runs into the same DOI. A restart resumes stranded rows on the worker's first tick; a deploy delays publication, never loses it.
 
-`publishSample` clears `publishing_error` in its UPDATE, so any later successful publish (the worker's or a human's on a `publish_failed` sample) erases the error. `PERMANENT_IGSN_STATUSES` (`published`, `withdrawn`, `tombstone`) replaces `status <> 'draft'` as `hasPermanentIgsn`'s definition, in TS and inline in SQL, keeping the two new statuses on the draft side of every permanence gate. `sample_status_requires_igsn` widens accordingly: the three pre-permanent statuses carry no IGSN.
+`publishSample` clears `publishing_error` in its UPDATE, so any later successful publish (the worker's or a human's on a `publish_failed` sample) erases the error. `PERMANENT_IGSN_STATUSES` (`published`, `withdrawn`, `tombstone`) replaces `status <> 'draft'` as `hasPermanentIgsn`'s definition, in TS and inline in SQL, keeping the two new statuses on the draft side of every permanence gate. `sample_status_requires_igsn` widens accordingly: the three pre-permanent statuses need no IGSN, so `published -> publishing -> published` keeps its IGSN across the queue.
+
+`POST /admin/samples/bulk-edit` (`api/src/sample/bulk-edit/`) reuses the same two statuses for an already-published sample: it commits accepted edits as `publishing`, and the same worker republishes it under its existing IGSN, `published_at` and a DataCite `publish` event. Accepted consequences: the sample is hidden from the public while queued, and a failed republish leaves it `publish_failed`, on the draft side of every permanence gate, until "Retry publication" succeeds.
 
 ## Rejected
 

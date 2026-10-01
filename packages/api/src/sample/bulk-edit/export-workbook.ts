@@ -44,7 +44,7 @@ const READ_ME_LINES = [
   `The "${SHEETS.vocabularies}" sheet lists every value the dropdowns offer, with the code the registry stores.`,
 ];
 
-function isFrozen(column: Column, sample: Sample): boolean {
+export function isFrozen(column: Column, sample: Sample): boolean {
   if (column.path === undefined || FROZEN_PATHS.has(column.path)) return true;
   const provenance = sample.scientificContext?.provenanceStatus;
   if (
