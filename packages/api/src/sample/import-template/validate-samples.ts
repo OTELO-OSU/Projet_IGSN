@@ -44,7 +44,7 @@ function columnAt(
   return undefined;
 }
 
-function placeOf(
+export function placeOf(
   sample: SampleCandidate,
   path: readonly PropertyKey[],
 ): Omit<ImportIssue, "code"> {
@@ -85,7 +85,11 @@ function issueOf(
   };
 }
 
-function leavesOf(value: unknown, path: readonly string[] = []): string[][] {
+export function leavesOf(
+  value: unknown,
+  path: readonly string[] = [],
+): string[][] {
+  if (value === undefined) return [];
   return value !== null && typeof value === "object"
     ? Object.entries(value).flatMap(([key, inner]) =>
         leavesOf(inner, [...path, key]),

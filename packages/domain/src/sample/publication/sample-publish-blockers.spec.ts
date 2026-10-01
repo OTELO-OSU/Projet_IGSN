@@ -5,9 +5,12 @@ import type { SampleProcessStep } from "../process-step/model.ts";
 import type { SampleRelation } from "../relation/model.ts";
 import type { Sample } from "../sample.ts";
 
+import { toCreateSample } from "../core/core-sample-fixture.ts";
+import { newPublishBlockers } from "./new-publish-blockers.ts";
 import {
   samplePublishBlockers,
   samplePublishRequirements,
+  toPublishableFields,
 } from "./sample-publish-blockers.ts";
 
 const base: Sample = {
@@ -178,6 +181,34 @@ describe("samplePublishBlockers", () => {
     expect(samplePublishBlockers({ ...base, location })).toEqual([
       "location_position_missing",
     ]);
+  });
+
+  const parent = {
+    id: "00000000-0000-7000-8000-000000000009",
+    igsn: "CNRS1234567890",
+    name: "Parent basalt",
+    material: base.material,
+  };
+
+  it.each([
+    [
+      "create-shaped values carry a parentIds entry",
+      toPublishableFields({ ...base, location: null, parentIds: [parent.id] }),
+    ],
+    [
+      "a stored sample has a parent",
+      { ...base, location: null, parents: [parent] },
+    ],
+  ])("should not require a location when %s", (_label, sample) => {
+    expect(samplePublishBlockers(sample)).toEqual([]);
+  });
+
+  it("should add no location blocker when an edit clears a published sub-sample's location", () => {
+    const current: Sample = { ...base, parents: [parent], status: "published" };
+    const { parentIds: _parentIds, ...edit } = toCreateSample(current);
+    expect(
+      newPublishBlockers(current, { ...edit, location: null }, 10),
+    ).toEqual([]);
   });
 
   it("should not require a location for synthetic material", () => {

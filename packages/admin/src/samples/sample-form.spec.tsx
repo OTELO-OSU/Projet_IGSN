@@ -2850,6 +2850,31 @@ describe("SampleForm post-publication field lock", () => {
     },
   );
 
+  it.each([
+    { parents: [], parentIds: [], tab: "Location (0/1)" },
+    {
+      parents: [NATURAL_PARENT],
+      parentIds: ["3f2504e0-4f89-41d3-9a0c-0305000000b1"],
+      tab: "Location",
+    },
+  ])(
+    "should count the location as a publish requirement on a root sample only: $tab",
+    async ({ parents, parentIds, tab }) => {
+      const screen = await render(
+        <SampleForm
+          onCancel={noop}
+          parents={parents}
+          defaultValues={{ material: "rock_and_sediment.mineral", parentIds }}
+          primaryAction={createAction(noop)}
+        />,
+      );
+
+      await expect
+        .element(screen.getByRole("tab", { name: tab, exact: true }))
+        .toBeVisible();
+    },
+  );
+
   it("should submit the collection date of a sub sample though its field is hidden", async () => {
     const onSubmit = vi.fn();
     const screen = await render(

@@ -166,3 +166,27 @@ export async function cleanBook(): Promise<ExcelJS.Workbook> {
   });
   return book;
 }
+
+const INHERITED_CELLS = [
+  "Collection date precision",
+  "Collection date start",
+  "Collection date end",
+  "Position type",
+  "Longitude",
+  "Latitude",
+  "Region (level 1)",
+  "Region (level 2)",
+];
+
+export async function parentedBook(
+  parentIgsn: string,
+  cells: Cells = {},
+): Promise<ExcelJS.Workbook> {
+  const book = await cleanBook();
+  fill(book, SHEETS.samples, 3, {
+    ...Object.fromEntries(INHERITED_CELLS.map((header) => [header, null])),
+    "Parent IGSN": parentIgsn,
+    ...cells,
+  });
+  return book;
+}

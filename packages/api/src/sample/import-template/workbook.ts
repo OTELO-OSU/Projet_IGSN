@@ -189,6 +189,7 @@ export const FROZEN_FILL: ExcelJS.Fill = {
 
 const greyFormula = (letter: string, condition: ConditionalCondition) => {
   const cell = `$${letter}${FIRST_DATA_ROW}`;
+  if (condition.match === "isEmpty") return `NOT(${cell}="")`;
   const applies = `OR(${condition.values
     .map((value) => `${cell}="${value}"`)
     .join(",")})`;

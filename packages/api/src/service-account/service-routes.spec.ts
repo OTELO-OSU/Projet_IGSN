@@ -1255,6 +1255,38 @@ describe("POST /service/samples", () => {
   );
 
   pgTest(
+    "should publish a sub-sample of a location-less parent without a location",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const created = await inLaboratory(
+        db,
+        {
+          ...publishableSample,
+          material:
+            "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample.rock",
+          location: undefined,
+        },
+        IN_REACH,
+      );
+      await insertSampleOwner(db, created.id, owner.id);
+      const parent = (await publishSample(db, created.id))!;
+      // Act
+      const res = await postSample(app, subSampleBody(parent.igsn!));
+      // Assert
+      const body = (await res.json()) as {
+        issues?: unknown;
+        production?: { location?: unknown };
+      };
+      expect({
+        status: res.status,
+        issues: body.issues,
+        location: body.production?.location,
+      }).toEqual({ status: 201, issues: undefined, location: undefined });
+    },
+  );
+
+  pgTest(
     "should publish a synthetic sub-sample linked to both its parents",
     async ({ db }) => {
       // Arrange

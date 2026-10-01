@@ -41,6 +41,7 @@ export function samplePublishInput(
       targetResourceType: targetResourceType || null,
     })),
     processSteps: composeProcessSteps(values.processSteps),
+    parentIds: values.parentIds,
     attachments,
   } as SamplePublishInput;
 }

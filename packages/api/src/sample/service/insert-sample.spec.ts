@@ -1,10 +1,84 @@
+import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
+import type { Kysely } from "kysely";
+
 import { describe, expect } from "vitest";
+
+import type { DB } from "../../db.ts";
 
 import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
+import { publishableSample } from "../../tests/sample-fixtures.ts";
 import { insertSample } from "./insert-sample.ts";
+import { publishSample } from "./publish-sample.ts";
+
+const published = async (db: Kysely<DB>, input: CreateSample) =>
+  (await publishSample(db, (await insertSample(db, input)).id, "published"))!;
+
+const located = (db: Kysely<DB>) => published(db, publishableSample);
+
+const locationless = (db: Kysely<DB>) =>
+  published(db, { ...publishableSample, location: undefined });
+
+const subSampleInput = (...parents: Sample[]): CreateSample => ({
+  ...publishableSample,
+  location: undefined,
+  parentIds: parents.map(({ id }) => id),
+});
+
+const locationIdOf = async (db: Kysely<DB>, id: string) =>
+  (
+    await db
+      .selectFrom("sample")
+      .select("location_id")
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow()
+  ).location_id;
+
+type Lineage = (
+  db: Kysely<DB>,
+) => Promise<{ parent: Sample; locatedAncestor: Sample | null }>;
+
+const LINEAGES: { rule: string; lineage: Lineage }[] = [
+  {
+    rule: "its located parent's location",
+    lineage: async (db) => {
+      const parent = await located(db);
+      return { parent, locatedAncestor: parent };
+    },
+  },
+  {
+    rule: "its located root's location through a sub-sample parent",
+    lineage: async (db) => {
+      const root = await located(db);
+      return {
+        parent: await published(db, subSampleInput(root)),
+        locatedAncestor: root,
+      };
+    },
+  },
+  {
+    rule: "no location from a location-less parent",
+    lineage: async (db) => ({
+      parent: await published(db, subSampleInput(await locationless(db))),
+      locatedAncestor: null,
+    }),
+  },
+];
 
 describe("insertSample", () => {
+  pgTest.for(LINEAGES)(
+    "should give a sub-sample $rule",
+    async ({ lineage }, { db }) => {
+      const { parent, locatedAncestor } = await lineage(db);
+
+      const child = await insertSample(db, subSampleInput(parent));
+
+      expect(await locationIdOf(db, child.id)).toEqual(
+        locatedAncestor && (await locationIdOf(db, locatedAncestor.id)),
+      );
+    },
+  );
+
   pgTest("should round-trip a full ltree material path", async ({ db }) => {
     const created = await insertSample(db, {
       name: "Basalt 42",

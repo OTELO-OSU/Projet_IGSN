@@ -14,6 +14,8 @@ import { subSampleDeclaredMail } from "./sub-sample-declared-mail.ts";
 
 const FAILURE = "Could not mail the declared sub-sample";
 
+const OWNER_FAILURE = "Could not resolve a parent sample owner";
+
 type SubSampleDeclaration = {
   userSamples: Pick<UserSampleRepository, "listCollaborators">;
   mail?: { sendMail: SendMail; adminUrl: string };
@@ -21,6 +23,45 @@ type SubSampleDeclaration = {
   subSample: Pick<Sample, "id" | "name">;
   parents: Pick<Sample, "id" | "name">[];
 };
+
+type ParentOwner = {
+  owner: SampleCollaborator;
+  parents: Pick<Sample, "id" | "name">[];
+};
+
+export async function parentOwners(
+  userSamples: Pick<UserSampleRepository, "listCollaborators">,
+  parents: readonly Pick<Sample, "id" | "name">[],
+  declarerId: string,
+): Promise<ParentOwner[]> {
+  const notified = new Map<string, ParentOwner>();
+  const resolved = await Promise.allSettled(
+    parents.map(async (parent) => ({
+      parent,
+      collaborators: await userSamples.listCollaborators(parent.id),
+    })),
+  );
+  for (const result of resolved) {
+    if (result.status === "rejected") {
+      console.error(OWNER_FAILURE, result.reason);
+      continue;
+    }
+    const { parent, collaborators } = result.value;
+    const owner = collaborators.find((collaborator) =>
+      isSampleOwner(collaborator.role),
+    );
+    if (!owner || owner.id === declarerId || !canReceiveMail(owner)) {
+      continue;
+    }
+    const already = notified.get(owner.id);
+    if (already) {
+      already.parents.push(parent);
+    } else {
+      notified.set(owner.id, { owner, parents: [parent] });
+    }
+  }
+  return [...notified.values()];
+}
 
 async function mailParentOwners({
   userSamples,
@@ -31,40 +72,15 @@ async function mailParentOwners({
 }: SubSampleDeclaration & {
   mail: { sendMail: SendMail; adminUrl: string };
 }): Promise<void> {
-  const notified = new Map<
-    string,
-    { owner: SampleCollaborator; parentNames: string[] }
-  >();
-  const resolved = await Promise.allSettled(
-    parents.map(async (parent) => ({
-      parent,
-      collaborators: await userSamples.listCollaborators(parent.id),
-    })),
-  );
-  for (const result of resolved) {
-    if (result.status === "rejected") {
-      console.error(FAILURE, result.reason);
-      continue;
-    }
-    const { parent, collaborators } = result.value;
-    const owner = collaborators.find((collaborator) =>
-      isSampleOwner(collaborator.role),
-    );
-    if (!owner || owner.id === declarer.id || !canReceiveMail(owner)) {
-      continue;
-    }
-    const already = notified.get(owner.id);
-    if (already) {
-      already.parentNames.push(parent.name);
-    } else {
-      notified.set(owner.id, { owner, parentNames: [parent.name] });
-    }
-  }
   const subSampleUrl = new URL(
     `samples/${subSample.id}`,
     mail.adminUrl,
   ).toString();
-  for (const { owner, parentNames } of notified.values()) {
+  for (const { owner, parents: owned } of await parentOwners(
+    userSamples,
+    parents,
+    declarer.id,
+  )) {
     if (!(await withinMailBudget(declarer.id))) {
       console.error(FAILURE, "declarer over the mail budget");
       return;
@@ -76,7 +92,7 @@ async function mailParentOwners({
           owner,
           declarer,
           subSampleName: subSample.name,
-          parentNames,
+          parentNames: owned.map((parent) => parent.name),
           subSampleUrl,
         }),
       mail.sendMail,

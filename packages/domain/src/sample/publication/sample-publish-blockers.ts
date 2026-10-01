@@ -73,6 +73,7 @@ export type PublishableFields = Pick<
 > & {
   relations: readonly Partial<Pick<SampleRelation, "targetResourceType">>[];
   processSteps: readonly Partial<Pick<SampleProcessStep, "date">>[];
+  parentIds?: readonly string[];
 };
 
 export function toPublishableFields(
@@ -91,6 +92,7 @@ export function toPublishableFields(
     syntheticDetails: sample.syntheticDetails ?? null,
     relations: sample.relations ?? [],
     processSteps: sample.processSteps ?? [],
+    parentIds: sample.parentIds ?? [],
   };
 }
 
@@ -150,7 +152,10 @@ const fieldRequirements = (
     isMet: materialComplete,
   });
 
+  const hasParent =
+    (sample.parentIds?.length ?? 0) > 0 || (sample.parents?.length ?? 0) > 0;
   if (
+    !hasParent &&
     materialComplete &&
     allowsLocation(sample.material) &&
     requiresLocation(sample.scientificContext?.provenanceStatus)

@@ -1,3 +1,4 @@
+import { FIELD_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
@@ -8,6 +9,7 @@ import {
   cleanBook,
   deleteColumn,
   fill,
+  parentedBook,
   templateBook,
 } from "./import-fixture.ts";
 import { validateImport } from "./validate-import.ts";
@@ -21,12 +23,23 @@ const UNAVAILABLE = 404;
 
 const GROUP = { id: "0190c9a0-0000-7000-8000-000000000001", name: "Alps" };
 
+const PUBLISHED_PARENTS = new Map([[FIELD_SAMPLE.igsn!, FIELD_SAMPLE]]);
+
 const validate = (bytes: ArrayBuffer) =>
   validateImport(
     bytes,
     (numbers) =>
       Promise.resolve(new Set(numbers.filter((n) => n === UNAVAILABLE))),
     () => Promise.resolve([GROUP]),
+    (igsns) =>
+      Promise.resolve(
+        new Map(
+          igsns.flatMap((igsn) => {
+            const parent = PUBLISHED_PARENTS.get(igsn);
+            return parent === undefined ? [] : [[igsn, parent] as const];
+          }),
+        ),
+      ),
   );
 
 const bytesOf = async (book: ExcelJS.Workbook) =>
@@ -58,6 +71,9 @@ const customizedBook = async () => {
   );
   return book;
 };
+
+const subSampleBook = (cells: Record<string, ExcelJS.CellValue> = {}) =>
+  parentedBook(FIELD_SAMPLE.igsn!, cells);
 
 const withKey = (book: ExcelJS.Workbook, row: number, key: string) =>
   fill(book, SHEETS.samples, row, { ...CLEAN_SAMPLE, "Sample #": key });
@@ -393,5 +409,74 @@ describe("validateImport", () => {
         code: "unknown_sample_key",
       },
     ]);
+  });
+
+  it("should cite a published parent by its IGSN, the sub-sample inheriting its collection date and carrying no location", async () => {
+    const { issues, samples } = await validate(
+      await bytesOf(await subSampleBook()),
+    );
+
+    expect({
+      issues,
+      parentIds: samples[0]?.input.parentIds,
+      location: samples[0]?.input.location,
+      collectionDate: samples[0]?.input.description?.collectionDate,
+    }).toEqual({
+      issues: [],
+      parentIds: [FIELD_SAMPLE.id],
+      location: undefined,
+      collectionDate: {
+        precision: "day",
+        start: "2024-06-01",
+        end: "2024-06-01",
+      },
+    });
+  });
+
+  it.each([
+    [
+      "an IGSN no published sample carries",
+      { "Parent IGSN": "UNKNOWN0123456789" },
+      "Parent IGSN",
+      "UNKNOWN0123456789",
+      "parent_not_found",
+    ],
+    [
+      "two IGSNs in the cell",
+      { "Parent IGSN": `${FIELD_SAMPLE.igsn}, ZYXWVTSRQPNMKJHGFEDCBA9876` },
+      "Parent IGSN",
+      `${FIELD_SAMPLE.igsn}, ZYXWVTSRQPNMKJHGFEDCBA9876`,
+      "multiple_parent_igsns",
+    ],
+    [
+      "a location filled beside the parent",
+      { Longitude: 2.35 },
+      "Longitude",
+      "2.35",
+      "location_inherited_from_parent",
+    ],
+    [
+      "a collection date filled beside the parent",
+      { "Collection date start": "2024-01-15" },
+      "Collection date start",
+      "2024-01-15",
+      "collection_date_inherited_from_parent",
+    ],
+  ])(
+    "should refuse a sub-sample row citing %s",
+    async (_, cells, column, value, code) => {
+      const book = await subSampleBook(cells);
+
+      expect(await issuesOf(await bytesOf(book))).toEqual([
+        { sheet: SHEETS.samples, row: 3, column, value, code },
+      ]);
+    },
+  );
+
+  it("should still validate a template predating the Parent IGSN column", async () => {
+    const book = await cleanBook();
+    deleteColumn(book, SHEETS.samples, "Parent IGSN");
+
+    expect(await issuesOf(await bytesOf(book))).toEqual([]);
   });
 });

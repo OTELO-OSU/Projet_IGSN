@@ -10,6 +10,8 @@ Amended 2026-09-14: aligned per-parent slots and one-field-per-row layout, after
 
 Amended 2026-09-14: a chip fills only its own field, no gate cascade, after a PO bug report on the first amendment.
 
+Amended 2026-09-29: a sub-sample inherits its parent's location pointer and has no location requirement of its own, see ADR [0053](0053-ancestor-location-inheritance.md).
+
 ## Context
 
 A sub-sample could declare at most one parent, so a sample made by combining two existing samples had nowhere to record its second origin.

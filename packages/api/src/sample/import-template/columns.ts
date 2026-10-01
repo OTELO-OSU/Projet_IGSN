@@ -62,7 +62,9 @@ export const plainHeader = (column: Column): string =>
   column.header.replace(REQUIRED_MARKER, "");
 
 const PUBLISH_REQUIRED_PATHS = new Set(
-  Object.values(PUBLISH_BLOCKER_PATH).map((path) => path.join(".")),
+  Object.entries(PUBLISH_BLOCKER_PATH)
+    .filter(([blocker]) => blocker !== "parent_not_found")
+    .map(([, path]) => path.join(".")),
 );
 
 const marked = (columns: readonly Column[]): readonly Column[] =>
@@ -113,6 +115,7 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
   ...grouped("Sample", [{ header: SAMPLE_KEY_HEADER }]),
   ...grouped("Identity", [
     field(SAMPLE_NAME_HEADER, "name"),
+    field("Parent IGSN", "parentIds"),
     field("Local ID", "localId"),
     field("Local ID description", "localIdDescription"),
     ...tree("type", "sample_type", "Sample type", SAMPLE_TYPES),

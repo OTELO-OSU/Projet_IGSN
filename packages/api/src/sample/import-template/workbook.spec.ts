@@ -297,6 +297,31 @@ describe("import template workbook", () => {
     });
   });
 
+  it.each(["location.position.longitude", "description.collectionDate.start"])(
+    "should grey %s once Parent IGSN is filled, since the parent's value is inherited",
+    (path) => {
+      const samples = sheet(SHEETS.samples);
+      const letter = letterOf(path);
+
+      expect({
+        prompt: sheetValidations(samples).find(`${letter}${FIRST_DATA_ROW}`)
+          ?.prompt,
+        formulae: conditionalFormattings(samples)
+          .filter((formatting) =>
+            formatting.ref.startsWith(`${letter}${FIRST_DATA_ROW}:`),
+          )
+          .flatMap((formatting) => formatting.rules[0]?.formulae ?? []),
+      }).toEqual({
+        prompt: expect.stringContaining(
+          'Leave empty when "Parent IGSN" is filled.',
+        ),
+        formulae: expect.arrayContaining([
+          `NOT($${letterOf("parentIds")}${FIRST_DATA_ROW}="")`,
+        ]),
+      });
+    },
+  );
+
   it("should offer the vocabulary labels of a multi-valued field in the value column of its own tab", () => {
     const storage = sheet(SHEETS.storageConditions);
 

@@ -48,8 +48,7 @@ export async function createServiceSampleIssues(
   if ((input.processSteps?.length ?? 0) > 0 && parents.length === 0) {
     issues.push(processStepsOnRootIssue());
   }
-  const sole = soleParent(parents);
-  if (sole !== undefined && input.location != null) {
+  if (soleParent(parents) !== undefined && input.location != null) {
     issues.push(
       coreSampleIssue("location_inherited_from_parent", ["location"]),
     );
@@ -58,13 +57,7 @@ export async function createServiceSampleIssues(
     .map(({ sample }) => sample)
     .filter((sample) => sample !== null);
   issues.push(
-    ...publishBlockerIssues(
-      publishBlockersOf(
-        { ...input, location: sole?.sample?.location ?? input.location },
-        uploadLimit,
-        resolved,
-      ),
-    ),
+    ...publishBlockerIssues(publishBlockersOf(input, uploadLimit, resolved)),
   );
   const submitted = input.manualGroupIds ?? [];
   if (submitted.length > 0) {

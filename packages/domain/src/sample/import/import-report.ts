@@ -14,6 +14,9 @@ export const importIssueCodeSchema = z.enum([
   "duplicate_value",
   "unavailable_internal_id",
   "unknown_manual_group",
+  "multiple_parent_igsns",
+  "location_inherited_from_parent",
+  "collection_date_inherited_from_parent",
 ]);
 export type ImportIssueCode = z.infer<typeof importIssueCodeSchema>;
 

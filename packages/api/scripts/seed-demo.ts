@@ -6,6 +6,8 @@ import type { DB } from "../src/db.ts";
 import type { SampleOwner } from "./seed.ts";
 
 import { createDb } from "../src/db.ts";
+import { deleteOrphanLocations } from "../src/sample/service/delete-orphan-locations.ts";
+import { inheritParentLocation } from "../src/sample/service/inherit-parent-location.ts";
 import { replaceSampleAdditionalRoles } from "../src/sample/service/replace-sample-additional-roles.ts";
 import { replaceSampleMineralClassifications } from "../src/sample/service/replace-sample-mineral-classifications.ts";
 import { replaceSampleProcessSteps } from "../src/sample/service/replace-sample-process-steps.ts";
@@ -78,6 +80,13 @@ const parentRows = Object.entries(DEMO_PARENTS).flatMap(([child, parents]) =>
 if (parentRows.length > 0) {
   await db.insertInto("sample_parent").values(parentRows).execute();
 }
+// DEMO_PARENTS lists parents before their children, so each copy reads a settled location.
+for (const [child, parents] of Object.entries(DEMO_PARENTS)) {
+  if (parents.length === 1) {
+    await inheritParentLocation(db, sampleId(child), sampleId(parents[0]!));
+  }
+}
+await deleteOrphanLocations(db);
 for (const [name, steps] of Object.entries(DEMO_PROCESS_STEPS)) {
   await replaceSampleProcessSteps(db, sampleId(name), steps);
 }

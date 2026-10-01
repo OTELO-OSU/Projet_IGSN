@@ -63,6 +63,9 @@ A published sample is public whole but for the fields `domain/sample/publication
 
 A sample carries 0, 1 or 2 parents, capped in `createSampleSchema` and `coreSampleSchema`, set at creation and never edited; two parents force a synthetic material (frozen and location-less), see ADR 0039.
 
+- The location publish requirement applies to parentless samples only, a sub-sample never setting its own location.
+- Creation gives a one-parent sub-sample its parent's `location_id` (`api/src/sample/service/inherit-parent-location.ts`, shared by the admin form, `/service` and the import), already the nearest located ancestor's since every sub-sample inherits at creation; see ADR 0053.
+
 - `api/src/datacite/sync-doi.ts` (`syncDoi`) is the single DataCite write and the single status-to-event map, called by `publishSample` (with `firstRegistration`) and by the `synced` wrapper in `api/src/sample/repository.ts` that every other persisted-sample write goes through, pointing a tombstone at the shared `/tombstone` page; see ADR 0046.
 
 Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`), itself derived from `samplePublishRequirements` (every applicable requirement with its `isMet` state; `samplePublishBlockers` keeps its exact signature and just filters the unmet ones plus the non-field blockers).
