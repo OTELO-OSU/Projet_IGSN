@@ -43,6 +43,8 @@ The template download can be customized by provenance status, material path (up 
 - A label naming none of them rejects its row with `unknown_manual_group`.
 - `POST /admin/samples/import-template/reservation` takes the same optional customization as the download, so reserved `Sample #` IDs land in the customized workbook.
 - A manual group that cannot be attached is a 422 before the sequence advances, burning no numbers.
+- A customized template carries the "Parent IGSN" column only when the optional `subSamples` flag (download query param, reservation body field) is true, the uncustomized one always carrying it.
+- The flag stays out of `C1`, since upload reads actual headers and treats that column as optional.
 
 ## Rejected option
 
