@@ -10,8 +10,18 @@ import { type Packaging } from "./condition/packaging.ts";
 import { type PressureType } from "./condition/pressure-type.ts";
 import { type StorageCondition } from "./condition/storage-condition.ts";
 import { type TemperatureType } from "./condition/temperature-type.ts";
+import { type CORE_ROLE_BY_ADDITIONAL_ROLE } from "./core/core-additional-role.ts";
+import {
+  type CORE_SYNTHESIS_STEP,
+  type CorePositiveDirection,
+} from "./core/core-production-schema.ts";
+import {
+  type CoreRole,
+  type CoreTitleType,
+} from "./core/core-sample-schema.ts";
 import { type AvailabilityStatus } from "./curation/availability-status.ts";
 import { type ExistenceStatus } from "./curation/existence-status.ts";
+import { type DatePrecision } from "./date-range.ts";
 import { type Element } from "./element/vocabulary.ts";
 import { type OceanSea } from "./location/ocean-sea.ts";
 import { type VerticalReferenceSystem } from "./location/vertical-reference-system.ts";
@@ -84,13 +94,24 @@ type _relationTargetResourceTypeKeys =
   AssertKeys<`relation_resource_type_${RelationTargetResourceType}`>;
 type _verticalReferenceSystemKeys =
   AssertKeys<`vertical_reference_system_${VerticalReferenceSystem}`>;
+type _coreRoleKeys = AssertKeys<`core_role_${Lowercase<
+  Exclude<CoreRole, (typeof CORE_ROLE_BY_ADDITIONAL_ROLE)[AdditionalRole]>
+>}`>;
+type _titleTypeKeys = AssertKeys<`title_type_${Lowercase<CoreTitleType>}`>;
+type _stepTypeKeys = AssertKeys<`step_type_${Lowercase<
+  typeof CORE_SYNTHESIS_STEP
+>}`>;
+type _collectionDatePrecisionKeys =
+  AssertKeys<`collection_date_precision_${DatePrecision}`>;
+type _positiveDirectionKeys =
+  AssertKeys<`positive_direction_${CorePositiveDirection}`>;
 
 export type Messages = Record<
   Exclude<MessageKey, `$${string}`>,
   (() => string) | undefined
 >;
 
-type SampleLabels = {
+export type SampleLabels = {
   materialPathLabel: (path: string) => string;
   typeLabel: (path: string) => string;
   collectionMethodLabel: (path: string) => string;
@@ -130,7 +151,18 @@ type SampleLabels = {
     resourceType: RelationTargetResourceType,
   ) => string;
   mineralAbundanceLabel: (abundance: MineralAbundance) => string;
+  coreRoleLabel: (role: CoreRole) => string;
+  titleTypeLabel: (type: CoreTitleType) => string;
+  stepTypeLabel: (type: typeof CORE_SYNTHESIS_STEP) => string;
+  collectionDatePrecisionLabel: (precision: DatePrecision) => string;
+  positiveDirectionLabel: (direction: CorePositiveDirection) => string;
   mineralClassificationLabel: (path: string) => string;
+};
+
+const KEY_SEGMENT = {
+  path: pathSegment,
+  code: (code: string) => code,
+  core: (code: string) => code.toLowerCase(),
 };
 
 const LABEL_KEY = {
@@ -171,9 +203,14 @@ const LABEL_KEY = {
   relationTypeLabel: ["relation_type", "code"],
   relationTargetResourceTypeLabel: ["relation_resource_type", "code"],
   mineralAbundanceLabel: ["mineral_abundance", "code"],
+  coreRoleLabel: ["core_role", "core"],
+  titleTypeLabel: ["title_type", "core"],
+  stepTypeLabel: ["step_type", "core"],
+  collectionDatePrecisionLabel: ["collection_date_precision", "code"],
+  positiveDirectionLabel: ["positive_direction", "code"],
 } satisfies Record<
   Exclude<keyof SampleLabels, "mineralClassificationLabel">,
-  [string, "path" | "code"]
+  [string, keyof typeof KEY_SEGMENT]
 >;
 
 export function createSampleLabels(m: Messages): SampleLabels {
@@ -181,8 +218,7 @@ export function createSampleLabels(m: Messages): SampleLabels {
     Object.entries(LABEL_KEY).map(([name, [prefix, kind]]) => [
       name,
       vocabularyLabel(
-        (value: string) =>
-          `${prefix}_${kind === "path" ? pathSegment(value) : value}`,
+        (value: string) => `${prefix}_${KEY_SEGMENT[kind](value)}`,
         m,
       ),
     ]),

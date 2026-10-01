@@ -18,6 +18,12 @@ export const CRS84 = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 
 export const coreVerticalReference = coreEnum(VERTICAL_REFERENCES, toCamelCase);
 
+export const CORE_POSITIVE_DIRECTIONS = ["up", "down"] as const;
+
+export type CorePositiveDirection = (typeof CORE_POSITIVE_DIRECTIONS)[number];
+
+export const CORE_DATE_PRECISIONS = ["day", "hour"] as const;
+
 const corePositionSchema = z.tuple([
   z.number().min(-180).max(180),
   z.number().min(-90).max(90),
@@ -92,7 +98,7 @@ export const coreVerticalCoordinateSchema = z.strictObject({
     })
     .optional(),
   positiveDirection: z
-    .enum(["up", "down"])
+    .enum(CORE_POSITIVE_DIRECTIONS)
     .meta({
       description:
         "Which way the coordinate grows, up for an elevation and down for a depth.",
@@ -262,7 +268,7 @@ export const coreProcessStepSchema = z
       .meta({ description: "End of the step, at the precision below." })
       .optional(),
     timestampPrecision: z
-      .enum(["day", "hour"])
+      .enum(CORE_DATE_PRECISIONS)
       .meta({ description: "Precision both step timestamps are written at." })
       .optional(),
     timestampTimeZone: timeZoneSchema
@@ -313,7 +319,7 @@ export const coreProductionSchema = z
       description:
         "End of the collection, equal to the start for a one-off collection; required on a published sample.",
     }),
-    collectionDatePrecision: z.enum(["day", "hour"]).meta({
+    collectionDatePrecision: z.enum(CORE_DATE_PRECISIONS).meta({
       description:
         "Precision both collection dates are written at; required on a published sample.",
     }),

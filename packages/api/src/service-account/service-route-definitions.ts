@@ -44,11 +44,11 @@ export const SERVICE_API_KEY_SCHEME = {
 
 const SECURITY = [{ apiKey: [] }];
 
-const OPTIONAL_SECURITY = [{}, ...SECURITY];
+export const OPTIONAL_SECURITY = [{}, ...SECURITY];
 
 const TAGS = ["Samples"];
 
-const json = <Schema extends z.ZodType>(
+export const json = <Schema extends z.ZodType>(
   schema: Schema,
   description: string,
 ) => ({
@@ -88,14 +88,17 @@ const FORBIDDEN = json(
   "The api key is missing or unknown.",
 );
 
-const FORBIDDEN_READ = json(serviceErrorSchema, "The api key is unknown.");
+export const FORBIDDEN_READ = json(
+  serviceErrorSchema,
+  "The api key is unknown.",
+);
 
-const THROTTLED = json(
+export const THROTTLED = json(
   serviceErrorSchema,
   "Too many requests came from this address.",
 );
 
-const FAILED = json(serviceErrorSchema, "The request failed.");
+export const FAILED = json(serviceErrorSchema, "The request failed.");
 
 const INVALID_IGSN = json(
   serviceErrorSchema,

@@ -22,6 +22,7 @@ The mapping lives in `packages/domain/src/sample/core/`, pure and I/O-free:
 ## Concept and Quantity conventions
 
 - **Concept** = `{ id, label, schemeName, schemeURI, notation? }`. `schemeURI = urn:otelo:vocabulary:<scheme>`, `id` is our machine code or dot path (validated by the domain schema named in each table below), `label = pathSegment(id)`. At most one concept per `(schemeName, notation)` pair in `contextCategories`.
+- A client wanting a human label for an `id` calls `GET /service/vocabularies` for the list of vocabularies and `GET /service/vocabularies/{id}` for its labelled values, rather than reading `label` back off a record.
 - **Quantity** = `{ value, unitCode (UCUM), unitLabel (our code) }`. The reverse mapper reads `unitLabel` and restores `{ value, unit }`; `unitCode` exists for a Core-side consumer and is never read back. `kbar -> bar` (x1e3) and `gpa -> Pa` (x1e9) scale the value by decimal exponent so the round trip is exact.
 - **emit only** = server-owned; present in every reply, ignored or refused in a body.
 - **required** = the pivot schema requires it because a publish blocker guarantees it on a published sample.

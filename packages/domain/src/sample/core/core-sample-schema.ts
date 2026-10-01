@@ -35,7 +35,7 @@ export const toOrcidUri = (orcid: string): string => `${ORCID_PREFIX}${orcid}`;
 
 export const CORE_LICENCE_URI = "https://creativecommons.org/licenses/by/4.0/";
 
-const CORE_ROLES = [
+export const CORE_ROLES = [
   "Creator",
   "Registrant",
   "Collector",
@@ -131,7 +131,9 @@ const coreRecordSchema = z.strictObject({
     }),
 });
 
-const CORE_TITLE_TYPES = ["Main", "AlternativeTitle", "Other"] as const;
+export const CORE_TITLE_TYPES = ["Main", "AlternativeTitle", "Other"] as const;
+
+export type CoreTitleType = (typeof CORE_TITLE_TYPES)[number];
 
 const coreSampleTitleSchema = coreTitleSchema.extend({
   titleType: z.enum(CORE_TITLE_TYPES).meta({

@@ -33,7 +33,7 @@ const mountedOperations = () =>
       )
       .map(
         ({ method, path }) =>
-          `${method} ${path.replace("/service", "").replace(":igsn", "{igsn}")}`,
+          `${method} ${path.replace("/service", "").replace(/:(\w+)/g, "{$1}")}`,
       )
       .filter((operation) => !DOC_OPERATIONS.includes(operation)),
   );
