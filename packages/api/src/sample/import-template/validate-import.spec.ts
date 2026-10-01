@@ -340,6 +340,21 @@ describe("validateImport", () => {
     ]);
   });
 
+  it("should default the existence and availability status of a template without their columns", async () => {
+    const book = await cleanBook();
+    deleteColumn(book, SHEETS.samples, "Existence status");
+    deleteColumn(book, SHEETS.samples, "Availability status");
+    const { issues, samples } = await validate(await bytesOf(book));
+
+    expect({
+      issues,
+      statuses: samples.map(({ input }) => [
+        input.existenceStatus,
+        input.availabilityStatus,
+      ]),
+    }).toEqual({ issues: [], statuses: [["exists", "available"]] });
+  });
+
   it.each([`sample-${UNAVAILABLE}`, `Sample-${UNAVAILABLE}`])(
     "should report a Sample # holding an unavailable internal ID, whatever its case (%s)",
     async (key) => {

@@ -30,6 +30,7 @@ import {
   readRows,
   textOf,
 } from "./read-rows.ts";
+import { IMPORT_DEFAULTS } from "./required-columns.ts";
 import {
   INHERITED_PATHS,
   type ResolveParentsByIgsn,
@@ -130,8 +131,20 @@ const isInheritedField = ({ sheet, column }: ImportIssue) =>
     isPathAtOrUnder(templateColumnOf(sheet, column)?.column.path, path),
   );
 
+const absentDefaultsOf = (layout: TemplateLayout) => {
+  const present = new Set(
+    layout
+      .find(({ name }) => name === SHEETS.samples)
+      ?.columns.map(({ path }) => path),
+  );
+  return Object.fromEntries(
+    Object.entries(IMPORT_DEFAULTS).filter(([path]) => !present.has(path)),
+  );
+};
+
 export async function validateRows(
   parsed: ParsedRows,
+  defaults: Readonly<Record<string, string>>,
   manualGroups: readonly ManualGroup[],
   resolveParentsByIgsn: ResolveParentsByIgsn,
   prepare: (candidate: SampleCandidate, index: number) => SampleCandidate = (
@@ -140,7 +153,10 @@ export async function validateRows(
 ): Promise<ValidatedImport> {
   const built = buildSampleInputs(parsed, manualGroups);
   const parents = await resolveImportParents(
-    built.samples,
+    built.samples.map((sample) => ({
+      ...sample,
+      input: { ...defaults, ...sample.input },
+    })),
     resolveParentsByIgsn,
   );
   const reported = new Set([...built.issues, ...parents.issues].map(fieldOf));
@@ -163,7 +179,7 @@ export async function validateRows(
   };
 }
 
-function withoutPrefilledRows(
+export function withoutPrefilledRows(
   parsed: ReturnType<typeof readRows>,
   prefilled: ReadonlyMap<string, string>,
 ): ReturnType<typeof readRows> {
@@ -233,6 +249,7 @@ export function validateImport(
       return rejected([{ sheet: SHEETS.samples, code: "too_many_rows" }]);
     const validated = await validateRows(
       parsed,
+      absentDefaultsOf(layout),
       await attachableManualGroups(),
       resolveParentsByIgsn,
     );

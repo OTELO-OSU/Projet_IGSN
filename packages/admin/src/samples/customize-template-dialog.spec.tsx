@@ -157,6 +157,12 @@ describe("CustomizeTemplateDialog", () => {
         materialPath: "rock_and_sediment.rock.igneous",
         manualGroupId: GROUP.id,
         subSamples: false,
+        physicalDescription: true,
+        age: true,
+        conservationSecurity: true,
+        repository: true,
+        relatedDocuments: true,
+        geologicalContext: true,
       },
     ]);
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
@@ -209,6 +215,44 @@ describe("CustomizeTemplateDialog", () => {
       materialPath: "rock_and_sediment",
       provenanceStatus: "field_sample",
       subSamples: "true",
+    });
+  });
+
+  it("should ask for a template without the unchecked sections", async () => {
+    const requested: URLSearchParams[] = [];
+    worker.use(
+      http.get("*/admin/samples/import-template", ({ request }) => {
+        requested.push(new URL(request.url).searchParams);
+        return new HttpResponse("customized-bytes");
+      }),
+    );
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const { dialog, download, pick } = await openDialog();
+    await pick(/^Provenance status/, "Field sample");
+    const section = (name: string) =>
+      dialog.getByRole("checkbox", { name, exact: true });
+    for (const name of [
+      "Physical description",
+      "Age",
+      "Conservation and security",
+      "Curation and repository",
+      "Related URL or document",
+      "Geological context",
+    ]) {
+      await expect.element(section(name)).toBeChecked();
+    }
+
+    await section("Curation and repository").click();
+    await section("Geological context").click();
+    await download.click();
+
+    await expect.poll(() => requested.length).toBe(1);
+    expect(Object.fromEntries(requested[0]!)).toEqual({
+      materialPath: "rock_and_sediment",
+      provenanceStatus: "field_sample",
+      repository: "false",
+      geologicalContext: "false",
     });
   });
 });

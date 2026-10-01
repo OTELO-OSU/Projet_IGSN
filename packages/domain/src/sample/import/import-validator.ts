@@ -26,6 +26,17 @@ export const reserveInternalIdsSchema = z.strictObject({
 
 export type ReserveInternalIds = z.infer<typeof reserveInternalIdsSchema>;
 
+export const TEMPLATE_SECTION_KEYS = [
+  "physicalDescription",
+  "age",
+  "conservationSecurity",
+  "repository",
+  "relatedDocuments",
+  "geologicalContext",
+] as const;
+
+export type TemplateSectionKey = (typeof TEMPLATE_SECTION_KEYS)[number];
+
 export const internalIdRequestSchema = z.strictObject({
   internalIds: z
     .array(

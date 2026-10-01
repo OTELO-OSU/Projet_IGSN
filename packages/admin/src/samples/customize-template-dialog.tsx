@@ -18,6 +18,10 @@ import {
   toHierarchyPath,
 } from "@projet-igsn/design-system/lib/hierarchy";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
+import {
+  TEMPLATE_SECTION_KEYS,
+  type TemplateSectionKey,
+} from "@projet-igsn/domain/sample/import/import-validator";
 import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
 import {
   MATERIAL_HIERARCHY,
@@ -42,6 +46,24 @@ const PROVENANCE_ITEMS = toComboboxItems(
   provenanceStatusLabel,
 );
 
+const SECTION_LABELS: Record<TemplateSectionKey, () => string> = {
+  physicalDescription: m.tab_physical_description,
+  age: m.tab_age,
+  conservationSecurity: m.tab_conservation_security,
+  repository: m.tab_curation_repository,
+  relatedDocuments: m.tab_related_resources,
+  geologicalContext: m.section_geological_context,
+};
+
+const ALL_SECTIONS: Record<TemplateSectionKey, boolean> = {
+  physicalDescription: true,
+  age: true,
+  conservationSecurity: true,
+  repository: true,
+  relatedDocuments: true,
+  geologicalContext: true,
+};
+
 export function CustomizeTemplateDialog({
   open,
   onBack,
@@ -55,6 +77,7 @@ export function CustomizeTemplateDialog({
   const [groupId, setGroupId] = useState("");
   const [provenanceValue, setProvenanceValue] = useState("");
   const [subSamples, setSubSamples] = useState(false);
+  const [sections, setSections] = useState(ALL_SECTIONS);
   const groups = useAttachableManualGroups().data?.data ?? [];
   const downloadTemplate = useDownloadImportTemplate();
   const provenanceStatus = PROVENANCE_STATUSES.find(
@@ -68,6 +91,7 @@ export function CustomizeTemplateDialog({
         materialPath: material ?? undefined,
         manualGroupId: groupId || undefined,
         subSamples,
+        ...sections,
       }
     : undefined;
 
@@ -143,6 +167,20 @@ export function CustomizeTemplateDialog({
               {m.customize_template_subsamples()}
             </Label>
           </div>
+          {TEMPLATE_SECTION_KEYS.map((key) => (
+            <div key={key} className="flex items-center gap-2">
+              <Checkbox
+                id={`customize-template-section-${key}`}
+                checked={sections[key]}
+                onCheckedChange={(checked) =>
+                  setSections({ ...sections, [key]: checked === true })
+                }
+              />
+              <Label htmlFor={`customize-template-section-${key}`}>
+                {SECTION_LABELS[key]()}
+              </Label>
+            </div>
+          ))}
         </div>
         <ReserveInternalIdsDialog
           customization={customization}

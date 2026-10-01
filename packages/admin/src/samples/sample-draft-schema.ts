@@ -9,6 +9,8 @@ import {
   composeHierarchyValue,
   toHierarchyPath,
 } from "@projet-igsn/design-system/lib/hierarchy";
+import { DEFAULT_AVAILABILITY_STATUS } from "@projet-igsn/domain/sample/curation/availability-status";
+import { DEFAULT_EXISTENCE_STATUS } from "@projet-igsn/domain/sample/curation/existence-status";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { allowsSpecificName } from "@projet-igsn/domain/sample/material/allows-specific-name";
 import { MATERIAL_ROOTS } from "@projet-igsn/domain/sample/material/classification";
@@ -212,9 +214,11 @@ export const toSampleDraft = (
   ),
   repository: toRepositoryDraft(value?.repository),
   syntheticDetails: toSyntheticDetailsDraft(value?.syntheticDetails, options),
-  existenceStatus: value?.existenceStatus ?? draftDefault(options, "exists"),
+  existenceStatus:
+    value?.existenceStatus ?? draftDefault(options, DEFAULT_EXISTENCE_STATUS),
   availabilityStatus:
-    value?.availabilityStatus ?? draftDefault(options, "available"),
+    value?.availabilityStatus ??
+    draftDefault(options, DEFAULT_AVAILABILITY_STATUS),
   age: ageFormValues(value?.age),
   relations: (value?.relations ?? []).map((relation) => ({
     key: crypto.randomUUID(),

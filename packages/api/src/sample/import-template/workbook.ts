@@ -1,4 +1,5 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
 
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import {
@@ -8,7 +9,7 @@ import {
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import ExcelJS from "exceljs";
 
-import type { Column } from "./columns.ts";
+import type { Column, ColumnGroup } from "./columns.ts";
 import type { ConditionalCondition } from "./conditional-fields.ts";
 import type {
   StoredCustomization,
@@ -22,6 +23,7 @@ import {
   SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
   SHEETS,
+  TEMPLATE_SECTIONS,
   TEMPLATE_VERSION,
 } from "./columns.ts";
 import {
@@ -32,6 +34,7 @@ import {
   driverIndexOf,
 } from "./conditional-fields.ts";
 import {
+  defaultLabelOf,
   droppedColumnsOf,
   hasCustomization,
   prefillOf,
@@ -329,12 +332,24 @@ export function addVocabularySheet(
   return sheet;
 }
 
+const droppedGroupsOf = (
+  customization: TemplateCustomization,
+): ReadonlySet<ColumnGroup> =>
+  new Set(
+    Object.entries(TEMPLATE_SECTIONS).flatMap(([section, group]) =>
+      customization[section as TemplateSectionKey] === false ? [group] : [],
+    ),
+  );
+
 const keptColumnsOf = (
   columns: readonly Column[],
   customization: StoredCustomization,
+  droppedGroups: ReadonlySet<ColumnGroup>,
 ) => {
   const dropped = droppedColumnsOf(columns, customization);
-  return columns.filter((column) => !dropped.includes(column));
+  return columns.filter(
+    (column) => !dropped.includes(column) && !droppedGroups.has(column.group),
+  );
 };
 
 async function build(
@@ -358,24 +373,34 @@ async function build(
   ]);
   const isParentColumnDropped =
     isCustomized && customization.subSamples !== true;
+  const droppedGroups = droppedGroupsOf(customization);
+  const sampleColumns = keptColumnsOf(
+    SAMPLE_COLUMNS,
+    stored,
+    droppedGroups,
+  ).filter(({ path }) => !isParentColumnDropped || path !== "parentIds");
   const samples = addDataSheet(
     book,
     SHEETS.samples,
-    keptColumnsOf(SAMPLE_COLUMNS, stored).filter(
-      ({ path }) => !isParentColumnDropped || path !== "parentIds",
-    ),
+    sampleColumns,
     rows,
     prefillOf(stored),
     vocabulary.placements,
   );
+  const defaults = sampleColumns.flatMap((column, index) => {
+    const label = defaultLabelOf(column);
+    return label === undefined ? [] : [{ number: index + 1, label }];
+  });
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
     const index = row - FIRST_DATA_ROW;
     const internalId = internalIds[index];
     samples.getCell(row, 1).value =
       internalId === undefined ? index + 1 : formatInternalId(internalId);
+    for (const { number, label } of defaults)
+      samples.getCell(row, number).value = label;
   }
   for (const child of CHILD_SHEETS) {
-    const columns = keptColumnsOf(child.columns, stored);
+    const columns = keptColumnsOf(child.columns, stored, droppedGroups);
     if (columns.every((column) => column.path === undefined)) continue;
     addChildSheet(book, child.name, columns, rows);
   }

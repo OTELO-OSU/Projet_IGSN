@@ -14,8 +14,6 @@ describe("REQUIRED_SAMPLE_COLUMNS", () => {
       "Material (level 1)",
       "Material (level 2)",
       "Material (level 3)",
-      "Existence status",
-      "Availability status",
     ]);
   });
 });

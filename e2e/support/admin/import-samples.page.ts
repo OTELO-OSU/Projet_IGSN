@@ -28,7 +28,15 @@ export function importSamplesPage(page: Page) {
       );
     },
     downloadCustomizedTemplate: async (
-      { provenance, manualGroup }: { provenance: string; manualGroup: string },
+      {
+        provenance,
+        manualGroup,
+        uncheckSections = [],
+      }: {
+        provenance: string;
+        manualGroup: string;
+        uncheckSections?: string[];
+      },
       testInfo: TestInfo,
     ) => {
       await dialog.getByRole("button", { name: "Download template" }).click();
@@ -39,6 +47,9 @@ export function importSamplesPage(page: Page) {
       const choose = chooseOption(page, customize);
       await choose(/^Manual group/, manualGroup);
       await choose(/^Provenance status/, provenance);
+      for (const name of uncheckSections) {
+        await customize.getByRole("checkbox", { name, exact: true }).click();
+      }
       return saveDownload(page, testInfo, () =>
         customize
           .getByRole("button", { name: "Download this template" })

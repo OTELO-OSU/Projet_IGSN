@@ -6,6 +6,7 @@ import type { TemplateCustomization } from "./customization.ts";
 import { DATA_SHEETS, plainHeader, SAMPLE_COLUMNS, SHEETS } from "./columns.ts";
 import {
   droppedColumnsOf,
+  prefilledHeaderLabelsOf,
   prefillOf,
   readCustomization,
 } from "./customization.ts";
@@ -90,6 +91,13 @@ describe("import template customization", () => {
       ["Material (level 1)", "Rock and sediment"],
       ["Material (level 2)", "Rock"],
       ["Material (level 3)", "Igneous"],
+    ]);
+  });
+
+  it("should treat the default existence and availability statuses as pre-filled in an uncustomized file", () => {
+    expect([...prefilledHeaderLabelsOf(undefined)]).toEqual([
+      ["Existence status", "Exists"],
+      ["Availability status", "Available"],
     ]);
   });
 

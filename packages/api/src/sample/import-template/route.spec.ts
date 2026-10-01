@@ -23,7 +23,7 @@ import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { createSampleRepository } from "../repository.ts";
 import { insertSample } from "../service/insert-sample.ts";
 import { publishSample } from "../service/publish-sample.ts";
-import { SHEETS } from "./columns.ts";
+import { REQUIRED_MARKER, SHEETS } from "./columns.ts";
 import {
   CLEAN_SAMPLE,
   cleanBook,
@@ -49,12 +49,16 @@ const reserve = (db: Kysely<DB>, body: unknown, headers = authHeader) =>
     body: JSON.stringify(body),
   });
 
-const hasParentColumn = async (res: Response) => {
+const hasSampleColumn = async (res: Response, header: string) => {
   const book = new ExcelJS.Workbook();
   await book.xlsx.load(await res.arrayBuffer());
   return (
     sheetOf(book, SHEETS.samples).getRow(2).values as ExcelJS.CellValue[]
-  ).includes("Parent IGSN");
+  ).some(
+    (value) =>
+      typeof value === "string" &&
+      value.replace(REQUIRED_MARKER, "") === header,
+  );
 };
 
 const joinGroup = async (db: Kysely<DB>, userId: string) => {
@@ -219,8 +223,20 @@ describe("import template route", () => {
 
       expect({
         status: res.status,
-        parent: await hasParentColumn(res),
+        parent: await hasSampleColumn(res, "Parent IGSN"),
       }).toEqual({ status: 200, parent: isKept });
+    },
+  );
+
+  pgTest(
+    "should answer a template without the Curation and repository columns on repository=false",
+    async ({ db }) => {
+      const res = await download(db, "?rows=1&repository=false");
+
+      expect({
+        status: res.status,
+        existence: await hasSampleColumn(res, "Existence status"),
+      }).toEqual({ status: 200, existence: false });
     },
   );
 });
@@ -327,8 +343,21 @@ describe("import template reservation route", () => {
 
       expect({
         status: res.status,
-        parent: await hasParentColumn(res),
+        parent: await hasSampleColumn(res, "Parent IGSN"),
       }).toEqual({ status: 200, parent: true });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should answer a reserved template without the Curation and repository columns on repository: false",
+    async ({ db }) => {
+      const res = await reserve(db, { count: 1, repository: false });
+
+      expect({
+        status: res.status,
+        existence: await hasSampleColumn(res, "Existence status"),
+      }).toEqual({ status: 200, existence: false });
     },
     30_000,
   );

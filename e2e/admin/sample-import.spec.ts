@@ -27,8 +27,6 @@ const CUSTOMIZED_SAMPLE = {
   Latitude: 45.2,
   "Region (level 1)": "Country",
   "Region (level 2)": "France",
-  "Existence status": "Exists",
-  "Availability status": "Available",
 };
 
 test.describe("sample import", () => {
@@ -81,7 +79,11 @@ test.describe("sample import", () => {
     const importSamples = importSamplesPage(page);
     await importSamples.open();
     const template = await importSamples.downloadCustomizedTemplate(
-      { provenance: "Field sample", manualGroup: MANUAL_GROUP },
+      {
+        provenance: "Field sample",
+        manualGroup: MANUAL_GROUP,
+        uncheckSections: ["Curation and repository"],
+      },
       testInfo,
     );
     await fillTemplateSample(template, { ...CUSTOMIZED_SAMPLE, Name: name });

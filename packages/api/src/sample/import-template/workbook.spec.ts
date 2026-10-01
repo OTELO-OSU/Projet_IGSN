@@ -1,4 +1,5 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
 
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
@@ -237,6 +238,30 @@ describe("import template workbook", () => {
         HEADER_ROW,
       ),
     ).toEqual(["sample-349", "sample-350"]);
+  });
+
+  it("should pre-fill every row's existence and availability status with their defaults, editable from their dropdown", () => {
+    const samples = sheet(SHEETS.samples);
+    const cellsAt = (row: number) =>
+      ["existenceStatus", "availabilityStatus"].map((path) => {
+        const address = `${letterOf(path)}${row}`;
+        const cell = samples.getCell(address);
+        return [
+          cell.value,
+          cell.fill,
+          sheetValidations(samples).find(address)?.type,
+        ];
+      });
+
+    expect([
+      cellsAt(FIRST_DATA_ROW),
+      cellsAt(FIRST_DATA_ROW + MAX_IMPORT_ROWS - 1),
+    ]).toEqual(
+      [0, 1].map(() => [
+        ["Exists", undefined, "list"],
+        ["Available", undefined, "list"],
+      ]),
+    );
   });
 
   it.each([
@@ -503,6 +528,41 @@ describe("customized import template workbook", () => {
       SHEETS.vocabularies,
     ]);
   });
+
+  it.each<[TemplateSectionKey, string, string | undefined]>([
+    ["physicalDescription", "Physical description", undefined],
+    ["age", "Age", undefined],
+    [
+      "conservationSecurity",
+      "Conservation and security",
+      SHEETS.storageConditions,
+    ],
+    ["repository", "Curation and repository", SHEETS.rightsHolders],
+    ["relatedDocuments", "Related URL or document", SHEETS.relations],
+    ["geologicalContext", "Geological context", undefined],
+  ])(
+    "should drop the %s section's %s columns and the sheet it empties (%s)",
+    async (section, group, emptied) => {
+      const trimmed = await loaded(1, [], { [section]: false });
+      const dataSheets = DATA_SHEETS.map(({ name }) => name);
+
+      expect({
+        holdingGroup: trimmed.worksheets
+          .filter(
+            (worksheet) =>
+              dataSheets.includes(worksheet.name) &&
+              valuesOf(worksheet.getRow(GROUP_ROW).values).includes(group),
+          )
+          .map((worksheet) => worksheet.name),
+        sheets: trimmed.worksheets.map((worksheet) => worksheet.name),
+      }).toEqual({
+        holdingGroup: [],
+        sheets: book.worksheets
+          .map((worksheet) => worksheet.name)
+          .filter((name) => name !== emptied),
+      });
+    },
+  );
 
   it("should record the customization codes and the manual group label in Read me C1 alone", () => {
     const readMe = sheetOf(customized, SHEETS.readMe);

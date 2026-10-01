@@ -1,4 +1,5 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 import type ExcelJS from "exceljs";
 
@@ -18,13 +19,15 @@ import {
 } from "./columns.ts";
 import { CONDITIONAL_FIELDS, conditionOf } from "./conditional-fields.ts";
 import { labels } from "./labels.ts";
+import { IMPORT_DEFAULTS } from "./required-columns.ts";
+import { labelOf } from "./resolve-label.ts";
 
 export type TemplateCustomization = {
   provenanceStatus?: ProvenanceStatus;
   materialPath?: string;
   manualGroup?: ManualGroup;
   subSamples?: boolean;
-};
+} & Partial<Record<TemplateSectionKey, boolean>>;
 
 export const templateMaterialPathSchema = z
   .string()
@@ -50,11 +53,12 @@ const ancestorAt = (path: string, level: number) =>
   path.split(".").slice(0, level).join(".");
 
 export const storedCustomizationOf = ({
+  provenanceStatus,
+  materialPath,
   manualGroup,
-  subSamples: _subSamples,
-  ...prefilled
 }: TemplateCustomization): StoredCustomization => ({
-  ...prefilled,
+  provenanceStatus,
+  materialPath,
   manualGroupLabel: manualGroup?.name,
 });
 
@@ -101,6 +105,13 @@ export const prefillOf =
       return labels.materialPathLabel(ancestorAt(materialPath, column.level));
     return undefined;
   };
+
+export const defaultLabelOf = ({ path, block }: Column): string | undefined => {
+  const code = path === undefined ? undefined : IMPORT_DEFAULTS[path];
+  return code === undefined || block === undefined
+    ? undefined
+    : labelOf(block, code);
+};
 
 function possibleLabelsOf(
   condition: ConditionalCondition,
@@ -156,7 +167,7 @@ export function prefilledHeaderLabelsOf(
   const prefill = stored === undefined ? undefined : prefillOf(stored);
   return new Map(
     SAMPLE_COLUMNS.flatMap((column) => {
-      const label = prefill?.(column);
+      const label = prefill?.(column) ?? defaultLabelOf(column);
       return label === undefined ? [] : [[plainHeader(column), label]];
     }),
   );

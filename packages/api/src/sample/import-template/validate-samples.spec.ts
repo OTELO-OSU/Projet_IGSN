@@ -9,15 +9,12 @@ import {
   cleanBook,
   deleteColumn,
   fill,
+  filledRowsOf,
 } from "./import-fixture.ts";
-import { readRows } from "./read-rows.ts";
-import { templateLayout } from "./template-layout.ts";
 import { validateSamples } from "./validate-samples.ts";
 
 const validated = (book: ExcelJS.Workbook) =>
-  validateSamples(
-    buildSampleInputs(readRows(book, templateLayout(book).layout)).samples,
-  );
+  validateSamples(buildSampleInputs(filledRowsOf(book)).samples);
 
 const issuesOf = (book: ExcelJS.Workbook) => validated(book).issues;
 
