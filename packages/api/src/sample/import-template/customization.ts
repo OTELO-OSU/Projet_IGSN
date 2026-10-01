@@ -23,6 +23,7 @@ export type TemplateCustomization = {
   provenanceStatus?: ProvenanceStatus;
   materialPath?: string;
   manualGroup?: ManualGroup;
+  subSamples?: boolean;
 };
 
 export const templateMaterialPathSchema = z
@@ -50,6 +51,7 @@ const ancestorAt = (path: string, level: number) =>
 
 export const storedCustomizationOf = ({
   manualGroup,
+  subSamples: _subSamples,
   ...prefilled
 }: TemplateCustomization): StoredCustomization => ({
   ...prefilled,

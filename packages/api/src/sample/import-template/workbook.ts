@@ -356,10 +356,14 @@ async function build(
     ...VOCABULARY_BLOCKS,
     manualGroupBlock(manualGroups),
   ]);
+  const isParentColumnDropped =
+    isCustomized && customization.subSamples !== true;
   const samples = addDataSheet(
     book,
     SHEETS.samples,
-    keptColumnsOf(SAMPLE_COLUMNS, stored),
+    keptColumnsOf(SAMPLE_COLUMNS, stored).filter(
+      ({ path }) => !isParentColumnDropped || path !== "parentIds",
+    ),
     rows,
     prefillOf(stored),
     vocabulary.placements,
