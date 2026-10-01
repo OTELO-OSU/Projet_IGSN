@@ -57,6 +57,11 @@ const VARS: EnvVar[] = [
     secret: true,
   },
   {
+    name: "DATABASE_POOL_MAX",
+    purpose:
+      "Most connections the api opens to Postgres; set it to about the database's CPU count, unset keeps postgres.js's 10.",
+  },
+  {
     name: "DATABASE_SSL",
     purpose:
       "`verify-full` checks the database certificate, `require` only encrypts; the api refuses any other value.",

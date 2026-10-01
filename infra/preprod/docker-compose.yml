@@ -52,6 +52,7 @@ services:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-}
       OIDC_ISSUER: "https://sso-test.earth-data.fr/realms/gaia-data"
       OIDC_CLIENT_ID: "formaterre-igsn"
       OIDC_ALLOWED_IDENTITY_PROVIDERS: "${OIDC_ALLOWED_IDENTITY_PROVIDERS:-satosa,orcid}"

@@ -38,6 +38,7 @@ infra/*/ca/
 
 bdd-igsn.sql
 import-legacy.log
+/benchmark-results
 .playwright-mcp
 
 sync-data/*

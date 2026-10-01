@@ -1,0 +1,56 @@
+x-database: &database
+  DATABASE_HOST: postgres
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: igsn
+  DATABASE_USER: igsn
+  DATABASE_PASSWORD: igsn
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    cpus: 2
+    mem_limit: 8g
+    memswap_limit: 8g
+    environment:
+      POSTGRES_USER: igsn
+      POSTGRES_PASSWORD: igsn
+      POSTGRES_DB: igsn
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U igsn -d igsn -h localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    image: igsn-api:bench
+    restart: unless-stopped
+    environment:
+      <<: *database
+      DATABASE_POOL_MAX: "2"
+      PORT: "8080"
+      RATE_LIMIT_ENABLED: "false"
+      CORS_ORIGINS: http://localhost
+      ADMIN_URL: http://localhost/admin
+      FRONTEND_URL: http://localhost
+      SMTP_HOST: localhost
+      ATTACHMENTS_DIR: /data/attachments
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  runner:
+    image: igsn-api:bench-runner
+    command: ["tail", "-f", "/dev/null"]
+    environment:
+      <<: *database
+    volumes:
+      - ./results:/results
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

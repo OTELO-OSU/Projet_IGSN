@@ -5,6 +5,7 @@ import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { type Expression, sql, type SqlBool } from "kysely";
 
 import { likePattern } from "../../like-pattern.ts";
+import { unaccented } from "../../unaccented.ts";
 import { matchesToken, tokenFilters } from "./search-filter.ts";
 
 export const FACET_COLUMN: Record<string, string> = {
@@ -36,7 +37,7 @@ export const PERSON_FACET_COLUMNS: Record<
 const matchesLinkedAccount = (userIdColumn: string) => (token: string) =>
   sql<SqlBool>`${sql.ref(`sample.${userIdColumn}`)} = any(array(
     select u.id from "user" u
-     where ${matchesToken(["u.firstname", "u.name"], token)}
+     where ${matchesToken([unaccented("u.firstname"), unaccented("u.name")], token)}
   ))`;
 
 export const FACET_JOIN: Record<string, { table: string; column: string }> = {
@@ -64,7 +65,7 @@ function facetFilter(
   const person = PERSON_FACET_COLUMNS[facet.key];
   if (person) {
     const filters = tokenFilters(
-      person.names,
+      person.names.map((column) => unaccented(column)),
       value,
       matchesLinkedAccount(person.userId),
     );
@@ -76,7 +77,7 @@ function facetFilter(
       return sql<SqlBool>`${sql.ref(column)} <@ ${value}::ltree`;
     case "enum":
       return facet.multiValued
-        ? sql<SqlBool>`${value} = any(${sql.ref(column)})`
+        ? sql<SqlBool>`${sql.ref(column)} @> array[${value}]::text[]`
         : sql<SqlBool>`${sql.ref(column)} = ${value}`;
     case "text":
       return sql<SqlBool>`immutable_unaccent(${sql.ref(column)}) ILIKE immutable_unaccent(${likePattern(value)})`;
