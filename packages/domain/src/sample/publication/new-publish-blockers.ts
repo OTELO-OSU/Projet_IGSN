@@ -26,8 +26,8 @@ export function newPublishBlockers(
   next: CreateSample,
   uploadLimit: number,
 ): PublishBlocker[] {
-  const existing = publishBlockersOf(current, uploadLimit);
-  return publishBlockersOf(next, uploadLimit).filter(
+  const existing = publishBlockersOf(current, uploadLimit, current.parents);
+  return publishBlockersOf(next, uploadLimit, current.parents).filter(
     (blocker) => !existing.includes(blocker),
   );
 }

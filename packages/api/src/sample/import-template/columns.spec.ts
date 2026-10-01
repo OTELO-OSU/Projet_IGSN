@@ -12,7 +12,6 @@ import {
 } from "./columns.ts";
 
 const DEFERRED_FIELDS = [
-  "parentIds",
   "processSteps",
   "syntheticDetails",
   "attachments",
@@ -81,11 +80,13 @@ describe("import template columns", () => {
       hierarchyFirstLevel: headerOf("material", 1),
       hierarchyDeeperLevel: headerOf("material", 2),
       notABlocker: headerOf("specificName"),
+      optionalParent: headerOf("parentIds"),
     }).toEqual({
       blocker: `Nature${REQUIRED_MARKER}`,
       hierarchyFirstLevel: `Material (level 1)${REQUIRED_MARKER}`,
       hierarchyDeeperLevel: "Material (level 2)",
       notABlocker: "Specific name",
+      optionalParent: "Parent IGSN",
     });
   });
 

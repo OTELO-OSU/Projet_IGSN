@@ -26,7 +26,7 @@ import {
   YES_NO_LABEL,
 } from "./vocabulary-sheet.ts";
 
-type ConditionalMatch = "is" | "isNot";
+type ConditionalMatch = "is" | "isNot" | "isEmpty";
 
 export type ConditionalCondition = {
   path: string;
@@ -55,6 +55,8 @@ const sentenceOf = (condition: ConditionalCondition) => {
       return `Only when ${driver} is ${values}.`;
     case "isNot":
       return `Leave empty when ${driver} is ${values}.`;
+    case "isEmpty":
+      return `Leave empty when ${driver} is filled.`;
   }
 };
 
@@ -139,6 +141,15 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
       match: "is",
       values: [labels.provenanceStatusLabel("collection_specimen")],
     },
+  },
+  {
+    paths: ["location", "description.collectionDate"],
+    condition: { path: "parentIds", match: "isEmpty", values: [] },
+  },
+  {
+    paths: ["parentIds"],
+    prompt:
+      "The IGSN of one already published sample. Its location and collection date are inherited.",
   },
   {
     paths: ["localIdDescription"],

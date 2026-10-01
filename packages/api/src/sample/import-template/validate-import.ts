@@ -6,6 +6,7 @@ import type ExcelJS from "exceljs";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { parseInternalId } from "@projet-igsn/domain/sample/parse-internal-id";
+import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 
 import type { TemplateLayout } from "./template-layout.ts";
 
@@ -20,6 +21,11 @@ import {
 import { prefilledHeaderLabelsOf, readCustomization } from "./customization.ts";
 import { openWorkbook } from "./open-workbook.ts";
 import { cellValue, type RawRow, readRows, textOf } from "./read-rows.ts";
+import {
+  INHERITED_PATHS,
+  type ResolveParentsByIgsn,
+  resolveImportParents,
+} from "./resolve-import-parents.ts";
 import { templateLayout } from "./template-layout.ts";
 import { validateSamples } from "./validate-samples.ts";
 
@@ -111,17 +117,33 @@ const internalNumberOf = ({ cells }: RawRow) => {
   return key === undefined ? undefined : parseInternalId(textOf(key));
 };
 
-function validateRows(
+const isInheritedField = ({ sheet, column }: ImportIssue) =>
+  INHERITED_PATHS.some((path) =>
+    isPathAtOrUnder(templateColumnOf(sheet, column)?.column.path, path),
+  );
+
+async function validateRows(
   parsed: ReturnType<typeof readRows>,
   manualGroups: readonly ManualGroup[],
-): ValidatedImport {
+  resolveParentsByIgsn: ResolveParentsByIgsn,
+): Promise<ValidatedImport> {
   const built = buildSampleInputs(parsed, manualGroups);
-  const reported = new Set(built.issues.map(fieldOf));
-  const { issues, inputs } = validateSamples(built.samples);
+  const parents = await resolveImportParents(
+    built.samples,
+    resolveParentsByIgsn,
+  );
+  const reported = new Set([...built.issues, ...parents.issues].map(fieldOf));
+  const unresolved = new Set(parents.issues.map(({ row }) => row));
+  const { issues, inputs } = validateSamples(parents.samples);
   return {
     issues: [
       ...built.issues,
-      ...issues.filter((issue) => !reported.has(fieldOf(issue))),
+      ...parents.issues,
+      ...issues.filter(
+        (issue) =>
+          !reported.has(fieldOf(issue)) &&
+          !(unresolved.has(issue.row) && isInheritedField(issue)),
+      ),
     ],
     samples: inputs.map((input, index) => ({
       input,
@@ -183,6 +205,7 @@ export function validateImport(
   bytes: ArrayBuffer,
   unavailableInternalNumbers: UnavailableInternalNumbers,
   attachableManualGroups: AttachableManualGroups,
+  resolveParentsByIgsn: ResolveParentsByIgsn,
 ): Promise<ValidatedImport> {
   return queueBuild(async () => {
     const book = await openWorkbook(bytes);
@@ -197,7 +220,11 @@ export function validateImport(
       return rejected([{ sheet: SHEETS.samples, code: "no_sample" }]);
     if (parsed.samples.length > MAX_IMPORT_ROWS)
       return rejected([{ sheet: SHEETS.samples, code: "too_many_rows" }]);
-    const validated = validateRows(parsed, await attachableManualGroups());
+    const validated = await validateRows(
+      parsed,
+      await attachableManualGroups(),
+      resolveParentsByIgsn,
+    );
     return {
       issues: [
         ...validated.issues,

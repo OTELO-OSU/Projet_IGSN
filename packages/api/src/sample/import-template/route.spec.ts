@@ -1,3 +1,4 @@
+import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import {
@@ -12,16 +13,23 @@ import { afterEach, describe, expect, vi } from "vitest";
 import type { DB } from "../../db.ts";
 
 import { createApp } from "../../app.ts";
+import { insertParent } from "../../tests/insert-parent.ts";
+import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { provisionUser } from "../../tests/provision-user.ts";
+import { publishableSample } from "../../tests/sample-fixtures.ts";
 import { stubDataCite } from "../../tests/stub-datacite.ts";
+import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { createSampleRepository } from "../repository.ts";
+import { insertSample } from "../service/insert-sample.ts";
+import { publishSample } from "../service/publish-sample.ts";
 import { SHEETS } from "./columns.ts";
 import {
   CLEAN_SAMPLE,
   cleanBook,
   columnOf,
   fill,
+  parentedBook,
   sheetOf,
 } from "./import-fixture.ts";
 
@@ -47,6 +55,16 @@ const joinGroup = async (db: Kysely<DB>, userId: string) => {
     .insertInto("manual_group_member")
     .values({ group_id: GROUP.id, user_id: userId })
     .execute();
+};
+
+const publishedOwned = async (
+  db: Kysely<DB>,
+  ownerId: string,
+  input: CreateSample,
+) => {
+  const created = await insertSample(db, input);
+  await insertSampleOwner(db, created.id, ownerId);
+  return (await publishSample(db, created.id, "published"))!;
 };
 
 const upload = (db: Kysely<DB>, file?: File) => {
@@ -406,6 +424,149 @@ describe("import upload route", () => {
       expect(await queuedSamples(db)).toEqual([]);
     },
     30_000,
+  );
+
+  pgTest(
+    "should queue a sub-sample of a published parent, its owner a contributor on it and its location and collection date inherited",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+      const owner = await insertUser(db, "parent.owner@univ-lorraine.fr");
+      const parent = await insertParent(db, owner.id);
+
+      const res = await upload(
+        db,
+        await fileOf(await parentedBook(parent.igsn!)),
+      );
+
+      const inherited = [
+        "location_id",
+        "collection_date_start",
+        "collection_date_end",
+        "collection_date_precision",
+      ] as const;
+      const { id: childId, ...child } = await db
+        .selectFrom("sample_parent")
+        .innerJoin("sample", "sample.id", "sample_parent.sample_id")
+        .select(["sample.id", "sample.status", ...inherited])
+        .where("sample_parent.parent_id", "=", parent.id)
+        .executeTakeFirstOrThrow();
+      const stored = await db
+        .selectFrom("sample")
+        .select(inherited)
+        .where("id", "=", parent.id)
+        .executeTakeFirstOrThrow();
+      const ownerRole = await db
+        .selectFrom("user_sample")
+        .select("role")
+        .where("sample_id", "=", childId)
+        .where("user_id", "=", owner.id)
+        .executeTakeFirst();
+      expect({
+        status: res.status,
+        child,
+        ownerRole,
+      }).toEqual({
+        status: 200,
+        child: { ...stored, status: "publishing" },
+        ownerRole: { role: "contributor" },
+      });
+    },
+    30_000,
+  );
+
+  pgTest.for([
+    {
+      rule: "a location-less parent queues it location-less",
+      parentOf: async (db: Kysely<DB>, ownerId: string) => ({
+        parent: await publishedOwned(db, ownerId, {
+          ...publishableSample,
+          material:
+            "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample.rock",
+          location: undefined,
+        }),
+        locatedAncestor: null,
+      }),
+    },
+    {
+      rule: "a sub-sample parent queues it at its located root",
+      parentOf: async (db: Kysely<DB>, ownerId: string) => {
+        const root = await insertParent(db, ownerId);
+        return {
+          parent: await publishedOwned(db, ownerId, {
+            ...publishableSample,
+            location: undefined,
+            parentIds: [root.id],
+          }),
+          locatedAncestor: root,
+        };
+      },
+    },
+  ])(
+    "should import a sub-sample whose published parent is $rule",
+    { timeout: 30_000 },
+    async ({ parentOf }, { db }) => {
+      await provisionUser(db, "test-token");
+      const owner = await insertUser(db, "parent.owner@univ-lorraine.fr");
+      const { parent, locatedAncestor } = await parentOf(db, owner.id);
+
+      const res = await upload(
+        db,
+        await fileOf(await parentedBook(parent.igsn!)),
+      );
+
+      const locationIdOf = async (id: string) =>
+        (
+          await db
+            .selectFrom("sample")
+            .select("location_id")
+            .where("id", "=", id)
+            .executeTakeFirstOrThrow()
+        ).location_id;
+      const child = await db
+        .selectFrom("sample_parent")
+        .innerJoin("sample", "sample.id", "sample_parent.sample_id")
+        .select(["sample.status", "sample.location_id"])
+        .where("sample_parent.parent_id", "=", parent.id)
+        .executeTakeFirst();
+      expect({ status: res.status, body: await res.json(), child }).toEqual({
+        status: 200,
+        body: { count: 1 },
+        child: {
+          status: "publishing",
+          location_id:
+            locatedAncestor && (await locationIdOf(locatedAncestor.id)),
+        },
+      });
+    },
+  );
+
+  pgTest.for(["withdrawn", "tombstone"] as const)(
+    "should refuse a sub-sample of a %s parent as parent_not_found",
+    { timeout: 30_000 },
+    async (status, { db }) => {
+      await provisionUser(db, "test-token");
+      const owner = await insertUser(db, "parent.owner@univ-lorraine.fr");
+      const parent = await insertParent(db, owner.id, status);
+      const igsn = parent.igsn!;
+
+      const res = await upload(db, await fileOf(await parentedBook(igsn)));
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [
+            {
+              sheet: SHEETS.samples,
+              row: 3,
+              column: "Parent IGSN",
+              value: igsn,
+              code: "parent_not_found",
+            },
+          ],
+        },
+      });
+    },
   );
 
   pgTest(

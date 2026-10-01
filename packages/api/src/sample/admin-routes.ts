@@ -10,6 +10,7 @@ import type {
   InvalidImport,
 } from "@projet-igsn/domain/sample/import/import-report";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
+import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type {
   AdminListSamplesResponse,
   AdminSampleResponse,
@@ -60,6 +61,7 @@ import { importTemplateResponse } from "./import-template/workbook.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { notifySubSampleDeclared } from "./notify-sub-sample-declared.ts";
+import { notifySubSamplesImported } from "./notify-sub-samples-imported.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { sampleDeletionRequestMail } from "./sample-deletion-request-mail.ts";
@@ -199,10 +201,18 @@ export function createSampleAdminRoutes(
       },
     )
     .post("/import", validateImportUpload, async (c) => {
+      const parents = new Map<string, Sample>();
       const { issues, samples } = await validateImport(
         await c.req.valid("form").file.arrayBuffer(),
         (numbers) => repository.unavailableInternalNumbers(numbers),
         () => manualGroups.listAttachableForUser(c.get("user").id),
+        async (igsns) => {
+          for (const igsn of igsns) {
+            const parent = await repository.getPublicByIgsn(igsn);
+            if (parent?.status === "published") parents.set(igsn, parent);
+          }
+          return parents;
+        },
       );
       if (issues.length > 0) {
         const body: InvalidImport = { error: "Invalid import", issues };
@@ -211,7 +221,15 @@ export function createSampleAdminRoutes(
       if (!(await checkDataCite(dataCiteConfig()))) {
         return c.json({ error: "DataCite unavailable" }, 503);
       }
-      const count = await repository.createPublishing(samples, c.get("user"));
+      const user = c.get("user");
+      const count = await repository.createPublishing(samples, user);
+      notifySubSamplesImported({
+        userSamples: userSampleRepository,
+        mail,
+        declarer: user,
+        parents: [...parents.values()],
+        parentIds: samples.flatMap(({ input }) => input.parentIds ?? []),
+      });
       return c.json({ count } satisfies ImportAccepted, 200);
     })
     .post(
