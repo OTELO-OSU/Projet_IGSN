@@ -16,6 +16,7 @@ export type ImportTemplateCustomization = {
   provenanceStatus: ProvenanceStatus;
   materialPath?: string;
   manualGroupId?: string;
+  subSamples: boolean;
 };
 
 function customizedTemplateUrl(
@@ -30,6 +31,7 @@ function customizedTemplateUrl(
   if (customization.manualGroupId) {
     url.searchParams.set("manualGroupId", customization.manualGroupId);
   }
+  if (customization.subSamples) url.searchParams.set("subSamples", "true");
   return url;
 }
 

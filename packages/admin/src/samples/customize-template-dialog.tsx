@@ -54,6 +54,7 @@ export function CustomizeTemplateDialog({
   );
   const [groupId, setGroupId] = useState("");
   const [provenanceValue, setProvenanceValue] = useState("");
+  const [subSamples, setSubSamples] = useState(false);
   const groups = useAttachableManualGroups().data?.data ?? [];
   const downloadTemplate = useDownloadImportTemplate();
   const provenanceStatus = PROVENANCE_STATUSES.find(
@@ -66,6 +67,7 @@ export function CustomizeTemplateDialog({
         provenanceStatus,
         materialPath: material ?? undefined,
         manualGroupId: groupId || undefined,
+        subSamples,
       }
     : undefined;
 
@@ -132,7 +134,11 @@ export function CustomizeTemplateDialog({
             />
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox id="customize-template-subsamples" disabled />
+            <Checkbox
+              id="customize-template-subsamples"
+              checked={subSamples}
+              onCheckedChange={(checked) => setSubSamples(checked === true)}
+            />
             <Label htmlFor="customize-template-subsamples">
               {m.customize_template_subsamples()}
             </Label>
