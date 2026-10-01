@@ -74,6 +74,13 @@ export type SampleRepository = {
   getPublicLineage(igsn: string): Promise<SampleLineage | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
   createPublishing(samples: ImportedSample[], owner: User): Promise<number>;
+  listByInternalNumbers(
+    numbers: number[],
+    userId: string,
+  ): Promise<{ sample: Sample; role: UserSampleRole | null }[]>;
+  updatePublishing(
+    samples: { id: string; input: CreateSample }[],
+  ): Promise<number>;
   retryFailedPublications(userId: string): Promise<number>;
   createPublished(
     input: CreateSample,

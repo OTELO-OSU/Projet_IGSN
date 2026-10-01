@@ -1,10 +1,8 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -15,52 +13,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@projet-igsn/design-system/components/ui/dropdown-menu";
-import {
-  IMPORT_MAX_BYTES,
-  importSamplesSchema,
-} from "@projet-igsn/domain/sample/import/import-validator";
-import {
-  ChevronDownIcon,
-  CircleXIcon,
-  FileDownIcon,
-  UploadIcon,
-} from "lucide-react";
+import { ChevronDownIcon, FileDownIcon } from "lucide-react";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { CustomizeTemplateDialog } from "#/samples/customize-template-dialog.tsx";
-import { FileDropZone } from "#/samples/file-drop-zone.tsx";
-import { ImportReport } from "#/samples/import-report.tsx";
+import { ImportFileUpload } from "#/samples/import-file-upload.tsx";
 import { ReserveInternalIdsDialog } from "#/samples/reserve-internal-ids-dialog.tsx";
 import { useDownloadImportTemplate } from "#/samples/use-download-import-template.ts";
 import { useImportSamples } from "#/samples/use-import-samples.ts";
 
-const fileError = (file: File | null): string | null => {
-  if (!file) return null;
-  const parsed = importSamplesSchema.safeParse({ file });
-  if (parsed.success) return null;
-  return parsed.error.issues.some((issue) => issue.code === "too_big")
-    ? m.import_samples_file_too_large({ max: IMPORT_MAX_BYTES / 1024 / 1024 })
-    : m.import_samples_file_not_xlsx();
-};
-
 export function ImportSamplesDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isCustomizing, setIsCustomizing] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
   const downloadTemplate = useDownloadImportTemplate();
   const importSamples = useImportSamples();
-  const error = fileError(file);
-
-  function pick(picked: File | null) {
-    setFile(picked);
-    importSamples.reset();
-  }
 
   function close() {
     setIsOpen(false);
     setIsCustomizing(false);
-    pick(null);
+    importSamples.reset();
   }
 
   return (
@@ -105,54 +77,7 @@ export function ImportSamplesDialog() {
             </DropdownMenu>
             <ReserveInternalIdsDialog />
           </div>
-          <FileDropZone
-            hint={m.import_samples_drop_hint()}
-            browseLabel={m.import_samples_choose_file()}
-            accept=".xlsx"
-            isInline
-            onFiles={([picked]) => pick(picked ?? null)}
-          />
-          {file ? (
-            <div className="grid gap-1 text-sm">
-              <span className="truncate" title={file.name}>
-                {file.name}
-              </span>
-              {error ? (
-                <p role="alert" className="text-destructive">
-                  {error}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-          {importSamples.data?.issues.length ? (
-            <ImportReport issues={importSamples.data.issues} />
-          ) : null}
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="ghost">
-                <CircleXIcon aria-hidden />
-                {m.action_cancel()}
-              </Button>
-            </DialogClose>
-            <Button
-              type="button"
-              disabled={!file || error !== null || importSamples.isPending}
-              onClick={() => {
-                if (!file) return;
-                importSamples.mutate(
-                  { file },
-                  {
-                    onSuccess: ({ issues }) => {
-                      if (issues.length === 0) close();
-                    },
-                  },
-                );
-              }}
-            >
-              <UploadIcon aria-hidden />
-              {m.action_import()}
-            </Button>
-          </DialogFooter>
+          <ImportFileUpload upload={importSamples} onImported={close} />
         </DialogContent>
       </Dialog>
       <CustomizeTemplateDialog

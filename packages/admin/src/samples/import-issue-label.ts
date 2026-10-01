@@ -26,6 +26,12 @@ const IMPORT_ISSUE_LABELS: Record<ImportIssueCode, () => string> = {
   location_inherited_from_parent: m.import_issue_location_inherited_from_parent,
   collection_date_inherited_from_parent:
     m.import_issue_collection_date_inherited_from_parent,
+  unknown_sample: m.import_issue_unknown_sample,
+  sample_not_published: m.import_issue_sample_not_published,
+  synthetic_sample: m.import_issue_synthetic_sample,
+  sample_not_editable: m.import_issue_sample_not_editable,
+  sample_locked: m.import_issue_sample_locked,
+  frozen_field: m.import_issue_frozen_field,
 };
 
 export function importIssueLabel({ code, message }: ImportIssue): string {

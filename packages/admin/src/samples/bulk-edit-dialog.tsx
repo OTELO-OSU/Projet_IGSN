@@ -5,14 +5,16 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@projet-igsn/design-system/components/ui/dialog";
 import { FileDownIcon } from "lucide-react";
+import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
+import { ImportFileUpload } from "#/samples/import-file-upload.tsx";
+import { useBulkEditSamples } from "#/samples/use-bulk-edit-samples.ts";
 import { useExportSamples } from "#/samples/use-export-samples.ts";
 
 export function BulkEditDialog({
@@ -20,28 +22,40 @@ export function BulkEditDialog({
 }: {
   exportRequest: ExportSamplesRequest;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
   const exportSamples = useExportSamples();
+  const bulkEdit = useBulkEditSamples();
+
+  function close() {
+    setIsOpen(false);
+    bulkEdit.reset();
+  }
 
   return (
-    <Dialog>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => (open ? setIsOpen(true) : close())}
+    >
       <DialogTrigger asChild>
         <Button variant="outline">{m.action_bulk_edit()}</Button>
       </DialogTrigger>
-      <DialogContent closeLabel={m.action_close()}>
+      <DialogContent className="sm:max-w-3xl" closeLabel={m.action_close()}>
         <DialogHeader>
           <DialogTitle>{m.action_bulk_edit()}</DialogTitle>
-          <DialogDescription>{m.bulk_edit_description()}</DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <div className="grid gap-4">
+          <DialogDescription>{m.bulk_edit_description()}</DialogDescription>
           <Button
             type="button"
+            variant="outline"
             disabled={exportSamples.isPending}
             onClick={() => exportSamples.mutate(exportRequest)}
           >
             <FileDownIcon aria-hidden />
             {m.action_export_samples()}
           </Button>
-        </DialogFooter>
+        </div>
+        <ImportFileUpload upload={bulkEdit} onImported={close} />
       </DialogContent>
     </Dialog>
   );

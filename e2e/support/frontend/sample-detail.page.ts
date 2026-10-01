@@ -129,6 +129,8 @@ export function sampleDetailPage(page: Page) {
     },
     expectAttachment: (label: string) =>
       expect(page.getByText(label, { exact: true })).toBeVisible(),
+    expectResearchProgram: (name: string) =>
+      expect(page.getByText(name, { exact: true })).toBeVisible(),
     attachmentDownloadHref: (name: string) =>
       page.getByRole("link", { name: `Download ${name}` }).getAttribute("href"),
   };

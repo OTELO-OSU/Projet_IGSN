@@ -35,6 +35,34 @@ export async function inModerationReach(
   return scope !== null && (await repository.isModerated(sampleId, scope));
 }
 
+export async function sampleAccess(
+  repository: SampleRepository,
+  users: UserRepository,
+  user: Pick<User, "id" | "superAdmin">,
+  found: { sample: Sample; role: UserSampleRole | null },
+): Promise<{
+  managed: boolean;
+  moderating: boolean;
+  shareRole: UserSampleRole | null;
+  role: UserSampleRole | null;
+}> {
+  const managed = await inModerationReach(
+    repository,
+    users,
+    user,
+    found.sample.id,
+  );
+  const moderating = managed && !isSampleOwner(found.role);
+  // Moderation never grants collaborator management.
+  const shareRole = user.superAdmin ? "owner" : found.role;
+  return {
+    managed,
+    moderating,
+    shareRole,
+    role: moderating && !isSampleOwner(shareRole) ? "editor" : shareRole,
+  };
+}
+
 export function requireSampleAccess(
   repository: SampleRepository,
   users: UserRepository,
@@ -47,10 +75,9 @@ export function requireSampleAccess(
     const user = c.get("user");
     const isRead = c.req.method === "GET" || c.req.method === "HEAD";
     const found = await repository.get(id.data, user.id);
-    const managed =
-      found !== null &&
-      (await inModerationReach(repository, users, user, found.sample.id));
-    const moderating = managed && !isSampleOwner(found?.role ?? null);
+    const access =
+      found && (await sampleAccess(repository, users, user, found));
+    const managed = access?.managed ?? false;
     if (found && !managed && found.role === null) {
       return c.json({ error: "Forbidden" }, 403);
     }
@@ -70,17 +97,11 @@ export function requireSampleAccess(
     ) {
       return c.json({ error: "Forbidden" }, 403);
     }
-    // Moderation never grants collaborator management.
-    const shareRole =
-      found && user.superAdmin ? "owner" : (found?.role ?? null);
     c.set("sample", found?.sample);
-    c.set("moderating", moderating);
+    c.set("moderating", access?.moderating ?? false);
     c.set("managed", managed);
-    c.set("shareRole", shareRole);
-    c.set(
-      "role",
-      moderating && !isSampleOwner(shareRole) ? "editor" : shareRole,
-    );
+    c.set("shareRole", access?.shareRole ?? null);
+    c.set("role", access?.role ?? null);
     await next();
   };
 }
