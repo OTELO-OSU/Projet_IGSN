@@ -9,12 +9,11 @@ import {
   CLEAN_ROWS_BY_PATH,
   cleanBook,
   fill,
+  filledRowsOf,
 } from "./import-fixture.ts";
-import { readRows } from "./read-rows.ts";
-import { templateLayout } from "./template-layout.ts";
 
 const candidatesOf = (book: ExcelJS.Workbook) =>
-  buildSampleInputs(readRows(book, templateLayout(book).layout));
+  buildSampleInputs(filledRowsOf(book));
 
 const CLEAN = {
   samples: [{ row: 3, input: CLEAN_INPUT, rowsByPath: CLEAN_ROWS_BY_PATH }],

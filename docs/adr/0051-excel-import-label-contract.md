@@ -45,6 +45,14 @@ The template download can be customized by provenance status, material path (up 
 - A manual group that cannot be attached is a 422 before the sequence advances, burning no numbers.
 - A customized template carries the "Parent IGSN" column only when the optional `subSamples` flag (download query param, reservation body field) is true, the uncustomized one always carrying it.
 - The flag stays out of `C1`, since upload reads actual headers and treats that column as optional.
+- Six more optional flags (`physicalDescription`, `age`, `conservationSecurity`, `repository`, `relatedDocuments`, `geologicalContext`) each map to one column group, checked by default in the dialog.
+- A flag sent false drops the group's columns, and any child sheet left with only key columns (Storage conditions, Rights holders, Relations).
+- Like `subSamples`, these flags stay out of `C1`, since dropped columns need nothing and headers match by name.
+- The template gained a "Geological context" column group, moved out of Location, so the row-1 groups now include one form section alongside the form tabs.
+- "Existence status" and "Availability status" leave the always-required set.
+- Present, they come pre-filled with the domain defaults (`DEFAULT_EXISTENCE_STATUS` "exists", `DEFAULT_AVAILABILITY_STATUS` "available"), editable with their dropdown kept.
+- Absent, the server applies those defaults before validation (`IMPORT_DEFAULTS` in `required-columns.ts`).
+- A row whose only values equal its pre-fill is blank on every template, customized or not.
 
 ## Rejected option
 

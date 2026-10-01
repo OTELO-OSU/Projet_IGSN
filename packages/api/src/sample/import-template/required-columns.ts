@@ -1,3 +1,5 @@
+import { DEFAULT_AVAILABILITY_STATUS } from "@projet-igsn/domain/sample/curation/availability-status";
+import { DEFAULT_EXISTENCE_STATUS } from "@projet-igsn/domain/sample/curation/existence-status";
 import { isMaterialComplete } from "@projet-igsn/domain/sample/material/is-complete";
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { parentPath } from "@projet-igsn/domain/sample/path/parent";
@@ -52,8 +54,14 @@ function publishFrontier(path: string): number {
   );
 }
 
+export const IMPORT_DEFAULTS: Readonly<Record<string, string>> = {
+  existenceStatus: DEFAULT_EXISTENCE_STATUS,
+  availabilityStatus: DEFAULT_AVAILABILITY_STATUS,
+};
+
 const isRequired = ({ path, level }: Column) =>
   path !== undefined &&
+  !(path in IMPORT_DEFAULTS) &&
   REQUIRED_PATHS.some((required) => isPathAtOrUnder(path, required)) &&
   !GOVERNED_PATHS.some((governed) => isPathAtOrUnder(path, governed)) &&
   (level === undefined || level <= publishFrontier(path));

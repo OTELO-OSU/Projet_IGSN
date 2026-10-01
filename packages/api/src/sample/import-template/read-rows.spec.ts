@@ -10,12 +10,15 @@ import {
   fill,
   swapColumns,
   templateBook,
+  filledRowsOf,
 } from "./import-fixture.ts";
-import { readRows } from "./read-rows.ts";
-import { templateLayout } from "./template-layout.ts";
 
-const read = (book: ExcelJS.Workbook) =>
-  readRows(book, templateLayout(book).layout);
+const read = (book: ExcelJS.Workbook) => filledRowsOf(book);
+
+const DEFAULTED = {
+  "Existence status": "Exists",
+  "Availability status": "Available",
+};
 
 const CLEAN = {
   samples: [
@@ -93,6 +96,7 @@ describe("readRows", () => {
         {
           row: 3,
           cells: {
+            ...DEFAULTED,
             "Sample #": "1",
             Nature: "Big rock",
             Latitude: "abc",
@@ -100,8 +104,12 @@ describe("readRows", () => {
           },
           children: [],
         },
-        { row: 4, cells: { "Sample #": "1", Name: "Twin" }, children: [] },
-        { row: 5, cells: { Name: "Keyless" }, children: [] },
+        {
+          row: 4,
+          cells: { ...DEFAULTED, "Sample #": "1", Name: "Twin" },
+          children: [],
+        },
+        { row: 5, cells: { ...DEFAULTED, Name: "Keyless" }, children: [] },
       ],
       orphans: [
         {

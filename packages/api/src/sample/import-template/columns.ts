@@ -1,3 +1,5 @@
+import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
+
 import { COLLECTION_METHODS } from "@projet-igsn/domain/sample/collection-method/vocabulary";
 import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
 import { PHYSIOGRAPHIC_ENVIRONMENTS } from "@projet-igsn/domain/sample/physiographic-environment/vocabulary";
@@ -11,6 +13,7 @@ export const COLUMN_GROUPS = [
   "Identity",
   "Sample classification",
   "Location",
+  "Geological context",
   "Age",
   "Physical description",
   "Scientific context",
@@ -20,6 +23,15 @@ export const COLUMN_GROUPS = [
 ] as const;
 
 export type ColumnGroup = (typeof COLUMN_GROUPS)[number];
+
+export const TEMPLATE_SECTIONS = {
+  physicalDescription: "Physical description",
+  age: "Age",
+  conservationSecurity: "Conservation and security",
+  repository: "Curation and repository",
+  relatedDocuments: "Related URL or document",
+  geologicalContext: "Geological context",
+} as const satisfies Record<TemplateSectionKey, ColumnGroup>;
 
 export type Column = {
   header: string;
@@ -200,6 +212,8 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
     },
     field("Locality name", "location.localityName"),
     field("Locality description", "location.localityDescription"),
+  ]),
+  ...grouped("Geological context", [
     field("Geological context description", "geologicalContextDescription"),
     ...tree(
       "physiographicEnvironment",

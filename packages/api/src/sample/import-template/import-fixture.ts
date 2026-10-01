@@ -1,6 +1,10 @@
 import ExcelJS from "exceljs";
 
 import { REQUIRED_MARKER, SHEETS } from "./columns.ts";
+import { prefilledHeaderLabelsOf, readCustomization } from "./customization.ts";
+import { readRows } from "./read-rows.ts";
+import { templateLayout } from "./template-layout.ts";
+import { withoutPrefilledRows } from "./validate-import.ts";
 import { HEADER_ROW, importTemplateWorkbook } from "./workbook.ts";
 
 type Cells = Record<string, ExcelJS.CellValue>;
@@ -13,6 +17,12 @@ export async function templateBook(): Promise<ExcelJS.Workbook> {
   await book.xlsx.load(await template);
   return book;
 }
+
+export const filledRowsOf = (book: ExcelJS.Workbook) =>
+  withoutPrefilledRows(
+    readRows(book, templateLayout(book).layout),
+    prefilledHeaderLabelsOf(readCustomization(book)),
+  );
 
 export function sheetOf(
   book: ExcelJS.Workbook,

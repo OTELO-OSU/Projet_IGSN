@@ -11,3 +11,5 @@ export const AVAILABILITY_STATUSES = [
 export const availabilityStatusSchema = z.enum(AVAILABILITY_STATUSES);
 
 export type AvailabilityStatus = z.infer<typeof availabilityStatusSchema>;
+
+export const DEFAULT_AVAILABILITY_STATUS: AvailabilityStatus = "available";

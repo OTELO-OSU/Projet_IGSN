@@ -12,3 +12,5 @@ export const EXISTENCE_STATUSES = [
 export const existenceStatusSchema = z.enum(EXISTENCE_STATUSES);
 
 export type ExistenceStatus = z.infer<typeof existenceStatusSchema>;
+
+export const DEFAULT_EXISTENCE_STATUS: ExistenceStatus = "exists";
