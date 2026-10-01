@@ -156,6 +156,7 @@ describe("CustomizeTemplateDialog", () => {
         provenanceStatus: "field_sample",
         materialPath: "rock_and_sediment.rock.igneous",
         manualGroupId: GROUP.id,
+        subSamples: false,
       },
     ]);
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
@@ -182,6 +183,32 @@ describe("CustomizeTemplateDialog", () => {
     expect(Object.fromEntries(requested[0]!)).toEqual({
       materialPath: "rock_and_sediment",
       provenanceStatus: "field_sample",
+    });
+  });
+
+  it("should ask for the sub-samples template when the sub-samples box is checked", async () => {
+    const requested: URLSearchParams[] = [];
+    worker.use(
+      http.get("*/admin/samples/import-template", ({ request }) => {
+        requested.push(new URL(request.url).searchParams);
+        return new HttpResponse("customized-bytes");
+      }),
+    );
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const { dialog, download, pick } = await openDialog();
+    await pick(/^Provenance status/, "Field sample");
+
+    await dialog
+      .getByRole("checkbox", { name: "The file will contain sub-samples" })
+      .click();
+    await download.click();
+
+    await expect.poll(() => requested.length).toBe(1);
+    expect(Object.fromEntries(requested[0]!)).toEqual({
+      materialPath: "rock_and_sediment",
+      provenanceStatus: "field_sample",
+      subSamples: "true",
     });
   });
 });

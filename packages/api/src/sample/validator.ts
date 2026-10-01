@@ -82,6 +82,7 @@ const importTemplateQuerySchema = z.object({
     .max(MAX_IMPORT_ROWS)
     .default(MAX_IMPORT_ROWS),
   ...templatePrefillFields,
+  subSamples: z.stringbool().optional(),
 });
 
 export const validateImportTemplateQuery = zodValidator(
@@ -92,6 +93,7 @@ export const validateImportTemplateQuery = zodValidator(
 
 const reserveInternalIdsBodySchema = reserveInternalIdsSchema.extend({
   ...templatePrefillFields,
+  subSamples: z.boolean().optional(),
 });
 
 export const validateReserveInternalIdsBody = zodValidator(

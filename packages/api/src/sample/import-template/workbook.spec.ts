@@ -390,9 +390,18 @@ describe("customized import template workbook", () => {
     "Material (level 2)": "Rock",
     "Material (level 3)": "Igneous",
   };
+  const customization: TemplateCustomization = {
+    provenanceStatus: "field_sample",
+    materialPath: "rock_and_sediment.rock.igneous",
+    manualGroup: GROUPS[0],
+    subSamples: true,
+  };
   let customized: ExcelJS.Workbook;
 
   const samples = () => sheetOf(customized, SHEETS.samples);
+
+  const headersOf = (source: ExcelJS.Workbook) =>
+    valuesOf(sheetOf(source, SHEETS.samples).getRow(HEADER_ROW).values);
 
   const addressOf = (header: string, row: number) => {
     const headers = valuesOf(samples().getRow(HEADER_ROW).values);
@@ -405,17 +414,27 @@ describe("customized import template workbook", () => {
   };
 
   beforeAll(async () => {
-    customized = await loaded(
+    customized = await loaded(rows, [], customization, GROUPS);
+  }, 30_000);
+
+  it("should keep the Parent IGSN column only when sub-samples are expected", async () => {
+    const withoutSubSamples = await loaded(
       rows,
       [],
-      {
-        provenanceStatus: "field_sample",
-        materialPath: "rock_and_sediment.rock.igneous",
-        manualGroup: GROUPS[0],
-      },
+      { ...customization, subSamples: undefined },
       GROUPS,
     );
-  }, 30_000);
+
+    expect({
+      expected: headersOf(customized).includes("Parent IGSN"),
+      omitted: headersOf(withoutSubSamples),
+    }).toEqual({
+      expected: true,
+      omitted: headersOf(customized).filter(
+        (header) => header !== "Parent IGSN",
+      ),
+    });
+  });
 
   it("should write each pre-fill label, greyed, in the first and last data rows", () => {
     const cellsAt = (row: number) =>

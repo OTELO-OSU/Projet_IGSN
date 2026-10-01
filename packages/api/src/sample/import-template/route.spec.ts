@@ -49,6 +49,14 @@ const reserve = (db: Kysely<DB>, body: unknown, headers = authHeader) =>
     body: JSON.stringify(body),
   });
 
+const hasParentColumn = async (res: Response) => {
+  const book = new ExcelJS.Workbook();
+  await book.xlsx.load(await res.arrayBuffer());
+  return (
+    sheetOf(book, SHEETS.samples).getRow(2).values as ExcelJS.CellValue[]
+  ).includes("Parent IGSN");
+};
+
 const joinGroup = async (db: Kysely<DB>, userId: string) => {
   await db.insertInto("manual_group").values(GROUP).execute();
   await db
@@ -197,6 +205,24 @@ describe("import template route", () => {
     },
     30_000,
   );
+
+  pgTest.for<[string, boolean]>([
+    ["&subSamples=true", true],
+    ["", false],
+  ])(
+    "should answer a customized template with query %j keeping the Parent IGSN column: %s",
+    async ([subSamples, isKept], { db }) => {
+      const res = await download(
+        db,
+        `?rows=1&provenanceStatus=field_sample${subSamples}`,
+      );
+
+      expect({
+        status: res.status,
+        parent: await hasParentColumn(res),
+      }).toEqual({ status: 200, parent: isKept });
+    },
+  );
 });
 
 describe("import template reservation route", () => {
@@ -288,6 +314,23 @@ describe("import template reservation route", () => {
         body: { error: "Manual group not attachable to this sample" },
       });
     },
+  );
+
+  pgTest(
+    "should keep the Parent IGSN column of a reserved customized template expecting sub-samples",
+    async ({ db }) => {
+      const res = await reserve(db, {
+        count: 1,
+        provenanceStatus: "field_sample",
+        subSamples: true,
+      });
+
+      expect({
+        status: res.status,
+        parent: await hasParentColumn(res),
+      }).toEqual({ status: 200, parent: true });
+    },
+    30_000,
   );
 
   pgTest(
