@@ -1,8 +1,6 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
-import type {
-  DuplicateCriteria,
-  SuspectedDuplicate,
-} from "@projet-igsn/domain/sample/publication/suspected-duplicate";
+import type { SampleBatchRepository } from "@projet-igsn/domain/sample-batch/repository";
+import type { SuspectedDuplicate } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { DuplicateConflict } from "@projet-igsn/domain/sample/sample-validator";
@@ -18,12 +16,9 @@ import type { Context } from "hono";
 
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
-import { keepContactLinks } from "@projet-igsn/domain/sample/contact-link";
 import { toListSamplesQuery } from "@projet-igsn/domain/sample/core/core-list-samples-query";
 import { CORE_SCHEMA_VERSION } from "@projet-igsn/domain/sample/core/core-sample-schema";
-import { fromCoreSample } from "@projet-igsn/domain/sample/core/from-core-sample";
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
 import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacite-schema";
 import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
@@ -34,33 +29,20 @@ import {
   toOmsSample,
   toOmsSampleCollection,
 } from "@projet-igsn/domain/sample/oms/to-oms-sample";
-import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
-import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
-import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import { redactPrivateContacts } from "@projet-igsn/domain/sample/publication/redact-private-contacts";
-import { duplicateCheckCriteria } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
-import {
-  createSampleSchema,
-  updateSampleSchema,
-} from "@projet-igsn/domain/sample/sample";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 import { accepts } from "hono/accepts";
-import { HTTPException } from "hono/http-exception";
 
 import type { SendMail } from "../mail/send-mail.ts";
 
 import {
   type ServiceEnv,
+  keyedServiceAccount,
   requireServiceAccount,
 } from "../auth/require-service-account.ts";
 import { notifySampleModerated } from "../sample/notify-sample-moderated.ts";
 import { notifySubSampleDeclared } from "../sample/notify-sub-sample-declared.ts";
-import { uploadLimit } from "../sample/upload-limit.ts";
-import {
-  type ResolvedParent,
-  createServiceSampleIssues,
-  processStepsOnRootIssue,
-} from "./create-service-sample-issues.ts";
+import { registerSampleBatchRoutes } from "./sample-batch-routes.ts";
 import {
   SERVED_MEDIA_TYPES,
   SERVICE_API_KEY_SCHEME,
@@ -70,11 +52,12 @@ import {
   updateSampleRoute,
 } from "./service-route-definitions.ts";
 import {
-  frozenFieldIssues,
-  publishBlockerIssues,
-  serviceSampleIssue,
-  zodIssues,
-} from "./service-sample-issue.ts";
+  checkServiceCreate,
+  checkServiceUpdate,
+  createDuplicates,
+  findPublished,
+  updateDuplicates,
+} from "./service-sample-checks.ts";
 import { serviceValidationHook } from "./service-validation-hook.ts";
 import { registerVocabularyRoutes } from "./vocabulary-routes.ts";
 
@@ -114,14 +97,6 @@ const NO_REACH: ModerationScope = {
   managedManualGroupIds: [],
 };
 
-const writingAccount = (c: Context<ServiceEnv>) => {
-  const account = c.get("serviceAccount");
-  if (!account) {
-    throw new HTTPException(403, { message: "Forbidden" });
-  }
-  return account;
-};
-
 const readable = (c: Context<ServiceEnv>, sample: Sample) =>
   c.get("serviceAccount") ? sample : redactPrivateContacts(sample);
 
@@ -156,23 +131,10 @@ export function createServiceRoutes(
   manualGroups: Pick<ManualGroupRepository, "listAttachableForUser">,
   frontendUrl: string,
   userSamples: Pick<UserSampleRepository, "listCollaborators">,
+  sampleBatches: SampleBatchRepository,
   mail?: { sendMail: SendMail; adminUrl: string },
 ) {
-  const findPublished = async (igsn: string) => {
-    const sample = await samples.getPublicByIgsn(igsn);
-    return sample?.status === "published" ? sample : null;
-  };
-  const suspectedDuplicates = (
-    criteria: DuplicateCriteria | null,
-    exclude?: string,
-  ) =>
-    criteria === null
-      ? Promise.resolve([])
-      : samples.findDuplicates(criteria, exclude);
-  const findPublishedByIgsn = async (igsn: string) => {
-    const parsed = igsnSchema.safeParse(igsn);
-    return parsed.success ? findPublished(parsed.data) : null;
-  };
+  const checks = { samples, manualGroups };
   const app = new OpenAPIHono<ServiceEnv>({
     defaultHook: serviceValidationHook,
   });
@@ -218,6 +180,7 @@ export function createServiceRoutes(
   );
   app.use("*", requireServiceAccount(serviceAccounts));
   registerVocabularyRoutes(app);
+  registerSampleBatchRoutes(app, { ...checks, sampleBatches });
   return app
     .openapi(listSamplesRoute, async (c) => {
       const format = negotiate(c);
@@ -257,7 +220,7 @@ export function createServiceRoutes(
       if (!format) {
         return notAcceptable(c);
       }
-      const sample = await findPublished(c.req.valid("param").igsn);
+      const sample = await findPublished(samples, c.req.valid("param").igsn);
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
@@ -280,42 +243,25 @@ export function createServiceRoutes(
       }
     })
     .openapi(createSampleRoute, async (c) => {
-      const account = writingAccount(c);
-      const { sample, parents } = fromCoreSample(c.req.valid("json"));
-      const resolved: ResolvedParent[] = await Promise.all(
-        parents.map(async ({ igsn, relationIndex }) => ({
-          relationIndex,
-          sample: await findPublishedByIgsn(igsn),
-        })),
-      );
-      const parsed = createSampleSchema.safeParse({
-        ...sample,
-        parentIds: resolved
-          .map(({ sample: parent }) => parent?.id)
-          .filter((id) => id != null),
-      });
-      if (!parsed.success) {
-        return invalid(c, zodIssues(parsed.error));
-      }
-      const issues = await createServiceSampleIssues(
-        { manualGroups },
+      const account = keyedServiceAccount(c);
+      const checked = await checkServiceCreate(
+        checks,
         account.owner.id,
-        parsed.data,
-        resolved,
+        c.req.valid("json"),
       );
-      if (issues.length > 0) {
-        return invalid(c, issues);
+      if ("issues" in checked) {
+        return invalid(c, checked.issues);
       }
-      const duplicates = await suspectedDuplicates(
-        duplicateCheckCriteria(parsed.data, {
-          confirmed: c.req.valid("query").confirmDuplicates,
-        }),
+      const duplicates = await createDuplicates(
+        samples,
+        checked.value,
+        c.req.valid("query").confirmDuplicates,
       );
       if (duplicates.length > 0) {
         return conflicting(c, duplicates);
       }
       const created = await samples.createPublished(
-        parsed.data,
+        checked.value.input,
         account.owner.id,
         account,
       );
@@ -324,69 +270,35 @@ export function createServiceRoutes(
         mail,
         declarer: account.owner,
         subSample: created,
-        parents: resolved
-          .map(({ sample: parent }) => parent)
-          .filter((parent) => parent !== null),
+        parents: checked.value.parents,
       });
       return c.json(toCoreSample(created, frontendUrl), 201);
     })
     .openapi(updateSampleRoute, async (c) => {
-      const account = writingAccount(c);
-      const current = await findPublished(c.req.valid("param").igsn);
-      if (!current) {
-        return c.json({ error: "Not found" }, 404);
-      }
-      if (
-        !(await samples.isModerated(
-          current.id,
-          managerScope(account.id, account.managedGroups),
-        ))
-      ) {
-        return c.json({ error: "Forbidden" }, 403);
-      }
-      const { sample, parents } = fromCoreSample(c.req.valid("json"));
-      const stored = new Set(current.parents.map(({ igsn }) => igsn));
-      const changed = parents.findIndex(
-        ({ igsn }) => !stored.has(igsnSchema.parse(igsn)),
+      const account = keyedServiceAccount(c);
+      const checked = await checkServiceUpdate(
+        checks,
+        account,
+        c.req.valid("param").igsn,
+        c.req.valid("json"),
       );
-      if (changed !== -1 || parents.length !== stored.size) {
-        return forbidden(c, [
-          serviceSampleIssue("field_frozen", [
-            "relations",
-            parents[changed]?.relationIndex ?? 0,
-          ]),
-        ]);
+      if ("issues" in checked) {
+        switch (checked.issues[0]?.code) {
+          case "sample_not_found":
+            return c.json({ error: "Not found" }, 404);
+          case "sample_not_editable":
+            return c.json({ error: "Forbidden" }, 403);
+          case "field_frozen":
+            return forbidden(c, checked.issues);
+          default:
+            return invalid(c, checked.issues);
+        }
       }
-      const parsed = updateSampleSchema.safeParse({
-        ...keepContactLinks(sample, current),
-        // Core has no slot for the local id description, so a round trip keeps the stored one.
-        localIdDescription:
-          sample.localId == null ? null : current.localIdDescription,
-      });
-      if (!parsed.success) {
-        return invalid(c, zodIssues(parsed.error));
-      }
-      const merged = mergePublishedEdit(current, parsed.data);
-      const frozen = frozenFieldEdits(parsed.data, merged);
-      if (frozen.length > 0) {
-        return forbidden(c, frozenFieldIssues(frozen));
-      }
-      const blockers = newPublishBlockers(current, merged, uploadLimit);
-      if (blockers.length > 0) {
-        return invalid(c, publishBlockerIssues(blockers));
-      }
-      if (
-        (merged.processSteps?.length ?? 0) > 0 &&
-        current.parents.length === 0
-      ) {
-        return invalid(c, [processStepsOnRootIssue()]);
-      }
-      const duplicates = await suspectedDuplicates(
-        duplicateCheckCriteria(merged, {
-          previous: current,
-          confirmed: c.req.valid("query").confirmDuplicates,
-        }),
-        current.id,
+      const { current, merged } = checked.value;
+      const duplicates = await updateDuplicates(
+        samples,
+        checked.value,
+        c.req.valid("query").confirmDuplicates,
       );
       if (duplicates.length > 0) {
         return conflicting(c, duplicates);

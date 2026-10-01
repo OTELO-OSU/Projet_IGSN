@@ -53,6 +53,13 @@ Accepted, then amended.
 - An anonymous `?editable=true` is ignored: every published sample is listed, since there is no account to narrow by.
 - `POST` and `PUT` are unchanged, still needing a valid key and answering 403 for a missing or unknown one.
 
+### 2026-10-01, `POST /service/samples/batch` and `GET /service/batches/:id`
+
+- The batch body is 1 to 500 items `{ partnerId, sample }`, `sample` an IGSN Core record; `partnerId` is required and not unique. With `identification.sampleIdentifier` the item updates that published sample inside the account's `managerScope`, exactly like `PUT /service/samples/:igsn`; without one it creates a sample owned by the account owner with the account's trio, exactly like `POST /service/samples`. `service-sample-checks.ts` carries those checks out of the single routes so both share them.
+- All or nothing: 422 `{ error: "Invalid sample", issues }` with every path prefixed by the item's index, three new codes added to the single route's vocabulary: `sample_not_found`, `sample_not_editable` (an unknown or out-of-reach IGSN) and `duplicate_sample_key` (the same IGSN on two items of the batch). 409 `{ error, reason: "duplicates", items: [{ index, duplicates }] }` for a suspected duplicate unless `?confirmDuplicates=true`. 503 when DataCite does not answer, nothing written. 413 above `IMPORT_MAX_BYTES`. 403 for a missing or unknown key, batching writes like the single routes.
+- A valid batch commits every row as `publishing` in one transaction, a create or an update (`published -> publishing`, keeping its IGSN), the same queue ADR 0052 gives the import and bulk edit; no mail. The answer is 202 `{ id }`, the batch id.
+- `GET /service/batches/{id}` needs a key (403 otherwise), 404 for an unknown batch or another account's, and lists `{ partnerId, id, status, igsn, publishingError }` per item in request order, reading `sample_batch_item` joined to `sample`.
+
 ## Context
 
 ADR 0035 declared the `service_account` entity but deferred its credential and any machine API: nothing recorded who a service account is for, and a created account could call nothing. A researcher must be able to ask for one, own it, and hold a credential a script can send.
