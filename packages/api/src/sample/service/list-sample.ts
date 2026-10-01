@@ -135,8 +135,36 @@ async function listSamplesWhere(
         .$if(filters.length > 0, (qb) => qb.where((eb) => eb.and(filters)));
 
     const relevance = search === undefined ? undefined : relevanceScore(search);
-    const rows = await matching()
-      .selectAll()
+    const offset = (page - 1) * perPage;
+    const pageKeys = matching()
+      .select((eb) => [
+        "sample.id",
+        "sample.updated_at",
+        eb.fn.countAll<string>().over().as("total"),
+      ])
+      .$if(sort === "status", (qb) =>
+        qb
+          .select(lifecycleOrder.as("lifecycle"))
+          .orderBy(lifecycleOrder, order),
+      )
+      .$if(sort === "igsn", (qb) =>
+        qb.select("sample.igsn").orderBy("sample.igsn", order),
+      )
+      .$call((qb) =>
+        relevance
+          ? qb.select(relevance.as("relevance")).orderBy(relevance, "desc")
+          : qb,
+      )
+      .orderBy("sample.updated_at", "desc")
+      .orderBy("sample.id", "desc")
+      .limit(perPage)
+      .offset(offset);
+
+    const rows = await trx
+      .selectFrom(pageKeys.as("page"))
+      .innerJoin("sample", "sample.id", "page.id")
+      .selectAll("sample")
+      .select("page.total")
       .select(sampleLocationQuery)
       .select(sampleRelationsQuery)
       .select(sampleProcessStepsQuery)
@@ -147,23 +175,31 @@ async function listSamplesWhere(
       .select(sampleParentsQuery)
       .select(samplePersonAccountsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
-      .$if(sort === "status", (qb) => qb.orderBy(lifecycleOrder, order))
-      .$if(sort === "igsn", (qb) => qb.orderBy("igsn", order))
-      .$call((qb) => (relevance ? qb.orderBy(relevance, "desc") : qb))
-      .orderBy("updated_at", "desc")
-      .orderBy("id", "desc")
-      .limit(perPage)
-      .offset((page - 1) * perPage)
+      .$if(sort === "status", (qb) =>
+        qb.orderBy(sql.ref("page.lifecycle"), order),
+      )
+      .$if(sort === "igsn", (qb) => qb.orderBy(sql.ref("page.igsn"), order))
+      .$if(relevance !== undefined, (qb) =>
+        qb.orderBy(sql.ref("page.relevance"), "desc"),
+      )
+      .orderBy("page.updated_at", "desc")
+      .orderBy("page.id", "desc")
       .execute();
 
-    const { count } = await matching()
-      .select((eb) => eb.fn.countAll<number>().as("count"))
-      .executeTakeFirstOrThrow();
+    const total =
+      rows[0]?.total ??
+      (offset === 0
+        ? 0
+        : (
+            await matching()
+              .select((eb) => eb.fn.countAll<string>().as("count"))
+              .executeTakeFirstOrThrow()
+          ).count);
 
     return {
       data: rows.map((row) => toSample(row)),
       owners: new Map(rows.map((row) => [row.id, row.owner])),
-      total: Number(count),
+      total: Number(total),
     };
   });
 }

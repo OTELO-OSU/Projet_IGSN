@@ -1439,4 +1439,56 @@ describe("listSamples", () => {
       .sort();
     expect(names).toEqual(["Deux", "Trois", "Un"]);
   });
+
+  pgTest.for([
+    { page: 1, names: ["Un"] },
+    { page: 2, names: ["Deux"] },
+    { page: 4, names: [] },
+  ])(
+    "should count every match whatever the page, page $page",
+    async ({ page, names }, { db }) => {
+      // Arrange
+      for (const [index, name] of ["Trois", "Deux", "Un"].entries()) {
+        const sample = await insertSample(db, {
+          name,
+          nature: "hand_sample",
+          type: null,
+          collectionMethod: null,
+        });
+        await db
+          .updateTable("sample")
+          .set({ updated_at: new Date(Date.UTC(2026, 0, index + 1)) })
+          .where("id", "=", sample.id)
+          .execute();
+      }
+      // Act
+      const { data, total } = await listAsOwner(db, { page, perPage: 1 });
+      // Assert
+      expect({ names: data.map((sample) => sample.name), total }).toEqual({
+        names,
+        total: 3,
+      });
+    },
+  );
+
+  pgTest(
+    "should answer no match with an empty page and zero",
+    async ({ db }) => {
+      // Arrange
+      await insertSample(db, {
+        name: "Basalt",
+        nature: "hand_sample",
+        type: null,
+        collectionMethod: null,
+      });
+      // Act
+      const result = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        search: "granite",
+      });
+      // Assert
+      expect(result).toEqual({ data: [], total: 0 });
+    },
+  );
 });

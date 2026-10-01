@@ -32,4 +32,39 @@ describe("facetFilters", () => {
       expect(JSON.stringify(plan)).toContain("user_name_trgm_idx");
     },
   );
+
+  pgTest.for([
+    ["nature", "powder", "sample_nature_idx"],
+    [
+      "institutionalOrganization",
+      "02feahw73",
+      "sample_institutional_organization_idx",
+    ],
+    ["institutionalOsu", "otelo", "sample_institutional_osu_idx"],
+    [
+      "institutionalLaboratory",
+      "geo_ressources",
+      "sample_institutional_laboratory_idx",
+    ],
+    ["type", "individual_sample", "sample_type_idx"],
+    ["collectionMethod", "drilling", "sample_collection_method_idx"],
+    ["mineralClassification", "01", "mineral_classification_strunz_id_idx"],
+    ["hostInstitution", "02feahw73", "sample_sc_host_institution_idx"],
+  ] as const)(
+    "should reach an index for the %s facet",
+    async ([facet, value, indexName], { db }) => {
+      // Arrange
+      await sql`set local enable_seqscan = off`.execute(db);
+      // Act
+      const plan = await db
+        .selectFrom("sample")
+        .select((eb) => eb.fn.countAll<number>().as("count"))
+        .where((eb) =>
+          eb.and(facetFilters({ page: 1, perPage: 10, [facet]: value })),
+        )
+        .explain();
+      // Assert
+      expect(JSON.stringify(plan)).toContain(indexName);
+    },
+  );
 });

@@ -2,14 +2,23 @@ import {
   parseSearchToken,
   searchTokens,
 } from "@projet-igsn/domain/sample/search/search-tokens";
-import { type Expression, sql, type SqlBool, type Transaction } from "kysely";
+import {
+  type Expression,
+  type RawBuilder,
+  sql,
+  type SqlBool,
+  type Transaction,
+} from "kysely";
 
 import type { DB } from "../../db.ts";
 
-import { unaccented } from "../../unaccented.ts";
 import { fuzzyThreshold } from "./fuzzy-threshold.ts";
 
-const SEARCHED_COLUMNS = ["name", "specific_name", "local_id"] as const;
+const SEARCHED_TEXTS = [
+  "name_unaccented",
+  "specific_name_unaccented",
+  "local_id_unaccented",
+].map((column) => sql.ref(column));
 
 const FUZZY_MIN_LENGTH = 5;
 
@@ -42,38 +51,35 @@ function matchesIgsnExactly(token: string): Expression<SqlBool> {
 }
 
 export function matchesToken(
-  columns: readonly string[],
+  texts: readonly RawBuilder<unknown>[],
   token: string,
   extraArms: Expression<SqlBool>[] = [],
 ): Expression<SqlBool> {
   const pattern = tokenPattern(token);
   const arms = [
     ...extraArms,
-    ...columns.map((column) => sql`${unaccented(column)} ~* ${pattern}`),
+    ...texts.map((text) => sql`${text} ~* ${pattern}`),
     ...(isFuzzyToken(token)
-      ? columns.map(
-          (column) =>
-            sql`${unaccented(column)} %> immutable_unaccent(${token})`,
-        )
+      ? texts.map((text) => sql`${text} %> immutable_unaccent(${token})`)
       : []),
   ];
   return sql<SqlBool>`(${sql.join(arms, sql` OR `)})`;
 }
 
 export function tokenFilters(
-  columns: readonly string[],
+  texts: readonly RawBuilder<unknown>[],
   value: string,
   extraArm?: (token: string) => Expression<SqlBool>,
 ): Expression<SqlBool>[] {
   const tokens = searchTokens(value);
   if (tokens.length === 0) return [sql<SqlBool>`false`];
   return tokens.map((token) =>
-    matchesToken(columns, token, extraArm ? [extraArm(token)] : []),
+    matchesToken(texts, token, extraArm ? [extraArm(token)] : []),
   );
 }
 
 export function searchFilters(search: string): Expression<SqlBool>[] {
-  return tokenFilters(SEARCHED_COLUMNS, search, matchesIgsnExactly);
+  return tokenFilters(SEARCHED_TEXTS, search, matchesIgsnExactly);
 }
 
 export async function applyFuzzyThreshold(
@@ -90,15 +96,19 @@ export async function applyFuzzyThreshold(
   );
 }
 
-export function relevanceScore(search: string): Expression<number> | undefined {
-  const needle = searchTokens(search)
-    .filter((token) => !token.includes("*"))
-    .join(" ");
+export function relevanceScore(search: string): RawBuilder<number> | undefined {
+  const tokens = searchTokens(search).filter((token) => !token.includes("*"));
+  const needle = tokens.join(" ");
   if (!needle) return undefined;
-  return sql<number>`GREATEST(${sql.join(
-    SEARCHED_COLUMNS.map(
-      (column) =>
-        sql`word_similarity(immutable_unaccent(${needle}), ${unaccented(column)})`,
+  const similarity = sql<number>`GREATEST(${sql.join(
+    SEARCHED_TEXTS.map(
+      (text) => sql`word_similarity(immutable_unaccent(${needle}), ${text})`,
     ),
   )})`;
+  if (tokens.length > 1) return similarity;
+  const pattern = sql`(SELECT '\\m' || ${literalSegment(needle)} || '\\M')`;
+  return sql<number>`CASE WHEN ${sql.join(
+    SEARCHED_TEXTS.map((text) => sql`${text} ~* ${pattern}`),
+    sql` OR `,
+  )} THEN 1 ELSE ${similarity} END`;
 }

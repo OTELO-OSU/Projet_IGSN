@@ -76,6 +76,9 @@ type SampleTable = {
   numeric_age_years_unit: string | null;
   annum_min: Generated<number | null>;
   annum_max: Generated<number | null>;
+  name_unaccented: Generated<string>;
+  specific_name_unaccented: Generated<string>;
+  local_id_unaccented: Generated<string>;
   geological_age_min: number | null;
   geological_age_max: number | null;
   geological_unit: string | null;
