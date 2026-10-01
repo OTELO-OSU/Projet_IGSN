@@ -1,3 +1,4 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type {
@@ -34,6 +35,7 @@ import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
 import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 
 import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
@@ -126,6 +128,18 @@ export function createSampleAdminRoutes(
   const accessibleSample = requireSampleAccess(repository, users);
   const unlockedSample = requireEditLock(repository);
 
+  const templateManualGroups = async (
+    userId: string,
+    manualGroupId: string | undefined,
+  ): Promise<{ attachable: ManualGroup[]; manualGroup?: ManualGroup }> => {
+    const attachable = await manualGroups.listAttachableForUser(userId);
+    const manualGroup = attachable.find((group) => group.id === manualGroupId);
+    if (manualGroupId !== undefined && manualGroup === undefined) {
+      throw new HTTPException(422, { message: NOT_ATTACHABLE.error });
+    }
+    return { attachable, manualGroup };
+  };
+
   return new Hono<SampleAdminEnv>()
     .get("/", validateListQuery, async (c) => {
       const { data, total } = await repository.listAssignedTo(
@@ -154,17 +168,33 @@ export function createSampleAdminRoutes(
         data: await repository.findDuplicates(criteria, exclude),
       });
     })
-    .get("/import-template", validateImportTemplateQuery, (c) =>
-      importTemplateResponse(c.req.valid("query").rows),
-    )
+    .get("/import-template", validateImportTemplateQuery, async (c) => {
+      const { rows, manualGroupId, ...customization } = c.req.valid("query");
+      const { attachable, manualGroup } = await templateManualGroups(
+        c.get("user").id,
+        manualGroupId,
+      );
+      return importTemplateResponse(
+        rows,
+        undefined,
+        { ...customization, manualGroup },
+        attachable,
+      );
+    })
     .post(
       "/import-template/reservation",
       validateReserveInternalIdsBody,
       async (c) => {
-        const { count } = c.req.valid("json");
+        const { count, manualGroupId, ...customization } = c.req.valid("json");
+        const { attachable, manualGroup } = await templateManualGroups(
+          c.get("user").id,
+          manualGroupId,
+        );
         return importTemplateResponse(
           count,
           await repository.reserveInternalNumbers(count),
+          { ...customization, manualGroup },
+          attachable,
         );
       },
     )
@@ -172,6 +202,7 @@ export function createSampleAdminRoutes(
       const { issues, samples } = await validateImport(
         await c.req.valid("form").file.arrayBuffer(),
         (numbers) => repository.unavailableInternalNumbers(numbers),
+        () => manualGroups.listAttachableForUser(c.get("user").id),
       );
       if (issues.length > 0) {
         const body: InvalidImport = { error: "Invalid import", issues };

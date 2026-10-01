@@ -19,9 +19,8 @@ const DEFERRED_FIELDS = [
   "mineralClassifications",
 ];
 
-// TODO(phase 3): these carry a uuid a researcher cannot type; drop them from this list once the importer resolves people and groups by name.
+// TODO(phase 3): these carry a uuid a researcher cannot type; drop them from this list once the importer resolves people by name.
 const IDENTIFIER_ONLY_FIELDS = [
-  "manualGroupIds",
   "scientificContext.chiefScientistUserId",
   "scientificContext.collectorUserId",
   "scientificContext.additionalRoles.personUserId",

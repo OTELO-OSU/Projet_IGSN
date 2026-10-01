@@ -20,22 +20,39 @@ import { CircleXIcon, FileDownIcon } from "lucide-react";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
-import { useDownloadImportTemplate } from "#/samples/use-download-import-template.ts";
+import {
+  type ImportTemplateCustomization,
+  useDownloadImportTemplate,
+} from "#/samples/use-download-import-template.ts";
 
 const validateCount = zodFieldErrors(reserveInternalIdsSchema, () =>
   m.import_template_reserve_count_invalid({ max: MAX_IMPORT_ROWS }),
 );
 
-export function ReserveInternalIdsDialog() {
+export function ReserveInternalIdsDialog({
+  customization,
+  disabled,
+  onDownloaded,
+}: {
+  customization?: ImportTemplateCustomization;
+  disabled?: boolean;
+  onDownloaded?: () => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const downloadTemplate = useDownloadImportTemplate();
   const form = useAppForm({
     defaultValues: { count: 250 } as Partial<ReserveInternalIds>,
     validators: { onSubmit: validateCount },
     onSubmit: ({ value }) =>
-      downloadTemplate.mutate(value.count, {
-        onSuccess: () => setIsOpen(false),
-      }),
+      downloadTemplate.mutate(
+        { ...reserveInternalIdsSchema.parse(value), ...customization },
+        {
+          onSuccess: () => {
+            setIsOpen(false);
+            onDownloaded?.();
+          },
+        },
+      ),
   });
 
   return (
@@ -50,6 +67,7 @@ export function ReserveInternalIdsDialog() {
         <Button
           type="button"
           variant="link"
+          disabled={disabled}
           className="h-auto justify-self-start p-0 text-sm underline"
         >
           {m.import_template_reserve_label()}

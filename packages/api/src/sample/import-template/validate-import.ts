@@ -1,3 +1,4 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { ImportIssue } from "@projet-igsn/domain/sample/import/import-report";
 import type { ImportedSample } from "@projet-igsn/domain/sample/repository";
 import type ExcelJS from "exceljs";
@@ -16,6 +17,7 @@ import {
   SAMPLE_KEY_HEADER,
   SHEETS,
 } from "./columns.ts";
+import { prefilledHeaderLabelsOf, readCustomization } from "./customization.ts";
 import { openWorkbook } from "./open-workbook.ts";
 import { cellValue, type RawRow, readRows, textOf } from "./read-rows.ts";
 import { templateLayout } from "./template-layout.ts";
@@ -109,8 +111,11 @@ const internalNumberOf = ({ cells }: RawRow) => {
   return key === undefined ? undefined : parseInternalId(textOf(key));
 };
 
-function validateRows(parsed: ReturnType<typeof readRows>): ValidatedImport {
-  const built = buildSampleInputs(parsed);
+function validateRows(
+  parsed: ReturnType<typeof readRows>,
+  manualGroups: readonly ManualGroup[],
+): ValidatedImport {
+  const built = buildSampleInputs(parsed, manualGroups);
   const reported = new Set(built.issues.map(fieldOf));
   const { issues, inputs } = validateSamples(built.samples);
   return {
@@ -125,7 +130,27 @@ function validateRows(parsed: ReturnType<typeof readRows>): ValidatedImport {
   };
 }
 
+function withoutPrefilledRows(
+  parsed: ReturnType<typeof readRows>,
+  prefilled: ReadonlyMap<string, string>,
+): ReturnType<typeof readRows> {
+  const isPrefilled = ({ cells }: RawRow) =>
+    Object.entries(cells).every(
+      ([header, cell]) =>
+        header === SAMPLE_KEY_HEADER || prefilled.get(header) === textOf(cell),
+    );
+  return {
+    samples: parsed.samples.filter((sample) => !isPrefilled(sample)),
+    orphans: [
+      ...parsed.orphans,
+      ...parsed.samples.filter(isPrefilled).flatMap(({ children }) => children),
+    ],
+  };
+}
+
 type UnavailableInternalNumbers = (numbers: number[]) => Promise<Set<number>>;
+
+type AttachableManualGroups = () => Promise<readonly ManualGroup[]>;
 
 async function internalIdIssues(
   parsed: ReturnType<typeof readRows>,
@@ -157,18 +182,22 @@ async function internalIdIssues(
 export function validateImport(
   bytes: ArrayBuffer,
   unavailableInternalNumbers: UnavailableInternalNumbers,
+  attachableManualGroups: AttachableManualGroups,
 ): Promise<ValidatedImport> {
   return queueBuild(async () => {
     const book = await openWorkbook(bytes);
     if (book === undefined) return rejected([{ code: "unreadable_file" }]);
     const { layout, issues } = templateLayout(book);
     if (issues.length > 0) return rejected(issues);
-    const parsed = readRows(book, layout);
+    const parsed = withoutPrefilledRows(
+      readRows(book, layout),
+      prefilledHeaderLabelsOf(readCustomization(book)),
+    );
     if (parsed.samples.length === 0)
       return rejected([{ sheet: SHEETS.samples, code: "no_sample" }]);
     if (parsed.samples.length > MAX_IMPORT_ROWS)
       return rejected([{ sheet: SHEETS.samples, code: "too_many_rows" }]);
-    const validated = validateRows(parsed);
+    const validated = validateRows(parsed, await attachableManualGroups());
     return {
       issues: [
         ...validated.issues,

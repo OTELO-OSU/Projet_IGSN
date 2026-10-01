@@ -25,6 +25,7 @@ import {
   addVocabularySheet,
   type ExcelBuffer,
   FIRST_DATA_ROW,
+  FROZEN_FILL,
   xlsxResponse,
 } from "../import-template/workbook.ts";
 import { EXPORT_SAMPLE_COLUMNS } from "./export-columns.ts";
@@ -57,12 +58,6 @@ function isFrozen(column: Column, sample: Sample): boolean {
     (column.level ?? 1) <= frozenMaterialDepth(sample.material)
   );
 }
-
-const FROZEN_FILL: ExcelJS.Fill = {
-  type: "pattern",
-  pattern: "solid",
-  fgColor: { argb: "FFD9D9D9" },
-};
 
 function fill(
   sheet: ExcelJS.Worksheet,

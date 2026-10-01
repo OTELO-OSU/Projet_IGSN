@@ -1,5 +1,8 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
+import { chooseOption } from "./choose-option.ts";
+import { sampleRow } from "./sample-list.page.ts";
+
 async function saveDownload(
   page: Page,
   testInfo: TestInfo,
@@ -18,10 +21,30 @@ export function importSamplesPage(page: Page) {
   return {
     open: () =>
       page.getByRole("button", { name: "Import", exact: true }).click(),
-    downloadTemplate: (testInfo: TestInfo) =>
-      saveDownload(page, testInfo, () =>
-        dialog.getByRole("button", { name: "Download template" }).click(),
-      ),
+    downloadTemplate: async (testInfo: TestInfo) => {
+      await dialog.getByRole("button", { name: "Download template" }).click();
+      return saveDownload(page, testInfo, () =>
+        page.getByRole("menuitem", { name: "Complete template" }).click(),
+      );
+    },
+    downloadCustomizedTemplate: async (
+      { provenance, manualGroup }: { provenance: string; manualGroup: string },
+      testInfo: TestInfo,
+    ) => {
+      await dialog.getByRole("button", { name: "Download template" }).click();
+      await page.getByRole("menuitem", { name: "Customized template" }).click();
+      const customize = page.getByRole("dialog", {
+        name: "Customize the template",
+      });
+      const choose = chooseOption(page, customize);
+      await choose(/^Manual group/, manualGroup);
+      await choose(/^Provenance status/, provenance);
+      return saveDownload(page, testInfo, () =>
+        customize
+          .getByRole("button", { name: "Download this template" })
+          .click(),
+      );
+    },
     reserveInternalIds: async (count: number, testInfo: TestInfo) => {
       await dialog
         .getByRole("button", { name: "Reserve internal IDs" })
@@ -54,5 +77,21 @@ export function importSamplesPage(page: Page) {
       ).toBeVisible();
     },
     expectOpen: () => expect(dialog).toBeVisible(),
+    expectPublishedInBackground: async (name: string) => {
+      await expect(
+        page.getByText(
+          "1 samples imported. Publication is running in the background.",
+        ),
+      ).toBeVisible();
+      await expect(async () => {
+        await page.reload();
+        await expect(
+          sampleRow(page, name).getByRole("cell", {
+            name: "Published",
+            exact: true,
+          }),
+        ).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 30_000 });
+    },
   };
 }

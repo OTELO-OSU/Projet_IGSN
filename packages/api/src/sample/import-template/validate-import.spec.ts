@@ -1,6 +1,5 @@
-import type ExcelJS from "exceljs";
-
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 
 import { SHEETS } from "./columns.ts";
@@ -12,6 +11,7 @@ import {
   templateBook,
 } from "./import-fixture.ts";
 import { validateImport } from "./validate-import.ts";
+import { importTemplateWorkbook } from "./workbook.ts";
 
 const FUTURE = "date must not be in the future";
 
@@ -19,15 +19,45 @@ const ORDER = "date range start must not be after end";
 
 const UNAVAILABLE = 404;
 
+const GROUP = { id: "0190c9a0-0000-7000-8000-000000000001", name: "Alps" };
+
 const validate = (bytes: ArrayBuffer) =>
-  validateImport(bytes, (numbers) =>
-    Promise.resolve(new Set(numbers.filter((n) => n === UNAVAILABLE))),
+  validateImport(
+    bytes,
+    (numbers) =>
+      Promise.resolve(new Set(numbers.filter((n) => n === UNAVAILABLE))),
+    () => Promise.resolve([GROUP]),
   );
 
 const bytesOf = async (book: ExcelJS.Workbook) =>
   new Uint8Array(await book.xlsx.writeBuffer()).buffer;
 
 const issuesOf = async (bytes: ArrayBuffer) => (await validate(bytes)).issues;
+
+const PREFILLED_HEADERS = [
+  "Provenance status",
+  "Manual group",
+  "Material (level 1)",
+  "Material (level 2)",
+  "Material (level 3)",
+];
+
+const customizedBook = async () => {
+  const book = new ExcelJS.Workbook();
+  await book.xlsx.load(
+    await importTemplateWorkbook(
+      3,
+      [],
+      {
+        provenanceStatus: "field_sample",
+        materialPath: "rock_and_sediment.rock.igneous",
+        manualGroup: GROUP,
+      },
+      [GROUP],
+    ),
+  );
+  return book;
+};
 
 const withKey = (book: ExcelJS.Workbook, row: number, key: string) =>
   fill(book, SHEETS.samples, row, { ...CLEAN_SAMPLE, "Sample #": key });
@@ -317,5 +347,51 @@ describe("validateImport", () => {
     withKey(book, 4, "sample-8");
 
     expect(await issuesOf(await bytesOf(book))).toEqual([]);
+  });
+
+  it("should read a customized file's rows left at their pre-fill as blank", async () => {
+    const book = await customizedBook();
+    fill(
+      book,
+      SHEETS.samples,
+      3,
+      Object.fromEntries(
+        Object.entries(CLEAN_SAMPLE).filter(
+          ([header]) => !PREFILLED_HEADERS.includes(header),
+        ),
+      ),
+    );
+    const { issues, samples } = await validate(await bytesOf(book));
+
+    expect({
+      issues,
+      groups: samples.map(({ input }) => input.manualGroupIds),
+    }).toEqual({ issues: [], groups: [[GROUP.id]] });
+  });
+
+  it("should answer no_sample for a customized file left untouched", async () => {
+    expect(await issuesOf(await bytesOf(await customizedBook()))).toEqual([
+      { sheet: SHEETS.samples, code: "no_sample" },
+    ]);
+  });
+
+  it("should report a child row picking a row left at its pre-fill as dangling", async () => {
+    const book = await customizedBook();
+    fill(book, SHEETS.samples, 3, { Name: "Basalt 1" });
+    fill(book, SHEETS.relations, 3, { "Sample #": 2, Title: "Paper" });
+
+    expect(
+      (await issuesOf(await bytesOf(book))).filter(
+        (issue) => issue.sheet === SHEETS.relations,
+      ),
+    ).toEqual([
+      {
+        sheet: SHEETS.relations,
+        row: 3,
+        column: "Sample #",
+        value: "2",
+        code: "unknown_sample_key",
+      },
+    ]);
   });
 });

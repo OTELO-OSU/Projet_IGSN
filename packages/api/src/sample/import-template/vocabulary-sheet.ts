@@ -1,3 +1,5 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+
 import {
   laboratoryLabel,
   organizationLabel,
@@ -60,7 +62,12 @@ import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-conte
 import { TEXTURES } from "@projet-igsn/domain/sample/texture/vocabulary";
 import { SAMPLE_TYPES } from "@projet-igsn/domain/sample/type/vocabulary";
 
-import { depthOf, SHEETS, TEMPLATE_MATERIAL_PATHS } from "./columns.ts";
+import {
+  depthOf,
+  MANUAL_GROUP_BLOCK,
+  SHEETS,
+  TEMPLATE_MATERIAL_PATHS,
+} from "./columns.ts";
 import { labels } from "./labels.ts";
 
 type VocabularyRow = readonly [key: string, label: string, path: string];
@@ -71,7 +78,7 @@ export type VocabularyBlock = {
   rows: readonly VocabularyRow[];
 };
 
-type BlockPlacement = {
+export type BlockPlacement = {
   title: string;
   keyRange: string;
   labelRange: string;
@@ -364,25 +371,34 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
   ),
 ];
 
-const laidOut = () => {
+export const manualGroupBlock = (
+  groups: readonly ManualGroup[],
+): VocabularyBlock => ({
+  id: MANUAL_GROUP_BLOCK,
+  title: "Manual group",
+  rows: groups.map((group) => [group.id, group.name, ""] as const),
+});
+
+export const vocabularyLayout = (blocks: readonly VocabularyBlock[]) => {
   const rows: VocabularyRow[] = [];
   const placements: Record<string, BlockPlacement> = {};
-  for (const block of VOCABULARY_BLOCKS) {
+  for (const block of blocks) {
     rows.push([block.title, "", ""]);
     const start = rows.length + 1;
     rows.push(...block.rows);
-    placements[block.id] = {
-      title: block.title,
-      keyRange: `${SHEETS.vocabularies}!$A$${start}:$A$${rows.length}`,
-      labelRange: `${SHEETS.vocabularies}!$B$${start}:$B$${rows.length}`,
-      labelAnchor: `${SHEETS.vocabularies}!$B$${start}`,
-    };
+    if (block.rows.length > 0)
+      placements[block.id] = {
+        title: block.title,
+        keyRange: `${SHEETS.vocabularies}!$A$${start}:$A$${rows.length}`,
+        labelRange: `${SHEETS.vocabularies}!$B$${start}:$B$${rows.length}`,
+        labelAnchor: `${SHEETS.vocabularies}!$B$${start}`,
+      };
     rows.push(["", "", ""]);
   }
   return { rows, placements };
 };
 
-const sheet = laidOut();
+const sheet = vocabularyLayout(VOCABULARY_BLOCKS);
 
 export const VOCABULARY_ROWS: readonly VocabularyRow[] = sheet.rows;
 

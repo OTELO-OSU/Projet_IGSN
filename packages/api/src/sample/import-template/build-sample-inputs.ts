@@ -1,3 +1,4 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type {
   ImportIssue,
   ImportIssueCode,
@@ -12,6 +13,7 @@ import type { Cell, ParsedRows, RawRow } from "./read-rows.ts";
 import { COLUMN_KINDS } from "./column-kind.ts";
 import {
   DATA_SHEETS,
+  MANUAL_GROUP_PATH,
   plainHeader,
   SAMPLE_KEY_HEADER,
   SHEETS,
@@ -236,12 +238,29 @@ const keyOf = ({ cells }: RawRow) => {
 const keyIssue = (sheet: string, { row }: RawRow, code: ImportIssueCode) =>
   issueAt(sheet, row, SAMPLE_KEY_HEADER, code);
 
-export function buildSampleInputs(parsed: ParsedRows): {
+export function buildSampleInputs(
+  parsed: ParsedRows,
+  manualGroups: readonly ManualGroup[] = [],
+): {
   samples: SampleCandidate[];
   issues: ImportIssue[];
 } {
   const seen = new Set<string>();
   const issues: ImportIssue[] = [];
+  const withManualGroupId = (row: number, field: Field): Field[] => {
+    if (field.path !== MANUAL_GROUP_PATH) return [field];
+    const group = manualGroups.find(({ name }) => name === field.value);
+    if (group !== undefined) return [{ ...field, value: [group.id] }];
+    issues.push(
+      issueAt(
+        SHEETS.samples,
+        row,
+        plainHeader(field.column),
+        "unknown_manual_group",
+      ),
+    );
+    return [];
+  };
   const samples = parsed.samples.map((sample): SampleCandidate => {
     const key = keyOf(sample);
     if (key === undefined)
@@ -252,7 +271,7 @@ export function buildSampleInputs(parsed: ParsedRows): {
     const fields = rowFields(
       SHEETS.samples,
       sheetRowOf(SHEETS.samples, sample),
-    );
+    ).flatMap((field) => withManualGroupId(sample.row, field));
     let candidate: SampleCandidate = {
       row: sample.row,
       input: fields.reduce<Json>(

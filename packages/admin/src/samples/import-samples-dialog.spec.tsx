@@ -47,6 +47,15 @@ async function openReserveDialog() {
   };
 }
 
+type Screen = Awaited<ReturnType<typeof openDialog>>["screen"];
+type Dialog = Awaited<ReturnType<typeof openDialog>>["dialog"];
+
+async function pickTemplate(screen: Screen, dialog: Dialog, item: string) {
+  await dialog.getByRole("button", { name: "Download template" }).click();
+  await screen.getByRole("menuitem", { name: item }).click();
+  await expect.poll(() => screen.getByRole("menu").elements()).toHaveLength(0);
+}
+
 function drop(target: Element, file: File) {
   const dataTransfer = new DataTransfer();
   dataTransfer.items.add(file);
@@ -80,10 +89,12 @@ describe("ImportSamplesDialog", () => {
       );
   });
 
-  it("should save the downloaded template, the button disabled meanwhile", async () => {
+  it("should save the complete template, fetched without customization, the button disabled meanwhile", async () => {
     const { promise: served, resolve: serve } = Promise.withResolvers<void>();
+    const requested: string[] = [];
     worker.use(
-      http.get("*/admin/samples/import-template", async () => {
+      http.get("*/admin/samples/import-template", async ({ request }) => {
+        requested.push(new URL(request.url).search);
         await served;
         return new HttpResponse("template-bytes");
       }),
@@ -97,18 +108,41 @@ describe("ImportSamplesDialog", () => {
         savedNames.push(this.download);
       },
     );
-    const { dialog } = await openDialog();
+    const { screen, dialog } = await openDialog();
     const download = dialog.getByRole("button", { name: "Download template" });
 
-    await download.click();
+    await pickTemplate(screen, dialog, "Complete template");
     await expect.element(download).toBeDisabled();
     serve();
 
     await expect.element(download).toBeEnabled();
+    expect(requested).toEqual([""]);
     expect(savedNames).toEqual([IMPORT_TEMPLATE_FILENAME]);
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
       "template-bytes",
     );
+  });
+
+  it("should swap to the customize dialog on Customized template, Back restoring the import dialog", async () => {
+    worker.use(
+      http.get("*/admin/currentUser/attachable-manual-groups", () =>
+        HttpResponse.json({ data: [] }),
+      ),
+    );
+    const { screen, dialog } = await openDialog();
+
+    await pickTemplate(screen, dialog, "Customized template");
+
+    await expect.element(dialog).not.toBeInTheDocument();
+    const customize = screen.getByRole("dialog", {
+      name: "Customize the template",
+    });
+    await customize.getByRole("button", { name: "Back" }).click();
+
+    await expect
+      .element(screen.getByRole("dialog", { name: "Import samples" }))
+      .toBeVisible();
+    await expect.element(customize).not.toBeInTheDocument();
   });
 
   it("should require a count before reserving internal IDs", async () => {
