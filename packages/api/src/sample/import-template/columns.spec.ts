@@ -14,9 +14,12 @@ import {
 const DEFERRED_FIELDS = [
   "processSteps",
   "syntheticDetails",
-  "attachments",
   "mineralClassifications",
 ];
+
+const ATTACHMENT_ID_FIELD = "attachments.id";
+
+const ATTACHMENT_FILE_NAME_FIELD = "attachments.name";
 
 // TODO(phase 3): these carry a uuid a researcher cannot type; drop them from this list once the importer resolves people by name.
 const IDENTIFIER_ONLY_FIELDS = [
@@ -27,7 +30,11 @@ const IDENTIFIER_ONLY_FIELDS = [
 
 const COVERED_BY_REGION_LEVEL_2 = ["location.region.oceanSea"];
 
-const EXCLUDED = [...DEFERRED_FIELDS, ...IDENTIFIER_ONLY_FIELDS];
+const EXCLUDED = [
+  ...DEFERRED_FIELDS,
+  ...IDENTIFIER_ONLY_FIELDS,
+  ATTACHMENT_ID_FIELD,
+];
 
 const isTemplated = (path: string) =>
   !EXCLUDED.some((field) => path === field || path.startsWith(`${field}.`));
@@ -122,13 +129,36 @@ describe("import template columns", () => {
     });
   });
 
+  it("should carry each attachment's metadata beside the file name it describes on the Attachments tab, never on Samples", () => {
+    expect({
+      onTab: pathsOf(
+        CHILD_SHEETS.find((child) => child.name === SHEETS.attachments)
+          ?.columns ?? [],
+      ),
+      onSamples: pathsOf(SAMPLE_COLUMNS).filter((path) =>
+        path.startsWith("attachments"),
+      ),
+    }).toEqual({
+      onTab: [
+        ATTACHMENT_FILE_NAME_FIELD,
+        "attachments.title",
+        "attachments.targetResourceType",
+        "attachments.description",
+      ],
+      onSamples: [],
+    });
+  });
+
   it("should carry a column for every createSampleSchema leaf but the deferred and identifier-only ones", () => {
     const columns = [
       ...SAMPLE_COLUMNS,
       ...CHILD_SHEETS.flatMap((child) => child.columns),
     ];
 
-    const covered = [...pathsOf(columns), ...COVERED_BY_REGION_LEVEL_2];
+    const covered = [
+      ...pathsOf(columns).filter((path) => path !== ATTACHMENT_FILE_NAME_FIELD),
+      ...COVERED_BY_REGION_LEVEL_2,
+    ];
 
     expect(unique(covered)).toEqual(
       unique([...COLUMN_KINDS.keys()].filter(isTemplated)),

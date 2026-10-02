@@ -16,6 +16,7 @@ import type {
   AdminSampleResponse,
   ListSamplesQuery,
 } from "@projet-igsn/domain/sample/sample-validator";
+import type { StagedUploadRepository } from "@projet-igsn/domain/staged-upload/repository";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
@@ -128,6 +129,7 @@ export function createSampleAdminRoutes(
   userSampleRepository: UserSampleRepository,
   manualGroups: ManualGroupRepository,
   users: UserRepository,
+  stagedUploads: StagedUploadRepository,
   mail?: { sendMail: SendMail; adminUrl: string },
 ) {
   const accessibleSample = requireSampleAccess(repository, users);
@@ -205,8 +207,19 @@ export function createSampleAdminRoutes(
     )
     .post("/import", validateImportUpload, async (c) => {
       const parents = new Map<string, Sample>();
+      const form = c.req.valid("form");
+      const ids = form["stagedUploadIds[]"] ?? [];
+      const staged = new Map(
+        (await stagedUploads.findCompleteOwned(ids, c.get("user").id)).map(
+          (upload) => [upload.name, upload],
+        ),
+      );
+      if (staged.size !== ids.length) {
+        return c.json({ error: "Invalid staged uploads" }, 400);
+      }
       const { issues, samples } = await validateImport(
-        await c.req.valid("form").file.arrayBuffer(),
+        await form.file.arrayBuffer(),
+        new Set(staged.keys()),
         (numbers) => repository.unavailableInternalNumbers(numbers),
         () => manualGroups.listAttachableForUser(c.get("user").id),
         async (igsns) => {
@@ -225,7 +238,16 @@ export function createSampleAdminRoutes(
         return c.json({ error: "DataCite unavailable" }, 503);
       }
       const user = c.get("user");
-      const count = await repository.createPublishing(samples, user);
+      const count = await repository.createPublishing(
+        samples.map((sample) => ({
+          ...sample,
+          attachments: sample.attachments.map((metadata) => {
+            const { id, mediaType } = staged.get(metadata.name)!;
+            return { input: { ...metadata, mediaType }, stagedId: id };
+          }),
+        })),
+        user,
+      );
       notifySubSamplesImported({
         userSamples: userSampleRepository,
         mail,

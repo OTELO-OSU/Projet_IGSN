@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { DEFAULT_UPLOAD_LIMIT } from "../attachment/attachment-validator.ts";
 import { parseInternalId } from "../parse-internal-id.ts";
 import { MAX_IMPORT_ROWS } from "./max-import-rows.ts";
 
@@ -16,6 +17,11 @@ export const importSamplesSchema = z.strictObject({
     .max(IMPORT_MAX_BYTES)
     .mime(XLSX_MEDIA_TYPE)
     .refine((file) => file.name.toLowerCase().endsWith(".xlsx")),
+  "stagedUploadIds[]": z
+    .array(z.uuid())
+    .max(MAX_IMPORT_ROWS * DEFAULT_UPLOAD_LIMIT)
+    .refine((ids) => new Set(ids).size === ids.length)
+    .optional(),
 });
 
 export type ImportSamples = z.infer<typeof importSamplesSchema>;

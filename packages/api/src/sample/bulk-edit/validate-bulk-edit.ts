@@ -11,7 +11,6 @@ import type { TemplateLayout } from "../import-template/template-layout.ts";
 
 import { queueBuild } from "../import-template/build-queue.ts";
 import {
-  CHILD_SHEETS,
   type Column,
   plainHeader,
   SAMPLE_KEY_HEADER,
@@ -27,7 +26,10 @@ import {
   validateRows,
   withValue,
 } from "../import-template/validate-import.ts";
-import { EXPORT_SAMPLE_COLUMNS } from "./export-columns.ts";
+import {
+  EXPORT_CHILD_SHEETS,
+  EXPORT_SAMPLE_COLUMNS,
+} from "./export-columns.ts";
 import { isFrozen } from "./export-workbook.ts";
 import { mergeStoredSample } from "./merge-stored-sample.ts";
 import { type Cell as StoredCell, childRows, sampleRow } from "./sample-row.ts";
@@ -44,7 +46,7 @@ type Matched = { row: ParsedSample; sample: Sample };
 
 const BULK_EDIT_SHEETS = [
   { name: SHEETS.samples, columns: EXPORT_SAMPLE_COLUMNS },
-  ...CHILD_SHEETS,
+  ...EXPORT_CHILD_SHEETS,
 ];
 
 const IDENTIFIER_HEADERS = new Set(
@@ -125,7 +127,7 @@ function withStoredCells(
   const absent = EXPORT_SAMPLE_COLUMNS.filter(
     (column) => !present.has(plainHeader(column)),
   );
-  const storedChildren = CHILD_SHEETS.filter(
+  const storedChildren = EXPORT_CHILD_SHEETS.filter(
     ({ name }) => !presentSheets.has(name),
   ).flatMap(({ name, columns }) =>
     childRows(sample, columns).map((values) => ({
@@ -164,6 +166,7 @@ async function validateMatched(
     {},
     [],
     NO_PARENTS,
+    new Set(),
     (candidate, index) => ({
       ...candidate,
       input: mergeStoredSample(matched[index]!.sample, candidate.input),

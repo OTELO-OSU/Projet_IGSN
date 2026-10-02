@@ -14,7 +14,7 @@ import {
 import { validateSamples } from "./validate-samples.ts";
 
 const validated = (book: ExcelJS.Workbook) =>
-  validateSamples(buildSampleInputs(filledRowsOf(book)).samples);
+  validateSamples(buildSampleInputs(filledRowsOf(book)).samples, new Set());
 
 const issuesOf = (book: ExcelJS.Workbook) => validated(book).issues;
 
@@ -46,7 +46,7 @@ describe("validateSamples", () => {
       "Existence status": null,
     });
 
-    expect(validated(book).inputs.map(({ name }) => name)).toEqual([
+    expect(validated(book).samples.map(({ input }) => input.name)).toEqual([
       CLEAN_SAMPLE.Name,
     ]);
   });

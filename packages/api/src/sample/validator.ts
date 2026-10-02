@@ -247,7 +247,9 @@ export const validateImportUpload = validator("form", (value, c) => {
     return parsed.data;
   }
   const { issues } = parsed.error;
-  if (issues.some((issue) => issue.code === "too_big")) {
+  if (
+    issues.some((issue) => issue.code === "too_big" && issue.path[0] === "file")
+  ) {
     return c.json({ error: "Import file too large" }, 413);
   }
   if (

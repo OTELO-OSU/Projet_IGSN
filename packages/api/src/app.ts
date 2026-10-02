@@ -1,13 +1,14 @@
 import type { Kysely } from "kysely";
 
 import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
-import { Hono } from "hono";
+import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
 import type { DB } from "./db.ts";
 import type { SendMail } from "./mail/send-mail.ts";
 
+import { attachmentsDir as defaultAttachmentsDir } from "./attachments-dir.ts";
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
 import { dataCiteConfig } from "./datacite/config.ts";
@@ -21,6 +22,7 @@ import {
   MAP_IP_BUDGET,
   IMPORT_TEMPLATE_USER_BUDGET,
   MAIL_REQUEST_USER_BUDGET,
+  UPLOAD_USER_BUDGET,
   loadRateLimitConfig,
 } from "./rate-limit/config.ts";
 import { type RateLimitEnv, rateLimit } from "./rate-limit/middleware.ts";
@@ -33,6 +35,9 @@ import { createServiceAccountOwnerRoutes } from "./service-account/owner-routes.
 import { createServiceAccountRepository } from "./service-account/repository.ts";
 import { createServiceAccountRoutes } from "./service-account/routes.ts";
 import { createServiceRoutes } from "./service-account/service-routes.ts";
+import { createStagedUploadRoutes } from "./staged-upload/routes.ts";
+import { createStagedUploads } from "./staged-upload/staged-uploads.ts";
+import { createTusServer } from "./staged-upload/tus-server.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
 import { createPublicUserRoutes } from "./user/public-routes.ts";
@@ -46,7 +51,7 @@ import {
 export function createApp(
   database: Kysely<DB>,
   {
-    attachmentsDir = process.env.ATTACHMENTS_DIR ?? "attachments",
+    attachmentsDir = defaultAttachmentsDir,
     frontendUrl = "http://localhost:3000/",
     mail,
   }: {
@@ -61,17 +66,33 @@ export function createApp(
     .filter(Boolean);
 
   const rateLimitConfig = loadRateLimitConfig();
+  const userRateLimit = rateLimit(rateLimitConfig, "user");
+  const uploadRateLimit = rateLimit(
+    rateLimitConfig,
+    "user",
+    UPLOAD_USER_BUDGET,
+  );
+  const adminRateLimit: MiddlewareHandler<RateLimitEnv> = (c, next) =>
+    c.req.path.startsWith("/admin/samples/import/uploads")
+      ? uploadRateLimit(c, next)
+      : userRateLimit(c, next);
   const importRateLimit = rateLimit(
     rateLimitConfig,
     "user",
     IMPORT_TEMPLATE_USER_BUDGET,
   );
 
-  const sampleRepository = createSampleRepository(database, dataCiteConfig());
+  const sampleRepository = createSampleRepository(
+    database,
+    attachmentsDir,
+    dataCiteConfig(),
+  );
   const sampleAttachmentRepository = createSampleAttachmentRepository(
     database,
     attachmentsDir,
   );
+  const stagedUploads = createStagedUploads(attachmentsDir);
+  const tusServer = createTusServer(attachmentsDir, stagedUploads);
   const userRepository = createUserRepository(database);
   const userSampleRepository = createUserSampleRepository(database);
   const manualGroupRepository = createManualGroupRepository(database);
@@ -127,7 +148,7 @@ export function createApp(
 
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
-    .use("*", rateLimit(rateLimitConfig, "user"))
+    .use("*", adminRateLimit)
     .use("*", currentUser(userRepository))
     .route(
       "/currentUser",
@@ -158,6 +179,7 @@ export function createApp(
       "/samples/:id/deletion-request",
       rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),
     )
+    .route("/samples/import/uploads", createStagedUploadRoutes(tusServer))
     .use("/samples/import-template", importRateLimit)
     .use("/samples/import-template/reservation", importRateLimit)
     .use("/samples/import", importRateLimit)
@@ -182,6 +204,7 @@ export function createApp(
         userSampleRepository,
         manualGroupRepository,
         userRepository,
+        stagedUploads,
         mail,
       ),
     )
@@ -202,8 +225,19 @@ export function createApp(
       cors({
         origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
         credentials: true,
-        allowHeaders: ["Authorization", "Content-Type"],
+        allowHeaders: [
+          "Authorization",
+          "Content-Type",
+          "Tus-Resumable",
+          "Upload-Length",
+          "Upload-Metadata",
+          "Upload-Offset",
+        ],
         exposeHeaders: [
+          "Location",
+          "Upload-Offset",
+          "Upload-Length",
+          "Tus-Resumable",
           "Retry-After",
           "RateLimit-Limit",
           "RateLimit-Remaining",

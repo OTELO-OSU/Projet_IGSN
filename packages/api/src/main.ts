@@ -2,12 +2,15 @@ import { serve } from "@hono/node-server";
 
 import { appUrl } from "./app-url.ts";
 import { createApp } from "./app.ts";
+import { attachmentsDir } from "./attachments-dir.ts";
 import { dataCiteConfig } from "./datacite/config.ts";
 import { createDb } from "./db.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
 import { createSendMail } from "./mail/send-mail.ts";
 import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { startPublishingWorker } from "./sample/service/publishing-worker.ts";
+import { scheduleStagedUploadCleanup } from "./staged-upload/cleanup-schedule.ts";
+import { createStagedUploads } from "./staged-upload/staged-uploads.ts";
 import { schedulePendingUsersDigest } from "./user/pending-users-digest-schedule.ts";
 import { createUserRepository } from "./user/repository.ts";
 import { sendPendingUsersDigest } from "./user/send-pending-users-digest.ts";
@@ -31,6 +34,11 @@ schedulePendingUsersDigest(() => {
     sendMail,
     adminUrl,
   );
+});
+
+const stagedUploads = createStagedUploads(attachmentsDir);
+scheduleStagedUploadCleanup(() => {
+  stagedUploads.deleteExpired().catch(console.error);
 });
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3002;

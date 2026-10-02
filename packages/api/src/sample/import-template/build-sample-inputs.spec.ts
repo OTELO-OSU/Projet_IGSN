@@ -7,6 +7,7 @@ import { SHEETS } from "./columns.ts";
 import {
   CLEAN_INPUT,
   CLEAN_ROWS_BY_PATH,
+  CLEAN_SAMPLE,
   cleanBook,
   fill,
   filledRowsOf,
@@ -16,7 +17,14 @@ const candidatesOf = (book: ExcelJS.Workbook) =>
   buildSampleInputs(filledRowsOf(book));
 
 const CLEAN = {
-  samples: [{ row: 3, input: CLEAN_INPUT, rowsByPath: CLEAN_ROWS_BY_PATH }],
+  samples: [
+    {
+      row: 3,
+      input: CLEAN_INPUT,
+      rowsByPath: CLEAN_ROWS_BY_PATH,
+      attachments: [],
+    },
+  ],
   issues: [],
 };
 
@@ -30,6 +38,48 @@ const issue = (sheet: string, row: number, column: string, code: string) => ({
 describe("buildSampleInputs", () => {
   it("should turn each sample row into a candidate, its child rows joined", async () => {
     expect(candidatesOf(await cleanBook())).toEqual(CLEAN);
+  });
+
+  it("should collect each sample's attachment rows beside its input, a file named by two samples once per sample", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.samples, 4, CLEAN_SAMPLE);
+    fill(book, SHEETS.attachments, 3, {
+      "Sample #": 1,
+      "File name": "report.pdf",
+      Title: "Field report",
+      "Resource type": "Book",
+      Description: "Scanned notebook",
+    });
+    fill(book, SHEETS.attachments, 4, {
+      "Sample #": 2,
+      "File name": "report.pdf",
+    });
+
+    expect(
+      candidatesOf(book).samples.map(({ input, attachments }) => ({
+        inputAttachments: input.attachments,
+        attachments,
+      })),
+    ).toEqual([
+      {
+        inputAttachments: undefined,
+        attachments: [
+          {
+            row: 3,
+            name: "report.pdf",
+            title: "Field report",
+            targetResourceType: "book",
+            description: "Scanned notebook",
+          },
+        ],
+      },
+      {
+        inputAttachments: undefined,
+        attachments: [
+          { row: 4, name: "report.pdf", title: null, description: null },
+        ],
+      },
+    ]);
   });
 
   it("should accept a raw code where a label is expected", async () => {

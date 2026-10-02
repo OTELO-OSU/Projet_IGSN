@@ -23,6 +23,7 @@ export const importIssueCodeSchema = z.enum([
   "sample_not_editable",
   "sample_locked",
   "frozen_field",
+  "missing_attachment_file",
 ]);
 export type ImportIssueCode = z.infer<typeof importIssueCodeSchema>;
 

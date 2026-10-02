@@ -3,11 +3,17 @@ import { describe, expect, it } from "vitest";
 import { COLUMN_KINDS } from "./column-kind.ts";
 import { DATA_SHEETS } from "./columns.ts";
 
+const ATTACHMENT_FILE_NAME_FIELD = "attachments.name";
+
 describe("COLUMN_KINDS", () => {
-  it("should resolve every template column path in createSampleSchema", () => {
+  it("should resolve every template column path in createSampleSchema but the attachment file name", () => {
     const unresolved = DATA_SHEETS.flatMap((sheet) => sheet.columns).flatMap(
       ({ path }) =>
-        path === undefined || COLUMN_KINDS.has(path) ? [] : [path],
+        path === undefined ||
+        path === ATTACHMENT_FILE_NAME_FIELD ||
+        COLUMN_KINDS.has(path)
+          ? []
+          : [path],
     );
 
     expect(unresolved).toEqual([]);

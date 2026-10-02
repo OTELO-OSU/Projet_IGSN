@@ -11,6 +11,8 @@ export const MAIL_REQUEST_USER_BUDGET = {
   duration: 3600,
 } as const;
 export const IMPORT_TEMPLATE_USER_BUDGET = { points: 5, duration: 60 } as const;
+// ponytail: ~2 requests per document, so the 2500-id import cap (~5000 requests) still throttles; raise or pace client-side if a real import hits it.
+export const UPLOAD_USER_BUDGET = { points: 600, duration: 60 } as const;
 
 export type RateLimitConfig = {
   enabled: boolean;

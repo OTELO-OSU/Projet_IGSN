@@ -21,6 +21,7 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-table": "catalog:",
+    "exceljs": "catalog:",
     "lucide-react": "catalog:",
     "oidc-client-ts": "catalog:",
     "radix-ui": "catalog:",
@@ -28,6 +29,7 @@
     "react-dom": "catalog:",
     "react-oidc-context": "catalog:",
     "tailwindcss": "catalog:",
+    "tus-js-client": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -7,12 +7,21 @@ import {
   XLSX_MEDIA_TYPE,
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { STAGED_UPLOAD_TTL_MS } from "@projet-igsn/domain/staged-upload/limits";
 import ExcelJS from "exceljs";
-import { afterEach, describe, expect, vi } from "vitest";
+import { mkdtemp, readdir, readFile, rm, utimes } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { v7 as uuidv7 } from "uuid";
+import { afterAll, afterEach, describe, expect, vi } from "vitest";
 
 import type { DB } from "../../db.ts";
 
 import { createApp } from "../../app.ts";
+import {
+  stagedUploadPathOf,
+  stagingDirOf,
+} from "../../staged-upload/staged-path.ts";
 import { insertParent } from "../../tests/insert-parent.ts";
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
@@ -21,6 +30,7 @@ import { publishableSample } from "../../tests/sample-fixtures.ts";
 import { stubDataCite } from "../../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { createSampleRepository } from "../repository.ts";
+import { attachmentPathOf } from "../service/insert-sample-attachment.ts";
 import { insertSample } from "../service/insert-sample.ts";
 import { publishSample } from "../service/publish-sample.ts";
 import { REQUIRED_MARKER, SHEETS } from "./columns.ts";
@@ -79,17 +89,70 @@ const publishedOwned = async (
   return (await publishSample(db, created.id, "published"))!;
 };
 
-const upload = (db: Kysely<DB>, file?: File) => {
+const attachmentsDir = await mkdtemp(join(tmpdir(), "import-attachments-"));
+
+afterAll(() => rm(attachmentsDir, { recursive: true, force: true }));
+
+const upload = (
+  db: Kysely<DB>,
+  file?: File,
+  stagedUploadIds: string[] = [],
+) => {
   const body = new FormData();
   if (file) {
     body.append("file", file);
   }
-  return createApp(db).app.request("/admin/samples/import", {
-    method: "POST",
-    headers: authHeader,
-    body,
-  });
+  for (const id of stagedUploadIds) {
+    body.append("stagedUploadIds[]", id);
+  }
+  return createApp(db, { attachmentsDir }).app.request(
+    "/admin/samples/import",
+    {
+      method: "POST",
+      headers: authHeader,
+      body,
+    },
+  );
 };
+
+const UPLOADS = "/admin/samples/import/uploads/";
+
+const createStaged = async (
+  db: Kysely<DB>,
+  document: File,
+  token = "test-token",
+) =>
+  (
+    await createApp(db, { attachmentsDir }).app.request(UPLOADS, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Tus-Resumable": "1.0.0",
+        "Upload-Length": String(document.size),
+        "Upload-Metadata": `filename ${btoa(document.name)},filetype ${btoa(document.type)}`,
+      },
+    })
+  ).headers.get("Location") ?? "";
+
+const stage = async (db: Kysely<DB>, document: File, token = "test-token") => {
+  const id = await createStaged(db, document, token);
+  await createApp(db, { attachmentsDir }).app.request(`${UPLOADS}${id}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Tus-Resumable": "1.0.0",
+      "Upload-Offset": "0",
+      "Content-Type": "application/offset+octet-stream",
+    },
+    body: await document.arrayBuffer(),
+  });
+  return id;
+};
+
+const stagedFilesOf = async (ids: string[]) =>
+  (await readdir(stagingDirOf(attachmentsDir))).filter((file) =>
+    ids.some((id) => file.startsWith(id)),
+  );
 
 describe("import template route", () => {
   pgTest(
@@ -399,6 +462,52 @@ const queuedSamples = (db: Kysely<DB>) =>
     .select(["sample.status", "user_sample.user_id", "user_sample.role"])
     .execute();
 
+const REPORT_TEXT = "Field report body";
+
+const REPORT = new File([REPORT_TEXT], "report.pdf", {
+  type: "application/pdf",
+});
+
+const NOTES_TEXT = "Lab notes body";
+
+const NOTES = new File([NOTES_TEXT], "notes.txt", { type: "text/plain" });
+
+const unreferenced = () =>
+  new File(["unused"], "unused.txt", { type: "text/plain" });
+
+const storedAttachments = async (db: Kysely<DB>) =>
+  Promise.all(
+    (
+      await db
+        .selectFrom("sample_attachment")
+        .select([
+          "id",
+          "sample_id",
+          "name",
+          "media_type",
+          "title",
+          "target_resource_type",
+          "description",
+        ])
+        .orderBy("name")
+        .execute()
+    ).map(async ({ id, sample_id, ...attachment }) => ({
+      ...attachment,
+      sample_id,
+      content: await readFile(
+        attachmentPathOf(attachmentsDir, sample_id, id, attachment.name),
+        "utf8",
+      ),
+    })),
+  );
+
+const attachingReport = (book: ExcelJS.Workbook) =>
+  fill(book, SHEETS.attachments, 3, {
+    "Sample #": 1,
+    "File name": REPORT.name,
+    "Resource type": "Book",
+  });
+
 describe("import upload route", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -424,11 +533,226 @@ describe("import upload route", () => {
   );
 
   pgTest(
+    "should move the staged documents the Attachments sheet names to the queued sample",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+      const book = await cleanBook();
+      fill(book, SHEETS.attachments, 3, {
+        "Sample #": 1,
+        "File name": REPORT.name,
+        Title: "Field report",
+        "Resource type": "Book",
+      });
+      fill(book, SHEETS.attachments, 4, {
+        "Sample #": 1,
+        "File name": NOTES.name,
+        "Resource type": "Book",
+      });
+      const referenced = [await stage(db, REPORT), await stage(db, NOTES)];
+
+      const res = await upload(db, await fileOf(book), [
+        ...referenced,
+        await stage(db, unreferenced()),
+      ]);
+
+      expect({
+        status: res.status,
+        attachments: await storedAttachments(db),
+        staged: await stagedFilesOf(referenced),
+      }).toEqual({
+        status: 200,
+        attachments: [
+          {
+            sample_id: expect.any(String),
+            name: NOTES.name,
+            media_type: "text/plain",
+            title: null,
+            target_resource_type: "book",
+            description: null,
+            content: NOTES_TEXT,
+          },
+          {
+            sample_id: expect.any(String),
+            name: REPORT.name,
+            media_type: "application/pdf",
+            title: "Field report",
+            target_resource_type: "book",
+            description: null,
+            content: REPORT_TEXT,
+          },
+        ],
+        staged: [],
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should store one copy of a staged document per sample naming it",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+      const book = await cleanBook();
+      fill(book, SHEETS.samples, 4, CLEAN_SAMPLE);
+      for (const key of [1, 2])
+        fill(book, SHEETS.attachments, 2 + key, {
+          "Sample #": key,
+          "File name": REPORT.name,
+          "Resource type": "Book",
+        });
+      const id = await stage(db, REPORT);
+
+      const res = await upload(db, await fileOf(book), [id]);
+      const attachments = await storedAttachments(db);
+
+      expect({
+        status: res.status,
+        contents: attachments.map(({ content }) => content),
+        samples: new Set(attachments.map(({ sample_id }) => sample_id)).size,
+        staged: await stagedFilesOf([id]),
+      }).toEqual({
+        status: 200,
+        contents: [REPORT_TEXT, REPORT_TEXT],
+        samples: 2,
+        staged: [],
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should answer 422 with missing_attachment_file and queue nothing when a named document is not uploaded",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+      const book = await cleanBook();
+      attachingReport(book);
+
+      const res = await upload(db, await fileOf(book));
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [
+            {
+              sheet: SHEETS.attachments,
+              row: 3,
+              column: "File name",
+              value: REPORT.name,
+              code: "missing_attachment_file",
+            },
+          ],
+        },
+      });
+      expect(await queuedSamples(db)).toEqual([]);
+    },
+    30_000,
+  );
+
+  pgTest.for([
+    { kind: "unknown", stagedId: async () => uuidv7() },
+    {
+      kind: "foreign",
+      stagedId: async (db: Kysely<DB>) => {
+        await provisionUser(db, "other-token");
+        return stage(db, REPORT, "other-token");
+      },
+    },
+    {
+      kind: "incomplete",
+      stagedId: (db: Kysely<DB>) => createStaged(db, REPORT),
+    },
+    {
+      kind: "expired",
+      stagedId: async (db: Kysely<DB>) => {
+        const id = await stage(db, REPORT);
+        const stale = new Date(Date.now() - STAGED_UPLOAD_TTL_MS - 60_000);
+        await utimes(stagedUploadPathOf(attachmentsDir, id), stale, stale);
+        return id;
+      },
+    },
+  ])(
+    "should refuse an $kind staged upload as one generic 400",
+    async ({ stagedId }, { db }) => {
+      await provisionUser(db, "test-token");
+      const id = await stagedId(db);
+
+      const res = await upload(db, await cleanFile(), [id]);
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 400,
+        body: { error: "Invalid staged uploads" },
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse two staged documents sharing a file name as 400",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+
+      const res = await upload(db, await cleanFile(), [
+        await stage(db, REPORT),
+        await stage(db, REPORT),
+      ]);
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 400,
+        body: { error: "Invalid staged uploads" },
+      });
+    },
+  );
+
+  pgTest(
+    "should keep the staged documents of a 422 so the corrected file imports with the same ids",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+      await db.insertInto("manual_group").values(GROUP).execute();
+      const invalid = await bookNamingGroup();
+      attachingReport(invalid);
+      const corrected = await cleanBook();
+      attachingReport(corrected);
+      const id = await stage(db, REPORT);
+
+      const rejected = await upload(db, await fileOf(invalid), [id]);
+      const resubmitted = await upload(db, await fileOf(corrected), [id]);
+
+      expect({
+        rejected: rejected.status,
+        resubmitted: resubmitted.status,
+        contents: (await storedAttachments(db)).map(({ content }) => content),
+      }).toEqual({ rejected: 422, resubmitted: 200, contents: [REPORT_TEXT] });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should refuse a replayed import whose staged documents were consumed, queuing nothing twice",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+      const book = await cleanBook();
+      attachingReport(book);
+      const id = await stage(db, REPORT);
+
+      const first = await upload(db, await fileOf(book), [id]);
+      const replay = await upload(db, await fileOf(book), [id]);
+
+      expect({
+        first: first.status,
+        replay: replay.status,
+        queued: (await queuedSamples(db)).length,
+      }).toEqual({ first: 200, replay: 400, queued: 1 });
+    },
+    30_000,
+  );
+
+  pgTest(
     "should queue a sample under the internal ID reserved in its Sample #",
     async ({ db }) => {
       await provisionUser(db, "test-token");
-      const [reserved] =
-        await createSampleRepository(db).reserveInternalNumbers(1);
+      const [reserved] = await createSampleRepository(
+        db,
+        attachmentsDir,
+      ).reserveInternalNumbers(1);
       const book = await cleanBook();
       fill(book, SHEETS.samples, 4, {
         ...CLEAN_SAMPLE,
@@ -690,16 +1014,22 @@ describe("import upload route", () => {
     },
   );
 
-  pgTest("should refuse a file over the size cap as 413", async ({ db }) => {
-    const res = await upload(
-      db,
-      new File([new Uint8Array(IMPORT_MAX_BYTES + 1)], "big.xlsx", {
-        type: XLSX_MEDIA_TYPE,
-      }),
-    );
+  pgTest(
+    "should refuse a workbook over its size cap as 413",
+    async ({ db }) => {
+      const res = await upload(
+        db,
+        new File([new Uint8Array(IMPORT_MAX_BYTES + 1)], "big.xlsx", {
+          type: XLSX_MEDIA_TYPE,
+        }),
+      );
 
-    expect(res.status).toBe(413);
-  });
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 413,
+        body: { error: "Import file too large" },
+      });
+    },
+  );
 
   pgTest("should refuse a missing file as 400", async ({ db }) => {
     const res = await upload(db);

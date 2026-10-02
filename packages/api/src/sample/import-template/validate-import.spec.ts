@@ -3,6 +3,7 @@ import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-ro
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 
+import { uploadLimit } from "../upload-limit.ts";
 import { SHEETS } from "./columns.ts";
 import {
   CLEAN_SAMPLE,
@@ -10,6 +11,7 @@ import {
   deleteColumn,
   fill,
   parentedBook,
+  sheetOf,
   templateBook,
 } from "./import-fixture.ts";
 import { validateImport } from "./validate-import.ts";
@@ -25,9 +27,15 @@ const GROUP = { id: "0190c9a0-0000-7000-8000-000000000001", name: "Alps" };
 
 const PUBLISHED_PARENTS = new Map([[FIELD_SAMPLE.igsn!, FIELD_SAMPLE]]);
 
-const validate = (bytes: ArrayBuffer) =>
+const REPORT = "report.pdf";
+
+const validate = (
+  bytes: ArrayBuffer,
+  providedFileNames: ReadonlySet<string> = new Set([REPORT]),
+) =>
   validateImport(
     bytes,
+    providedFileNames,
     (numbers) =>
       Promise.resolve(new Set(numbers.filter((n) => n === UNAVAILABLE))),
     () => Promise.resolve([GROUP]),
@@ -493,5 +501,112 @@ describe("validateImport", () => {
     deleteColumn(book, SHEETS.samples, "Parent IGSN");
 
     expect(await issuesOf(await bytesOf(book))).toEqual([]);
+  });
+});
+
+const attachmentAt = (
+  book: ExcelJS.Workbook,
+  row: number,
+  cells: Record<string, ExcelJS.CellValue>,
+) =>
+  fill(book, SHEETS.attachments, row, {
+    "Sample #": 1,
+    "File name": REPORT,
+    "Resource type": "Book",
+    ...cells,
+  });
+
+describe("validateImport attachments", () => {
+  it("should answer each sample's attachment metadata when every named file is provided", async () => {
+    const book = await cleanBook();
+    attachmentAt(book, 3, { Title: "Field report" });
+
+    const { issues, samples } = await validate(await bytesOf(book));
+
+    expect({
+      issues,
+      attachments: samples.map(({ attachments }) => attachments),
+    }).toEqual({
+      issues: [],
+      attachments: [
+        [
+          {
+            name: REPORT,
+            title: "Field report",
+            targetResourceType: "book",
+            description: null,
+          },
+        ],
+      ],
+    });
+  });
+
+  it("should still import a workbook made before the Attachments sheet existed", async () => {
+    const book = await cleanBook();
+    book.removeWorksheet(sheetOf(book, SHEETS.attachments).id);
+
+    const { issues, samples } = await validate(await bytesOf(book), new Set());
+
+    expect({
+      issues,
+      attachments: samples.map(({ attachments }) => attachments),
+    }).toEqual({ issues: [], attachments: [[]] });
+  });
+
+  it.each([
+    [
+      "a file name no uploaded document carries",
+      { "File name": "photo.jpg" },
+      {
+        column: "File name",
+        value: "photo.jpg",
+        code: "missing_attachment_file",
+      },
+    ],
+    [
+      "an empty file name",
+      { "File name": null },
+      { column: "File name", code: "missing_attachment_file" },
+    ],
+    [
+      "a missing resource type",
+      { "Resource type": null },
+      { column: "Resource type", code: "attachment_metadata_missing" },
+    ],
+    [
+      "a resource type matching no label",
+      { "Resource type": "Pamphlet" },
+      { column: "Resource type", value: "Pamphlet", code: "invalid_value" },
+    ],
+  ])("should report %s at its cell", async (_, cells, expected) => {
+    const book = await cleanBook();
+    attachmentAt(book, 3, { Title: "Field report", ...cells });
+
+    expect(await issuesOf(await bytesOf(book))).toEqual([
+      { sheet: SHEETS.attachments, row: 3, ...expected },
+    ]);
+  });
+
+  it("should report a sample naming more attachments than the upload limit at its first row past it", async () => {
+    const book = await cleanBook();
+    const names = Array.from(
+      { length: uploadLimit + 1 },
+      (_, index) => `document-${index}.pdf`,
+    );
+    names.forEach((name, index) =>
+      attachmentAt(book, 3 + index, { "File name": name }),
+    );
+
+    const { issues } = await validate(await bytesOf(book), new Set(names));
+
+    expect(issues).toEqual([
+      {
+        sheet: SHEETS.attachments,
+        row: 3 + uploadLimit,
+        column: "Sample #",
+        value: "1",
+        code: "attachment_limit_exceeded",
+      },
+    ]);
   });
 });

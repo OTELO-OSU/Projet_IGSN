@@ -84,6 +84,9 @@ catalog:
   "@hono/zod-openapi": ^1.6.3
   "@hono/swagger-ui": ^0.6.1
   oxc-transform-react: ^0.149.0
+  "@tus/server": ^2.4.5
+  "@tus/file-store": ^2.1.1
+  tus-js-client: ^4.3.1
 
 catalogMode: strict
 

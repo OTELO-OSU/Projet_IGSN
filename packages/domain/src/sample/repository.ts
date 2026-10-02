@@ -2,6 +2,7 @@ import type { InstitutionalGroups } from "../institutional-group/model.ts";
 import type { UserSampleRole } from "../user-sample/model.ts";
 import type { User } from "../user/model.ts";
 import type { ModerationScope } from "../user/moderation-scope.ts";
+import type { CreateSampleAttachment } from "./attachment/repository.ts";
 import type { SampleEditLock } from "./edit-lock.ts";
 import type { ExportSamplesRequest } from "./export/export-validator.ts";
 import type { SampleLineage } from "./lineage/model.ts";
@@ -33,6 +34,7 @@ export type AdminListSamplesResult = {
 export type ImportedSample = {
   input: CreateSample;
   internalNumber: number | null;
+  attachments: { input: CreateSampleAttachment; stagedId: string }[];
 };
 
 export type SampleRepository = {

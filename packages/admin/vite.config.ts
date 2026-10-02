@@ -16,7 +16,9 @@ export default defineConfig({
     },
   },
   resolve: { tsconfigPaths: true },
-  optimizeDeps: { include: ["radix-ui", "lucide-react", "cmdk", "sonner"] },
+  optimizeDeps: {
+    include: ["radix-ui", "lucide-react", "cmdk", "sonner", "exceljs"],
+  },
   plugins: [
     tailwindcss(),
     paraglideVitePlugin(paraglideOptions),

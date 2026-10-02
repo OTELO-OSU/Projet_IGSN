@@ -7,6 +7,8 @@ import type { DataCiteConfig } from "../datacite/config.ts";
 import type { DB } from "../db.ts";
 
 import { syncDoi } from "../datacite/sync-doi.ts";
+import { stagedUploadPathOf } from "../staged-upload/staged-path.ts";
+import { consumeStagedUploads } from "../staged-upload/staged-uploads.ts";
 import {
   type Transactional,
   transactionally,
@@ -22,6 +24,7 @@ import { getPublicSampleByIgsn } from "./service/get-public-sample-by-igsn.ts";
 import { getSampleById } from "./service/get-sample-by-id.ts";
 import { getSampleLineage } from "./service/get-sample-lineage.ts";
 import { getSample } from "./service/get-sample.ts";
+import { insertSampleAttachment } from "./service/insert-sample-attachment.ts";
 import { insertSampleRows } from "./service/insert-sample.ts";
 import { isSampleModerated } from "./service/is-sample-moderated.ts";
 import {
@@ -55,6 +58,7 @@ async function insertOwnedSample(
 
 export function createSampleRepository(
   db: Kysely<DB>,
+  attachmentsDir: string,
   dataCite: DataCiteConfig | null = null,
 ): SampleRepository {
   const tx = transactionally(db);
@@ -90,14 +94,33 @@ export function createSampleRepository(
       ),
     createPublishing: (samples, owner) =>
       withTransaction(db, async (trx) => {
-        for (const { input, internalNumber } of samples) {
+        const lastReferenceOf = new Map(
+          samples
+            .flatMap(({ attachments }) => attachments)
+            .map((attachment) => [attachment.stagedId, attachment]),
+        );
+        const lastReferences = new Set(lastReferenceOf.values());
+        for (const { input, internalNumber, attachments } of samples) {
           const id = await insertOwnedSample(trx, input, owner.id, owner);
           await trx
             .updateTable("sample")
             .set({ status: "publishing", internal_number: internalNumber })
             .where("id", "=", id)
             .execute();
+          for (const attachment of attachments)
+            await insertSampleAttachment(
+              trx,
+              attachmentsDir,
+              id,
+              attachment.input,
+              {
+                from: stagedUploadPathOf(attachmentsDir, attachment.stagedId),
+                move: lastReferences.has(attachment),
+              },
+            );
         }
+        // ponytail: a rollback after a rename strands the staged info file, the same fs-in-transaction ceiling as writeFile.
+        await consumeStagedUploads(attachmentsDir, [...lastReferenceOf.keys()]);
         return samples.length;
       }),
     listByInternalNumbers: tx(listSamplesByInternalNumbers),

@@ -84,6 +84,7 @@ const READ_ME_LINES = [
   `A "${SAMPLE_KEY_HEADER}" reserved when downloading this template becomes that sample's internal ID; a plain number gets the next free one on import.`,
   `A row on ${CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} picks that number in its own "${SAMPLE_KEY_HEADER}" list, and the name beside it fills itself.`,
   `Those sheets take one value per row, so a sample with three of them has three rows.`,
+  `A row on "${SHEETS.attachments}" names a file you must provide when importing; several rows may name the same file, and names match exactly, case included.`,
   `Dropdowns are a guide, not a rule: the server validates the whole file on upload and refuses it as a whole.`,
   `Leave a cell empty when you have nothing to declare.`,
   `The "${SHEETS.vocabularies}" sheet lists every value the dropdowns offer, with the code the registry stores.`,
