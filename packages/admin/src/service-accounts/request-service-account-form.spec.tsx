@@ -118,6 +118,27 @@ describe("RequestServiceAccountForm", () => {
     ).toBeNull();
   });
 
+  it("should mark the name and the reason as required, not the group pickers", async () => {
+    fakeApi();
+    const screen = await renderForm();
+
+    await expect
+      .element(screen.getByLabelText("Service name *", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByLabelText("Why do you need a service account? *", {
+          exact: true,
+        }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Groups to access", exact: true }),
+      )
+      .toBeVisible();
+  });
+
   it("should flag the name and the reason and post nothing when both are blank", async () => {
     const posts = fakeApi();
     const screen = await renderForm();

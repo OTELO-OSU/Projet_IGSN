@@ -31,24 +31,15 @@ function ProfilePage() {
           </FormSection>
           {data.status === "accepted" && (
             <>
-              <FormSection title={m.settings_samples_links_title()}>
-                <FormSection
-                  level={3}
-                  title={m.settings_my_samples_title()}
-                  description={m.settings_my_samples_hint()}
-                >
-                  <ShareLink
-                    label={m.settings_my_samples_link()}
-                    link={frontendSearchUrl({ contributor: data.id })}
-                  />
-                </FormSection>
-                <FormSection
-                  level={3}
-                  title={m.settings_group_samples_title()}
-                  description={m.settings_group_samples_hint()}
-                >
-                  <GroupSamplesLink />
-                </FormSection>
+              <FormSection
+                title={m.settings_samples_links_title()}
+                description={m.settings_samples_links_hint()}
+              >
+                <ShareLink
+                  label={m.settings_my_samples_link()}
+                  link={frontendSearchUrl({ contributor: data.id })}
+                />
+                <GroupSamplesLink />
               </FormSection>
               <MyServiceAccounts />
             </>

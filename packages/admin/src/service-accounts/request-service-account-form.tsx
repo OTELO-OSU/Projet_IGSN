@@ -87,11 +87,20 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
       className="grid gap-4"
     >
       <form.AppField name="name">
-        {(field) => <field.TextField label={m.service_account_field_name()} />}
+        {(field) => (
+          <field.TextField
+            label={m.service_account_field_name()}
+            requiredToPublish
+          />
+        )}
       </form.AppField>
       <form.AppField name="reason">
         {(field) => (
-          <field.TextField label={m.service_account_field_reason()} multiline />
+          <field.TextField
+            label={m.service_account_field_reason()}
+            multiline
+            requiredToPublish
+          />
         )}
       </form.AppField>
       {groupFields.map(
