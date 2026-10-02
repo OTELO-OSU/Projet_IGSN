@@ -26,6 +26,7 @@ const IMPORT_ISSUE_LABELS: Record<ImportIssueCode, () => string> = {
   location_inherited_from_parent: m.import_issue_location_inherited_from_parent,
   collection_date_inherited_from_parent:
     m.import_issue_collection_date_inherited_from_parent,
+  process_steps_without_parent: m.import_issue_process_steps_without_parent,
   unknown_sample: m.import_issue_unknown_sample,
   sample_not_published: m.import_issue_sample_not_published,
   synthetic_sample: m.import_issue_synthetic_sample,

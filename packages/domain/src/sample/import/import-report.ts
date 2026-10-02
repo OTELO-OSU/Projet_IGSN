@@ -17,6 +17,7 @@ export const importIssueCodeSchema = z.enum([
   "multiple_parent_igsns",
   "location_inherited_from_parent",
   "collection_date_inherited_from_parent",
+  "process_steps_without_parent",
   "unknown_sample",
   "sample_not_published",
   "synthetic_sample",

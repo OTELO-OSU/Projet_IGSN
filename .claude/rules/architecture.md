@@ -33,6 +33,7 @@
 - `POST /admin/samples/export` (`api/src/sample/bulk-edit/`) answers the published, non-synthetic, non-mineral samples of a list, its current `filters` or checked `ids`, as an editable xlsx, reusing the import template's builder (`import-template/workbook.ts`), capped at `MAX_IMPORT_ROWS` (422 above).
 - The export's reach follows the calling list: `assignedTo` for `moderated: false`, the caller's moderation scope (403 without one) for `moderated: true`, never a union.
 - `POST /admin/samples/bulk-edit` (`api/src/sample/bulk-edit/`) re-imports that xlsx once edited, matching each row to a sample by `Sample #` (internal number), all-or-nothing (422 with issues), 403 without `canPublishSamples`, 503 when DataCite is down, 200 `{ count }`; only template columns change, never owner, collaborators, manual groups, parents, attachments, status or dates, and a frozen cell that differs from the stored value refuses the row, no super admin bypass.
+- The export carries the "Process steps" sheet only when an exported sample has a parent, and a re-imported file with that sheet replaces a published sub-sample's steps while one without it keeps them.
 - `internal_number` is drawn from one global sequence, `sample_internal_number_seq`, by every publish path.
 - `POST /admin/samples/import-template/reservation` locks `sample` and advances that sequence by `count`, pre-filling the template's `Sample #` with those `sample-N`, so every later publish skips the range.
 - A reserved ID never expires and anyone may use it.

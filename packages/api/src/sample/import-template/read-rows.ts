@@ -11,7 +11,7 @@ export type RawRow = { row: number; cells: Readonly<Record<string, Cell>> };
 
 type ChildRow = RawRow & { sheet: string };
 
-type ParsedSample = RawRow & { children: ChildRow[] };
+export type ParsedSample = RawRow & { children: ChildRow[] };
 
 export type ParsedRows = { samples: ParsedSample[]; orphans: ChildRow[] };
 

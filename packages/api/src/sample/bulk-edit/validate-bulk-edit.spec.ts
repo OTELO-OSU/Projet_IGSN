@@ -1,6 +1,8 @@
+import type { SampleProcessStep } from "@projet-igsn/domain/sample/process-step/model";
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
+import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import ExcelJS from "exceljs";
 import { describe, expect } from "vitest";
 
@@ -45,6 +47,34 @@ async function published(
   await publishSample(db, id);
   return (await readSample(db, id))!;
 }
+
+const DAY_STEP: SampleProcessStep = {
+  kind: "subsampling",
+  date: { precision: "day", start: "2024-06-05", end: "2024-06-06" },
+  description: "Sawn into three slabs",
+};
+
+async function publishedSubSample(
+  db: Kysely<DB>,
+  processSteps: SampleProcessStep[],
+): Promise<{ parent: Sample; sample: Sample }> {
+  const parent = await published(db);
+  const sample = await published(db, {
+    ...STORED,
+    parentIds: [parent.id],
+    processSteps,
+  });
+  return { parent, sample };
+}
+
+const PREPARATION_CELLS = {
+  Kind: "Preparation",
+  "Date precision": "Day",
+  "Date start": "2024-07-01",
+  "Date end": "2024-07-01",
+};
+
+const keyOf = ({ internalNumber }: Sample) => formatInternalId(internalNumber!);
 
 async function exported(samples: Sample[]): Promise<ExcelJS.Workbook> {
   const book = new ExcelJS.Workbook();
@@ -252,6 +282,69 @@ describe("validateBulkEdit", () => {
           issue("Existence status", "existence_status_missing"),
         ]),
       );
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should replace a published sub-sample's stored steps with its Process steps rows, its parent unchanged",
+    async ({ db }) => {
+      const { sample } = await publishedSubSample(db, [DAY_STEP]);
+      const book = await exported([sample]);
+      fill(book, SHEETS.processSteps, ROW, {
+        Description: "Broken with a hammer",
+      });
+      fill(book, SHEETS.processSteps, ROW + 1, {
+        "Sample #": keyOf(sample),
+        ...PREPARATION_CELLS,
+      });
+
+      const { issues, samples } = await validated(book, [sample]);
+      await updateSample(db, sample.id, samples[0]!.input);
+      const stored = await readSample(db, sample.id);
+
+      expect({
+        issues,
+        processSteps: stored?.processSteps,
+        parents: stored?.parents,
+      }).toEqual({
+        issues: [],
+        processSteps: [
+          { ...DAY_STEP, description: "Broken with a hammer" },
+          {
+            kind: "preparation",
+            date: { precision: "day", start: "2024-07-01", end: "2024-07-01" },
+            description: null,
+          },
+        ],
+        parents: sample.parents,
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should refuse a Process steps row on a parentless published sample",
+    async ({ db }) => {
+      const { parent, sample } = await publishedSubSample(db, []);
+      const book = await exported([parent, sample]);
+      fill(book, SHEETS.processSteps, ROW, {
+        "Sample #": keyOf(parent),
+        ...PREPARATION_CELLS,
+      });
+
+      const { issues, samples } = await validated(book, [parent, sample]);
+
+      expect({ issues, samples }).toEqual({
+        issues: [
+          issue(
+            "Sample #",
+            "process_steps_without_parent",
+            SHEETS.processSteps,
+          ),
+        ],
+        samples: [],
+      });
     },
     30_000,
   );

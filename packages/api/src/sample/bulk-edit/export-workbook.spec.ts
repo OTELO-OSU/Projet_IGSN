@@ -21,6 +21,27 @@ const ROOT_ONLY: Sample = {
   parents: [],
 };
 
+const SUB_SAMPLE: Sample = {
+  ...FIELD_SAMPLE,
+  processSteps: [
+    {
+      kind: "subsampling",
+      date: { precision: "day", start: "2024-06-05", end: "2024-06-06" },
+      description: "Sawn into three slabs",
+    },
+    {
+      kind: "transformation",
+      date: {
+        precision: "hour",
+        start: "2025-01-15T09:00",
+        end: "2025-01-15T11:00",
+        timeZone: "Europe/Paris",
+      },
+      description: null,
+    },
+  ],
+};
+
 let book: ExcelJS.Workbook;
 
 const sheetOf = (name: string) => {
@@ -61,7 +82,7 @@ const materialLevels = () =>
 
 beforeAll(async () => {
   book = new ExcelJS.Workbook();
-  await book.xlsx.load(await exportWorkbook([FIELD_SAMPLE, ROOT_ONLY]));
+  await book.xlsx.load(await exportWorkbook([SUB_SAMPLE, ROOT_ONLY]));
 }, 30_000);
 
 describe("samples export workbook", () => {
@@ -166,5 +187,59 @@ describe("samples export workbook", () => {
       },
       greyed: ["Sample #", "Sample name (filled automatically)"],
     });
+  });
+
+  it("should list each stored process step of a sub-sample on its own Process steps row", () => {
+    const stepsOf = (row: number) => {
+      const { "Sample name (filled automatically)": _lookup, ...cells } = rowOf(
+        SHEETS.processSteps,
+        row,
+      );
+      return cells;
+    };
+
+    expect(
+      [FIRST_DATA_ROW, FIRST_DATA_ROW + 1, FIRST_DATA_ROW + 2].map(stepsOf),
+    ).toEqual([
+      {
+        "Sample #": "sample-7",
+        Kind: "Sub-sampling",
+        "Date precision": "Day",
+        "Date start": "2024-06-05",
+        "Date end": "2024-06-06",
+        "Date time zone": null,
+        Description: "Sawn into three slabs",
+      },
+      {
+        "Sample #": "sample-7",
+        Kind: "Transformation",
+        "Date precision": "Hour and minute",
+        "Date start": "2025-01-15T09:00",
+        "Date end": "2025-01-15T11:00",
+        "Date time zone": "Europe/Paris",
+        Description: null,
+      },
+      {
+        "Sample #": null,
+        Kind: null,
+        "Date precision": null,
+        "Date start": null,
+        "Date end": null,
+        "Date time zone": null,
+        Description: null,
+      },
+    ]);
+  });
+
+  it("should add the Process steps sheet only when an exported sample has a parent", async () => {
+    const parentless = new ExcelJS.Workbook();
+    await parentless.xlsx.load(await exportWorkbook([ROOT_ONLY]));
+    const hasProcessSteps = (source: ExcelJS.Workbook) =>
+      source.worksheets.some(({ name }) => name === SHEETS.processSteps);
+
+    expect({
+      withSubSample: hasProcessSteps(book),
+      parentlessOnly: hasProcessSteps(parentless),
+    }).toEqual({ withSubSample: true, parentlessOnly: false });
   });
 });

@@ -18,6 +18,7 @@ import {
 } from "../import-template/columns.ts";
 import { openWorkbook } from "../import-template/open-workbook.ts";
 import { readRows, textOf } from "../import-template/read-rows.ts";
+import { reportProcessStepsWithoutParent } from "../import-template/report-process-steps-without-parent.ts";
 import { templateLayout } from "../import-template/template-layout.ts";
 import {
   byPosition,
@@ -156,6 +157,9 @@ async function validateMatched(
   const present = new Set(layout[0]?.columns.map(plainHeader));
   const presentSheets = new Set(layout.map(({ name }) => name));
   const frozen = matched.flatMap((match) => frozenIssues(match, present));
+  const parentless = matched
+    .filter(({ sample }) => sample.parents.length === 0)
+    .flatMap(({ row }) => reportProcessStepsWithoutParent(row));
   const validated = await validateRows(
     {
       samples: matched.map((match) =>
@@ -173,7 +177,7 @@ async function validateMatched(
     }),
   );
   return {
-    issues: [...frozen, ...validated.issues],
+    issues: [...frozen, ...parentless, ...validated.issues],
     samples: validated.samples.map(({ input }, index) => ({
       id: matched[index]!.sample.id,
       input,

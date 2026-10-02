@@ -83,6 +83,15 @@ const customizedBook = async () => {
 const subSampleBook = (cells: Record<string, ExcelJS.CellValue> = {}) =>
   parentedBook(FIELD_SAMPLE.igsn!, cells);
 
+const PROCESS_STEP_ROW = {
+  "Sample #": 1,
+  Kind: "Sub-sampling",
+  "Date precision": "Day",
+  "Date start": new Date(Date.UTC(2024, 5, 5)),
+  "Date end": "2024-06-06",
+  Description: "Sawn into three slabs",
+};
+
 const withKey = (book: ExcelJS.Workbook, row: number, key: string) =>
   fill(book, SHEETS.samples, row, { ...CLEAN_SAMPLE, "Sample #": key });
 
@@ -458,6 +467,39 @@ describe("validateImport", () => {
       ]);
     },
   );
+
+  it("should read a sub-sample's process steps, one per Process steps row", async () => {
+    const book = await subSampleBook();
+    fill(book, SHEETS.processSteps, 3, PROCESS_STEP_ROW);
+
+    const { issues, samples } = await validate(await bytesOf(book));
+
+    expect({ issues, processSteps: samples[0]?.input.processSteps }).toEqual({
+      issues: [],
+      processSteps: [
+        {
+          kind: "subsampling",
+          date: { precision: "day", start: "2024-06-05", end: "2024-06-06" },
+          description: "Sawn into three slabs",
+        },
+      ],
+    });
+  });
+
+  it("should refuse a Process steps row on a sample row citing no parent", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.processSteps, 3, PROCESS_STEP_ROW);
+
+    expect(await issuesOf(await bytesOf(book))).toEqual([
+      {
+        sheet: SHEETS.processSteps,
+        row: 3,
+        column: "Sample #",
+        value: "1",
+        code: "process_steps_without_parent",
+      },
+    ]);
+  });
 
   it("should still validate a template predating the Parent IGSN column", async () => {
     const book = await cleanBook();

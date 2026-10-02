@@ -400,6 +400,7 @@ async function build(
       samples.getCell(row, number).value = label;
   }
   for (const child of CHILD_SHEETS) {
+    if (isParentColumnDropped && child.name === SHEETS.processSteps) continue;
     const columns = keptColumnsOf(child.columns, stored, droppedGroups);
     if (columns.every((column) => column.path === undefined)) continue;
     addChildSheet(book, child.name, columns, rows);

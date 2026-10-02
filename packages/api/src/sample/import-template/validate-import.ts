@@ -17,6 +17,7 @@ import {
 } from "./build-sample-inputs.ts";
 import {
   DATA_SHEETS,
+  PARENT_IGSN_HEADER,
   plainHeader,
   SAMPLE_KEY_HEADER,
   SHEETS,
@@ -30,6 +31,7 @@ import {
   readRows,
   textOf,
 } from "./read-rows.ts";
+import { reportProcessStepsWithoutParent } from "./report-process-steps-without-parent.ts";
 import { IMPORT_DEFAULTS } from "./required-columns.ts";
 import {
   INHERITED_PATHS,
@@ -271,6 +273,9 @@ export function validateImport(
       issues: [
         ...validated.issues,
         ...(await internalIdIssues(parsed, unavailableInternalNumbers)),
+        ...parsed.samples
+          .filter(({ cells }) => cells[PARENT_IGSN_HEADER] === undefined)
+          .flatMap(reportProcessStepsWithoutParent),
       ]
         .map((issue) => withValue(book, layout, issue))
         .sort(byPosition),

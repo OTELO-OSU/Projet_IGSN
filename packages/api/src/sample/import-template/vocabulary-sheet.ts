@@ -49,6 +49,7 @@ import { METAMORPHIC_FACIES } from "@projet-igsn/domain/sample/metamorphic-facie
 import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { expandPaths } from "@projet-igsn/domain/sample/path/expand-paths";
 import { PHYSIOGRAPHIC_ENVIRONMENTS } from "@projet-igsn/domain/sample/physiographic-environment/vocabulary";
+import { PROCESS_STEP_KINDS } from "@projet-igsn/domain/sample/process-step/kind";
 import {
   IDENTIFIER_TYPES,
   identifierTypeLabel,
@@ -200,6 +201,12 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
     "Date precision",
     ["day", "hour"] as const,
     (code) => DATE_PRECISION_LABEL[code],
+  ),
+  flat(
+    "process_step_kind",
+    "Process step kind",
+    PROCESS_STEP_KINDS,
+    labels.processStepKindLabel,
   ),
   flat("size_unit", "Size unit", SIZE_UNITS, identity),
   flat("mass_unit", "Mass unit", MASS_UNITS, identity),
