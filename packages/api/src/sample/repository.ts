@@ -92,14 +92,8 @@ export function createSampleRepository(
           await insertOwnedSample(trx, input, owner.id, owner),
         ),
       ),
-    createPublishing: (samples, owner) =>
-      withTransaction(db, async (trx) => {
-        const lastReferenceOf = new Map(
-          samples
-            .flatMap(({ attachments }) => attachments)
-            .map((attachment) => [attachment.stagedId, attachment]),
-        );
-        const lastReferences = new Set(lastReferenceOf.values());
+    createPublishing: async (samples, owner) => {
+      const count = await withTransaction(db, async (trx) => {
         for (const { input, internalNumber, attachments } of samples) {
           const id = await insertOwnedSample(trx, input, owner.id, owner);
           await trx
@@ -113,16 +107,19 @@ export function createSampleRepository(
               attachmentsDir,
               id,
               attachment.input,
-              {
-                from: stagedUploadPathOf(attachmentsDir, attachment.stagedId),
-                move: lastReferences.has(attachment),
-              },
+              { from: stagedUploadPathOf(attachmentsDir, attachment.stagedId) },
             );
         }
-        // ponytail: a rollback after a rename strands the staged info file, the same fs-in-transaction ceiling as writeFile.
-        await consumeStagedUploads(attachmentsDir, [...lastReferenceOf.keys()]);
         return samples.length;
-      }),
+      });
+      await consumeStagedUploads(
+        attachmentsDir,
+        samples.flatMap(({ attachments }) =>
+          attachments.map(({ stagedId }) => stagedId),
+        ),
+      );
+      return count;
+    },
     listByInternalNumbers: tx(listSamplesByInternalNumbers),
     updatePublishing: (samples) =>
       withTransaction(db, async (trx) => {

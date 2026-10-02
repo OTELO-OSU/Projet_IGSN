@@ -1,7 +1,8 @@
 import type { CreateSampleAttachment } from "@projet-igsn/domain/sample/attachment/repository";
 import type { Selectable } from "kysely";
 
-import { copyFile, mkdir, rename, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { v7 as uuidv7 } from "uuid";
 
@@ -27,7 +28,7 @@ export async function insertSampleAttachment(
   storageDir: string,
   sampleId: string,
   input: CreateSampleAttachment,
-  content: Uint8Array | { from: string; move: boolean },
+  content: Uint8Array | { from: string },
 ): Promise<Selectable<DB["sample_attachment"]>> {
   const row = await trx
     .insertInto("sample_attachment")
@@ -46,10 +47,8 @@ export async function insertSampleAttachment(
   const path = attachmentPathOf(storageDir, sampleId, row.id, row.name);
   if (content instanceof Uint8Array) {
     await writeFile(path, content);
-  } else if (content.move) {
-    await rename(content.from, path);
   } else {
-    await copyFile(content.from, path);
+    await copyFile(content.from, path, constants.COPYFILE_FICLONE);
   }
   return row;
 }

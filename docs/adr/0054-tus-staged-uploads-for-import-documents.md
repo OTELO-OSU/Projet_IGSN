@@ -21,7 +21,7 @@ Import documents upload through the tus protocol before the import, using `@tus/
 - A staged upload expires after 24 h, swept hourly.
 - `POST /admin/samples/import` references uploads by `stagedUploadIds[]`.
 - An unknown, foreign, incomplete, expired or consumed id gets one generic 400.
-- The publishing transaction consumes the uploads: rename into the sample attachment path, copy for shared references.
+- The publishing transaction copies each upload into the sample attachment path, and the uploads are deleted once it commits, so a rolled-back import keeps them for a retry with the same ids.
 - A replayed import therefore answers 400 instead of duplicating samples.
 
 ## Rejected
