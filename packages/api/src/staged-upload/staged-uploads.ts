@@ -31,6 +31,10 @@ export function createStagedUploads(
 ): StagedUploadRepository {
   const store = stagingStoreOf(storageDir);
   const { configstore } = store;
+  const declaredById = new Map<
+    string,
+    { ownerId: string | null | undefined; size: number }
+  >();
 
   const stateOf = async (id: string) => {
     const [info, data] = await Promise.all([
@@ -71,11 +75,28 @@ export function createStagedUploads(
   return {
     findCompleteOwned: async (ids, ownerId) =>
       (await Promise.all(ids.map((id) => completeOwned(id, ownerId)))).flat(),
-    // ponytail: an O(n) info scan per create, and racing creates over-admit at most one upload; an index if staging grows.
-    quotaUsed: async (ownerId) =>
-      (await Promise.all((await listIds()).map((id) => configstore.get(id))))
-        .filter((info) => info?.metadata?.ownerId === ownerId)
-        .reduce((sum, info) => sum + (info?.size ?? 0), 0),
+    // ponytail: one staging listing per create, each info read once into memory, and racing creates over-admit at most one upload; an index if staging grows.
+    quotaUsed: async (ownerId) => {
+      const ids = await listIds();
+      const listed = new Set(ids);
+      for (const id of declaredById.keys())
+        if (!listed.has(id)) declaredById.delete(id);
+      await Promise.all(
+        ids
+          .filter((id) => !declaredById.has(id))
+          .map(async (id) => {
+            const info = await configstore.get(id);
+            if (info)
+              declaredById.set(id, {
+                ownerId: info.metadata?.ownerId,
+                size: info.size ?? 0,
+              });
+          }),
+      );
+      return [...declaredById.values()]
+        .filter((declared) => declared.ownerId === ownerId)
+        .reduce((sum, { size }) => sum + size, 0);
+    },
     deleteExpired: async () => {
       await store.deleteExpired();
       const stale = (

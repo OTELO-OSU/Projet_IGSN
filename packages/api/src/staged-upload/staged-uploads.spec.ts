@@ -1,8 +1,9 @@
 import { STAGED_UPLOAD_TTL_MS } from "@projet-igsn/domain/staged-upload/limits";
+import { FileKvStore } from "@tus/server";
 import { mkdtemp, readdir, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { seedStagedUpload } from "../tests/seed-staged-upload.ts";
 import { stagedUploadPathOf, stagingDirOf } from "./staged-path.ts";
@@ -68,6 +69,22 @@ describe("staged uploads", () => {
     await seedStagedUpload(storageDir, { ownerId: FOREIGN, size: 100 });
 
     expect(await createStagedUploads(storageDir).quotaUsed(OWNER)).toBe(10);
+  });
+
+  it("should read each upload's info once across quota checks, dropping consumed uploads", async () => {
+    const stagedUploads = createStagedUploads(storageDir);
+    await seedStagedUpload(storageDir, { ownerId: OWNER, size: 4 });
+    const consumed = await seedStagedUpload(storageDir, {
+      ownerId: OWNER,
+      size: 5,
+    });
+    await stagedUploads.quotaUsed(OWNER);
+    await seedStagedUpload(storageDir, { ownerId: OWNER, size: 6 });
+    await consumeStagedUploads(storageDir, [consumed]);
+    const reads = vi.spyOn(FileKvStore.prototype, "get");
+
+    expect(await stagedUploads.quotaUsed(OWNER)).toBe(10);
+    expect(reads).toHaveBeenCalledOnce();
   });
 
   it("should reap stale uploads, finished or not, and keep fresh and in-progress ones", async () => {
