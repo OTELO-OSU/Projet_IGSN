@@ -1,4 +1,7 @@
-import { UPLOAD_CHUNK_BYTES } from "@projet-igsn/domain/staged-upload/limits";
+import {
+  UPLOAD_CHUNK_BYTES,
+  UPLOAD_RATE_WINDOW_SECONDS,
+} from "@projet-igsn/domain/staged-upload/limits";
 import { type DetailedError, Upload } from "tus-js-client";
 
 import { API_URL } from "#/api-url.ts";
@@ -13,7 +16,7 @@ export type StagedUploadProgress = {
   retryingAttempt?: number;
 };
 
-const RETRY_DELAYS_MS = [1_000, 5_000];
+const RETRY_DELAYS_MS = [1_000, 5_000, UPLOAD_RATE_WINDOW_SECONDS * 1_000];
 
 export const STAGED_UPLOAD_ATTEMPTS = RETRY_DELAYS_MS.length + 1;
 
@@ -64,8 +67,8 @@ function stageDocument(
 export async function uploadStagedDocuments(
   documents: File[],
   onProgress: (progress: StagedUploadProgress) => void,
-): Promise<Map<string, string>> {
-  const ids = new Map<string, string>();
+  onStaged: (document: File, id: string) => void,
+): Promise<void> {
   for (const [fileIndex, document] of documents.entries()) {
     let progress: StagedUploadProgress = {
       fileIndex,
@@ -79,13 +82,12 @@ export async function uploadStagedDocuments(
       onProgress(progress);
     };
     report({});
-    ids.set(
-      document.name,
+    onStaged(
+      document,
       await stageDocument(document, {
         onBytes: (uploadedBytes) => report({ uploadedBytes }),
         onRetry: (retryingAttempt) => report({ retryingAttempt }),
       }),
     );
   }
-  return ids;
 }

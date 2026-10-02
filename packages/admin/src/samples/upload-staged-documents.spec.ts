@@ -1,7 +1,10 @@
 import type { User } from "oidc-client-ts";
 
-import { UPLOAD_CHUNK_BYTES } from "@projet-igsn/domain/staged-upload/limits";
-import { vi } from "vitest";
+import {
+  UPLOAD_CHUNK_BYTES,
+  UPLOAD_RATE_WINDOW_SECONDS,
+} from "@projet-igsn/domain/staged-upload/limits";
+import { onTestFinished, vi } from "vitest";
 
 import { fakeTus } from "../../test/fake-tus.ts";
 import { userManager } from "../auth/oidc-config.ts";
@@ -21,13 +24,23 @@ function recordProgress() {
   };
 }
 
+function recordStaged() {
+  const staged = new Map<string, string>();
+  return {
+    staged,
+    onStaged: (document: File, id: string) => staged.set(document.name, id),
+  };
+}
+
 describe("uploadStagedDocuments", () => {
   it("should stage the documents one after the other, chunk by chunk, answering each name's staged id", async () => {
     const tus = fakeTus();
+    const { staged, onStaged } = recordStaged();
 
-    const ids = await uploadStagedDocuments(
+    await uploadStagedDocuments(
       [document("big.pdf", UPLOAD_CHUNK_BYTES + 1), document("notes", 4, "")],
       () => {},
+      onStaged,
     );
 
     expect(tus.requests).toEqual([
@@ -37,12 +50,28 @@ describe("uploadStagedDocuments", () => {
       "POST notes application/octet-stream",
       "PATCH notes 0",
     ]);
-    expect(ids).toEqual(
+    expect(staged).toEqual(
       new Map([
         ["big.pdf", tus.idOf("big.pdf")],
         ["notes", tus.idOf("notes")],
       ]),
     );
+  });
+
+  it("should report each staged id as its file finishes, before a later file fails", async () => {
+    let posts = 0;
+    const tus = fakeTus({ post: () => (++posts === 2 ? 413 : null) });
+    const { staged, onStaged } = recordStaged();
+
+    await expect(
+      uploadStagedDocuments(
+        [document("report.pdf"), document("photo.jpg")],
+        () => {},
+        onStaged,
+      ),
+    ).rejects.toThrow();
+
+    expect(staged).toEqual(new Map([["report.pdf", tus.idOf("report.pdf")]]));
   });
 
   it("should report the current file's own bytes, starting over at each new file", async () => {
@@ -64,6 +93,7 @@ describe("uploadStagedDocuments", () => {
     await uploadStagedDocuments(
       [document("big.pdf", UPLOAD_CHUNK_BYTES + 1), document("small.pdf")],
       onProgress,
+      () => {},
     );
 
     expect(snapshots[0]).toEqual(
@@ -82,7 +112,11 @@ describe("uploadStagedDocuments", () => {
       .mockResolvedValueOnce({ access_token: "first" } as User)
       .mockResolvedValue({ access_token: "renewed" } as User);
 
-    await uploadStagedDocuments([document("report.pdf")], () => {});
+    await uploadStagedDocuments(
+      [document("report.pdf")],
+      () => {},
+      () => {},
+    );
 
     expect(tus.authorizations).toEqual(["Bearer first", "Bearer renewed"]);
   });
@@ -95,10 +129,12 @@ describe("uploadStagedDocuments", () => {
     async ({ answer }) => {
       const tus = fakeTus({ patch: (call) => (call === 1 ? answer : null) });
       const { snapshots, onProgress } = recordProgress();
+      const { staged, onStaged } = recordStaged();
 
-      const ids = await uploadStagedDocuments(
+      await uploadStagedDocuments(
         [document("report.pdf")],
         onProgress,
+        onStaged,
       );
 
       expect(tus.requests).toEqual([
@@ -108,38 +144,63 @@ describe("uploadStagedDocuments", () => {
         "PATCH report.pdf 0",
       ]);
       expect(snapshots.map((p) => p.retryingAttempt)).toContain(2);
-      expect(ids).toEqual(new Map([["report.pdf", tus.idOf("report.pdf")]]));
+      expect(staged).toEqual(new Map([["report.pdf", tus.idOf("report.pdf")]]));
     },
   );
 
   it("should resume a chunk whose response was lost from the offset HEAD reports, never re-sending it", async () => {
     const tus = fakeTus({ patch: (call) => (call === 1 ? "lost" : null) });
+    const { staged, onStaged } = recordStaged();
 
-    const ids = await uploadStagedDocuments([document("report.pdf")], () => {});
+    await uploadStagedDocuments([document("report.pdf")], () => {}, onStaged);
 
     expect(tus.requests).toEqual([
       "POST report.pdf application/pdf",
       "PATCH report.pdf 0",
       "HEAD report.pdf 4",
     ]);
-    expect(ids).toEqual(new Map([["report.pdf", tus.idOf("report.pdf")]]));
+    expect(staged).toEqual(new Map([["report.pdf", tus.idOf("report.pdf")]]));
   });
 
-  it("should fail after three attempts at a chunk the server keeps refusing", async () => {
+  it("should fail after four attempts at a chunk the server keeps refusing, the last one a whole rate window later", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const tus = fakeTus({ patch: () => 500 });
+    const patches = () => tus.requests.filter((r) => r.startsWith("PATCH"));
 
-    await expect(
-      uploadStagedDocuments([document("report.pdf")], () => {}),
+    const failed = expect(
+      uploadStagedDocuments(
+        [document("report.pdf")],
+        () => {},
+        () => {},
+      ),
     ).rejects.toThrow();
+    for (const [attempt, delayMs] of [
+      [1, 1_000],
+      [2, 5_000],
+      [3, UPLOAD_RATE_WINDOW_SECONDS * 1_000],
+    ] as const) {
+      await vi.waitFor(() => expect(patches()).toHaveLength(attempt));
+      await vi.advanceTimersByTimeAsync(delayMs - 1);
+      expect(patches()).toHaveLength(attempt);
+      await vi.advanceTimersByTimeAsync(1);
+    }
 
-    expect(tus.requests.filter((r) => r.startsWith("PATCH"))).toHaveLength(3);
-  }, 10_000);
+    await failed;
+    expect(patches()).toHaveLength(4);
+  });
 
   it("should fail at once on a client error other than 429", async () => {
     const tus = fakeTus({ post: () => 413 });
 
     await expect(
-      uploadStagedDocuments([document("report.pdf")], () => {}),
+      uploadStagedDocuments(
+        [document("report.pdf")],
+        () => {},
+        () => {},
+      ),
     ).rejects.toThrow();
 
     expect(tus.requests).toEqual(["POST report.pdf application/pdf"]);

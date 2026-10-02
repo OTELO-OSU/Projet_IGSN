@@ -551,7 +551,7 @@ describe("ImportSamplesDialog", () => {
     await expect.element(bar).toHaveAttribute("max", "7");
     await expect
       .element(
-        upload.getByText("File 1/2: report.pdf, retrying (attempt 2 of 3)"),
+        upload.getByText("File 1/2: report.pdf, retrying (attempt 2 of 4)"),
         { timeout: 3_000 },
       )
       .toBeVisible();
@@ -594,6 +594,36 @@ describe("ImportSamplesDialog", () => {
     expect(tus.requests).toEqual([
       "POST report.pdf application/pdf",
       "PATCH report.pdf 0",
+    ]);
+  });
+
+  it("should keep the documents staged before a failed upload, Import again staging only the rest", async () => {
+    let posts = 0;
+    const tus = fakeTus({ post: () => (++posts === 2 ? 413 : null) });
+    const posted = recordImports(() => HttpResponse.json({ count: 1 }));
+    const { dialog, importButton, dropDocuments } = await dropWorkbookNaming([
+      "report.pdf",
+      "photo.jpg",
+    ]);
+    await dropDocuments([
+      attachmentFile("report.pdf"),
+      attachmentFile("photo.jpg"),
+    ]);
+    await importButton.click();
+    await expect.element(dialog).toBeVisible();
+
+    await importButton.click();
+
+    await expect.poll(() => posted).toHaveLength(1);
+    expect(tus.requests.filter((r) => r.startsWith("POST"))).toEqual([
+      "POST report.pdf application/pdf",
+      "POST photo.jpg application/pdf",
+      "POST photo.jpg application/pdf",
+    ]);
+    expect(posted[0]).toEqual([
+      ["file", "samples.xlsx"],
+      ["stagedUploadIds[]", tus.idOf("report.pdf")],
+      ["stagedUploadIds[]", tus.idOf("photo.jpg")],
     ]);
   });
 

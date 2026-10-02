@@ -49,15 +49,15 @@ export function useImportSamples() {
       const missing = documents.filter(
         (document) => !isStaged(document, staged.get(document.name)),
       );
-      const uploaded = await uploadStagedDocuments(missing, setProgress);
-      const current = new Map([
-        ...staged,
-        ...missing.map(
-          ({ name, size, lastModified }) =>
-            [name, { id: uploaded.get(name)!, size, lastModified }] as const,
-        ),
-      ]);
-      setStaged(current);
+      const current = new Map(staged);
+      await uploadStagedDocuments(
+        missing,
+        setProgress,
+        ({ name, size, lastModified }, id) => {
+          current.set(name, { id, size, lastModified });
+          setStaged(new Map(current));
+        },
+      );
       setProgress("importing");
       const body = new FormData();
       body.append("file", file);
