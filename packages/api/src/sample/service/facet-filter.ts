@@ -34,11 +34,22 @@ export const PERSON_FACET_COLUMNS: Record<
   },
 };
 
-const matchesLinkedAccount = (userIdColumn: string) => (token: string) =>
-  sql<SqlBool>`${sql.ref(`sample.${userIdColumn}`)} = any(array(
+export const matchesAccountName = (token: string) =>
+  matchesToken([unaccented("u.firstname"), unaccented("u.name")], token);
+
+export type LinkedAccounts = ReadonlyMap<string, readonly string[]>;
+
+const matchesLinkedAccount =
+  (userIdColumn: string, linkedAccounts?: LinkedAccounts) =>
+  (token: string) => {
+    const column = sql.ref(`sample.${userIdColumn}`);
+    return linkedAccounts
+      ? sql<SqlBool>`${column} = any(${linkedAccounts.get(token) ?? []}::uuid[])`
+      : sql<SqlBool>`${column} = any(array(
     select u.id from "user" u
-     where ${matchesToken([unaccented("u.firstname"), unaccented("u.name")], token)}
+     where ${matchesAccountName(token)}
   ))`;
+  };
 
 export const FACET_JOIN: Record<string, { table: string; column: string }> = {
   manualGroup: { table: "sample_manual_group", column: "group_id" },
@@ -49,9 +60,36 @@ export const FACET_JOIN: Record<string, { table: string; column: string }> = {
   },
 };
 
-export function facetFilter(
-  facet: (typeof SAMPLE_FACETS)[number],
+type Facet = (typeof SAMPLE_FACETS)[number];
+
+export const INDEXED_FIELD: Record<string, string> = {
+  type: "type_paths",
+  material: "material_paths",
+  mineralClassification: "mineral_classification_paths",
+  collectionMethod: "collection_method_paths",
+  nature: "nature",
+  hostInstitution: "sc_host_institution",
+  institutionalOrganization: "institutional_organization",
+  institutionalOsu: "institutional_osu",
+  institutionalLaboratory: "institutional_laboratory",
+  manualGroup: "manual_group_ids",
+  contributor: "contributor_ids",
+};
+
+export function indexedFacetFilter(
+  facet: Facet,
   value: string,
+): Expression<SqlBool> {
+  const field = sql.ref(`sample.${INDEXED_FIELD[facet.key]!}`);
+  return facet.kind === "enum" && !facet.multiValued
+    ? sql<SqlBool>`${field} = ${value}`
+    : sql<SqlBool>`${value} = any(${field})`;
+}
+
+function facetFilter(
+  facet: Facet,
+  value: string,
+  linkedAccounts?: LinkedAccounts,
 ): Expression<SqlBool> | undefined {
   const join = FACET_JOIN[facet.key];
   if (join) {
@@ -67,7 +105,8 @@ export function facetFilter(
     const filters = tokenFilters(
       person.names.map((column) => unaccented(column)),
       value,
-      matchesLinkedAccount(person.userId),
+      matchesLinkedAccount(person.userId, linkedAccounts),
+      linkedAccounts !== undefined,
     );
     return sql<SqlBool>`(${sql.join(filters, sql` AND `)})`;
   }
@@ -109,6 +148,7 @@ export function personFacetValues(params: Partial<ListSamplesQuery>): string[] {
 
 export function facetFilters(
   params: Partial<ListSamplesQuery>,
+  linkedAccounts?: LinkedAccounts,
 ): Expression<SqlBool>[] {
   const values: Record<string, unknown> = params;
 
@@ -116,7 +156,10 @@ export function facetFilters(
     ...SAMPLE_FACETS.flatMap((facet) => {
       const value = values[facet.key];
       if (typeof value !== "string") return [];
-      const filter = facetFilter(facet, value);
+      const filter =
+        params.search !== undefined && INDEXED_FIELD[facet.key]
+          ? indexedFacetFilter(facet, value)
+          : facetFilter(facet, value, linkedAccounts);
       return filter ? [filter] : [];
     }),
     ...numericAgeFilters(params),

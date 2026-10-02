@@ -90,11 +90,13 @@ const NARROWED_VALUES: Record<
 function withCounts(
   items: ComboboxItem[],
   counts: Record<string, number> | undefined,
+  selected: string | undefined,
 ): ComboboxItem[] {
   if (!counts) return items;
   return items.flatMap((item) => {
     const count = counts[item.value] ?? 0;
-    return count > 0 ? [{ ...item, label: `${item.label} (${count})` }] : [];
+    if (count > 0) return [{ ...item, label: `${item.label} (${count})` }];
+    return item.value === selected ? [item] : [];
   });
 }
 
@@ -171,6 +173,7 @@ export function SampleFacets({
                 )
               : (fetchedItems[facet.key] ?? []),
             countsOf(facet.key),
+            selected,
           ),
           selected,
           facetValueLabel(facet.key),

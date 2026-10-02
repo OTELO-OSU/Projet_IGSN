@@ -10,7 +10,10 @@ const dbConfigSchema = z.object({
   max: z.coerce.number().int().positive().optional(),
 });
 
-const CONNECTION_PARAMETERS = { jit: "off", random_page_cost: 1.1 } as const;
+const CONNECTION_PARAMETERS = {
+  jit: "off",
+  random_page_cost: 1.1,
+} as const;
 
 type DbConfig = z.infer<typeof dbConfigSchema> & {
   connection: typeof CONNECTION_PARAMETERS;

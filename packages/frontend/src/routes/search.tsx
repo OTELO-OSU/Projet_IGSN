@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
 
-import { facetParamKeys } from "@projet-igsn/domain/sample/search/facets";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import type {
   ListSamplesParams,
   SampleFilters,
 } from "#/domain/samples/client/list-samples.ts";
-import type { SearchParams } from "#/domain/samples/search-params.ts";
 
 import {
   listManualGroupsQueryOptions,
@@ -25,8 +23,10 @@ import {
 import { SampleFacets } from "#/domain/samples/sample-facets.tsx";
 import { SearchBanner } from "#/domain/samples/search-banner.tsx";
 import { SearchCompose } from "#/domain/samples/search-compose.tsx";
+import { searchEmptyMessage } from "#/domain/samples/search-empty-message.ts";
 import {
   clearDependents,
+  clearFacets,
   composeSeedFromParams,
   searchParamsSchema,
   searchQueryParams,
@@ -37,9 +37,6 @@ import {
   listPublicUsersQueryOptions,
   useListPublicUsers,
 } from "#/domain/users/hook/list-public-users.ts";
-import { m } from "#/paraglide/messages.js";
-
-const FACET_KEYS = facetParamKeys();
 
 export const Route = createFileRoute("/search")({
   validateSearch: searchParamsSchema,
@@ -86,6 +83,7 @@ function SearchPage() {
             navigate({
               search: (prev) => ({
                 ...prev,
+                ...clearFacets(),
                 q: next.q,
                 bbox: next.bbox,
                 engine: next.engine,
@@ -117,12 +115,7 @@ function SearchPage() {
             onClearAll={() =>
               navigate({
                 resetScroll: false,
-                search: (prev) => {
-                  const next = { ...prev } as Record<string, unknown>;
-                  for (const key of FACET_KEYS) delete next[key];
-                  next.page = 1;
-                  return next as SearchParams;
-                },
+                search: (prev) => ({ ...prev, ...clearFacets(), page: 1 }),
               })
             }
           />
@@ -166,11 +159,7 @@ function Results({
       pageCount={pageCount}
       perPage={params.perPage}
       fields={fields}
-      emptyMessage={
-        params.bbox && !params.search
-          ? m.search_location_empty_hint()
-          : m.search_no_results()
-      }
+      emptyMessage={searchEmptyMessage(params)}
       onPageChange={(next) =>
         navigate({ search: (prev) => ({ ...prev, page: next }) })
       }

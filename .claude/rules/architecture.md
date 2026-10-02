@@ -44,13 +44,15 @@
 - Lists are paginated server-side, so sorting and filtering MUST happen in the Postgres query (Kysely `orderBy`/`where`), never in the client or on a fetched page.
 - Declare the sort/filter params in the list query schema in `domain`, pass them through the repository, and keep them in the URL app-side.
 - Public sample-list filters are driven by the `SAMPLE_FACETS` registry (`domain/sample/search/facets.ts`) as single source of truth; to add or extend one, see the `add-search-facet` skill.
-- The free-text global search box is a separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet; see ADR 0018.
+- The free-text global search box is a separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet, and it runs in the ParadeDB index `sample_search_idx` for every `searchFilters` caller; see ADR 0018.
 - The admin sample lists accept `ownerId` / `institution` / `manualGroup` / `status` / `collectorName` / `existenceStatus` / `availabilityStatus` on `listSamplesQuerySchema`, ANDed inside the caller's moderation scope; the three `institutional*` facet params stay dropped there, one param one meaning.
 - `existenceStatus` and `availabilityStatus` are top-level params, not `SAMPLE_FACETS` entries: the registry is the public facet contract, and these two stay admin-only, off the sidebar and the Core `/service` contract.
 - The status filter, the `sort: "status"` order (`array_position` over `sampleStatusSchema.options`, so the enum order is the sort order) and the admin badge all read the `status` column.
 - `searchable` (`domain/sample/path/tree-node.ts`) is the public search-facet policy alone; the admin collection-method filter (`admin/src/samples/collection-method-tree-nodes.ts`) offers every hierarchy level regardless of that flag.
 - The public `GET /samples/map` (`api/src/sample/service/map-sample.ts`) shares the same filters as the public list, via `sampleFilters`/`publishedScope` in `list-sample.ts`, and clusters server-side with Postgis `ST_SnapToGrid`, a cell floored so a whole-world viewport never exceeds ~64x64 clusters.
-- `GET /samples/facets` (`api/src/sample/service/count-facets.ts`) answers each `enum`/`hierarchy`/`linked` facet's disjunctive counts (own filter ignored, a hierarchy node counting its descendants) in one pass over the published, non-sub-sample scope, reusing `facetFilter` and `sampleFilters`/`publishedScope` from the list query.
+- `GET /samples/facets` (`api/src/sample/service/count-facets.ts`) answers each `enum`/`hierarchy`/`linked` facet's disjunctive counts (own filter ignored, a hierarchy node counting its descendants) with one ParadeDB `pdb.agg` terms aggregation per facet over `sample_search_idx`, in one single-table scan of the published, non-sub-sample scope, reusing `sampleFilters`/`publishedScope` from the list query.
+- Every transaction that scans ParadeDB (the facet count always; list, map and parent picker when a search is present) runs `set local plan_cache_mode = force_custom_plan`, since ParadeDB ignores parameters or hangs under generic plans.
+- That scan joins nothing, so `sample` carries trigger-maintained copies of what the counts and shared filters would join: `location_geom`, `is_sub_sample`, `manual_group_ids`, `contributor_ids`, `mineral_classification_paths`, plus the generated `*_paths` ancestor arrays.
 
 ## Publish constraints
 

@@ -4,21 +4,27 @@ import type {
 } from "@projet-igsn/domain/sample/sample-validator";
 
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
-import { type RawBuilder, sql, type SqlBool } from "kysely";
+import { searchTokens } from "@projet-igsn/domain/sample/search/search-tokens";
+import { type Expression, sql, type SqlBool, type Transaction } from "kysely";
 
 import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import {
-  FACET_COLUMN,
-  FACET_JOIN,
-  facetFilter,
+  INDEXED_FIELD,
+  indexedFacetFilter,
+  type LinkedAccounts,
+  matchesAccountName,
   personFacetValues,
 } from "./facet-filter.ts";
 import { publishedScope, sampleFilters } from "./list-sample.ts";
-import { applyFuzzyThreshold } from "./search-filter.ts";
+import { applyFuzzyThreshold, forceCustomPlan } from "./search-filter.ts";
 
 type Facet = (typeof SAMPLE_FACETS)[number];
+
+type TermsAggregate = {
+  buckets: { key: string | null; doc_count: number }[];
+} | null;
 
 const COUNTED_KINDS: readonly Facet["kind"][] = ["enum", "hierarchy", "linked"];
 
@@ -26,44 +32,35 @@ const COUNTED_FACETS = SAMPLE_FACETS.filter((facet) =>
   COUNTED_KINDS.includes(facet.kind),
 );
 
-const COLUMN_FACETS = COUNTED_FACETS.filter((facet) => !FACET_JOIN[facet.key]);
+// ponytail: a facet past 65000 distinct values drops its rarest ones, page the terms aggregation if a linked facet ever grows that large
+const MAX_BUCKETS = 65000;
 
-const flag = (key: string) => `is_${key}`;
-
-function valueCounts(
-  facet: Facet,
-  where: RawBuilder<unknown>,
-): RawBuilder<unknown> {
-  const join = FACET_JOIN[facet.key];
-  if (join) {
-    const column = sql.ref(`${join.table}.${join.column}`);
-    const from = sql`matching join ${sql.table(join.table)} on ${sql.ref(`${join.table}.sample_id`)} = matching.id`;
-    return facet.kind === "hierarchy"
-      ? sql`select subpath(${column}, 0, depth)::text as value, count(distinct matching.id) as count
-          from ${from} cross join lateral generate_series(1, nlevel(${column})) as depth
-         where ${where} group by 1`
-      : sql`select ${column}::text as value, count(*) as count from ${from} where ${where} group by 1`;
-  }
-  const column = sql.ref(`matching.${FACET_COLUMN[facet.key]!}`);
-  if (facet.kind === "hierarchy") {
-    return sql`select subpath(leaf, 0, depth)::text as value, sum(n) as count
-      from (select ${column} as leaf, count(*) as n from matching where ${where} group by 1) as leaves
-      cross join lateral generate_series(1, nlevel(leaf)) as depth
-     group by 1`;
-  }
-  return facet.kind === "enum" && facet.multiValued
-    ? sql`select value::text, count(*) as count from matching cross join lateral unnest(${column}) as value where ${where} group by 1`
-    : sql`select ${column}::text as value, count(*) as count from matching where ${where} group by 1`;
+function termsCount(facet: Facet, others: Expression<SqlBool>[]) {
+  const terms = sql.lit(
+    JSON.stringify({
+      terms: { field: INDEXED_FIELD[facet.key], size: MAX_BUCKETS },
+    }),
+  );
+  const filter =
+    others.length > 0
+      ? sql` filter (where ${sql.join(others, sql` and `)})`
+      : sql``;
+  return sql`pdb.agg(${terms})${filter} as ${sql.id(facet.key)}`;
 }
 
-function facetCounts(facet: Facet, activeKeys: string[]): RawBuilder<unknown> {
-  const others = activeKeys
-    .filter((key) => key !== facet.key)
-    .map((key) => sql.ref(`matching.${flag(key)}`));
-  const where = others.length > 0 ? sql.join(others, sql` and `) : sql`true`;
-  return sql`(select ${facet.key}::text as facet, value, count
-    from (${valueCounts(facet, where)}) as counts
-   where value is not null)`;
+async function resolveLinkedAccounts(
+  trx: Transaction<DB>,
+  params: ListSamplesQuery,
+): Promise<LinkedAccounts> {
+  const tokens = [...new Set(personFacetValues(params).flatMap(searchTokens))];
+  if (tokens.length === 0) return new Map();
+  const { rows } = await sql<Record<string, string[]>>`select ${sql.join(
+    tokens.map(
+      (token, index) =>
+        sql`array(select u.id from "user" u where ${matchesAccountName(token)}) as ${sql.id(String(index))}`,
+    ),
+  )}`.execute(trx);
+  return new Map(tokens.map((token, index) => [token, rows[0]![index]!]));
 }
 
 export function countPublishedFacets(
@@ -74,49 +71,42 @@ export function countPublishedFacets(
   const active = COUNTED_FACETS.flatMap((facet) => {
     const value = values[facet.key];
     return typeof value === "string"
-      ? [{ key: facet.key, filter: facetFilter(facet, value)! }]
+      ? [{ key: facet.key, pick: indexedFacetFilter(facet, value) }]
       : [];
   });
-  const base = [
-    ...sampleFilters({
-      ...params,
-      ...Object.fromEntries(
-        COUNTED_FACETS.map((facet) => [facet.key, undefined]),
-      ),
-    }),
-    ...publishedScope(params),
-  ];
-  const columns = COLUMN_FACETS.map((facet) =>
-    sql.ref(`sample.${FACET_COLUMN[facet.key]!}`),
+  const counts = COUNTED_FACETS.map((facet) =>
+    termsCount(
+      facet,
+      active.filter(({ key }) => key !== facet.key).map(({ pick }) => pick),
+    ),
   );
-  const flags = active.map(
-    ({ key, filter }) => sql<SqlBool>`${filter} as ${sql.id(flag(key))}`,
-  );
-  const activeKeys = active.map(({ key }) => key);
 
   return withTransaction(db, async (trx) => {
-    await applyFuzzyThreshold(trx, [
-      params.search,
-      ...personFacetValues(params),
-    ]);
-    const { rows } = await sql<{ facet: string; value: string; count: string }>`
-      with matching as (
-        select ${sql.join([sql.ref("sample.id"), ...columns, ...flags])}
-          from sample
-         where ${sql.join(base, sql` and `)}
-      )
-      ${sql.join(
-        COUNTED_FACETS.map((facet) => facetCounts(facet, activeKeys)),
-        sql` union all `,
-      )}
+    await forceCustomPlan(trx);
+    await applyFuzzyThreshold(trx, personFacetValues(params));
+    const base = [
+      sql<SqlBool>`sample.id @@@ pdb.all()`,
+      ...sampleFilters(
+        {
+          ...params,
+          ...Object.fromEntries(
+            COUNTED_FACETS.map((facet) => [facet.key, undefined]),
+          ),
+        },
+        await resolveLinkedAccounts(trx, params),
+      ),
+      ...publishedScope(params),
+    ];
+    const { rows } = await sql<Record<string, TermsAggregate>>`
+      select ${sql.join(counts)} from sample where ${sql.join(base, sql` and `)}
     `.execute(trx);
     return Object.fromEntries(
       COUNTED_FACETS.map((facet) => [
         facet.key,
         Object.fromEntries(
-          rows
-            .filter((row) => row.facet === facet.key)
-            .map((row) => [row.value, Number(row.count)]),
+          (rows[0]?.[facet.key]?.buckets ?? []).flatMap(({ key, doc_count }) =>
+            key === null ? [] : [[key, doc_count]],
+          ),
         ),
       ]),
     );

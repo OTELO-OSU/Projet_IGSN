@@ -24,5 +24,5 @@ Kysely is the database abstraction layer in `api`: a type-safe SQL query builder
 - The Kysely schema types in `db.ts` must be kept in sync with the database by hand; migrations live in `packages/api/migrations/` and run with `pnpm -F @projet-igsn/api migrate`.
 - Types Postgres has no Kysely equivalent for are declared as `string` and validated by Zod at the boundary: `material` (ltree), `geom` on `location` (`Generated<string>`, never selected).
 - Spatial and trigram predicates use `sql` fragments.
-- Real repositories are tested against a real Postgres through `@kysely-vitest/postgres` (`pgTest`, a per-test transaction-rollback `db` fixture); a stubbed query builder is never a substitute. The container image is `postgis/postgis:17-3.5`, needed for [[sample-location]].
+- Real repositories are tested against a real Postgres through `@kysely-vitest/postgres` (`pgTest`, a per-test transaction-rollback `db` fixture); a stubbed query builder is never a substitute. The container image is `paradedb/paradedb:0.25.11-pg17`, needed for [[sample-location]].
 - Lists are paginated server-side, so sorting and filtering MUST happen in the Postgres query (`orderBy` / `where`), never in the client or on a fetched page; the params are declared in the list query schema in `domain` and kept in the URL app-side.

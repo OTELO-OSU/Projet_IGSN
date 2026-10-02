@@ -27,18 +27,6 @@ const VARS: EnvVar[] = [
     placeholder: "<domain>",
   },
   {
-    name: "DATABASE_HOST",
-    purpose: "External managed Postgres host.",
-    scope: "prod",
-    required: true,
-  },
-  {
-    name: "DATABASE_PORT",
-    purpose: "Postgres port.",
-    scope: "prod",
-    default: "5432",
-  },
-  {
     name: "DATABASE_NAME",
     purpose: "Database name.",
     required: true,
@@ -60,19 +48,6 @@ const VARS: EnvVar[] = [
     name: "DATABASE_POOL_MAX",
     purpose:
       "Most connections the api opens to Postgres; set it to about the database's CPU count, unset keeps postgres.js's 10.",
-  },
-  {
-    name: "DATABASE_SSL",
-    purpose:
-      "`verify-full` checks the database certificate, `require` only encrypts; the api refuses any other value.",
-    scope: "prod",
-    default: "verify-full",
-  },
-  {
-    name: "DATABASE_CA_FILE",
-    purpose:
-      "CA bundle signing the database certificate, as a path under /ca, when that CA is not a public one.",
-    scope: "prod",
   },
   {
     name: "SMTP_HOST",
@@ -99,7 +74,7 @@ const VARS: EnvVar[] = [
   },
   {
     name: "SAMPLE_SEARCH_FUZZY_THRESHOLD",
-    purpose: "pg_trgm similarity threshold of the public search, in (0,1].",
+    purpose: "pg_trgm similarity threshold of the person facets, in (0,1].",
     default: "0.8",
   },
   {

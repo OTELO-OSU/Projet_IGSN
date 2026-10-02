@@ -80,16 +80,16 @@ describe("matchRanges", () => {
   );
 
   it.each([
-    ["(", "Core (deep)"],
-    ["+", "Core +1"],
-    ["|", "Core|A"],
-    ["?", "Core?"],
-    ["{", "Core {1}"],
-    ["[", "Core [1]"],
-    ["\\", "Core\\A"],
-    ["$", "Core$A"],
-    ["（", "Core（deep）"],
-    ["＼", "Core＼A"],
+    ["(d", "Core (deep)"],
+    ["+1", "Core +1"],
+    ["e|", "Core|A"],
+    ["e?", "Core?"],
+    ["{1", "Core {1}"],
+    ["[1", "Core [1]"],
+    ["e\\", "Core\\A"],
+    ["e$", "Core$A"],
+    ["（d", "Core（deep）"],
+    ["e＼", "Core＼A"],
   ])("should match the metacharacter %j literally", (query, text) => {
     expect(matchRanges(text, query)).toHaveLength(1);
     expect(matchRanges("Core deep", query)).toEqual([]);
@@ -115,7 +115,7 @@ describe("matchRanges", () => {
     ["*powder", "Rock powder", [[5, 11]]],
     ["caro*te", "Carotte de Basalte", [[0, 7]]],
     ["gres", "Gres du Nord", [[0, 4]]],
-    ["**z", "Quartz", [[0, 6]]],
+    ["**tz", "Quartz", [[0, 6]]],
   ])("should be unchanged by the collapse for %j", (query, text, ranges) => {
     expect(matchRanges(text, query)).toEqual(ranges);
   });

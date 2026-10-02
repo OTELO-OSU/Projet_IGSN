@@ -62,11 +62,13 @@ is missing, that is a domain/API change first (see the `add-domain-entity` and
    own builder; a `linked` facet goes in `FACET_JOIN` instead (its link table
    and column). `facet-column.spec` guards both lists against the registry.
 
-4. **Counts**: `enum`, `hierarchy` and `linked` facets are counted automatically
-   by `GET /samples/facets` (`api/sample/service/count-facets.ts`), which
-   derives its facet list from `SAMPLE_FACETS` and reuses `FACET_COLUMN` /
-   `FACET_JOIN`; a `text` or `numericRange` facet is never counted. Nothing to
-   wire here beyond steps 1 and 3.
+4. **Counts**: `GET /samples/facets` (`api/sample/service/count-facets.ts`)
+   counts every `enum`, `hierarchy` and `linked` facet of `SAMPLE_FACETS`; a
+   `text` or `numericRange` facet is never counted. A counted facet needs its
+   `INDEXED_FIELD` entry there: a `sample` column (an ancestor-path `text[]`
+   for a hierarchy), maintained by a trigger when the value lives in a joined
+   table, and a migration rebuilding `sample_search_idx` with that field as
+   `::pdb.literal`.
 
 5. **Endpoint-backed options (rare)**: a facet whose values aren't a static
    catalog (the `linked` ones) fetches them instead of reading the registry's

@@ -1,4 +1,5 @@
 import {
+  MAX_TOKEN_LENGTH,
   parseSearchToken,
   searchTokens,
 } from "@projet-igsn/domain/sample/search/search-tokens";
@@ -24,11 +25,13 @@ const FUZZY_MIN_LENGTH = 5;
 
 const ESCAPED_GROUP = "\\\\\\1";
 
+const TANTIVY_REGEX_PUNCTUATION = "([!-/:;=?@[-`{-~])";
+
 function literalSegment(value: string) {
   return sql`regexp_replace(immutable_unaccent(${value}), '([^[:alnum:]])', ${ESCAPED_GROUP}, 'g')`;
 }
 
-function tokenPattern(token: string) {
+function tokenPattern(token: string, inline: boolean) {
   const { segments, anchorStart, anchorEnd } = parseSearchToken(token);
   const pieces = [
     ...(anchorStart ? [sql`'\\m'`] : []),
@@ -39,23 +42,41 @@ function tokenPattern(token: string) {
     ),
     ...(anchorEnd ? [sql`'\\M'`] : []),
   ];
-  return sql`(SELECT ${sql.join(pieces, sql` || `)})`;
+  const pattern = sql.join(pieces, sql` || `);
+  return inline ? sql`(${pattern})` : sql`(SELECT ${pattern})`;
+}
+
+function termSegment(value: string) {
+  return sql`regexp_replace(lower(immutable_unaccent(${value})), ${TANTIVY_REGEX_PUNCTUATION}, ${ESCAPED_GROUP}, 'g')`;
+}
+
+function termRegex(token: string) {
+  const { segments, anchorStart, anchorEnd } = parseSearchToken(token);
+  const pieces = [
+    ...(anchorStart ? [] : [sql`'.*'`]),
+    ...segments
+      .filter((segment) => segment !== "")
+      .flatMap((segment, index) =>
+        index === 0
+          ? [termSegment(segment)]
+          : [sql`'.*'`, termSegment(segment)],
+      ),
+    ...(anchorEnd ? [] : [sql`'.*'`]),
+  ];
+  return sql.join(pieces, sql` || `);
 }
 
 function isFuzzyToken(token: string): boolean {
   return token.length >= FUZZY_MIN_LENGTH && !token.includes("*");
 }
 
-function matchesIgsnExactly(token: string): Expression<SqlBool> {
-  return sql<SqlBool>`igsn = upper(${token})`;
-}
-
 export function matchesToken(
   texts: readonly RawBuilder<unknown>[],
   token: string,
   extraArms: Expression<SqlBool>[] = [],
+  inline = false,
 ): Expression<SqlBool> {
-  const pattern = tokenPattern(token);
+  const pattern = tokenPattern(token, inline);
   const arms = [
     ...extraArms,
     ...texts.map((text) => sql`${text} ~* ${pattern}`),
@@ -70,16 +91,40 @@ export function tokenFilters(
   texts: readonly RawBuilder<unknown>[],
   value: string,
   extraArm?: (token: string) => Expression<SqlBool>,
+  inline = false,
 ): Expression<SqlBool>[] {
   const tokens = searchTokens(value);
   if (tokens.length === 0) return [sql<SqlBool>`false`];
   return tokens.map((token) =>
-    matchesToken(texts, token, extraArm ? [extraArm(token)] : []),
+    matchesToken(texts, token, extraArm ? [extraArm(token)] : [], inline),
   );
 }
 
+function matchesSearchToken(token: string): Expression<SqlBool> {
+  if (token.length > MAX_TOKEN_LENGTH) return sql<SqlBool>`false`;
+  const regex = termRegex(token);
+  const arms = [
+    sql`igsn = upper(${token})`,
+    ...SEARCHED_TEXTS.map((text) => sql`${text} @@@ pdb.regex(${regex})`),
+    ...(isFuzzyToken(token)
+      ? SEARCHED_TEXTS.map(
+          (text) =>
+            sql`${text} === (lower(immutable_unaccent(${token})))::pdb.fuzzy(1, f, t)`,
+        )
+      : []),
+  ];
+  return sql<SqlBool>`(${sql.join(arms, sql` OR `)})`;
+}
+
 export function searchFilters(search: string): Expression<SqlBool>[] {
-  return tokenFilters(SEARCHED_TEXTS, search, matchesIgsnExactly);
+  const tokens = searchTokens(search);
+  if (tokens.length === 0) return [sql<SqlBool>`false`];
+  return tokens.map(matchesSearchToken);
+}
+
+export async function forceCustomPlan(trx: Transaction<DB>): Promise<void> {
+  // ponytail: ParadeDB ignores Params in heap filters under generic plans (paradedb#6492), drop once pg_search handles them
+  await sql`set local plan_cache_mode = force_custom_plan`.execute(trx);
 }
 
 export async function applyFuzzyThreshold(

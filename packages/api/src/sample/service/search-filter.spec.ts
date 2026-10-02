@@ -7,21 +7,24 @@ import { relevanceScore, searchFilters } from "./search-filter.ts";
 
 describe("searchFilters", () => {
   pgTest.for([
-    ["the wildcard/substring arm", "gres"],
+    ["the substring arm", "gres"],
     ["the typo-tolerance arm", "achondrites"],
+    ["the wildcard arm", "bas*"],
   ] as const)(
-    "should reach a trigram index for %s",
+    "should plan %s as a ParadeDB index query, never a heap filter",
     async ([, search], { db }) => {
-      // Arrange
-      await sql`set local enable_seqscan = off`.execute(db);
       // Act
       const plan = await db
         .selectFrom("sample")
-        .select((eb) => eb.fn.countAll<number>().as("count"))
+        .select("id")
         .where((eb) => eb.and(searchFilters(search)))
         .explain();
       // Assert
-      expect(JSON.stringify(plan)).toContain("sample_name_trgm_idx");
+      const lines = plan.map((row) => Object.values(row).join(""));
+      expect({
+        indexed: lines.some((line) => line.includes("ParadeDB")),
+        heapFiltered: lines.some((line) => /\bFilter:/.test(line)),
+      }).toEqual({ indexed: true, heapFiltered: false });
     },
   );
 });

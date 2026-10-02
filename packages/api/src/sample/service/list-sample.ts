@@ -17,7 +17,11 @@ import { type Expression, sql, type SqlBool } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
-import { facetFilters, personFacetValues } from "./facet-filter.ts";
+import {
+  facetFilters,
+  type LinkedAccounts,
+  personFacetValues,
+} from "./facet-filter.ts";
 import { institutionSampleWhere } from "./institution-sample-where.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
@@ -34,6 +38,7 @@ import {
 } from "./sample-children-query.ts";
 import {
   applyFuzzyThreshold,
+  forceCustomPlan,
   relevanceScore,
   searchFilters,
 } from "./search-filter.ts";
@@ -44,13 +49,9 @@ function withinBbox(
 ): Expression<SqlBool> {
   const envelopes = splitBbox(bbox).map(
     ({ west, south, east, north }) =>
-      sql<SqlBool>`ST_Intersects(location.geom, ST_MakeEnvelope(${west}, ${south}, ${east}, ${north}, 4326))`,
+      sql<SqlBool>`ST_Intersects(sample.location_geom, ST_MakeEnvelope(${west}, ${south}, ${east}, ${north}, 4326))`,
   );
-  return sql<SqlBool>`exists (
-    select 1 from location
-     where location.id = sample.location_id
-       and (${sql.join(envelopes, sql` OR `)})
-  )`;
+  return sql<SqlBool>`(${sql.join(envelopes, sql` OR `)})`;
 }
 
 function assignedTo(
@@ -81,12 +82,13 @@ function isPublished(): Expression<SqlBool> {
 
 export function sampleFilters(
   params: Partial<ListSamplesQuery>,
+  linkedAccounts?: LinkedAccounts,
 ): Expression<SqlBool>[] {
   return [
     ...(params.search === undefined ? [] : searchFilters(params.search)),
     ...(params.bbox === undefined ? [] : [withinBbox(params.bbox)]),
     ...(params.viewport === undefined ? [] : [withinBbox(params.viewport)]),
-    ...facetFilters(params),
+    ...facetFilters(params, linkedAccounts),
   ];
 }
 
@@ -97,11 +99,7 @@ export function publishedScope(
     isPublished(),
     ...(params.includeSubSamples === true
       ? []
-      : [
-          sql<SqlBool>`not exists (
-    select 1 from sample_parent where sample_parent.sample_id = sample.id
-  )`,
-        ]),
+      : [sql<SqlBool>`not sample.is_sub_sample`]),
   ];
 }
 
@@ -122,7 +120,8 @@ async function listSamplesWhere(
   const { page, perPage, search, sort, order = "asc" } = params;
 
   return withTransaction(db, async (trx) => {
-    await applyFuzzyThreshold(trx, [search, ...personFacetValues(params)]);
+    if (search !== undefined) await forceCustomPlan(trx);
+    await applyFuzzyThreshold(trx, personFacetValues(params));
 
     const filters = [
       ...sampleFilters(params),

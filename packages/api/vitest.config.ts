@@ -10,8 +10,8 @@ export default defineConfig({
     kyselyPostgres<DB>({
       config: {
         dockerContainer: {
-          image: "postgis/postgis",
-          tag: "17-3.5",
+          image: "paradedb/paradedb",
+          tag: "0.25.11-pg17",
         },
         port: randomInt(20000, 40000),
       },

@@ -19,6 +19,7 @@
   "search_results_count": "{count} results",
   "search_results_count_one": "1 result",
   "search_no_results": "No samples match your search.",
+  "search_too_short_hint": "Type a word of at least 2 characters to search.",
   "search_per_page": "Results per page",
   "search_engine_text": "Terms",
   "search_engine_location": "Location",

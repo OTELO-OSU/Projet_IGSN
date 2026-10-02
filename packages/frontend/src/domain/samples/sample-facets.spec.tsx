@@ -243,6 +243,11 @@ describe("SampleFacets", () => {
     },
     { facet: TYPE_FACET, values: {}, offered: ["Core (2)"] },
     { facet: /other group/i, values: {}, offered: ["ANR CritMet (1)"] },
+    {
+      facet: /other group/i,
+      values: { manualGroup: "01980e2d-6f9b-7000-9000-000000000003" },
+      offered: ["ANR CritMet (1)", "X"],
+    },
   ])(
     "should offer only the $facet options with results or selected",
     async ({ facet, values, offered }) => {
@@ -261,6 +266,19 @@ describe("SampleFacets", () => {
         .toEqual(offered);
     },
   );
+
+  it("should name the selected contributor without results", async () => {
+    const { screen } = await renderFacets(
+      { contributor: CONTRIBUTOR.id },
+      [],
+      [CONTRIBUTOR],
+      {},
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: /contributor/i }))
+      .toHaveTextContent("Marie Dupont");
+  });
 
   it("should keep offering the selected hierarchy node without results", async () => {
     const { screen } = await renderFacets({ type: "core" }, [], [], {});

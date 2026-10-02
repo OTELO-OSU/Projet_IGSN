@@ -19,6 +19,35 @@ describe("searchTokens", () => {
       expect(searchTokens(search)).toEqual([]);
     },
   );
+
+  it.each(["a", "*a*", "😀", "á", "́́", "\u0301e"])(
+    "should drop the token %j, shorter than 2 characters without its wildcards",
+    (token) => {
+      expect(searchTokens(`${token} basalt`)).toEqual(["basalt"]);
+    },
+  );
+
+  it.each(["ab", "a*b", "ab́", "😀😀"])(
+    "should keep the 2-character token %j",
+    (token) => {
+      expect(searchTokens(token)).toEqual([token]);
+    },
+  );
+
+  it("should collapse the duplicate tokens", () => {
+    expect(searchTokens("basalt core basalt")).toEqual(["basalt", "core"]);
+  });
+
+  it("should keep only the first 6 tokens", () => {
+    expect(searchTokens("aa bb aa cc dd ee ff gg")).toEqual([
+      "aa",
+      "bb",
+      "cc",
+      "dd",
+      "ee",
+      "ff",
+    ]);
+  });
 });
 
 describe("parseSearchToken", () => {

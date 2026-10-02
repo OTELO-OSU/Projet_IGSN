@@ -4,10 +4,11 @@ import {
 } from "@projet-igsn/domain/sample/sample-validator";
 import {
   activeFacetKeys,
+  facetParamKeys,
   facetQueryFields,
   SAMPLE_FACETS,
 } from "@projet-igsn/domain/sample/search/facets";
-import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
+import { searchTermSchema } from "@projet-igsn/domain/sample/search/search-tokens";
 import { z } from "zod";
 
 import type {
@@ -23,12 +24,7 @@ import {
 export const PER_PAGE = 10;
 
 export const searchParamsSchema = z.object({
-  q: z
-    .string()
-    .trim()
-    .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
-    .optional()
-    .catch(undefined),
+  q: searchTermSchema,
   bbox: z.string().optional().catch(undefined),
   engine: searchEngineSchema.optional().catch(undefined),
   page: z.coerce.number().int().min(1).default(1).catch(1),
@@ -51,6 +47,12 @@ export function clearDependents(key: string): Record<string, undefined> {
   );
 }
 
+const FACET_KEYS = facetParamKeys();
+
+export function clearFacets(): Record<string, undefined> {
+  return Object.fromEntries(FACET_KEYS.map((key) => [key, undefined]));
+}
+
 function hasValidBbox(bbox: string | undefined): boolean {
   return !!bbox && bboxSchema.safeParse(bbox).success;
 }
@@ -65,16 +67,19 @@ export function toFilters(params: SearchParams): SampleFilters {
   return filters;
 }
 
+export function narrowsByFacet(filters: SampleFilters): boolean {
+  return Object.keys(filters).some(
+    (key) => !SAMPLE_FACETS.some((f) => f.key === key && f.kind === "boolean"),
+  );
+}
+
 export function searchQueryParams(
   params: SearchParams,
 ): ListSamplesParams | undefined {
   const search = params.q || undefined;
   const bbox = hasValidBbox(params.bbox) ? params.bbox : undefined;
   const filters = toFilters(params);
-  const narrows = Object.keys(filters).some(
-    (key) => !SAMPLE_FACETS.some((f) => f.key === key && f.kind === "boolean"),
-  );
-  if (!search && !bbox && !narrows) return undefined;
+  if (!search && !bbox && !narrowsByFacet(filters)) return undefined;
   return {
     page: params.page,
     perPage: params.perPage ?? PER_PAGE,

@@ -64,7 +64,7 @@ ADR 0016 amended this: the location now shows by default and hides only for a re
 
 ## Consequences
 
-- **Infrastructure**: PostGIS needs `postgis/postgis:17-3.5` rather than `postgres:17-alpine` in `packages/api/vitest.config.ts`, `docker-compose.dev.yml` and `docker-compose.e2e.yml`. RDS ships PostGIS on its extension allowlist.
+- **Infrastructure**: PostGIS needs `paradedb/paradedb:0.25.11-pg17`, which bundles it, rather than `postgres:17-alpine` in `packages/api/vitest.config.ts` and every compose running Postgres.
 - **Kysely** has no geometry type, so `db.ts` types `geom` as `Generated<string>`, never selected. The repository reads a sample with `selectAll("sample")` plus a correlated `location` subquery selecting its explicit columns, and maps the nested row to `Location`; spatial predicates use `sql` fragments.
 - The generated column relies on `ST_MakePoint`, `ST_SetSRID`, `ST_MakeEnvelope` and `ST_Collect` being `IMMUTABLE`, validated by the integration tests on the real container; the fallback is a `BEFORE INSERT/UPDATE` trigger. A generated column's type cannot be altered in place (`USING` is rejected outright), so changing it means `DROP` plus re-`ADD`, which is safe only because `geom` derives from the raw columns.
 - **Search**: `listSamplesQuerySchema` carries an optional bounding-box param and the drawn box lives in the URL. The OR of two envelopes must carry its own parentheses, since the filter list is joined with `AND` and an unparenthesised OR would escape the visibility scope.
