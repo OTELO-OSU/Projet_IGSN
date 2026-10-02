@@ -55,11 +55,11 @@ const undescribedProperties = (node: unknown, path: string): string[] => {
     return [];
   }
   const { properties, ...keywords } = node as Record<string, unknown> & {
-    properties?: Record<string, { description?: string }>;
+    properties?: Record<string, { description?: string; $ref?: string }>;
   };
   return [
     ...Object.entries(properties ?? {})
-      .filter(([, property]) => !property?.description)
+      .filter(([, property]) => !property?.description && !property?.$ref)
       .map(([name]) => `${path}.${name}`),
     ...Object.entries(properties ?? {}).flatMap(([name, property]) =>
       undescribedProperties(property, `${path}.${name}`),

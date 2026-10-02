@@ -1,6 +1,5 @@
-import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
-import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
+import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import type { DataCiteConfig } from "../datacite/config.ts";
@@ -14,22 +13,22 @@ import {
   transactionally,
   withTransaction,
 } from "../transaction.ts";
-import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
-import { addParentOwnerAsContributor } from "./service/add-parent-owner-as-contributor.ts";
 import { countPublishedFacets } from "./service/count-facets.ts";
 import { deleteSample } from "./service/delete-sample.ts";
 import {
+  findBatchDuplicateSamples,
   findDuplicateSamples,
   findDuplicateSamplesOfEach,
 } from "./service/find-duplicate-samples.ts";
+import { findSampleStatusByIgsn } from "./service/find-sample-status-by-igsn.ts";
 import { getEditLock } from "./service/get-edit-lock.ts";
 import { getPublicSampleByIgsn } from "./service/get-public-sample-by-igsn.ts";
 import { getSampleById } from "./service/get-sample-by-id.ts";
 import { getSampleLineage } from "./service/get-sample-lineage.ts";
 import { getSample } from "./service/get-sample.ts";
+import { insertOwnedSample } from "./service/insert-owned-sample.ts";
 import { insertSampleAttachment } from "./service/insert-sample-attachment.ts";
-import { insertSampleRows } from "./service/insert-sample.ts";
 import { isSampleModerated } from "./service/is-sample-moderated.ts";
 import {
   listExportableSamples,
@@ -41,24 +40,16 @@ import {
 import { listSamplesByInternalNumbers } from "./service/list-samples-by-internal-numbers.ts";
 import { mapPublishedSamples } from "./service/map-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
+import {
+  insertPublishingSample,
+  updatePublishingSample,
+} from "./service/queue-publication.ts";
 import { releaseEditLock } from "./service/release-edit-lock.ts";
 import { reserveInternalNumbers } from "./service/reserve-internal-numbers.ts";
 import { searchEligibleParents } from "./service/search-eligible-parents.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
 import { unavailableInternalNumbers } from "./service/unavailable-internal-numbers.ts";
 import { updateSample } from "./service/update-sample.ts";
-
-async function insertOwnedSample(
-  trx: Transactional<DB>,
-  input: CreateSample,
-  ownerId: string,
-  groups: InstitutionalGroups,
-): Promise<string> {
-  const id = await insertSampleRows(trx, input, groups);
-  await insertSampleOwner(trx, id, ownerId);
-  await addParentOwnerAsContributor(trx, id, input.parentIds ?? []);
-  return id;
-}
 
 export function createSampleRepository(
   db: Kysely<DB>,
@@ -90,6 +81,8 @@ export function createSampleRepository(
     getPublicByIgsn: tx(getPublicSampleByIgsn),
     findDuplicates: tx(findDuplicateSamples),
     findDuplicatesOfEach: tx(findDuplicateSamplesOfEach),
+    findBatchDuplicates: tx(findBatchDuplicateSamples),
+    findStatusByIgsn: tx(findSampleStatusByIgsn),
     getPublicLineage: tx(getSampleLineage),
     create: (input, owner) =>
       withTransaction(db, async (trx) =>
@@ -101,12 +94,13 @@ export function createSampleRepository(
     createPublishing: async (samples, owner) => {
       const count = await withTransaction(db, async (trx) => {
         for (const { input, internalNumber, attachments } of samples) {
-          const id = await insertOwnedSample(trx, input, owner.id, owner);
-          await trx
-            .updateTable("sample")
-            .set({ status: "publishing", internal_number: internalNumber })
-            .where("id", "=", id)
-            .execute();
+          const id = await insertPublishingSample(
+            trx,
+            input,
+            owner.id,
+            owner,
+            internalNumber,
+          );
           for (const attachment of attachments)
             await insertSampleAttachment(
               trx,
@@ -129,13 +123,8 @@ export function createSampleRepository(
     listByInternalNumbers: tx(listSamplesByInternalNumbers),
     updatePublishing: (samples) =>
       withTransaction(db, async (trx) => {
-        for (const { id, input } of samples) {
-          await updateSample(trx, id, input);
-          await trx
-            .updateTable("sample")
-            .set({ status: "publishing" })
-            .where("id", "=", id)
-            .execute();
+        for (const { id, input, updatedAt } of samples) {
+          await updatePublishingSample(trx, id, input, updatedAt);
         }
         return samples.length;
       }),

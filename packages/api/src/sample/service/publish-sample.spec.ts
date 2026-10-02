@@ -228,6 +228,26 @@ describe("publishSample", () => {
     });
     expect(republished).toMatchObject({ id: created.id });
   });
+
+  pgTest(
+    "should keep a legacy igsn when the sample is published again",
+    async ({ db }) => {
+      // Arrange
+      const created = await insertSample(db, publishableSample);
+      await db
+        .updateTable("sample")
+        .set({ status: "publishing", igsn: "CNRS0000000042" })
+        .where("id", "=", created.id)
+        .execute();
+      // Act
+      const republished = await publishSample(db, created.id);
+      // Assert
+      expect(republished).toMatchObject({
+        status: "published",
+        igsn: "CNRS0000000042",
+      });
+    },
+  );
 });
 
 describe("publishSample with DataCite configured", () => {

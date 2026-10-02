@@ -15,7 +15,7 @@ Phase 4 of the Excel bulk import must publish up to `MAX_IMPORT_ROWS` samples, e
 The `sample.status` column is the queue, with two new values:
 
 - `publishing`: committed by the import, waiting for registration; read-only for everyone (`canUpdateSample` refuses it), not deletable, invisible publicly.
-- `publish_failed`: registration failed after retries; behaves exactly like `draft` (editable, deletable, publishable), with the failure text in the new `sample.publishing_error` column.
+- `publish_failed`: registration failed after retries; behaves like `draft` (editable, publishable; deletable until the 2026-10-02 amendment), with the failure text in the new `sample.publishing_error` column.
 
 `POST /admin/samples/import` on a zero-issue workbook probes DataCite (`checkDataCite`, one authenticated `GET /dois?page[size]=1`; a null config passes, matching `publishSample`), aborts with 503 if unreachable, else inserts every sample as `publishing` in one transaction and answers 200 `{count}`.
 
@@ -26,6 +26,16 @@ Idempotence rests on two facts: `generateIgsnSuffix(id)` is deterministic from t
 `publishSample` clears `publishing_error` in its UPDATE, so any later successful publish (the worker's or a human's on a `publish_failed` sample) erases the error. `PERMANENT_IGSN_STATUSES` (`published`, `withdrawn`, `tombstone`) replaces `status <> 'draft'` as `hasPermanentIgsn`'s definition, in TS and inline in SQL, keeping the two new statuses on the draft side of every permanence gate. `sample_status_requires_igsn` widens accordingly: the three pre-permanent statuses need no IGSN, so `published -> publishing -> published` keeps its IGSN across the queue.
 
 `POST /admin/samples/bulk-edit` (`api/src/sample/bulk-edit/`) reuses the same two statuses for an already-published sample: it commits accepted edits as `publishing`, and the same worker republishes it under its existing IGSN, `published_at` and a DataCite `publish` event. Accepted consequences: the sample is hidden from the public while queued, and a failed republish leaves it `publish_failed`, on the draft side of every permanence gate, until "Retry publication" succeeds.
+
+`POST /service/samples/batch` (ADR 0036) is a third producer: each item commits as `publishing`, a create or an update, in the batch's own transaction, and `GET /service/batches/{id}` is the partner's poll, reading the same `status` and `publishing_error` the worker writes.
+
+### 2026-10-02
+
+- `publish_failed` is no longer deletable, `canDeleteSample` allowing only `draft` (user decision).
+- `publishSample` keeps an existing IGSN (`coalesce`), so a legacy `CNRS…` IGSN survives the queue.
+- A queued update to a published sample guards `status = 'published'` and the `updated_at` its checks read.
+- A sample changed in between answers 409 `{ error: "Sample changed, retry" }` and rolls the whole batch or bulk edit back.
+- The fail-fast sweep is unchanged.
 
 ## Rejected
 
