@@ -7,6 +7,7 @@ import {
   XLSX_MEDIA_TYPE,
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { REQUIRED_MARKER } from "@projet-igsn/domain/sample/import/template-header";
 import { STAGED_UPLOAD_TTL_MS } from "@projet-igsn/domain/staged-upload/limits";
 import ExcelJS from "exceljs";
 import { mkdtemp, readdir, readFile, rm, utimes } from "node:fs/promises";
@@ -33,7 +34,7 @@ import { createSampleRepository } from "../repository.ts";
 import { attachmentPathOf } from "../service/insert-sample-attachment.ts";
 import { insertSample } from "../service/insert-sample.ts";
 import { publishSample } from "../service/publish-sample.ts";
-import { REQUIRED_MARKER, SHEETS } from "./columns.ts";
+import { SHEETS } from "./columns.ts";
 import {
   CLEAN_SAMPLE,
   cleanBook,

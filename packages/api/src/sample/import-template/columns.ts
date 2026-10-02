@@ -5,6 +5,7 @@ import {
   ATTACHMENT_FILE_NAME_HEADER,
   ATTACHMENTS_SHEET_NAME,
 } from "@projet-igsn/domain/sample/import/attachment-sheet";
+import { REQUIRED_MARKER } from "@projet-igsn/domain/sample/import/template-header";
 import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
 import { PHYSIOGRAPHIC_ENVIRONMENTS } from "@projet-igsn/domain/sample/physiographic-environment/vocabulary";
 import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
@@ -68,8 +69,6 @@ export const SAMPLE_KEY_HEADER = "Sample #";
 export const SAMPLE_NAME_HEADER = "Name";
 
 export const SAMPLE_LOOKUP_HEADER = "Sample name (filled automatically)";
-
-export const REQUIRED_MARKER = " *";
 
 export const MANUAL_GROUP_PATH = "manualGroupIds";
 

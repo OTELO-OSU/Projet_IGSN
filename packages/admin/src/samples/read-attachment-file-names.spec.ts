@@ -1,4 +1,6 @@
+import { ATTACHMENT_FILE_NAME_HEADER } from "@projet-igsn/domain/sample/import/attachment-sheet";
 import { XLSX_MEDIA_TYPE } from "@projet-igsn/domain/sample/import/import-validator";
+import { REQUIRED_MARKER } from "@projet-igsn/domain/sample/import/template-header";
 
 import { buildAttachmentWorkbook } from "../../test/build-attachment-workbook.ts";
 import { readAttachmentFileNames } from "./read-attachment-file-names.ts";
@@ -18,6 +20,22 @@ describe("readAttachmentFileNames", () => {
       "photo.jpg",
     ]);
   });
+
+  it.each([
+    `${ATTACHMENT_FILE_NAME_HEADER}${REQUIRED_MARKER}`,
+    "  FILE   name ",
+  ])(
+    "should find the file name column under the header %j, matched as the server matches it",
+    async (header) => {
+      const file = await buildAttachmentWorkbook(
+        ["report.pdf"],
+        "samples.xlsx",
+        header,
+      );
+
+      expect(await readAttachmentFileNames(file)).toEqual(["report.pdf"]);
+    },
+  );
 
   it.each([
     {

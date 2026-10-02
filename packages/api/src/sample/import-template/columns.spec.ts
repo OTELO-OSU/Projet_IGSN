@@ -1,3 +1,4 @@
+import { REQUIRED_MARKER } from "@projet-igsn/domain/sample/import/template-header";
 import { describe, expect, it } from "vitest";
 
 import type { Column } from "./columns.ts";
@@ -6,7 +7,6 @@ import { COLUMN_KINDS } from "./column-kind.ts";
 import {
   CHILD_SHEETS,
   DATA_SHEETS,
-  REQUIRED_MARKER,
   SAMPLE_COLUMNS,
   SHEETS,
 } from "./columns.ts";

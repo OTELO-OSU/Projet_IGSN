@@ -1,10 +1,11 @@
 import type ExcelJS from "exceljs";
 
+import { REQUIRED_MARKER } from "@projet-igsn/domain/sample/import/template-header";
 import { describe, expect, it } from "vitest";
 
 import type { TemplateLayout } from "./template-layout.ts";
 
-import { REQUIRED_MARKER, SHEETS } from "./columns.ts";
+import { SHEETS } from "./columns.ts";
 import {
   columnOf,
   deleteColumn,

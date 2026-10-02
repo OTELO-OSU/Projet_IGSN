@@ -7,6 +7,7 @@ import {
   XLSX_MEDIA_TYPE,
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { HEADER_ROW } from "@projet-igsn/domain/sample/import/template-header";
 import ExcelJS from "exceljs";
 
 import type { Column, ColumnGroup } from "./columns.ts";
@@ -67,8 +68,6 @@ export const sheetValidations = (sheet: ExcelJS.Worksheet): RangeValidations =>
   (sheet as unknown as { dataValidations: RangeValidations }).dataValidations;
 
 const GROUP_ROW = 1;
-
-export const HEADER_ROW = 2;
 
 export const FIRST_DATA_ROW = HEADER_ROW + 1;
 
