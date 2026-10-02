@@ -498,6 +498,20 @@ describe("SampleView", () => {
     await expect.element(screen.getByText("3.2 kBq alpha")).toBeInTheDocument();
   });
 
+  it("should hide the security section when no hazard is declared", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          security: { radioactivity: false, asbestosRich: false },
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Security" }))
+      .not.toBeInTheDocument();
+  });
+
   it("should show the description section with its rows when set", async () => {
     const screen = await render(
       <SampleView

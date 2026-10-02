@@ -34,7 +34,7 @@ import {
   typeLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { ScientificContextView } from "#/domain/samples/scientific-context-view.tsx";
-import { SecurityView } from "#/domain/samples/security-view.tsx";
+import { hasHazard, SecurityView } from "#/domain/samples/security-view.tsx";
 import { SyntheticDetailsView } from "#/domain/samples/synthetic-details-view.tsx";
 import { m } from "#/paraglide/messages.js";
 
@@ -272,11 +272,13 @@ export function sampleSections(
           content: <AgeView age={age} />,
         }
       : null,
-    security && {
-      id: "security",
-      title: m.sample_section_security(),
-      content: <SecurityView security={security} />,
-    },
+    hasHazard(security)
+      ? {
+          id: "security",
+          title: m.sample_section_security(),
+          content: <SecurityView security={security} />,
+        }
+      : null,
     hasEconomicInterest({
       resourceType,
       economicInterestElements,

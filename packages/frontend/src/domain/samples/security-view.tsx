@@ -1,10 +1,19 @@
-import type { Security } from "@projet-igsn/domain/sample/security/model";
+import {
+  HAZARDS,
+  type Security,
+} from "@projet-igsn/domain/sample/security/model";
 
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
 
 const hazardText = (flag: boolean | null | undefined) =>
   flag == null ? null : flag ? m.sample_hazard_yes() : m.sample_hazard_no();
+
+export function hasHazard(
+  security: Security | null | undefined,
+): security is Security {
+  return HAZARDS.some(({ flag }) => security?.[flag] === true);
+}
 
 export function SecurityView({ security }: { security: Security }) {
   return (
