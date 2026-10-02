@@ -111,7 +111,7 @@ db-psql:									## Open a psql shell on the local dev Postgres (dev stack must 
 
 db-reset:								## Fully reset the dev Postgres database, then re-run migrations (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec -T postgres \
-		psql -U igsn -d igsn -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+		psql -U igsn -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE igsn WITH (FORCE)" -c "CREATE DATABASE igsn"
 	@docker compose -f docker-compose.dev.yml run --rm api pnpm -F @projet-igsn/api migrate
 
 db-reset-demo: db-reset db-seed-demo							## Reset the dev Postgres and reseed it with the demo dataset (dev stack must be up)

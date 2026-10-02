@@ -18,7 +18,7 @@ RUNNER = $(COMPOSE) exec -T runner pnpm
 define RESET
 $(COMPOSE) stop api
 $(COMPOSE) up -d --wait postgres
-$(SQL) "drop schema public cascade; create schema public;"
+$(COMPOSE) exec -T postgres psql -U igsn -d postgres -v ON_ERROR_STOP=1 -c "drop database igsn with (force)" -c "create database igsn"
 $(RUNNER) migrate
 $(RUNNER) seed:bench --count $(1)
 $(SQL) "vacuum analyze"

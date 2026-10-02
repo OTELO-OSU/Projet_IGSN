@@ -19,7 +19,11 @@ export function LazySampleLocationMap({
   useEffect(() => setMounted(true), []);
 
   return (
-    <div role="group" aria-label={m.sample_map_label()} className="h-80">
+    <div
+      role="group"
+      aria-label={m.sample_map_label()}
+      className="h-80 md:mt-2"
+    >
       {mounted ? (
         <Suspense fallback={null}>
           <SampleLocationMap position={position} />
