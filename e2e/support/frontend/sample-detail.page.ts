@@ -10,7 +10,7 @@ export function sampleDetailPage(page: Page) {
   });
   const lineage = page.getByRole("region", { name: "Lineage" });
   const locationMap = page
-    .getByRole("region", { name: "Sample", exact: true })
+    .getByRole("region", { name: "Identity", exact: true })
     .getByRole("group", { name: "Sample location map" });
   const lineageLink = (name: string, relation: string) =>
     lineage.getByRole("link", { name: `${name} ${relation}` });

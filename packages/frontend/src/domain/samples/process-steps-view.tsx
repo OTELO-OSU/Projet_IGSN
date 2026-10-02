@@ -14,9 +14,9 @@ export function ProcessStepsView({
     <div className="mt-2 grid gap-6">
       {processSteps.map(({ kind, date, description }, index) => (
         <div key={index}>
-          <h3 className="text-muted-foreground px-4 pt-3 font-medium">
+          <h4 className="text-muted-foreground px-4 pt-3 font-medium">
             {processStepKindLabel(kind)}
-          </h3>
+          </h4>
           <FieldRows>
             <FieldRow
               label={m.sample_field_process_step_date()}

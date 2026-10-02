@@ -25,13 +25,13 @@ export function RepositoryView({ repository }: { repository: Repository }) {
           laboratoryLabel(repository.currentArchiveLaboratory)
         }
       />
-      <FieldRow
-        label={m.sample_field_collection_name()}
-        value={repository.collectionName}
-      />
       <OrgLinksRow
         label={m.sample_field_rights_holder()}
         rors={repository.rightsHolder}
+      />
+      <FieldRow
+        label={m.sample_field_collection_name()}
+        value={repository.collectionName}
       />
     </FieldRows>
   );
