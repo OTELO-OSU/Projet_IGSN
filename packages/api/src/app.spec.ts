@@ -297,6 +297,30 @@ describe("app", () => {
     );
 
     pgTest(
+      "should throttle the service batch on the import template's budget, per client IP",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const batchFrom = (ip: string) =>
+          app.request("/service/samples/batch", {
+            method: "POST",
+            headers: { "X-Real-IP": ip, "content-type": "application/json" },
+            body: "[]",
+          });
+
+        await spend(
+          () => batchFrom("10.0.0.7"),
+          IMPORT_TEMPLATE_USER_BUDGET.points,
+        );
+        expect((await batchFrom("10.0.0.7")).status).toBe(429);
+        expect((await batchFrom("10.0.0.8")).status).not.toBe(429);
+        const read = await app.request("/service/samples", {
+          headers: { "X-Real-IP": "10.0.0.7" },
+        });
+        expect(read.status).toBe(200);
+      },
+    );
+
+    pgTest(
       "should limit an admin route per authenticated user",
       async ({ db }) => {
         const app = createApp(db).app;

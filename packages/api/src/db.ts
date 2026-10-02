@@ -288,6 +288,14 @@ type ServiceAccountTable = {
   created_at: Generated<Date>;
 };
 
+type SampleBatchItemTable = {
+  batch_id: string;
+  sample_id: string;
+  position: number;
+  partner_id: string;
+  service_account_id: string;
+};
+
 type ServiceAccountManagedInstitutionalGroupTable = {
   service_account_id: string;
   kind: InstitutionalGroupKind;
@@ -312,6 +320,7 @@ export type DB = {
   mineral_classification: MineralClassificationTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;
+  sample_batch_item: SampleBatchItemTable;
   service_account: ServiceAccountTable;
   service_account_managed_institutional_group: ServiceAccountManagedInstitutionalGroupTable;
   service_account_managed_manual_group: ServiceAccountManagedManualGroupTable;

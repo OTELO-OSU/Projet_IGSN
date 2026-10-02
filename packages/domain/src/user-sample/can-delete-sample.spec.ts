@@ -17,8 +17,8 @@ describe("canDeleteSample", () => {
     ["editor", "withdrawn", false],
     ["owner", "publishing", false],
     ["editor", "publishing", false],
-    ["owner", "publish_failed", true],
-    ["editor", "publish_failed", true],
+    ["owner", "publish_failed", false],
+    ["editor", "publish_failed", false],
     ["contributor", "publish_failed", false],
     [null, "publish_failed", false],
   ] as [UserSampleRole | null, SampleStatus, boolean][])(

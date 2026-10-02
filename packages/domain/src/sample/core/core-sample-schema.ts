@@ -161,7 +161,7 @@ export const localIdTitleOf = (
 const coreIdentificationFields = {
   sampleIdentifier: igsnSchema.meta({
     description:
-      "IGSN of the sample, minted by the registry; emit only, ignored on input.",
+      "IGSN of the sample, minted by the registry. The single POST and PUT ignore it, and a batch item uses it to select the sample to update.",
   }),
   doi: z
     .string()

@@ -1,5 +1,11 @@
 import { createRoute } from "@hono/zod-openapi";
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
+import {
+  acceptedSampleBatchSchema,
+  sampleBatchBodySchema,
+  sampleBatchConflictSchema,
+  sampleBatchSchema,
+} from "@projet-igsn/domain/sample-batch/model";
 import { coreFilterFields } from "@projet-igsn/domain/sample/core/core-list-samples-query";
 import {
   coreSampleBodySchema,
@@ -9,6 +15,7 @@ import {
   DATACITE_MEDIA_TYPE,
   dataCiteSampleSchema,
 } from "@projet-igsn/domain/sample/datacite/datacite-schema";
+import { IMPORT_MAX_BYTES } from "@projet-igsn/domain/sample/import/import-validator";
 import {
   ISAMPLES_MEDIA_TYPE,
   iSamplesSampleSchema,
@@ -33,6 +40,7 @@ import {
   invalidServiceSampleSchema,
   serviceErrorSchema,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
+import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 
 export const SERVICE_API_KEY_SCHEME = {
@@ -277,6 +285,75 @@ export const updateSampleRoute = createRoute({
       invalidServiceSampleSchema,
       "The record cannot stay published as it stands, one issue per reason.",
     ),
+    429: THROTTLED,
+    500: FAILED,
+  },
+});
+
+export const createSampleBatchRoute = createRoute({
+  method: "post",
+  path: "/samples/batch",
+  tags: TAGS,
+  summary: "Create or update samples in one batch",
+  description:
+    "Checks every item as POST /samples or PUT /samples/{igsn} would, then queues them all for publication, owned by the account's owner and snapshotting the account's own institutional codes, or refuses the whole batch. Poll GET /batches/{id} for each item's outcome.",
+  security: SECURITY,
+  middleware: [
+    bodyLimit({
+      maxSize: IMPORT_MAX_BYTES,
+      onError: (c) => c.json({ error: "Payload too large" }, 413),
+    }),
+  ] as const,
+  request: {
+    query: confirmDuplicatesQuery,
+    body: {
+      required: true,
+      content: { "application/json": { schema: sampleBatchBodySchema } },
+    },
+  },
+  responses: {
+    202: json(
+      acceptedSampleBatchSchema,
+      "The batch is queued for publication.",
+    ),
+    403: FORBIDDEN,
+    409: json(
+      z.union([sampleBatchConflictSchema, serviceErrorSchema]),
+      "Items are suspected to duplicate published samples, or each other, carrying the same name, material and collector; send the batch again with confirmDuplicates=true to keep them anyway. A sample changing between the checks and the write answers the same status with the issue-less ServiceError body; send the batch again.",
+    ),
+    413: json(serviceErrorSchema, "The body is larger than 20 MiB."),
+    415: UNSUPPORTED_MEDIA_TYPE,
+    422: json(
+      invalidServiceSampleSchema,
+      "Items cannot be published as they stand, one issue per reason, each path starting with the item's index.",
+    ),
+    429: THROTTLED,
+    500: FAILED,
+    503: json(
+      serviceErrorSchema,
+      "DataCite does not answer, so nothing was queued.",
+    ),
+  },
+});
+
+export const getSampleBatchRoute = createRoute({
+  method: "get",
+  path: "/batches/{id}",
+  tags: TAGS,
+  summary: "Read the outcome of a batch",
+  description:
+    "Lists each sample of a batch the account sent, with its publication status, its IGSN once published and the error of a failed publication.",
+  security: SECURITY,
+  request: {
+    params: z.object({
+      id: z.uuid().meta({ description: "Identifier of the batch." }),
+    }),
+  },
+  responses: {
+    200: json(sampleBatchSchema, "The batch and the state of its samples."),
+    400: json(serviceErrorSchema, "The id in the path is not a valid uuid."),
+    403: FORBIDDEN,
+    404: json(serviceErrorSchema, "The account sent no batch with this id."),
     429: THROTTLED,
     500: FAILED,
   },

@@ -1,9 +1,12 @@
+import type { BatchSuspectedDuplicate } from "@projet-igsn/domain/sample-batch/model";
 import type {
   DuplicateCriteria,
   SuspectedDuplicate,
 } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { RawBuilder, SqlBool } from "kysely";
 
+import { batchSuspectedDuplicateSchema } from "@projet-igsn/domain/sample-batch/model";
 import { suspectedDuplicateSchema } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import { sql } from "kysely";
 import { z } from "zod";
@@ -48,18 +51,19 @@ function sameCollector({
   return sql<SqlBool>`case when c.sc_collector_user_id is null then ${HAS_COLLECTOR} and ${sameNames(account("u.firstname"), account("u.name"))} else c.sc_collector_user_id = ${collectorUserId}::uuid end`;
 }
 
-export async function findDuplicateSamples(
+const duplicateRows = (
   db: Transactional<DB>,
   criteria: DuplicateCriteria,
+  statuses: SampleStatus[],
   exclude?: string,
-): Promise<SuspectedDuplicate[]> {
-  const rows = await db
+) =>
+  db
     .selectFrom("sample as c")
     .leftJoin("user as cu", "cu.id", "c.sc_collector_user_id")
     .select(["c.id", "c.igsn", "c.name"])
     .where((eb) =>
       eb.and([
-        eb("c.status", "=", "published"),
+        eb("c.status", "in", statuses),
         sameText(sql.ref("c.name"), text(criteria.name)),
         sql<SqlBool>`c.material = ${criteria.material}::ltree`,
         sameCollector(criteria),
@@ -69,5 +73,25 @@ export async function findDuplicateSamples(
     .orderBy("c.igsn")
     .limit(DUPLICATE_SEARCH_LIMIT)
     .execute();
-  return z.array(suspectedDuplicateSchema).parse(rows);
+
+export async function findDuplicateSamples(
+  db: Transactional<DB>,
+  criteria: DuplicateCriteria,
+  exclude?: string,
+): Promise<SuspectedDuplicate[]> {
+  return z
+    .array(suspectedDuplicateSchema)
+    .parse(await duplicateRows(db, criteria, ["published"], exclude));
+}
+
+export async function findBatchDuplicateSamples(
+  db: Transactional<DB>,
+  criteria: DuplicateCriteria,
+  exclude?: string,
+): Promise<BatchSuspectedDuplicate[]> {
+  return z
+    .array(batchSuspectedDuplicateSchema)
+    .parse(
+      await duplicateRows(db, criteria, ["published", "publishing"], exclude),
+    );
 }

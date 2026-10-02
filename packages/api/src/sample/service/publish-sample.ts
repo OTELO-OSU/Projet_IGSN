@@ -22,7 +22,7 @@ export async function publishSample(
     .set({
       status,
       publishing_error: null,
-      igsn: generateIgsnSuffix(id),
+      igsn: sql`coalesce(igsn, ${generateIgsnSuffix(id)})`,
       doi_prefix: sql`coalesce(doi_prefix, ${config?.prefix ?? null})`,
       publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
       published_at: sql`coalesce(published_at, now())`,
