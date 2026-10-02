@@ -7,7 +7,7 @@ import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
 
 const hazardText = (flag: boolean | null | undefined) =>
-  flag == null ? null : flag ? m.sample_hazard_yes() : m.sample_hazard_no();
+  flag ? m.sample_hazard_yes() : null;
 
 export function hasHazard(
   security: Security | null | undefined,

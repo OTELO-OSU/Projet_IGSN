@@ -1,3 +1,4 @@
+import type { SampleLineage } from "@projet-igsn/domain/sample/lineage/model";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import {
@@ -21,6 +22,122 @@ import { SampleView } from "./sample-view.tsx";
 
 const render = (ui: React.ReactNode, stubPaths?: string[]) =>
   renderWithRouter(stubAuth(ui), stubPaths);
+
+type Screen = Awaited<ReturnType<typeof render>>;
+
+const region = (screen: Screen, name: string) =>
+  screen.getByRole("region", { name, exact: true });
+
+const headingTexts = (screen: Screen, level: number) =>
+  screen
+    .getByRole("heading", { level })
+    .elements()
+    .map((heading) => heading.textContent);
+
+const RUBRICS = [
+  "Identity",
+  "Sample classification",
+  "Lineage",
+  "Location",
+  "Age",
+  "Physical description",
+  "Scientific context",
+  "Conservation and security",
+  "Curation and repository",
+  "Declaration",
+  "Related resources",
+];
+
+const day = (date: string) => ({
+  precision: "day" as const,
+  start: date,
+  end: date,
+});
+
+const subSampleParents: PublishedSample["parents"] = [
+  {
+    id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
+    igsn: "0123456789ABCDEFGHJKMNPQRT",
+    name: "Basalt 41",
+    material: null,
+  },
+];
+
+const relation: PublishedSample["relations"][number] = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+  relationType: "is_cited_by",
+  identifierType: "doi",
+  identifier: "https://doi.org/10.1594/IEDA.100252",
+  targetTitle: "IEDA companion dataset",
+  targetResourceType: null,
+  relatedMetadataScheme: null,
+  schemeURI: null,
+  schemeType: null,
+  description: null,
+};
+
+const parentLineage: SampleLineage = {
+  nodes: [
+    {
+      id: "3f2504e0-4f89-41d3-9a0c-0305e82c3304",
+      igsn: "0123456789ABCDEFGHJKMNPQRT",
+      name: "Basalt 41",
+      generation: -1,
+      tombstone: false,
+    },
+    {
+      id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
+      igsn: "0123456789ABCDEFGHJKMNPQRS",
+      name: "Basalt 42",
+      generation: 0,
+      tombstone: false,
+    },
+  ],
+  edges: [
+    {
+      parentId: "3f2504e0-4f89-41d3-9a0c-0305e82c3304",
+      childId: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
+    },
+  ],
+};
+
+const fullSample = () =>
+  sample({
+    localId: "FTB-42",
+    type: "core.half_round",
+    collectionMethod: "coring.gravity_corer",
+    publicationYear: 2026,
+    processSteps: [{ kind: "subsampling", description: "Split with a saw" }],
+    manualGroups: [
+      { id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302", name: "Volcano" },
+    ],
+    institutionalOrganization: "04vfs2w97",
+    material: "rock_and_sediment.mineral",
+    mineralClassifications: [{ strunzId: "9.E", mindatId: 2815 }],
+    economicDepositName: "Chuquicamata",
+    syntheticDetails: { equipmentUsed: "Piston cylinder press" },
+    location: {
+      position: { type: "point", longitude: 2.96, latitude: 45.77 },
+      localityName: "Reef flat",
+    },
+    geologicalContextDescription: "Sampled in a peat bog margin",
+    age: { ...emptyAge, geologicalUnit: "Green Sandstone Fm" },
+    description: {
+      collectionDate: day("2024-03-05"),
+      mass: { value: 1.4, unit: "kg" },
+    },
+    scientificContext: {
+      provenanceStatus: "field_sample",
+      funding: "ANR grant 42",
+      additionalRoles: [],
+    },
+    condition: { packaging: "glass_bottle" },
+    security: { radioactivity: true },
+    existenceStatus: "lost",
+    availabilityStatus: "not_available",
+    repository: { currentArchiveOsu: "OMP", rightsHolder: [] },
+    relations: [relation],
+  });
 
 describe("SampleView", () => {
   it("should show the name as the heading and the igsn as subtitle", async () => {
@@ -64,33 +181,16 @@ describe("SampleView", () => {
     );
 
     await expect
-      .element(screen.getByRole("link", { name: "Sample" }))
+      .element(screen.getByRole("link", { name: "Identity" }))
       .toHaveAttribute("aria-current", "location");
     await expect
-      .element(screen.getByRole("link", { name: "Description" }))
+      .element(screen.getByRole("link", { name: "Physical description" }))
       .not.toHaveAttribute("aria-current");
   });
 
   it("should show the related resources section when the sample has relations", async () => {
     const screen = await render(
-      <SampleView
-        sample={sample({
-          relations: [
-            {
-              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-              relationType: "is_cited_by",
-              identifierType: "doi",
-              identifier: "https://doi.org/10.1594/IEDA.100252",
-              targetTitle: "IEDA companion dataset",
-              targetResourceType: null,
-              relatedMetadataScheme: null,
-              schemeURI: null,
-              schemeType: null,
-              description: null,
-            },
-          ],
-        })}
-      />,
+      <SampleView sample={sample({ relations: [relation] })} />,
     );
 
     await expect
@@ -103,36 +203,18 @@ describe("SampleView", () => {
       .toBeVisible();
   });
 
-  it("should omit every optional section and row on a bare sample", async () => {
+  it("should show only the Identity and Declaration rubrics, with no sub-group nor optional row, on a bare sample", async () => {
     const screen = await render(<SampleView sample={sample()} />);
 
     await expect
       .element(screen.getByRole("heading", { level: 1, name: "Basalt 42" }))
       .toBeVisible();
-    const headings = [
-      "Description",
-      "Location",
-      "Geological context",
-      "Condition",
-      "Scientific context",
-      "Repository",
-      "Synthetic details",
-      "Process steps",
-      "Strunz-Mindat (2026) Classifications",
-      "Institution",
-      "Groups",
-      "Lineage",
-      "Age",
-      "Security",
-      "Economic interest",
-      "Related resources",
-    ].map((name) => [name, screen.getByRole("heading", { name })] as const);
-    const lists = ["Type", "Material", "Collection method"].map(
-      (name) => [name, screen.getByRole("list", { name })] as const,
-    );
+    expect(headingTexts(screen, 2)).toEqual(["Identity", "Declaration"]);
+    expect(headingTexts(screen, 3)).toEqual([]);
     const shown = [
-      ...headings,
-      ...lists,
+      ...["Type", "Material", "Collection method"].map(
+        (name) => [name, screen.getByRole("list", { name })] as const,
+      ),
       [
         "Collection method details",
         screen.getByText("Collection method details"),
@@ -142,6 +224,298 @@ describe("SampleView", () => {
       .map(([name]) => name);
     expect(shown).toEqual([]);
   });
+
+  it("should list the rubrics in order as h2 headings and nav links on a fully filled sample", async () => {
+    const screen = await render(
+      <SampleView sample={fullSample()} lineage={parentLineage} />,
+      ["/samples/$igsn"],
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Identity" }))
+      .toBeVisible();
+    expect(headingTexts(screen, 2)).toEqual(RUBRICS);
+    expect(
+      screen
+        .getByRole("navigation", { name: "Sample" })
+        .getByRole("link")
+        .elements()
+        .map((link) => link.textContent),
+    ).toEqual(RUBRICS);
+  });
+
+  it.each<[string, string, Partial<PublishedSample>]>([
+    [
+      "Conservation and security",
+      "a condition alone",
+      { condition: { packaging: "glass_bottle" } },
+    ],
+    [
+      "Conservation and security",
+      "a hazard alone",
+      { security: { radioactivity: true } },
+    ],
+    [
+      "Curation and repository",
+      "an existence status alone",
+      { existenceStatus: "lost" },
+    ],
+    [
+      "Curation and repository",
+      "a repository alone",
+      { repository: { currentArchiveOsu: "OMP", rightsHolder: [] } },
+    ],
+  ])("should show the %s rubric for %s", async (rubric, _case, overrides) => {
+    const screen = await render(<SampleView sample={sample(overrides)} />);
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: rubric }))
+      .toBeVisible();
+  });
+
+  it.each<[string, string]>([
+    ["Identity", "Process steps"],
+    ["Sample classification", "Strunz-Mindat (2026) Classifications"],
+    ["Sample classification", "Economic interest"],
+    ["Sample classification", "Synthetic details"],
+    ["Location", "Geological context"],
+    ["Conservation and security", "Condition"],
+    ["Conservation and security", "Security"],
+    ["Curation and repository", "Repository"],
+  ])(
+    "should nest the %s > %s sub-group as an h3 region",
+    async (rubric, subGroup) => {
+      const screen = await render(<SampleView sample={fullSample()} />);
+
+      await expect
+        .element(
+          region(screen, rubric)
+            .getByRole("region", { name: subGroup, exact: true })
+            .getByRole("heading", { level: 3, name: subGroup, exact: true }),
+        )
+        .toBeInTheDocument();
+    },
+  );
+
+  it("should place the collection date, provenance status and publication year in Identity, and the statuses in Curation", async () => {
+    const screen = await render(<SampleView sample={fullSample()} />);
+
+    const identity = region(screen, "Identity");
+    for (const text of [
+      "Collection date",
+      "2024-03-05",
+      "Provenance status",
+      "Field sample",
+      "Publication year",
+      "2026",
+    ]) {
+      await expect
+        .element(identity.getByText(text, { exact: true }))
+        .toBeInTheDocument();
+    }
+    const curation = region(screen, "Curation and repository");
+    for (const text of [
+      "Existence status",
+      "Lost",
+      "Availability status",
+      "Not available",
+    ]) {
+      await expect
+        .element(curation.getByText(text, { exact: true }))
+        .toBeInTheDocument();
+    }
+    await expect
+      .element(identity.getByText("Existence status"))
+      .not.toBeInTheDocument();
+    await expect
+      .element(
+        region(screen, "Physical description").getByText("Collection date"),
+      )
+      .not.toBeInTheDocument();
+    await expect
+      .element(
+        region(screen, "Scientific context").getByText("Provenance status"),
+      )
+      .not.toBeInTheDocument();
+  });
+
+  it.each<[string, Partial<PublishedSample>, string, string[]]>([
+    [
+      "Identity",
+      {
+        localId: "FTB-2026-042",
+        localIdDescription: "Catalogue number",
+        type: "core.half_round",
+        collectionMethod: "coring.gravity_corer",
+        collectionMethodDescription: "Cored at low tide",
+        scientificContext: { provenanceStatus: "collection_specimen" },
+        description: { collectionDate: day("2024-03-05") },
+        publicationYear: 2026,
+      },
+      "Identity",
+      [
+        "Local ID",
+        "Local ID description",
+        "Type",
+        "Nature",
+        "Collection method",
+        "Collection method details",
+        "Provenance status",
+        "Collection date",
+        "Publication year",
+      ],
+    ],
+    [
+      "Location of a point",
+      {
+        location: {
+          position: {
+            type: "point",
+            longitude: -149.83,
+            latitude: -17.53,
+            vertical: {
+              position: 2500,
+              reference: "bathymetry",
+              system: "msl",
+            },
+          },
+          navigationType: "GPS",
+          region: { kind: "country", country: "FR" },
+          localityName: "Reef flat",
+          localityDescription: "Southern reef flat",
+        },
+      },
+      "Location",
+      [
+        "Longitude",
+        "Latitude",
+        "Vertical position",
+        "Vertical reference",
+        "Vertical reference system",
+        "Navigation type",
+        "Region",
+        "Locality name",
+        "Locality description",
+      ],
+    ],
+    [
+      "Location of a line",
+      {
+        location: {
+          position: {
+            type: "line",
+            startLongitude: 2.35,
+            startLatitude: 48.85,
+            endLongitude: 4.83,
+            endLatitude: 45.76,
+          },
+        },
+      },
+      "Location",
+      ["Start longitude", "End longitude", "Start latitude", "End latitude"],
+    ],
+    [
+      "Geological context",
+      {
+        geologicalContextDescription: "Sampled in a peat bog margin",
+        physiographicEnvironment: "wetland.peat_bog",
+      },
+      "Geological context",
+      ["Physiographic environment", "Description"],
+    ],
+    [
+      "Physical description",
+      {
+        description: {
+          openDescription: "Dark basalt",
+          length: { value: 12, unit: "cm" },
+          mass: { value: 1.4, unit: "kg" },
+          oriented: true,
+          orientationExplanation: "Arrow on the top face",
+        },
+      },
+      "Physical description",
+      [
+        "General description",
+        "Length",
+        "Mass",
+        "Oriented",
+        "Orientation details",
+      ],
+    ],
+    [
+      "Repository",
+      {
+        repository: {
+          currentArchiveOsu: "OMP",
+          currentArchiveLaboratory: "EA4038",
+          collectionName: "Historic basalts",
+          rightsHolder: ["03fd77x13"],
+        },
+      },
+      "Repository",
+      [
+        "Current archive OSU",
+        "Current archive laboratory",
+        "Rights holder",
+        "Collection name",
+      ],
+    ],
+  ])(
+    "should order the %s rows like the admin form",
+    async (_case, overrides, name, labels) => {
+      const screen = await render(<SampleView sample={sample(overrides)} />);
+
+      const rows = region(screen, name);
+      await expect.element(rows).toBeInTheDocument();
+      expect(
+        rows
+          .getByRole("term")
+          .elements()
+          .map((term) => term.textContent),
+      ).toEqual(labels);
+    },
+  );
+
+  it.each([
+    {
+      collectionDate: {
+        precision: "day",
+        start: "2024-03-05",
+        end: "2024-04-01",
+      },
+      expected: "2024-03-05 - 2024-04-01",
+    },
+    {
+      collectionDate: {
+        precision: "hour",
+        start: "2024-03-05T14:30",
+        end: "2024-03-05T14:30",
+        timeZone: "Europe/Paris",
+      },
+      expected: "2024-03-05 14:30 (Europe/Paris)",
+    },
+    {
+      collectionDate: {
+        precision: "hour",
+        start: "2024-03-05T14:30",
+        end: "2024-03-06T09:05",
+        timeZone: "Pacific/Auckland",
+      },
+      expected: "2024-03-05 14:30 - 2024-03-06 09:05 (Pacific/Auckland)",
+    },
+  ] as const)(
+    "should show the collection date in Identity as $expected",
+    async ({ collectionDate, expected }) => {
+      const screen = await render(
+        <SampleView sample={sample({ description: { collectionDate } })} />,
+      );
+
+      await expect
+        .element(region(screen, "Identity").getByText(expected))
+        .toBeInTheDocument();
+    },
+  );
 
   it.each<[string, Partial<PublishedSample>, string, string]>([
     ["Type", { type: "core.half_round" }, "Core", "Core Half round"],
@@ -215,22 +589,6 @@ describe("SampleView", () => {
       ["Collection method details", "Cored at low tide from the reef flat"],
     ],
     [
-      "the translated statuses and the publication year",
-      {
-        existenceStatus: "lost",
-        availabilityStatus: "not_available",
-        publicationYear: 2026,
-      },
-      [
-        "Existence status",
-        "Lost",
-        "Availability status",
-        "Not available",
-        "Publication year",
-        "2026",
-      ],
-    ],
-    [
       "a single numeric age with its unit",
       {
         age: {
@@ -295,39 +653,21 @@ describe("SampleView", () => {
     }
   });
 
-  it("should show the economic interest as its own section when only a detail field is set", async () => {
+  it("should show the economic interest in Sample classification when only a detail field is set", async () => {
     const screen = await render(
       <SampleView sample={sample({ economicDepositName: "Chuquicamata" })} />,
     );
 
     await expect
       .element(
-        screen.getByRole("heading", { level: 2, name: "Economic interest" }),
+        region(screen, "Sample classification")
+          .getByRole("region", { name: "Economic interest" })
+          .getByText("Chuquicamata"),
       )
       .toBeInTheDocument();
-    await expect.element(screen.getByText("Chuquicamata")).toBeInTheDocument();
   });
 
-  it("should show the declarer's institution as its own section", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          institutionalOrganization: "04vfs2w97",
-          institutionalOsu: "OTELo",
-          institutionalLaboratory: "UMR7358",
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Institution" }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Université de Lorraine"))
-      .toBeInTheDocument();
-  });
-
-  it("should show the manual groups the sample belongs to as their own section", async () => {
+  it("should list the manual groups the sample belongs to in the Declaration rubric, separated by semicolons", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
@@ -339,29 +679,17 @@ describe("SampleView", () => {
       />,
     );
 
+    const groups = region(screen, "Declaration");
     await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Groups" }))
+      .element(groups.getByText("Volcano; Deep sea", { exact: true }))
       .toBeInTheDocument();
-    await expect.element(screen.getByText("Volcano")).toBeInTheDocument();
-    await expect.element(screen.getByText("Deep sea")).toBeInTheDocument();
   });
 
   it("should omit the lineage section when the lineage holds the sample alone", async () => {
     const screen = await render(
       <SampleView
         sample={sample()}
-        lineage={{
-          nodes: [
-            {
-              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
-              igsn: "0123456789ABCDEFGHJKMNPQRS",
-              name: "Basalt 42",
-              generation: 0,
-              tombstone: false,
-            },
-          ],
-          edges: [],
-        }}
+        lineage={{ nodes: [parentLineage.nodes[1]!], edges: [] }}
       />,
     );
 
@@ -372,33 +700,7 @@ describe("SampleView", () => {
 
   it("should show the lineage as its own section, in the nav, listing the related samples", async () => {
     const screen = await render(
-      <SampleView
-        sample={sample()}
-        lineage={{
-          nodes: [
-            {
-              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3304",
-              igsn: "0123456789ABCDEFGHJKMNPQRT",
-              name: "Basalt 41",
-              generation: -1,
-              tombstone: false,
-            },
-            {
-              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
-              igsn: "0123456789ABCDEFGHJKMNPQRS",
-              name: "Basalt 42",
-              generation: 0,
-              tombstone: false,
-            },
-          ],
-          edges: [
-            {
-              parentId: "3f2504e0-4f89-41d3-9a0c-0305e82c3304",
-              childId: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
-            },
-          ],
-        }}
-      />,
+      <SampleView sample={sample()} lineage={parentLineage} />,
       ["/samples/$igsn"],
     );
 
@@ -415,113 +717,30 @@ describe("SampleView", () => {
       .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRT");
   });
 
-  it("should show the synthetic details as their own section", async () => {
+  it("should show no Security sub-group in Conservation when no hazard is declared", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
-          syntheticDetails: {
-            experimentType: "fusion",
-            equipmentUsed: "Piston cylinder press",
-          },
-        })}
-      />,
-    );
-
-    await expect
-      .element(
-        screen.getByRole("heading", { level: 2, name: "Synthetic details" }),
-      )
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Piston cylinder press"))
-      .toBeInTheDocument();
-  });
-
-  it("should show the process steps as their own section", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          processSteps: [
-            { kind: "subsampling", description: "Split with a rock saw" },
-          ],
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Process steps" }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Split with a rock saw"))
-      .toBeInTheDocument();
-  });
-
-  it("should show the mineral classifications as their own section", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          material: "rock_and_sediment.mineral",
-          mineralClassifications: [{ strunzId: "9.E", mindatId: 2815 }],
-        })}
-      />,
-    );
-
-    await expect
-      .element(
-        screen.getByRole("heading", {
-          level: 2,
-          name: "Strunz-Mindat (2026) Classifications",
-        }),
-      )
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Muscovite")).toBeInTheDocument();
-  });
-
-  it("should show the security as its own section with its hazards", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          security: {
-            radioactivity: true,
-            radioactivityExplanation: "3.2 kBq alpha",
-          },
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Security" }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Radioactivity", { exact: true }))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("3.2 kBq alpha")).toBeInTheDocument();
-  });
-
-  it("should hide the security section when no hazard is declared", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
+          condition: { packaging: "glass_bottle" },
           security: { radioactivity: false, asbestosRich: false },
         })}
       />,
     );
 
+    const conservation = region(screen, "Conservation and security");
+    await expect.element(conservation).toBeInTheDocument();
     await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Security" }))
+      .element(conservation.getByRole("region", { name: "Security" }))
       .not.toBeInTheDocument();
   });
 
-  it("should show the description section with its rows when set", async () => {
+  it("should show no collection date in the Identity of a sub-sample, which inherits its parent's", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
+          parents: subSampleParents,
           description: {
-            collectionDate: {
-              precision: "day",
-              start: "2024-03-05",
-              end: "2024-03-05",
-            },
+            collectionDate: day("2024-03-05"),
             mass: { value: 1.4, unit: "kg" },
           },
         })}
@@ -529,100 +748,63 @@ describe("SampleView", () => {
     );
 
     await expect
-      .element(screen.getByRole("heading", { name: "Description" }))
+      .element(region(screen, "Physical description").getByText("1.4 kg"))
       .toBeInTheDocument();
-    await expect.element(screen.getByText("2024-03-05")).toBeInTheDocument();
-    await expect.element(screen.getByText("1.4 kg")).toBeInTheDocument();
-  });
-
-  it("should hide the collection date of a sub-sample, which inherits its parent's", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          parents: [
-            {
-              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
-              igsn: "0123456789ABCDEFGHJKMNPQRT",
-              name: "Basalt 41",
-              material: null,
-            },
-          ],
-          description: {
-            collectionDate: {
-              precision: "day",
-              start: "2024-03-05",
-              end: "2024-03-05",
-            },
-            mass: { value: 1.4, unit: "kg" },
-          },
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Description" }))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("1.4 kg")).toBeInTheDocument();
     await expect
       .element(screen.getByText("Collection date"))
       .not.toBeInTheDocument();
   });
 
-  it("should omit the description section of a sub-sample described by its collection date alone", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          parents: [
-            {
-              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
-              igsn: "0123456789ABCDEFGHJKMNPQRT",
-              name: "Basalt 41",
-              material: null,
-            },
-          ],
-          description: {
-            collectionDate: {
-              precision: "day",
-              start: "2024-03-05",
-              end: "2024-03-05",
-            },
-          },
-        })}
-      />,
-    );
+  it.each<[string, Partial<PublishedSample>]>([
+    ["a sample", {}],
+    ["a sub-sample", { parents: subSampleParents }],
+  ])(
+    "should hide Physical description for %s whose collection date is its only value",
+    async (_case, overrides) => {
+      const screen = await render(
+        <SampleView
+          sample={sample({
+            ...overrides,
+            description: { collectionDate: day("2024-03-05") },
+          })}
+        />,
+      );
 
-    await expect
-      .element(screen.getByRole("heading", { name: "Description" }))
-      .not.toBeInTheDocument();
-  });
+      await expect.element(region(screen, "Identity")).toBeInTheDocument();
+      await expect
+        .element(
+          screen.getByRole("heading", {
+            level: 2,
+            name: "Physical description",
+          }),
+        )
+        .not.toBeInTheDocument();
+    },
+  );
 
-  it("should show the condition as its own section with its rows", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          condition: {
-            packaging: "glass_bottle",
-            storageConditions: ["temperature_controlled"],
-            temperature: {
-              type: "frozen",
-              measurement: { value: -18, unit: "celsius" },
-            },
-          },
-        })}
-      />,
-    );
+  it.each<[string, NonNullable<PublishedSample["scientificContext"]>]>([
+    [
+      "a field sample",
+      { provenanceStatus: "field_sample", additionalRoles: [] },
+    ],
+    ["a collection specimen", { provenanceStatus: "collection_specimen" }],
+  ])(
+    "should hide Scientific context for %s holding only its provenance status",
+    async (_case, scientificContext) => {
+      const screen = await render(
+        <SampleView sample={sample({ scientificContext })} />,
+      );
 
-    await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Condition" }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("heading", { name: "Description" }))
-      .not.toBeInTheDocument();
-    await expect.element(screen.getByText("Glass bottle")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Frozen (-18 °C)"))
-      .toBeInTheDocument();
-  });
+      await expect
+        .element(region(screen, "Identity").getByText("Provenance status"))
+        .toBeInTheDocument();
+      await expect
+        .element(
+          screen.getByRole("heading", { level: 2, name: "Scientific context" }),
+        )
+        .not.toBeInTheDocument();
+    },
+  );
 
   it.each<[string, NonNullable<Sample["location"]>, string[]]>([
     [
@@ -714,12 +896,10 @@ describe("SampleView", () => {
     async (_type, location, texts) => {
       const screen = await render(<SampleView sample={sample({ location })} />);
 
-      await expect
-        .element(screen.getByRole("heading", { name: "Location" }))
-        .toBeInTheDocument();
+      const rows = region(screen, "Location");
       for (const text of texts) {
         await expect
-          .element(screen.getByText(text, { exact: true }))
+          .element(rows.getByText(text, { exact: true }))
           .toBeInTheDocument();
       }
     },
@@ -780,7 +960,7 @@ describe("SampleView", () => {
     await expect.element(screen.getByText(expected)).toBeInTheDocument();
   });
 
-  it("should show the location map in the Sample section when a position is set", async () => {
+  it("should show the location map in the Identity rubric when a position is set", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
@@ -793,9 +973,9 @@ describe("SampleView", () => {
 
     await expect
       .element(
-        screen
-          .getByRole("region", { name: "Sample", exact: true })
-          .getByRole("group", { name: "Sample location map" }),
+        region(screen, "Identity").getByRole("group", {
+          name: "Sample location map",
+        }),
       )
       .toBeInTheDocument();
   });
@@ -815,7 +995,7 @@ describe("SampleView", () => {
     ).toBeNull();
   });
 
-  it("should show who declared the sample and when, next to a button opening the contact form", async () => {
+  it("should show the publication date, and who declared the sample next to a button opening the contact form, in the Declaration rubric", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
@@ -825,10 +1005,18 @@ describe("SampleView", () => {
       />,
     );
 
-    await expect
-      .element(screen.getByText("Declared in 2026 by Ada Lovelace"))
-      .toBeInTheDocument();
-    await screen
+    const declaration = region(screen, "Declaration");
+    for (const text of [
+      "Publication date",
+      "2026",
+      "Declared by",
+      "Ada Lovelace",
+    ]) {
+      await expect
+        .element(declaration.getByText(text, { exact: true }))
+        .toBeInTheDocument();
+    }
+    await declaration
       .getByRole("button", { name: "Contact the record owner" })
       .click();
     await expect
@@ -836,38 +1024,47 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should keep the contact button but omit the declaration line when the owner is unknown", async () => {
+  it("should not show the sample's institution", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          institutionalOrganization: "04vfs2w97",
+          institutionalOsu: "OMP",
+          institutionalLaboratory: "EA4038",
+        })}
+      />,
+    );
+
+    const institution = [
+      organizationLabel("04vfs2w97"),
+      osuLabel("OMP"),
+      laboratoryLabel("EA4038"),
+    ].join(" / ");
+    await expect.element(screen.getByText(institution)).not.toBeInTheDocument();
+  });
+
+  it("should keep the contact button in the Declared by row when the owner is unknown", async () => {
     const screen = await render(
       <SampleView sample={sample({ owner: null, publicationYear: 2026 })} />,
     );
 
     await expect
-      .element(screen.getByText(/^Declared in/))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("button", { name: "Contact the record owner" }))
+      .element(
+        region(screen, "Declaration").getByRole("button", {
+          name: "Contact the record owner",
+        }),
+      )
       .toBeInTheDocument();
   });
 
-  it("should show the geological context as its own section with the physiographic environment breadcrumb", async () => {
+  it("should show the physiographic environment breadcrumb in the Geological context", async () => {
     const screen = await render(
       <SampleView
-        sample={sample({
-          geologicalContextDescription: "Sampled in a peat bog margin",
-          physiographicEnvironment: "wetland.peat_bog",
-        })}
+        sample={sample({ physiographicEnvironment: "wetland.peat_bog" })}
       />,
     );
 
-    await expect
-      .element(
-        screen.getByRole("heading", { level: 2, name: "Geological context" }),
-      )
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Sampled in a peat bog margin"))
-      .toBeInTheDocument();
-    const environment = screen.getByRole("list", {
+    const environment = region(screen, "Geological context").getByRole("list", {
       name: "Physiographic environment",
     });
     await expect
@@ -876,7 +1073,7 @@ describe("SampleView", () => {
     await expect.element(environment.getByText("Peat bog")).toBeInTheDocument();
   });
 
-  it("should show the repository as its own section with the osu, the umr, the collection and the rights holders", async () => {
+  it("should show the osu, the umr, the collection and the rights holders in the Repository", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
@@ -890,26 +1087,21 @@ describe("SampleView", () => {
       />,
     );
 
+    const repository = region(screen, "Repository");
     await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Repository" }))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText(osuLabel("OMP"))).toBeInTheDocument();
-    await expect
-      .element(screen.getByText(laboratoryLabel("EA4038")))
+      .element(repository.getByText(osuLabel("OMP")))
       .toBeInTheDocument();
     await expect
-      .element(screen.getByText("Historic basalts"))
+      .element(repository.getByText(laboratoryLabel("EA4038")))
       .toBeInTheDocument();
     await expect
-      .element(
-        screen.getByRole("link", { name: organizationLabel("03fd77x13") }),
-      )
-      .toHaveAttribute("href", "https://ror.org/03fd77x13");
-    await expect
-      .element(
-        screen.getByRole("link", { name: organizationLabel("02cte4b68") }),
-      )
-      .toHaveAttribute("href", "https://ror.org/02cte4b68");
+      .element(repository.getByText("Historic basalts"))
+      .toBeInTheDocument();
+    for (const ror of ["03fd77x13", "02cte4b68"]) {
+      await expect
+        .element(repository.getByRole("link", { name: organizationLabel(ror) }))
+        .toHaveAttribute("href", `https://ror.org/${ror}`);
+    }
   });
 
   it("should never show the archive contacts, which stay private to the admin", async () => {

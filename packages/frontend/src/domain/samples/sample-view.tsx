@@ -1,11 +1,8 @@
 import type { SampleLineage } from "@projet-igsn/domain/sample/lineage/model";
 import type { PublicSample } from "@projet-igsn/domain/sample/sample-validator";
 
-import { fullName } from "@projet-igsn/domain/user/full-name";
-
 import { AddSubSampleLink } from "#/domain/samples/add-sub-sample-link.tsx";
 import { AdminSampleLink } from "#/domain/samples/admin-sample-link.tsx";
-import { ContactOwnerDialog } from "#/domain/samples/contact-owner-dialog.tsx";
 import { LineageView } from "#/domain/samples/lineage-view.tsx";
 import { SampleHero } from "#/domain/samples/sample-hero.tsx";
 import { sampleSections } from "#/domain/samples/sample-sections.tsx";
@@ -65,7 +62,7 @@ export function SampleView({
         {withdrawn ? null : (
           <nav
             aria-label={m.sample_section_sample()}
-            className="sticky top-28 hidden w-40 shrink-0 self-start md:block"
+            className="sticky top-28 hidden shrink-0 self-start md:block"
           >
             <ul className="grid gap-2">
               {sections.map(({ id, title }) => (
@@ -99,22 +96,6 @@ export function SampleView({
               {content}
             </section>
           ))}
-
-          {withdrawn ? null : (
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              {sample.owner && sample.publicationYear ? (
-                <p className="text-muted-foreground">
-                  {m.sample_declared_by({
-                    year: sample.publicationYear,
-                    owner: fullName(sample.owner),
-                  })}
-                </p>
-              ) : null}
-              {sample.igsn != null ? (
-                <ContactOwnerDialog igsn={sample.igsn} />
-              ) : null}
-            </div>
-          )}
         </div>
       </div>
     </div>

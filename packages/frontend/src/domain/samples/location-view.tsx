@@ -29,8 +29,8 @@ const coordinates = (
   switch (position.type) {
     case "point":
       return [
-        [m.sample_field_latitude(), position.latitude],
         [m.sample_field_longitude(), position.longitude],
+        [m.sample_field_latitude(), position.latitude],
       ];
     case "area":
       return [
@@ -42,8 +42,8 @@ const coordinates = (
     case "line":
       return [
         [m.sample_field_start_longitude(), position.startLongitude],
-        [m.sample_field_start_latitude(), position.startLatitude],
         [m.sample_field_end_longitude(), position.endLongitude],
+        [m.sample_field_start_latitude(), position.startLatitude],
         [m.sample_field_end_latitude(), position.endLatitude],
       ];
   }
@@ -82,6 +82,10 @@ export function LocationView({ location }: { location: Location }) {
         }
       />
       <FieldRow
+        label={m.sample_field_navigation_type()}
+        value={navigationType}
+      />
+      <FieldRow
         label={m.sample_field_region()}
         value={
           region &&
@@ -93,10 +97,6 @@ export function LocationView({ location }: { location: Location }) {
               ? oceanSeaLabel(region.oceanSea)
               : m.region_kind_ocean())
         }
-      />
-      <FieldRow
-        label={m.sample_field_navigation_type()}
-        value={navigationType}
       />
       <FieldRow label={m.sample_field_locality_name()} value={localityName} />
       <FieldRow
