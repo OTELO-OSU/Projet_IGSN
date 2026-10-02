@@ -10,7 +10,7 @@ export function FieldRow({ id, label, value }: FieldRowProps) {
   if (value == null || value === false || value === "") return null;
   return (
     <div className="flex gap-4 px-4 py-3">
-      <dt id={id} className="text-muted-foreground w-40">
+      <dt id={id} className="text-muted-foreground w-40 shrink-0">
         {label}
       </dt>
       <dd className="font-medium wrap-anywhere whitespace-pre-line">{value}</dd>
