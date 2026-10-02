@@ -1,7 +1,7 @@
 # Prod deploy
 
 - Publishing a GitHub release builds the three images, pushes them to GHCR under the release tag, and deploys them over SSH with docker compose ([release.yml](../.github/workflows/release.yml)).
-- The stack lives in [infra/prod/](../infra/prod) and mirrors [preprod](preprod-architecture.md), minus Postgres: the prod database is external and managed.
+- The stack lives in [infra/prod/](../infra/prod) and mirrors [preprod](preprod-architecture.md), Postgres included: the database runs in the stack on the `paradedb/paradedb` image, its data in the `paradedb-data` volume.
 - A prerelease only publishes the images.
 - A release that is not the repository's latest one only publishes the images, so a slow run of an older release never overwrites a newer one.
 - A release whose production environment is incomplete only publishes the images, the run staying green with a warning naming the missing variables.
@@ -14,12 +14,8 @@
 - Caddy faces clients directly, so the rate limits key on the peer address; a proxy added in front needs `trusted_proxies` in the [Caddyfile](../infra/prod/Caddyfile).
 - A certificate for `igsn.$DOMAIN`, full chain, and its key at `~/igsn/certs/origin.pem` and `~/igsn/certs/origin.key`; the deploy refuses to run without them and never ships them.
 - Renewing that certificate is the infra team's job: replace both files, then run `docker compose -p igsn exec caddy caddy reload --config /etc/caddy/Caddyfile --force` from `~/igsn`.
-- A Postgres 17 database with PostGIS, its `postgis`, `ltree`, `unaccent` and `pg_trgm` extensions already created, and an application user owning the schema.
-- The migrations run `CREATE EXTENSION IF NOT EXISTS`, which a plain owner may not do, hence the extensions created beforehand.
-- TLS on the database with a certificate the api can verify, since `DATABASE_SSL` defaults to `verify-full`.
-- When that certificate is signed by a private CA, its bundle under `~/igsn/ca/` and `DATABASE_CA_FILE` set to `/ca/<file>`.
-- `DATABASE_SSL=require` encrypts without checking the certificate, for a database whose certificate cannot be verified.
-- Attachments stay on the host in the `attachments` volume, so the host is not stateless.
+- Attachments stay on the host in the `attachments` volume and the database in the `paradedb-data` volume, so the host is not stateless.
+- Nothing backs up the database yet.
 
 ## GitHub setup
 

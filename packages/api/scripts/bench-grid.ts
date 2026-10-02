@@ -95,7 +95,7 @@ async function explain(call: Call, params: ListSamplesQuery) {
   return db.transaction().execute(async (trx) => {
     const explained = [];
     for (const statement of statements) {
-      if (statement.sql.startsWith("select set_config(")) {
+      if (/^(select set_config\(|set )/i.test(statement.sql)) {
         await trx.executeQuery(statement);
         continue;
       }

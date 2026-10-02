@@ -457,6 +457,41 @@ describe("listSamples", () => {
     expect(data.map((s) => s.name)).toEqual(["In the group"]);
   });
 
+  pgTest(
+    "should filter moderated drafts by bbox and a linked facet",
+    async ({ db }) => {
+      // Arrange
+      const groupId = crypto.randomUUID();
+      await db
+        .insertInto("manual_group")
+        .values({ id: groupId, name: "ANR CritMet 22f" })
+        .execute();
+      const draftAt = (name: string, longitude: number, groups: string[]) =>
+        insertSample(db, {
+          ...bare,
+          name,
+          location: { position: { type: "point", longitude, latitude: 45 } },
+          manualGroupIds: groups,
+        });
+      await draftAt("Inside, grouped", 5, [groupId]);
+      await draftAt("Inside, ungrouped", 5, []);
+      await draftAt("Outside, grouped", -50, [groupId]);
+      // Act
+      const { data } = await listModeratedSamples(
+        db,
+        {
+          page: 1,
+          perPage: 10,
+          bbox: { west: 0, south: 40, east: 10, north: 50 },
+          manualGroup: groupId,
+        },
+        superAdminScope(crypto.randomUUID()),
+      );
+      // Assert
+      expect(data.map((s) => s.name)).toEqual(["Inside, grouped"]);
+    },
+  );
+
   pgTest("should filter by the existence status", async ({ db }) => {
     // Arrange
     await insertSample(db, {
@@ -1389,7 +1424,7 @@ describe("listSamples", () => {
       });
 
     pgTest("should honour a stricter override", async ({ db }) => {
-      await seedAchondrite(db);
+      await insertCharpentier(db);
       process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD = "0.9";
       vi.resetModules();
       const { listAsOwner: listWithOverride } =
@@ -1398,7 +1433,7 @@ describe("listSamples", () => {
       const { data } = await listWithOverride(db, {
         page: 1,
         perPage: 10,
-        search: "achondrites",
+        collectorName: "charpentiers",
       });
 
       expect(data).toEqual([]);

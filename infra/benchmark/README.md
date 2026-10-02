@@ -1,6 +1,6 @@
 # Search benchmark host
 
-- A temporary AWS host timing the public results list (`GET /samples`) and its facet counts (`GET /samples/facets`) on Postgres capped at 2 CPUs and 8 GB with the api pool capped at 2 connections, writing CSVs to compare runs.
+- A temporary AWS host timing the public results list (`GET /samples`) and its facet counts (`GET /samples/facets`) on Postgres (`paradedb/paradedb:0.25.11-pg17`) capped at 2 CPUs and 8 GB with the api pool capped at 2 connections, writing CSVs to compare runs.
 - Standalone: its own local OpenTofu state in `tf/`, security group and compose stack, outside the compose parity rule.
 - It bills by the hour, CPU credits unlimited: run `make benchmark-destroy` when done.
 

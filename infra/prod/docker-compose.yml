@@ -1,12 +1,10 @@
 x-database: &database
-  DATABASE_HOST: ${DATABASE_HOST}
-  DATABASE_PORT: ${DATABASE_PORT:-5432}
+  DATABASE_HOST: postgres
+  DATABASE_PORT: "5432"
   DATABASE_NAME: ${DATABASE_NAME}
   DATABASE_USER: ${DATABASE_USER}
   DATABASE_PASSWORD: ${DATABASE_PASSWORD}
   DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-}
-  DATABASE_SSL: ${DATABASE_SSL:-verify-full}
-  NODE_EXTRA_CA_CERTS: ${DATABASE_CA_FILE:-}
 
 x-healthcheck: &healthcheck
   test: ["CMD", "curl", "-fsS", "http://localhost:8080/"]
@@ -16,13 +14,33 @@ x-healthcheck: &healthcheck
   start_period: 20s
 
 services:
+  postgres:
+    image: paradedb/paradedb:0.25.11-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME} -h localhost",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - paradedb-data:/var/lib/postgresql/data
+
   migrate:
     image: ghcr.io/otelo-osu/projet-igsn/api:${IMAGE_TAG:?IMAGE_TAG is required}
     command: ["node", "scripts/migrate.ts"]
     environment: *database
-    volumes:
-      - ./ca:/ca:ro
     restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   api:
     image: ghcr.io/otelo-osu/projet-igsn/api:${IMAGE_TAG:?IMAGE_TAG is required}
@@ -54,7 +72,6 @@ services:
     healthcheck: *healthcheck
     volumes:
       - attachments:/data/attachments
-      - ./ca:/ca:ro
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -96,6 +113,7 @@ services:
         condition: service_healthy
 
 volumes:
+  paradedb-data:
   attachments:
   caddy_data:
   caddy_config:

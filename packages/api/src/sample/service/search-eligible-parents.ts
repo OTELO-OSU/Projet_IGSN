@@ -11,7 +11,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
-import { applyFuzzyThreshold, searchFilters } from "./search-filter.ts";
+import { forceCustomPlan, searchFilters } from "./search-filter.ts";
 
 const PARENT_SEARCH_LIMIT = 20;
 
@@ -40,15 +40,15 @@ function declarableWhere(
   ]);
 }
 
-export function searchEligibleParents(
+export async function searchEligibleParents(
   db: Transactional<DB>,
   { search, exclude }: SearchEligibleParentsQuery,
   userId: string,
   scope: ModerationScope | null,
 ): Promise<SampleParent[]> {
-  return withTransaction(db, async (trx) => {
-    await applyFuzzyThreshold(trx, [search]);
-    const rows = await trx
+  const rows = await withTransaction(db, async (trx) => {
+    if (search !== undefined) await forceCustomPlan(trx);
+    return trx
       .selectFrom("sample")
       .select(["id", "igsn", "name", "material"])
       .where((eb) =>
@@ -61,6 +61,6 @@ export function searchEligibleParents(
       .orderBy("name")
       .limit(PARENT_SEARCH_LIMIT)
       .execute();
-    return z.array(sampleParentSchema).parse(rows);
   });
+  return z.array(sampleParentSchema).parse(rows);
 }
