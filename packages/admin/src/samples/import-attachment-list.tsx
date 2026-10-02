@@ -27,37 +27,31 @@ export function ImportAttachmentList({
         {m.import_samples_attachments_hint()}
       </p>
       <ul aria-labelledby={titleId} className="grid gap-1">
-        {requiredNames.map((name) => (
+        {[...requiredNames, ...unreferencedNames].map((name) => (
           <li key={name} className="flex items-center justify-between gap-2">
             <span className="truncate" title={name}>
               {name}
             </span>
-            {addedNames.has(name) ? (
+            {unreferencedNames.includes(name) ? (
+              <span className="text-destructive flex items-center gap-1">
+                {m.import_samples_attachment_not_referenced()}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={m.import_samples_attachment_remove({ name })}
+                  onClick={() => onRemove(name)}
+                >
+                  <XIcon aria-hidden />
+                </Button>
+              </span>
+            ) : addedNames.has(name) ? (
               <span>{m.import_samples_attachment_added()}</span>
             ) : (
               <span className="text-destructive">
                 {m.import_samples_attachment_missing()}
               </span>
             )}
-          </li>
-        ))}
-        {unreferencedNames.map((name) => (
-          <li key={name} className="flex items-center justify-between gap-2">
-            <span className="truncate" title={name}>
-              {name}
-            </span>
-            <span className="text-destructive flex items-center gap-1">
-              {m.import_samples_attachment_not_referenced()}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={m.import_samples_attachment_remove({ name })}
-                onClick={() => onRemove(name)}
-              >
-                <XIcon aria-hidden />
-              </Button>
-            </span>
           </li>
         ))}
       </ul>

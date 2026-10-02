@@ -1,23 +1,10 @@
 import { ATTACHMENT_MAX_BYTES } from "@projet-igsn/domain/sample/attachment/attachment-validator";
-import {
-  IMPORT_MAX_BYTES,
-  importSamplesSchema,
-} from "@projet-igsn/domain/sample/import/import-validator";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { readAttachmentFileNames } from "#/samples/read-attachment-file-names.ts";
 
 const MEGABYTE = 1024 * 1024;
-
-const fileError = (file: File | null): string | null => {
-  if (!file) return null;
-  const parsed = importSamplesSchema.safeParse({ file });
-  if (parsed.success) return null;
-  return parsed.error.issues.some((issue) => issue.code === "too_big")
-    ? m.import_samples_file_too_large({ max: IMPORT_MAX_BYTES / MEGABYTE })
-    : m.import_samples_file_not_xlsx();
-};
 
 type Workbook = { file: File; requiredNames: string[] | null };
 
@@ -75,19 +62,15 @@ export function useImportFiles() {
   const unreferencedNames = [...addedNames].filter(
     (name) => !requiredNames.includes(name),
   );
-  const error = fileError(file);
 
   return {
     file,
-    error,
     documents,
     requiredNames,
     addedNames,
     unreferencedNames,
     pickErrors,
     isReady:
-      file !== null &&
-      error === null &&
       !isParsing &&
       requiredNames.every((name) => addedNames.has(name)) &&
       unreferencedNames.length === 0,

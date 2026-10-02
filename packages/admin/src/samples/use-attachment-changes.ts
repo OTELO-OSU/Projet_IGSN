@@ -15,7 +15,6 @@ import { z } from "zod";
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
-import { xhrUpload } from "#/xhr-upload.ts";
 
 export type AttachmentEdit = {
   title?: string;
@@ -72,25 +71,40 @@ const uploadResponseSchema = z.object({ data: sampleAttachmentSchema });
 
 // ponytail: no silent-renewal retry on 401 here; the upload just fails in the
 // recap.
-async function uploadAttachment(
+function xhrUpload(
   url: string,
   token: string | undefined,
   file: File,
   edit: AttachmentEdit,
   onProgress: (percent: number) => void,
 ): Promise<SampleAttachment> {
-  const body = new FormData();
-  body.append("file", file);
-  for (const [name, value] of Object.entries(edit)) {
-    if (value?.trim()) body.append(name, value.trim());
-  }
-  const { status, responseText } = await xhrUpload(url, token, body, {
-    onProgress,
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      try {
+        if (xhr.status < 200 || xhr.status >= 300) {
+          throw new Error(`Upload failed (${xhr.status})`);
+        }
+        resolve(uploadResponseSchema.parse(JSON.parse(xhr.responseText)).data);
+      } catch (error: unknown) {
+        reject(error instanceof Error ? error : new Error("Upload failed"));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Upload failed"));
+    const body = new FormData();
+    body.append("file", file);
+    for (const [name, value] of Object.entries(edit)) {
+      if (value?.trim()) body.append(name, value.trim());
+    }
+    xhr.send(body);
   });
-  if (status < 200 || status >= 300) {
-    throw new Error(`Upload failed (${status})`);
-  }
-  return uploadResponseSchema.parse(JSON.parse(responseText)).data;
 }
 
 export function useAttachmentChanges(sampleId: string) {
@@ -158,7 +172,7 @@ export function useAttachmentChanges(sampleId: string) {
     const results = await Promise.all(
       staged.map(async ({ key, file, error: _error, ...edit }) => {
         try {
-          const created = await uploadAttachment(
+          const created = await xhrUpload(
             new URL(`admin/samples/${sampleId}/attachments`, API_URL).href,
             token,
             file,

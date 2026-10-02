@@ -37,12 +37,11 @@ describe("staged uploads", () => {
         OWNER,
       ),
     ).toEqual([
-      { id: typed, name: "report.pdf", mediaType: "application/pdf", size: 4 },
+      { id: typed, name: "report.pdf", mediaType: "application/pdf" },
       {
         id: untyped,
         name: "report.pdf",
         mediaType: "application/octet-stream",
-        size: 4,
       },
     ]);
   });
@@ -84,12 +83,11 @@ describe("staged uploads", () => {
       written: 2,
     });
 
-    const count = await createStagedUploads(storageDir).deleteExpired();
+    await createStagedUploads(storageDir).deleteExpired();
 
-    expect({ count, files: await stagedFiles() }).toEqual({
-      count: 2,
-      files: [fresh, `${fresh}.json`, inProgress, `${inProgress}.json`].sort(),
-    });
+    expect(await stagedFiles()).toEqual(
+      [fresh, `${fresh}.json`, inProgress, `${inProgress}.json`].sort(),
+    );
   });
 
   it("should consume staged uploads whose blob was already moved", async () => {

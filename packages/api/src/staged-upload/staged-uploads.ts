@@ -3,7 +3,6 @@ import type { StagedUploadRepository } from "@projet-igsn/domain/staged-upload/r
 
 import { STAGED_UPLOAD_TTL_MS } from "@projet-igsn/domain/staged-upload/limits";
 import { FileStore } from "@tus/file-store";
-import { FileKvStore, type Upload } from "@tus/server";
 import { rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -12,7 +11,6 @@ import { stagedUploadPathOf, stagingDirOf } from "./staged-path.ts";
 export const stagingStoreOf = (storageDir: string): FileStore =>
   new FileStore({
     directory: stagingDirOf(storageDir),
-    configstore: new FileKvStore<Upload>(stagingDirOf(storageDir)),
     expirationPeriodInMilliseconds: STAGED_UPLOAD_TTL_MS,
   });
 
@@ -65,7 +63,6 @@ export function createStagedUploads(
             id,
             name: metadata.filename,
             mediaType: metadata.filetype || "application/octet-stream",
-            size: state.info.size ?? 0,
           },
         ]
       : [];
@@ -80,7 +77,7 @@ export function createStagedUploads(
         .filter((info) => info?.metadata?.ownerId === ownerId)
         .reduce((sum, info) => sum + (info?.size ?? 0), 0),
     deleteExpired: async () => {
-      const unfinished = await store.deleteExpired();
+      await store.deleteExpired();
       const stale = (
         await Promise.all(
           (
@@ -92,7 +89,6 @@ export function createStagedUploads(
         )
       ).flat();
       await consumeStagedUploads(storageDir, stale);
-      return unfinished + stale.length;
     },
   };
 }
