@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-type CoreEnum<T extends string> = {
+export type CoreEnum<T extends string> = {
+  values: readonly T[];
   schema: z.ZodType<string>;
   toCore: (value: T) => string;
   fromCore: (value: string) => T;
@@ -12,6 +13,7 @@ export function coreEnum<T extends string>(
 ): CoreEnum<T> {
   const byCore = new Map(values.map((value) => [format(value), value]));
   return {
+    values,
     schema: z.enum([...byCore.keys()] as [string, ...string[]]).meta({
       description: "Our own code, spelled the IGSN Core way.",
     }),

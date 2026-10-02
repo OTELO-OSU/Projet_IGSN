@@ -76,6 +76,7 @@ import {
   zodIssues,
 } from "./service-sample-issue.ts";
 import { serviceValidationHook } from "./service-validation-hook.ts";
+import { registerVocabularyRoutes } from "./vocabulary-routes.ts";
 
 const SWAGGER_UI_VERSION = "5.32.15";
 
@@ -216,6 +217,7 @@ export function createServiceRoutes(
     }),
   );
   app.use("*", requireServiceAccount(serviceAccounts));
+  registerVocabularyRoutes(app);
   return app
     .openapi(listSamplesRoute, async (c) => {
       const format = negotiate(c);
