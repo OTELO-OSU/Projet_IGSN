@@ -2,7 +2,6 @@ import type { Description } from "@projet-igsn/domain/sample/description/model";
 
 import { volumeUnitLabel } from "@projet-igsn/domain/sample/description/volume-unit";
 
-import { dateRangeText } from "#/domain/samples/date-range-text.ts";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
 
@@ -23,12 +22,16 @@ export function DescriptionView({ description }: { description: Description }) {
   return (
     <FieldRows>
       <FieldRow
-        label={m.sample_field_collection_date()}
-        value={
-          description.collectionDate &&
-          dateRangeText(description.collectionDate)
-        }
+        label={m.sample_field_open_description()}
+        value={description.openDescription}
       />
+      {measurements.map(({ label, measurement }) => (
+        <FieldRow
+          key={label}
+          label={label}
+          value={measurement && `${measurement.value} ${measurement.unit}`}
+        />
+      ))}
       <FieldRow
         label={m.sample_field_oriented()}
         value={
@@ -43,17 +46,6 @@ export function DescriptionView({ description }: { description: Description }) {
         label={m.sample_field_orientation_explanation()}
         value={description.orientationExplanation}
       />
-      <FieldRow
-        label={m.sample_field_open_description()}
-        value={description.openDescription}
-      />
-      {measurements.map(({ label, measurement }) => (
-        <FieldRow
-          key={label}
-          label={label}
-          value={measurement && `${measurement.value} ${measurement.unit}`}
-        />
-      ))}
     </FieldRows>
   );
 }

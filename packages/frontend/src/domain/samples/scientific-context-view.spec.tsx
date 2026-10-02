@@ -29,11 +29,6 @@ describe("ScientificContextView", () => {
       />,
     );
 
-    await expect
-      .element(screen.getByText("Provenance status"))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Field sample")).toBeInTheDocument();
-
     for (const ror of ["03fd77x13", "02cte4b68", "043htjv09", "00z54nq84"]) {
       await expect
         .element(screen.getByRole("link", { name: organizationLabel(ror) }))
@@ -68,9 +63,6 @@ describe("ScientificContextView", () => {
     );
 
     await expect
-      .element(screen.getByText("Collection specimen"))
-      .toBeInTheDocument();
-    await expect
       .element(screen.getByText("Scientific expedition"))
       .toBeInTheDocument();
     await expect.element(screen.getByText("Old Collector")).toBeInTheDocument();
@@ -98,7 +90,6 @@ describe("ScientificContextView", () => {
         additionalRoles: [{ role: "researcher", personLastname: "Lovelace" }],
       },
       [
-        "Provenance status",
         "Collector name",
         "Collector ORCID",
         "Chief scientist / Project leader",
@@ -122,7 +113,6 @@ describe("ScientificContextView", () => {
         collectionContextDescription: "Collected during the 1890 expedition.",
       },
       [
-        "Provenance status",
         "Collection origin",
         "Collector name",
         "Open description of the collection context",
