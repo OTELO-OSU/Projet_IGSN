@@ -73,7 +73,10 @@ export type ServiceSampleIssueCode =
   | PublishBlocker
   | "location_inherited_from_parent"
   | "manual_group_not_attachable"
-  | "field_frozen";
+  | "field_frozen"
+  | "sample_not_found"
+  | "sample_not_editable"
+  | "duplicate_sample_key";
 
 const serviceSampleIssueSchema = z.object({
   path: z
@@ -85,7 +88,7 @@ const serviceSampleIssueSchema = z.object({
     .optional(),
   code: z.string().meta({
     description:
-      "Machine-readable reason, a publish blocker code or one of location_inherited_from_parent, manual_group_not_attachable and field_frozen.",
+      "Machine-readable reason, a publish blocker code or one of location_inherited_from_parent, manual_group_not_attachable, field_frozen, sample_not_found, sample_not_editable and duplicate_sample_key.",
   }),
   message: z
     .string()

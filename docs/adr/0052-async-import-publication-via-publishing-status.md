@@ -27,6 +27,8 @@ Idempotence rests on two facts: `generateIgsnSuffix(id)` is deterministic from t
 
 `POST /admin/samples/bulk-edit` (`api/src/sample/bulk-edit/`) reuses the same two statuses for an already-published sample: it commits accepted edits as `publishing`, and the same worker republishes it under its existing IGSN, `published_at` and a DataCite `publish` event. Accepted consequences: the sample is hidden from the public while queued, and a failed republish leaves it `publish_failed`, on the draft side of every permanence gate, until "Retry publication" succeeds.
 
+`POST /service/samples/batch` (ADR 0036) is a third producer: each item commits as `publishing`, a create or an update, in the batch's own transaction, and `GET /service/batches/{id}` is the partner's poll, reading the same `status` and `publishing_error` the worker writes.
+
 ## Rejected
 
 - One transaction for the whole batch with DataCite inside: a mid-batch failure rolls the DB back but leaves the already-PUT DOIs registered against vanished rows.
