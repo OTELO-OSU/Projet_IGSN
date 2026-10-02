@@ -6,11 +6,14 @@ import { render } from "vitest-browser-react";
 import { userEvent } from "vitest/browser";
 
 import { worker } from "../../test/msw.ts";
-import { CustomizeTemplateDialog } from "./customize-template-dialog.tsx";
+import {
+  CustomizeTemplateDialog,
+  type TemplateDialogValues,
+} from "./customize-template-dialog.tsx";
 
 const GROUP = { id: "0f8fad5b-d9cb-469f-a165-70867728950e", name: "Alps team" };
 
-async function openDialog() {
+async function openDialog(initialValues?: TemplateDialogValues) {
   worker.use(
     http.get("*/admin/currentUser/attachable-manual-groups", () =>
       HttpResponse.json({ data: [GROUP] }),
@@ -19,7 +22,11 @@ async function openDialog() {
   const onBack = vi.fn();
   const screen = await render(
     <QueryClientProvider client={new QueryClient()}>
-      <CustomizeTemplateDialog open onBack={onBack} />
+      <CustomizeTemplateDialog
+        open
+        onBack={onBack}
+        initialValues={initialValues}
+      />
     </QueryClientProvider>,
   );
   const dialog = screen.getByRole("dialog", { name: "Customize the template" });
@@ -253,6 +260,89 @@ describe("CustomizeTemplateDialog", () => {
       provenanceStatus: "field_sample",
       repository: "false",
       geologicalContext: "false",
+    });
+  });
+
+  describe("prefilled from a sample", () => {
+    const PREFILLED: TemplateDialogValues = {
+      materialPath: [
+        "rock_and_sediment",
+        "rock_and_sediment.rock",
+        "rock_and_sediment.rock.igneous",
+      ],
+      groupId: GROUP.id,
+      provenanceValue: "field_sample",
+      subSamples: true,
+      sections: {
+        physicalDescription: true,
+        age: false,
+        conservationSecurity: false,
+        repository: true,
+        relatedDocuments: false,
+        geologicalContext: false,
+      },
+    };
+
+    const captureDownload = () => {
+      const requested: URLSearchParams[] = [];
+      worker.use(
+        http.get("*/admin/samples/import-template", ({ request }) => {
+          requested.push(new URL(request.url).searchParams);
+          return new HttpResponse("customized-bytes");
+        }),
+      );
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        () => {},
+      );
+      return requested;
+    };
+
+    it("should show the prefilled choices and download the template they describe", async () => {
+      const requested = captureDownload();
+      const { dialog, download } = await openDialog(PREFILLED);
+      const checkbox = (name: string) =>
+        dialog.getByRole("checkbox", { name, exact: true });
+      await expect
+        .element(checkbox("The file will contain sub-samples"))
+        .toBeChecked();
+      await expect.element(checkbox("Physical description")).toBeChecked();
+      await expect.element(checkbox("Age")).not.toBeChecked();
+      await expect
+        .element(dialog.getByRole("combobox", { name: "Manual group" }))
+        .toHaveTextContent(GROUP.name);
+
+      await download.click();
+
+      await expect.poll(() => requested.length).toBe(1);
+      expect(Object.fromEntries(requested[0]!)).toEqual({
+        materialPath: "rock_and_sediment.rock.igneous",
+        manualGroupId: GROUP.id,
+        provenanceStatus: "field_sample",
+        subSamples: "true",
+        age: "false",
+        conservationSecurity: "false",
+        relatedDocuments: "false",
+        geologicalContext: "false",
+      });
+    });
+
+    it("should send no manual group the caller cannot attach", async () => {
+      const requested = captureDownload();
+      const { screen, dialog, download } = await openDialog({
+        ...PREFILLED,
+        groupId: "3f2504e0-4f89-41d3-9a0c-0305000000ff",
+      });
+      await dialog.getByRole("combobox", { name: "Manual group" }).click();
+      await expect
+        .element(screen.getByRole("option", { name: GROUP.name }))
+        .toBeVisible();
+      await userEvent.keyboard("{Escape}");
+
+      await download.click();
+
+      await expect.poll(() => requested.length).toBe(1);
+      expect(requested[0]!.has("manualGroupId")).toBe(false);
     });
   });
 });

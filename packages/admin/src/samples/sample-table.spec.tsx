@@ -1,6 +1,7 @@
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
   createMemoryHistory,
@@ -12,10 +13,12 @@ import {
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
+import { HttpResponse, http } from "msw";
 import { useState } from "react";
 import { afterEach, vi } from "vitest";
-import { render } from "vitest-browser-react";
+import { type RenderResult, render } from "vitest-browser-react";
 
+import { worker } from "../../test/msw.ts";
 import { SampleTable } from "./sample-table.tsx";
 
 const sample: AdminSampleListItem = {
@@ -75,6 +78,17 @@ const SUB_SAMPLE_ACTION = `Add a sub sample of ${sample.name}`;
 
 const DUPLICATE_ACTION = `Duplicate ${sample.name}`;
 
+const TEMPLATE_ACTION = "Create an import template";
+
+const IMPORTABLE: AdminSampleListItem = {
+  ...sample,
+  status: "published",
+  material: "rock_and_sediment.rock",
+};
+
+const openRowMenu = (screen: RenderResult) =>
+  screen.getByRole("button", { name: `Actions for ${sample.name}` }).click();
+
 const COLUMNS_KEY = "admin-sample-columns";
 
 const showColumns = (columns: string) =>
@@ -127,9 +141,15 @@ function renderTable(
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
   return render(
-    <TooltipProvider>
-      <RouterProvider router={router} />
-    </TooltipProvider>,
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -446,8 +466,11 @@ describe("SampleTable", () => {
     "should offer a sub sample link on a %s sample, which holds a permanent IGSN",
     async (status) => {
       const screen = await renderTable([{ ...sample, status }]);
+
+      await openRowMenu(screen);
+
       await expect
-        .element(screen.getByRole("link", { name: SUB_SAMPLE_ACTION }))
+        .element(screen.getByRole("menuitem", { name: SUB_SAMPLE_ACTION }))
         .toHaveAttribute("href", `/samples/create?parent=${sample.id}`);
     },
   );
@@ -455,46 +478,84 @@ describe("SampleTable", () => {
   it("should offer no sub sample link on a draft sample", async () => {
     const screen = await renderTable(samples);
 
+    await openRowMenu(screen);
+
     await expect
-      .element(screen.getByRole("link", { name: sample.name, exact: true }))
+      .element(screen.getByRole("menuitem", { name: DUPLICATE_ACTION }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("link", { name: SUB_SAMPLE_ACTION }))
+      .element(screen.getByRole("menuitem", { name: SUB_SAMPLE_ACTION }))
       .not.toBeInTheDocument();
   });
 
   it("should offer a duplicate link on a draft sample", async () => {
     const screen = await renderTable(samples);
 
+    await openRowMenu(screen);
+
     await expect
-      .element(screen.getByRole("link", { name: DUPLICATE_ACTION }))
+      .element(screen.getByRole("menuitem", { name: DUPLICATE_ACTION }))
       .toHaveAttribute("href", `/samples/create?duplicate=${sample.id}`);
   });
 
   it("should offer no duplicate link on a tombstoned sample", async () => {
     const screen = await renderTable([{ ...sample, status: "tombstone" }]);
 
+    await openRowMenu(screen);
+
     await expect
-      .element(screen.getByRole("link", { name: DUPLICATE_ACTION }))
+      .element(screen.getByRole("menuitem", { name: SUB_SAMPLE_ACTION }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("menuitem", { name: DUPLICATE_ACTION }))
       .not.toBeInTheDocument();
   });
 
-  it("should explain the sub sample icon in a tooltip on hover", async () => {
+  it("should open a row menu action without navigating to the edit page", async () => {
     const screen = await renderTable([{ ...sample, status: "published" }]);
 
-    await screen.getByRole("link", { name: SUB_SAMPLE_ACTION }).hover();
-
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(SUB_SAMPLE_ACTION);
-  });
-
-  it("should not navigate to the edit page when the sub sample link is clicked", async () => {
-    const screen = await renderTable([{ ...sample, status: "published" }]);
-
-    await screen.getByRole("link", { name: SUB_SAMPLE_ACTION }).click();
+    await openRowMenu(screen);
+    await screen.getByRole("menuitem", { name: SUB_SAMPLE_ACTION }).click();
 
     await expect.element(screen.getByText("Create page stub")).toBeVisible();
+    await expect
+      .element(screen.getByText("Edit page stub"))
+      .not.toBeInTheDocument();
+  });
+
+  it.each<[string, AdminSampleListItem]>([
+    ["a draft", { ...IMPORTABLE, status: "draft" }],
+    ["a mineral", { ...IMPORTABLE, material: "rock_and_sediment.mineral" }],
+  ])("should offer no import template on %s", async (_, row) => {
+    const screen = await renderTable([row]);
+
+    await openRowMenu(screen);
+
+    await expect
+      .element(screen.getByRole("menuitem", { name: DUPLICATE_ACTION }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("menuitem", { name: TEMPLATE_ACTION }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should open the template dialog prefilled from a published sample of an importable material, staying on the list", async () => {
+    worker.use(
+      http.get("*/admin/currentUser/attachable-manual-groups", () =>
+        HttpResponse.json({ data: [] }),
+      ),
+    );
+    const screen = await renderTable([IMPORTABLE]);
+
+    await openRowMenu(screen);
+    await screen.getByRole("menuitem", { name: TEMPLATE_ACTION }).click();
+
+    const dialog = screen.getByRole("dialog", {
+      name: "Customize the template",
+    });
+    await expect
+      .element(dialog.getByRole("checkbox", { name: "Age", exact: true }))
+      .not.toBeChecked();
     await expect
       .element(screen.getByText("Edit page stub"))
       .not.toBeInTheDocument();

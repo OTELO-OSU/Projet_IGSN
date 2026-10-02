@@ -1,7 +1,6 @@
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 import type { ReactNode } from "react";
 
-import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { Checkbox } from "@projet-igsn/design-system/components/ui/checkbox";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import { FieldPicker } from "@projet-igsn/design-system/components/ui/field-picker";
@@ -12,8 +11,6 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
-import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
-import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicate-sample";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -23,7 +20,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { CopyIcon, GitBranchPlusIcon } from "lucide-react";
+import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import {
@@ -33,7 +30,10 @@ import {
   materialText,
   typeText,
 } from "#/samples/card-fields.ts";
+import { CustomizeTemplateDialog } from "#/samples/customize-template-dialog.tsx";
+import { SampleRowActionsMenu } from "#/samples/sample-row-actions-menu.tsx";
 import { SampleStatusBadge } from "#/samples/sample-status-badge.tsx";
+import { templateCustomizationOfSample } from "#/samples/template-customization-of-sample.ts";
 import { useSampleColumns } from "#/samples/use-sample-columns.ts";
 import { UserInitials } from "#/users/user-initials.tsx";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
@@ -55,31 +55,6 @@ function TruncatedCell({
 
 const editSampleSearch = (moderated: boolean) =>
   moderated ? { from: "moderation" as const } : {};
-
-function RowAction({
-  label,
-  search,
-  icon: Icon,
-}: {
-  label: string;
-  search: { parent: string } | { duplicate: string };
-  icon: typeof CopyIcon;
-}) {
-  return (
-    <TruncatedCell text={label}>
-      <Button asChild variant="ghost" size="icon">
-        <Link
-          to="/samples/create"
-          search={search}
-          aria-label={label}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Icon aria-hidden />
-        </Link>
-      </Button>
-    </TruncatedCell>
-  );
-}
 
 type PickableColumn = {
   id: string;
@@ -182,7 +157,10 @@ const PICKABLE_COLUMNS: readonly PickableColumn[] = [
 
 const PICKABLE_COLUMN_IDS = PICKABLE_COLUMNS.map((column) => column.id);
 
-function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
+function sampleColumns(
+  moderated: boolean,
+  onCreateTemplate: (sample: AdminSampleListItem) => void,
+): ColumnDef<AdminSampleListItem>[] {
   return [
     {
       id: "select",
@@ -267,22 +245,10 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
       id: "actions",
       header: () => m.column_actions(),
       cell: ({ row }) => (
-        <span className="flex items-center">
-          {hasPermanentIgsn(row.original) ? (
-            <RowAction
-              label={m.sample_add_sub_sample({ name: row.original.name })}
-              search={{ parent: row.original.id }}
-              icon={GitBranchPlusIcon}
-            />
-          ) : null}
-          {canDuplicateSample(row.original) ? (
-            <RowAction
-              label={m.sample_duplicate({ name: row.original.name })}
-              search={{ duplicate: row.original.id }}
-              icon={CopyIcon}
-            />
-          ) : null}
-        </span>
+        <SampleRowActionsMenu
+          sample={row.original}
+          onCreateTemplate={onCreateTemplate}
+        />
       ),
       meta: {
         className:
@@ -310,13 +276,15 @@ export function SampleTable({
   moderated = false,
 }: SampleTableProps) {
   const navigate = useNavigate();
+  const [templateSample, setTemplateSample] =
+    useState<AdminSampleListItem | null>(null);
   const { columns, saveColumns } = useSampleColumns(
     PICKABLE_COLUMN_IDS,
     moderated,
   );
   const table = useReactTable({
     data: samples,
-    columns: sampleColumns(moderated),
+    columns: sampleColumns(moderated, setTemplateSample),
     getCoreRowModel: getCoreRowModel(),
     getRowId: (sample) => sample.id,
     manualSorting: true,
@@ -366,6 +334,13 @@ export function SampleTable({
           })
         }
       />
+      {templateSample ? (
+        <CustomizeTemplateDialog
+          open
+          initialValues={templateCustomizationOfSample(templateSample)}
+          onBack={() => setTemplateSample(null)}
+        />
+      ) : null}
     </>
   );
 }

@@ -64,20 +64,36 @@ const ALL_SECTIONS: Record<TemplateSectionKey, boolean> = {
   geologicalContext: true,
 };
 
+export type TemplateDialogValues = {
+  materialPath: string[];
+  groupId: string;
+  provenanceValue: string;
+  subSamples: boolean;
+  sections: Record<TemplateSectionKey, boolean>;
+};
+
 export function CustomizeTemplateDialog({
   open,
   onBack,
+  initialValues,
 }: {
   open: boolean;
   onBack: () => void;
+  initialValues?: TemplateDialogValues;
 }) {
-  const [materialPath, setMaterialPath] = useState<string[]>(() =>
-    toHierarchyPath(MATERIAL_ROOTS[0]),
+  const [materialPath, setMaterialPath] = useState<string[]>(
+    () => initialValues?.materialPath ?? toHierarchyPath(MATERIAL_ROOTS[0]),
   );
-  const [groupId, setGroupId] = useState("");
-  const [provenanceValue, setProvenanceValue] = useState("");
-  const [subSamples, setSubSamples] = useState(false);
-  const [sections, setSections] = useState(ALL_SECTIONS);
+  const [groupId, setGroupId] = useState(initialValues?.groupId ?? "");
+  const [provenanceValue, setProvenanceValue] = useState(
+    initialValues?.provenanceValue ?? "",
+  );
+  const [subSamples, setSubSamples] = useState(
+    initialValues?.subSamples ?? false,
+  );
+  const [sections, setSections] = useState(
+    initialValues?.sections ?? ALL_SECTIONS,
+  );
   const groups = useAttachableManualGroups().data?.data ?? [];
   const downloadTemplate = useDownloadImportTemplate();
   const provenanceStatus = PROVENANCE_STATUSES.find(
@@ -89,7 +105,9 @@ export function CustomizeTemplateDialog({
     ? {
         provenanceStatus,
         materialPath: material ?? undefined,
-        manualGroupId: groupId || undefined,
+        manualGroupId: groups.some((group) => group.id === groupId)
+          ? groupId
+          : undefined,
         subSamples,
         ...sections,
       }
@@ -190,7 +208,7 @@ export function CustomizeTemplateDialog({
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={onBack}>
             <ArrowLeftIcon aria-hidden />
-            {m.action_back()}
+            {initialValues ? m.action_close() : m.action_back()}
           </Button>
           <Button
             type="button"
