@@ -151,12 +151,8 @@ describe("profile page", () => {
       "Your ORCID iD becomes a sign-in method for this account, so make sure it is yours.",
     ],
     [
-      "My samples",
-      "Share this link to show every published sample you own or contribute to.",
-    ],
-    [
-      "Group samples",
-      "Share this link to show every published sample attached to a group you belong to.",
+      "Samples links",
+      "Share these links to show every published sample you contribute to or that is attached to a group you belong to.",
     ],
     [
       "Services",
@@ -173,13 +169,14 @@ describe("profile page", () => {
     await renderProfilePage();
     const links = page.getByRole("region", { name: "Samples links" });
     await expect
-      .element(links.getByRole("region", { name: "My samples", exact: true }))
+      .element(links.getByRole("textbox", { name: "My samples link" }))
       .toBeVisible();
+    await links.getByRole("combobox", { name: "Group", exact: true }).click();
+    await page.getByRole("option", { name: "Basalt team" }).click();
     await expect
-      .element(
-        links.getByRole("region", { name: "Group samples", exact: true }),
-      )
+      .element(links.getByRole("textbox", { name: "Group samples link" }))
       .toBeVisible();
+    expect(links.getByRole("heading", { level: 3 }).elements()).toHaveLength(0);
   });
 
   const MY_SAMPLES_LINK = `http://localhost:3000/search?contributor=${USER_ID}`;
