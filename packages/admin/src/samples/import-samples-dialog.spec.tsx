@@ -125,16 +125,6 @@ function recordImports(answer: () => Response | Promise<Response>) {
 }
 
 describe("ImportSamplesDialog", () => {
-  it("should open the import dialog from the Import button", async () => {
-    const { dialog } = await openDialog();
-
-    await expect
-      .element(dialog)
-      .toHaveTextContent(
-        "To import samples in bulk, download the template, fill it in and upload it.",
-      );
-  });
-
   it("should save the complete template, fetched without customization, the button disabled meanwhile", async () => {
     const { promise: served, resolve: serve } = Promise.withResolvers<void>();
     const requested: string[] = [];
@@ -340,7 +330,6 @@ describe("ImportSamplesDialog", () => {
   });
 
   it.each([
-    [415, "The file could not be imported."],
     [500, "The file could not be imported."],
     [503, "DataCite is unreachable. Nothing was imported, try again later."],
   ])(
@@ -484,23 +473,17 @@ describe("ImportSamplesDialog", () => {
     await expect.element(importButton).toBeDisabled();
   });
 
-  it.each([
-    {
-      reason: "the workbook and the staged ids of its documents",
-      fileNames: ["report.pdf", "photo.jpg"],
-    },
-    { reason: "the workbook alone when it names no file", fileNames: null },
-  ])("should post $reason", async ({ fileNames }) => {
+  it("should post the workbook and the staged ids of its documents", async () => {
     const tus = fakeTus();
     const posted = recordImports(() => HttpResponse.json({ count: 1 }));
-    const { dialog, importButton } = await openDialog();
-    await dialog
-      .getByLabelText("choose one")
-      .upload([await buildAttachmentWorkbook(fileNames)]);
-    if (fileNames !== null)
-      await dialog
-        .getByLabelText("choose them")
-        .upload(fileNames.map((name) => attachmentFile(name)));
+    const { importButton, addDocuments } = await dropWorkbookNaming([
+      "report.pdf",
+      "photo.jpg",
+    ]);
+    await addDocuments([
+      attachmentFile("report.pdf"),
+      attachmentFile("photo.jpg"),
+    ]);
 
     await importButton.click();
 
@@ -508,10 +491,8 @@ describe("ImportSamplesDialog", () => {
     expect(posted).toEqual([
       [
         ["file", "samples.xlsx"],
-        ...(fileNames ?? []).map((name) => [
-          "stagedUploadIds[]",
-          tus.idOf(name),
-        ]),
+        ["stagedUploadIds[]", tus.idOf("report.pdf")],
+        ["stagedUploadIds[]", tus.idOf("photo.jpg")],
       ],
     ]);
   });

@@ -121,12 +121,9 @@ describe("uploadStagedDocuments", () => {
     expect(tus.authorizations).toEqual(["Bearer first", "Bearer renewed"]);
   });
 
-  it.each([
-    { reason: "a 500", answer: 500 },
-    { reason: "a 429", answer: 429 },
-  ])(
-    "should retry a chunk answered by $reason, resuming from the offset the server reports",
-    async ({ answer }) => {
+  it.each([500, 429])(
+    "should retry a chunk answered by a %i, resuming from the offset the server reports",
+    async (answer) => {
       const tus = fakeTus({ patch: (call) => (call === 1 ? answer : null) });
       const { snapshots, onProgress } = recordProgress();
       const { staged, onStaged } = recordStaged();

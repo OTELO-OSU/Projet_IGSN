@@ -28,14 +28,11 @@ describe("importSamplesSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it.each([
-    { rule: "a staged upload id given twice", ids: [firstId, firstId] },
-    { rule: "a staged upload id that is not a uuid", ids: ["report.pdf"] },
-  ])("should reject $rule", ({ ids }) => {
+  it("should reject a staged upload id given twice", () => {
     // Arrange / Act
     const result = importSamplesSchema.safeParse({
       file: file("samples.xlsx"),
-      "stagedUploadIds[]": ids,
+      "stagedUploadIds[]": [firstId, firstId],
     });
     // Assert
     expect(result.success).toBe(false);

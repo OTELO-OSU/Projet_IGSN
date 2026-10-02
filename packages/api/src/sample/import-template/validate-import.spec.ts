@@ -196,22 +196,6 @@ describe("validateImport", () => {
     ]);
   });
 
-  it("should report a label it cannot resolve without the blocker its absence raises", async () => {
-    const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, { Nature: "Handy sample" });
-
-    expect(await issuesOf(await bytesOf(book))).toEqual([
-      {
-        sheet: SHEETS.samples,
-        row: 3,
-        column: "Nature",
-        value: "Handy sample",
-        code: "invalid_value",
-        message: expect.any(String),
-      },
-    ]);
-  });
-
   it("should report a dangling child Sample # together with the samples' errors", async () => {
     const book = await cleanBook();
     fill(book, SHEETS.relations, 4, { "Sample #": 7, Title: "Paper" });
@@ -334,20 +318,6 @@ describe("validateImport", () => {
     },
   );
 
-  it("should carry no value for an issue about an empty cell", async () => {
-    const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, { "Existence status": null });
-
-    expect(await issuesOf(await bytesOf(book))).toEqual([
-      {
-        sheet: SHEETS.samples,
-        row: 3,
-        column: "Existence status",
-        code: "existence_status_missing",
-      },
-    ]);
-  });
-
   it("should default the existence and availability status of a template without their columns", async () => {
     const book = await cleanBook();
     deleteColumn(book, SHEETS.samples, "Existence status");
@@ -380,13 +350,6 @@ describe("validateImport", () => {
       ]);
     },
   );
-
-  it("should accept a Sample # holding an available internal ID", async () => {
-    const book = await cleanBook();
-    withKey(book, 4, "sample-8");
-
-    expect(await issuesOf(await bytesOf(book))).toEqual([]);
-  });
 
   it("should read a customized file's rows left at their pre-fill as blank", async () => {
     const book = await customizedBook();

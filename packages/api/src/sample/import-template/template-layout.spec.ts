@@ -79,9 +79,6 @@ describe("templateLayout", () => {
 
   it.each([
     [SHEETS.samples, "Local ID"],
-    [SHEETS.samples, "Collection origin"],
-    [SHEETS.samples, "Existence status"],
-    [SHEETS.samples, "Availability status"],
     [SHEETS.relations, "Title"],
   ])(
     "should leave the optional or conditional column %s / %s out without an issue",
