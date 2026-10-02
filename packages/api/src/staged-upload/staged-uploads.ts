@@ -1,0 +1,115 @@
+import type { StagedUpload } from "@projet-igsn/domain/staged-upload/model";
+import type { StagedUploadRepository } from "@projet-igsn/domain/staged-upload/repository";
+
+import { STAGED_UPLOAD_TTL_MS } from "@projet-igsn/domain/staged-upload/limits";
+import { FileStore } from "@tus/file-store";
+import { rm, stat } from "node:fs/promises";
+import { join } from "node:path";
+
+import { stagedUploadPathOf, stagingDirOf } from "./staged-path.ts";
+
+export const stagingStoreOf = (storageDir: string): FileStore =>
+  new FileStore({
+    directory: stagingDirOf(storageDir),
+    expirationPeriodInMilliseconds: STAGED_UPLOAD_TTL_MS,
+  });
+
+export const consumeStagedUploads = async (
+  storageDir: string,
+  ids: string[],
+): Promise<void> => {
+  await Promise.all(
+    ids.flatMap((id) => [
+      rm(join(stagingDirOf(storageDir), `${id}.json`), { force: true }),
+      rm(stagedUploadPathOf(storageDir, id), { force: true }),
+    ]),
+  );
+};
+
+export function createStagedUploads(
+  storageDir: string,
+): StagedUploadRepository {
+  const store = stagingStoreOf(storageDir);
+  const { configstore } = store;
+  const declaredById = new Map<
+    string,
+    { ownerId: string | null | undefined; size: number }
+  >();
+
+  const stateOf = async (id: string) => {
+    const [info, data] = await Promise.all([
+      configstore.get(id),
+      stat(stagedUploadPathOf(storageDir, id)).catch(() => undefined),
+    ]);
+    return info && data
+      ? {
+          info,
+          isComplete: data.size === info.size,
+          isStale: Date.now() - data.mtimeMs > STAGED_UPLOAD_TTL_MS,
+        }
+      : undefined;
+  };
+
+  const listIds = async () => (await configstore.list?.()) ?? [];
+
+  const completeOwned = async (
+    id: string,
+    ownerId: string,
+  ): Promise<StagedUpload[]> => {
+    const state = await stateOf(id);
+    const metadata = state?.info.metadata;
+    return state?.isComplete &&
+      !state.isStale &&
+      metadata?.ownerId === ownerId &&
+      metadata.filename
+      ? [
+          {
+            id,
+            name: metadata.filename,
+            mediaType: metadata.filetype || "application/octet-stream",
+          },
+        ]
+      : [];
+  };
+
+  return {
+    findCompleteOwned: async (ids, ownerId) =>
+      (await Promise.all(ids.map((id) => completeOwned(id, ownerId)))).flat(),
+    // ponytail: one staging listing per create, each info read once into memory, and racing creates over-admit at most one upload; an index if staging grows.
+    quotaUsed: async (ownerId) => {
+      const ids = await listIds();
+      const listed = new Set(ids);
+      for (const id of declaredById.keys())
+        if (!listed.has(id)) declaredById.delete(id);
+      await Promise.all(
+        ids
+          .filter((id) => !declaredById.has(id))
+          .map(async (id) => {
+            const info = await configstore.get(id);
+            if (info)
+              declaredById.set(id, {
+                ownerId: info.metadata?.ownerId,
+                size: info.size ?? 0,
+              });
+          }),
+      );
+      return [...declaredById.values()]
+        .filter((declared) => declared.ownerId === ownerId)
+        .reduce((sum, { size }) => sum + size, 0);
+    },
+    deleteExpired: async () => {
+      await store.deleteExpired();
+      const stale = (
+        await Promise.all(
+          (
+            await listIds()
+          ).map(async (id) => {
+            const state = await stateOf(id);
+            return state?.isComplete && state.isStale ? [id] : [];
+          }),
+        )
+      ).flat();
+      await consumeStagedUploads(storageDir, stale);
+    },
+  };
+}

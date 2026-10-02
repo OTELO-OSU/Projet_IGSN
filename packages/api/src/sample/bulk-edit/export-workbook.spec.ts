@@ -1,10 +1,11 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { FIELD_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
+import { REQUIRED_MARKER } from "@projet-igsn/domain/sample/import/template-header";
 import ExcelJS from "exceljs";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { REQUIRED_MARKER, SHEETS } from "../import-template/columns.ts";
+import { SHEETS } from "../import-template/columns.ts";
 import { exportWorkbook } from "./export-workbook.ts";
 
 const HEADER_ROW = 2;

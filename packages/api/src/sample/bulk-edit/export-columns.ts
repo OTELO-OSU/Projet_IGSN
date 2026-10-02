@@ -1,6 +1,10 @@
 import type { Column } from "../import-template/columns.ts";
 
-import { SAMPLE_COLUMNS } from "../import-template/columns.ts";
+import {
+  CHILD_SHEETS,
+  SAMPLE_COLUMNS,
+  SHEETS,
+} from "../import-template/columns.ts";
 
 export const EXPORT_SAMPLE_COLUMNS: readonly Column[] = SAMPLE_COLUMNS.flatMap(
   (column): Column[] => {
@@ -10,4 +14,8 @@ export const EXPORT_SAMPLE_COLUMNS: readonly Column[] = SAMPLE_COLUMNS.flatMap(
       ? [{ ...column, path: "parents.igsn" }]
       : [column];
   },
+);
+
+export const EXPORT_CHILD_SHEETS = CHILD_SHEETS.filter(
+  ({ name }) => name !== SHEETS.attachments,
 );

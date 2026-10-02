@@ -1,5 +1,5 @@
 import type { ImportIssue } from "@projet-igsn/domain/sample/import/import-report";
-import type { UseMutationResult } from "@tanstack/react-query";
+import type { ComponentProps, ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
@@ -8,21 +8,13 @@ import {
 } from "@projet-igsn/design-system/components/ui/dialog";
 import {
   IMPORT_MAX_BYTES,
-  type ImportSamples,
   importSamplesSchema,
 } from "@projet-igsn/domain/sample/import/import-validator";
-import { CircleXIcon, UploadIcon } from "lucide-react";
-import { useState } from "react";
+import { CircleXIcon, UploadIcon, XIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { FileDropZone } from "#/samples/file-drop-zone.tsx";
 import { ImportReport } from "#/samples/import-report.tsx";
-
-export type ImportUpload = UseMutationResult<
-  { issues: ImportIssue[]; count: number },
-  Error,
-  ImportSamples
->;
 
 const fileError = (file: File | null): string | null => {
   if (!file) return null;
@@ -34,33 +26,42 @@ const fileError = (file: File | null): string | null => {
 };
 
 export function ImportFileUpload({
-  upload,
-  onImported,
+  dropZone,
+  file,
+  onRemove,
+  issues,
+  isReady,
+  onImport,
+  children,
 }: {
-  upload: ImportUpload;
-  onImported: () => void;
+  dropZone: Omit<ComponentProps<typeof FileDropZone>, "isInline">;
+  file: File | null;
+  onRemove: () => void;
+  issues: ImportIssue[] | undefined;
+  isReady: boolean;
+  onImport: (file: File) => void;
+  children?: ReactNode;
 }) {
-  const [file, setFile] = useState<File | null>(null);
   const error = fileError(file);
-
-  function pick(picked: File | null) {
-    setFile(picked);
-    upload.reset();
-  }
 
   return (
     <>
-      <FileDropZone
-        hint={m.import_samples_drop_hint()}
-        browseLabel={m.import_samples_choose_file()}
-        accept=".xlsx"
-        isInline
-        onFiles={([picked]) => pick(picked ?? null)}
-      />
+      <FileDropZone {...dropZone} isInline />
       {file ? (
         <div className="grid gap-1 text-sm">
-          <span className="truncate" title={file.name}>
-            {file.name}
+          <span className="flex items-center gap-1">
+            <span className="truncate" title={file.name}>
+              {file.name}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={m.import_samples_remove_workbook({ name: file.name })}
+              onClick={onRemove}
+            >
+              <XIcon aria-hidden />
+            </Button>
           </span>
           {error ? (
             <p role="alert" className="text-destructive">
@@ -69,9 +70,8 @@ export function ImportFileUpload({
           ) : null}
         </div>
       ) : null}
-      {upload.data?.issues.length ? (
-        <ImportReport issues={upload.data.issues} />
-      ) : null}
+      {children}
+      {issues?.length ? <ImportReport issues={issues} /> : null}
       <DialogFooter>
         <DialogClose asChild>
           <Button type="button" variant="ghost">
@@ -81,18 +81,8 @@ export function ImportFileUpload({
         </DialogClose>
         <Button
           type="button"
-          disabled={!file || error !== null || upload.isPending}
-          onClick={() => {
-            if (!file) return;
-            upload.mutate(
-              { file },
-              {
-                onSuccess: ({ issues }) => {
-                  if (issues.length === 0) onImported();
-                },
-              },
-            );
-          }}
+          disabled={!file || error !== null || !isReady}
+          onClick={() => file && onImport(file)}
         >
           <UploadIcon aria-hidden />
           {m.action_import()}

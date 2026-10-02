@@ -522,6 +522,7 @@ describe("customized import template workbook", () => {
       SHEETS.readMe,
       SHEETS.samples,
       SHEETS.relations,
+      SHEETS.attachments,
       SHEETS.rightsHolders,
       SHEETS.elementsOfInterest,
       SHEETS.storageConditions,
@@ -529,19 +530,23 @@ describe("customized import template workbook", () => {
     ]);
   });
 
-  it.each<[TemplateSectionKey, string, string | undefined]>([
-    ["physicalDescription", "Physical description", undefined],
-    ["age", "Age", undefined],
+  it.each<[TemplateSectionKey, string, string[]]>([
+    ["physicalDescription", "Physical description", []],
+    ["age", "Age", []],
     [
       "conservationSecurity",
       "Conservation and security",
-      SHEETS.storageConditions,
+      [SHEETS.storageConditions],
     ],
-    ["repository", "Curation and repository", SHEETS.rightsHolders],
-    ["relatedDocuments", "Related URL or document", SHEETS.relations],
-    ["geologicalContext", "Geological context", undefined],
+    ["repository", "Curation and repository", [SHEETS.rightsHolders]],
+    [
+      "relatedDocuments",
+      "Related URL or document",
+      [SHEETS.relations, SHEETS.attachments],
+    ],
+    ["geologicalContext", "Geological context", []],
   ])(
-    "should drop the %s section's %s columns and the sheet it empties (%s)",
+    "should drop the %s section's %s columns and the sheets it empties (%s)",
     async (section, group, emptied) => {
       const trimmed = await loaded(1, [], { [section]: false });
       const dataSheets = DATA_SHEETS.map(({ name }) => name);
@@ -559,7 +564,7 @@ describe("customized import template workbook", () => {
         holdingGroup: [],
         sheets: book.worksheets
           .map((worksheet) => worksheet.name)
-          .filter((name) => name !== emptied),
+          .filter((name) => !emptied.includes(name)),
       });
     },
   );

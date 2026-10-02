@@ -173,7 +173,7 @@ describe("app", () => {
     );
 
     pgTest(
-      "should allow Authorization and Content-Type headers on preflight",
+      "should allow the Authorization, Content-Type and tus headers on preflight",
       async ({ db }) => {
         const app = createApp(db).app;
 
@@ -187,7 +187,7 @@ describe("app", () => {
         });
 
         expect(res.headers.get("access-control-allow-headers")).toBe(
-          "Authorization,Content-Type",
+          "Authorization,Content-Type,Tus-Resumable,Upload-Length,Upload-Metadata,Upload-Offset",
         );
       },
     );
@@ -311,6 +311,28 @@ describe("app", () => {
       },
     );
 
+    pgTest(
+      "should charge upload requests to their own budget, never the authenticated one",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const upload = () =>
+          app.request(`/admin/samples/import/uploads/${UNKNOWN_ID}`, {
+            method: "HEAD",
+            headers: {
+              Authorization: "Bearer user-1",
+              "Tus-Resumable": "1.0.0",
+            },
+          });
+
+        await spend(upload, AUTHENTICATED_USER_BUDGET.points + 1);
+        const admin = await app.request("/admin/currentUser", {
+          headers: { Authorization: "Bearer user-1" },
+        });
+
+        expect(admin.status).toBe(200);
+      },
+    );
+
     const adminRequest = (
       app: ReturnType<typeof createApp>["app"],
       token: string,
@@ -406,6 +428,10 @@ describe("app", () => {
       expect(
         refused.headers.get("access-control-expose-headers")?.split(","),
       ).toEqual([
+        "Location",
+        "Upload-Offset",
+        "Upload-Length",
+        "Tus-Resumable",
         "Retry-After",
         "RateLimit-Limit",
         "RateLimit-Remaining",

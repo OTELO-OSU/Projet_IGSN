@@ -7,6 +7,7 @@ import {
   XLSX_MEDIA_TYPE,
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { HEADER_ROW } from "@projet-igsn/domain/sample/import/template-header";
 import ExcelJS from "exceljs";
 
 import type { Column, ColumnGroup } from "./columns.ts";
@@ -68,8 +69,6 @@ export const sheetValidations = (sheet: ExcelJS.Worksheet): RangeValidations =>
 
 const GROUP_ROW = 1;
 
-export const HEADER_ROW = 2;
-
 export const FIRST_DATA_ROW = HEADER_ROW + 1;
 
 const lastDataRow = (rows: number) => FIRST_DATA_ROW + rows - 1;
@@ -84,6 +83,7 @@ const READ_ME_LINES = [
   `A "${SAMPLE_KEY_HEADER}" reserved when downloading this template becomes that sample's internal ID; a plain number gets the next free one on import.`,
   `A row on ${CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} picks that number in its own "${SAMPLE_KEY_HEADER}" list, and the name beside it fills itself.`,
   `Those sheets take one value per row, so a sample with three of them has three rows.`,
+  `A row on "${SHEETS.attachments}" names a file you must provide when importing; several rows may name the same file, and names match exactly, case included.`,
   `Dropdowns are a guide, not a rule: the server validates the whole file on upload and refuses it as a whole.`,
   `Leave a cell empty when you have nothing to declare.`,
   `The "${SHEETS.vocabularies}" sheet lists every value the dropdowns offer, with the code the registry stores.`,

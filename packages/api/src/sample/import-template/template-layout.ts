@@ -1,17 +1,20 @@
 import type { ImportIssue } from "@projet-igsn/domain/sample/import/import-report";
 import type ExcelJS from "exceljs";
 
+import {
+  HEADER_ROW,
+  normalisedHeader,
+} from "@projet-igsn/domain/sample/import/template-header";
+
 import type { Column } from "./columns.ts";
 
 import {
   DATA_SHEETS,
   plainHeader,
-  REQUIRED_MARKER,
   SAMPLE_KEY_HEADER,
   SHEETS,
 } from "./columns.ts";
 import { REQUIRED_SAMPLE_COLUMNS } from "./required-columns.ts";
-import { HEADER_ROW } from "./workbook.ts";
 
 export type LayoutColumn = Column & { number: number };
 
@@ -19,19 +22,10 @@ type LayoutSheet = { name: string; columns: readonly LayoutColumn[] };
 
 export type TemplateLayout = readonly LayoutSheet[];
 
-const normalised = (header: string) => {
-  const collapsed = header.trim().replace(/\s+/g, " ");
-  return (
-    collapsed.endsWith(REQUIRED_MARKER)
-      ? collapsed.slice(0, -REQUIRED_MARKER.length)
-      : collapsed
-  ).toLowerCase();
-};
-
 function headerNumbers(sheet: ExcelJS.Worksheet): Map<string, number[]> {
   const numbers = new Map<string, number[]>();
   sheet.getRow(HEADER_ROW).eachCell((cell, number) => {
-    const header = normalised(cell.text);
+    const header = normalisedHeader(cell.text);
     numbers.set(header, [...(numbers.get(header) ?? []), number]);
   });
   return numbers;
@@ -55,7 +49,7 @@ function sheetLayout(
   const present: LayoutColumn[] = [];
   const issues: ImportIssue[] = [];
   for (const column of columns) {
-    const found = numbers.get(normalised(column.header)) ?? [];
+    const found = numbers.get(normalisedHeader(column.header)) ?? [];
     const [number, ...others] = found;
     if (others.length > 0) {
       issues.push({

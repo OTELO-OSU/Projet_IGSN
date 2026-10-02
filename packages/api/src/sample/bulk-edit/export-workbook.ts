@@ -13,11 +13,7 @@ import type { Column } from "../import-template/columns.ts";
 import type { Cell } from "./sample-row.ts";
 
 import { queueBuild } from "../import-template/build-queue.ts";
-import {
-  CHILD_SHEETS,
-  SAMPLE_KEY_HEADER,
-  SHEETS,
-} from "../import-template/columns.ts";
+import { SAMPLE_KEY_HEADER, SHEETS } from "../import-template/columns.ts";
 import {
   addChildSheet,
   addDataSheet,
@@ -28,7 +24,10 @@ import {
   FROZEN_FILL,
   xlsxResponse,
 } from "../import-template/workbook.ts";
-import { EXPORT_SAMPLE_COLUMNS } from "./export-columns.ts";
+import {
+  EXPORT_CHILD_SHEETS,
+  EXPORT_SAMPLE_COLUMNS,
+} from "./export-columns.ts";
 import { childRows, sampleRow } from "./sample-row.ts";
 
 type ExportRow = { sample: Sample; cells: readonly Cell[] };
@@ -39,7 +38,7 @@ const FROZEN_PATHS = new Set(["igsn", "parents.igsn", ...FROZEN_FORM_FIELDS]);
 
 const READ_ME_LINES = [
   `One published sample per row on the "${SHEETS.samples}" sheet, from row ${FIRST_DATA_ROW}, identified by its "${SAMPLE_KEY_HEADER}", its internal ID, so do not edit it.`,
-  `A row on ${CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} belongs to the sample whose "${SAMPLE_KEY_HEADER}" it picks, one value per row, and a value is added on an empty row picking that "${SAMPLE_KEY_HEADER}".`,
+  `A row on ${EXPORT_CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} belongs to the sample whose "${SAMPLE_KEY_HEADER}" it picks, one value per row, and a value is added on an empty row picking that "${SAMPLE_KEY_HEADER}".`,
   `A greyed cell holds an identifier or a value frozen since publication, so the server will refuse to change it.`,
   `The "${SHEETS.vocabularies}" sheet lists every value the dropdowns offer, with the code the registry stores.`,
 ];
@@ -98,7 +97,7 @@ async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
       cells: sampleRow(sample, EXPORT_SAMPLE_COLUMNS).with(0, keyOf(sample)),
     })),
   );
-  for (const child of CHILD_SHEETS) {
+  for (const child of EXPORT_CHILD_SHEETS) {
     const rows = samples.flatMap((sample) =>
       childRows(sample, child.columns.slice(KEY_COLUMNS)).map((cells) => ({
         sample,

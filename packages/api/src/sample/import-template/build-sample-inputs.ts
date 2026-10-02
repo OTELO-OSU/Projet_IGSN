@@ -12,6 +12,7 @@ import type { Cell, ParsedRows, RawRow } from "./read-rows.ts";
 
 import { COLUMN_KINDS } from "./column-kind.ts";
 import {
+  ATTACHMENT_PATH,
   DATA_SHEETS,
   MANUAL_GROUP_PATH,
   plainHeader,
@@ -32,10 +33,19 @@ type Field = { column: Column; path: string; value: unknown };
 
 type Source = { sheet: string; row: number };
 
+export type AttachmentCandidate = {
+  row: number;
+  name?: string;
+  title: string | null;
+  targetResourceType?: string;
+  description: string | null;
+};
+
 export type SampleCandidate = {
   row: number;
   input: Json;
   rowsByPath: Readonly<Record<string, Source>>;
+  attachments: readonly AttachmentCandidate[];
 };
 
 const REGION_BLOCK = "region";
@@ -220,6 +230,25 @@ function withChildRow(
   return { sample: { ...sample, input, rowsByPath }, duplicates };
 }
 
+function attachmentOf(
+  row: number,
+  fields: readonly Field[],
+): AttachmentCandidate {
+  const textAt = (key: string) => {
+    const value = fields.find(
+      ({ path }) => path === `${ATTACHMENT_PATH}.${key}`,
+    )?.value;
+    return typeof value === "string" ? value : undefined;
+  };
+  return {
+    row,
+    name: textAt("name"),
+    title: textAt("title") ?? null,
+    targetResourceType: textAt("targetResourceType"),
+    description: textAt("description") ?? null,
+  };
+}
+
 const sheetRowOf = (sheet: string, { row, cells }: RawRow): SheetRow => ({
   number: row,
   cells: new Map(
@@ -279,12 +308,24 @@ export function buildSampleInputs(
         {},
       ),
       rowsByPath: {},
+      attachments: [],
     };
     for (const child of sample.children) {
+      const fields = rowFields(child.sheet, sheetRowOf(child.sheet, child));
+      if (child.sheet === SHEETS.attachments) {
+        candidate = {
+          ...candidate,
+          attachments: [
+            ...candidate.attachments,
+            attachmentOf(child.row, fields),
+          ],
+        };
+        continue;
+      }
       const joined = withChildRow(
         candidate,
         { sheet: child.sheet, row: child.row },
-        rowFields(child.sheet, sheetRowOf(child.sheet, child)),
+        fields,
       );
       candidate = joined.sample;
       issues.push(

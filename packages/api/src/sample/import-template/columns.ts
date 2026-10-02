@@ -1,6 +1,11 @@
 import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
 
 import { COLLECTION_METHODS } from "@projet-igsn/domain/sample/collection-method/vocabulary";
+import {
+  ATTACHMENT_FILE_NAME_HEADER,
+  ATTACHMENTS_SHEET_NAME,
+} from "@projet-igsn/domain/sample/import/attachment-sheet";
+import { REQUIRED_MARKER } from "@projet-igsn/domain/sample/import/template-header";
 import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
 import { PHYSIOGRAPHIC_ENVIRONMENTS } from "@projet-igsn/domain/sample/physiographic-environment/vocabulary";
 import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
@@ -49,6 +54,7 @@ export const SHEETS = {
   readMe: "Read me",
   samples: "Samples",
   relations: "Relations",
+  attachments: ATTACHMENTS_SHEET_NAME,
   additionalRoles: "Additional roles",
   funderOrganizations: "Funder organizations",
   hostInstitutions: "Host institutions",
@@ -63,8 +69,6 @@ export const SAMPLE_KEY_HEADER = "Sample #";
 export const SAMPLE_NAME_HEADER = "Name";
 
 export const SAMPLE_LOOKUP_HEADER = "Sample name (filled automatically)";
-
-export const REQUIRED_MARKER = " *";
 
 export const MANUAL_GROUP_PATH = "manualGroupIds";
 
@@ -343,6 +347,24 @@ const RELATION_COLUMNS: readonly Column[] = marked([
   ]),
 ]);
 
+export const ATTACHMENT_PATH = "attachments";
+
+export const ATTACHMENT_RESOURCE_TYPE_HEADER = "Resource type";
+
+const ATTACHMENT_COLUMNS: readonly Column[] = marked([
+  ...KEY_COLUMNS,
+  ...grouped("Related URL or document", [
+    field(ATTACHMENT_FILE_NAME_HEADER, `${ATTACHMENT_PATH}.name`),
+    field("Title", `${ATTACHMENT_PATH}.title`),
+    field(
+      ATTACHMENT_RESOURCE_TYPE_HEADER,
+      `${ATTACHMENT_PATH}.targetResourceType`,
+      "relation_resource_type",
+    ),
+    field("Description", `${ATTACHMENT_PATH}.description`),
+  ]),
+]);
+
 const ADDITIONAL_ROLE = "scientificContext.additionalRoles";
 
 const ADDITIONAL_ROLE_COLUMNS: readonly Column[] = marked([
@@ -401,6 +423,7 @@ export const CHILD_SHEETS: readonly {
   columns: readonly Column[];
 }[] = [
   { name: SHEETS.relations, columns: RELATION_COLUMNS },
+  { name: SHEETS.attachments, columns: ATTACHMENT_COLUMNS },
   { name: SHEETS.additionalRoles, columns: ADDITIONAL_ROLE_COLUMNS },
   valueSheet(
     SHEETS.funderOrganizations,

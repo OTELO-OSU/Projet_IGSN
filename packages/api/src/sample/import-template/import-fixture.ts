@@ -1,11 +1,15 @@
+import {
+  HEADER_ROW,
+  REQUIRED_MARKER,
+} from "@projet-igsn/domain/sample/import/template-header";
 import ExcelJS from "exceljs";
 
-import { REQUIRED_MARKER, SHEETS } from "./columns.ts";
+import { SHEETS } from "./columns.ts";
 import { prefilledHeaderLabelsOf, readCustomization } from "./customization.ts";
 import { readRows } from "./read-rows.ts";
 import { templateLayout } from "./template-layout.ts";
 import { withoutPrefilledRows } from "./validate-import.ts";
-import { HEADER_ROW, importTemplateWorkbook } from "./workbook.ts";
+import { importTemplateWorkbook } from "./workbook.ts";
 
 type Cells = Record<string, ExcelJS.CellValue>;
 

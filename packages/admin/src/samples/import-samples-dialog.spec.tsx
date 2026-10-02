@@ -1,5 +1,6 @@
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
+import { ATTACHMENT_MAX_BYTES } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import {
   IMPORT_MAX_BYTES,
   IMPORT_TEMPLATE_FILENAME,
@@ -10,6 +11,8 @@ import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { buildAttachmentWorkbook } from "../../test/build-attachment-workbook.ts";
+import { fakeTus } from "../../test/fake-tus.ts";
 import { worker } from "../../test/msw.ts";
 import { ImportSamplesDialog } from "./import-samples-dialog.tsx";
 
@@ -56,39 +59,72 @@ async function pickTemplate(screen: Screen, dialog: Dialog, item: string) {
   await expect.poll(() => screen.getByRole("menu").elements()).toHaveLength(0);
 }
 
-function drop(target: Element, file: File) {
+function drop(target: Element, ...files: File[]) {
   const dataTransfer = new DataTransfer();
-  dataTransfer.items.add(file);
+  for (const file of files) dataTransfer.items.add(file);
   target.dispatchEvent(
     new DragEvent("drop", { dataTransfer, bubbles: true, cancelable: true }),
   );
 }
 
-function answerNoSample() {
-  worker.use(
-    http.post("*/admin/samples/import", () =>
-      HttpResponse.json(
-        {
-          error: "Invalid import",
-          issues: [{ sheet: "Samples", code: "no_sample" }],
-        },
-        { status: 422 },
-      ),
-    ),
+const attachmentFile = (name: string) =>
+  new File(["content"], name, { type: "application/pdf" });
+
+async function dropWorkbookNaming(fileNames: readonly string[]) {
+  const opened = await openDialog();
+  await opened.dialog
+    .getByLabelText("choose one")
+    .upload([await buildAttachmentWorkbook(fileNames)]);
+  const attachments = opened.dialog.getByRole("list", {
+    name: "Attached documents",
+  });
+  return {
+    ...opened,
+    addDocuments: (files: File[]) =>
+      opened.dialog.getByLabelText("choose them").upload(files),
+    dropDocuments: async (files: File[]) => {
+      const zone = opened.dialog.getByText("Drop the documents here, or");
+      await expect.element(zone).toBeVisible();
+      drop(zone.element(), ...files);
+    },
+    statuses: () =>
+      attachments
+        .getByRole("listitem")
+        .elements()
+        .map((item) => item.textContent),
+  };
+}
+
+const invalidImport = () =>
+  HttpResponse.json(
+    {
+      error: "Invalid import",
+      issues: [{ sheet: "Samples", code: "no_sample" }],
+    },
+    { status: 422 },
   );
+
+function answerNoSample() {
+  worker.use(http.post("*/admin/samples/import", invalidImport));
+}
+
+function recordImports(answer: () => Response | Promise<Response>) {
+  const posted: unknown[][][] = [];
+  worker.use(
+    http.post("*/admin/samples/import", async ({ request }) => {
+      posted.push(
+        [...(await request.formData()).entries()].map(([key, value]) => [
+          key,
+          value instanceof File ? value.name : value,
+        ]),
+      );
+      return answer();
+    }),
+  );
+  return posted;
 }
 
 describe("ImportSamplesDialog", () => {
-  it("should open the import dialog from the Import button", async () => {
-    const { dialog } = await openDialog();
-
-    await expect
-      .element(dialog)
-      .toHaveTextContent(
-        "To import samples in bulk, download the template, fill it in and upload it.",
-      );
-  });
-
   it("should save the complete template, fetched without customization, the button disabled meanwhile", async () => {
     const { promise: served, resolve: serve } = Promise.withResolvers<void>();
     const requested: string[] = [];
@@ -294,7 +330,6 @@ describe("ImportSamplesDialog", () => {
   });
 
   it.each([
-    [415, "The file could not be imported."],
     [500, "The file could not be imported."],
     [503, "DataCite is unreachable. Nothing was imported, try again later."],
   ])(
@@ -315,6 +350,340 @@ describe("ImportSamplesDialog", () => {
         .element(screen.getByRole("region", { name: /notifications/i }))
         .toHaveTextContent(message);
       await expect.element(dialog.getByText("samples.xlsx")).toBeVisible();
+    },
+  );
+
+  it("should block Import until every file the workbook names is added", async () => {
+    const { importButton, addDocuments, statuses } = await dropWorkbookNaming([
+      "report.pdf",
+      "photo.jpg",
+    ]);
+
+    await expect
+      .poll(statuses)
+      .toEqual(["report.pdfMissing", "photo.jpgMissing"]);
+    await expect.element(importButton).toBeDisabled();
+
+    await addDocuments([
+      attachmentFile("report.pdf"),
+      attachmentFile("photo.jpg"),
+    ]);
+
+    await expect.poll(statuses).toEqual(["report.pdfAdded", "photo.jpgAdded"]);
+    await expect.element(importButton).toBeEnabled();
+  });
+
+  it("should list a file the workbook does not name as an error, blocking Import until removed", async () => {
+    const { dialog, importButton, addDocuments, statuses } =
+      await dropWorkbookNaming(["report.pdf"]);
+
+    await addDocuments([
+      attachmentFile("report.pdf"),
+      attachmentFile("notes.txt"),
+    ]);
+
+    await expect
+      .poll(statuses)
+      .toEqual(["report.pdfAdded", "notes.txtNot named in the workbook"]);
+    await expect.element(importButton).toBeDisabled();
+
+    await dialog.getByRole("button", { name: "Remove notes.txt" }).click();
+
+    await expect.poll(statuses).toEqual(["report.pdfAdded"]);
+    await expect.element(importButton).toBeEnabled();
+  });
+
+  it.each([
+    {
+      reason: "the workbook names as a document",
+      dropped: "data.xlsx",
+      expected: ["data.xlsxAdded"],
+    },
+    {
+      reason: "the workbook does not name as an error",
+      dropped: "other.xlsx",
+      expected: ["data.xlsxMissing", "other.xlsxNot named in the workbook"],
+    },
+  ])(
+    "should add a dropped xlsx $reason, keeping the workbook",
+    async ({ dropped, expected }) => {
+      const { dialog, addDocuments, statuses } = await dropWorkbookNaming([
+        "data.xlsx",
+      ]);
+      await expect.poll(statuses).toEqual(["data.xlsxMissing"]);
+
+      await addDocuments([xlsx(dropped)]);
+
+      await expect.poll(statuses).toEqual(expected);
+      await expect
+        .element(dialog.getByText("samples.xlsx", { exact: true }))
+        .toBeVisible();
+    },
+  );
+
+  it("should clear the workbook and its documents when the workbook is removed", async () => {
+    const { dialog, importButton, addDocuments, statuses } =
+      await dropWorkbookNaming(["report.pdf"]);
+    await addDocuments([attachmentFile("report.pdf")]);
+    await expect.poll(statuses).toEqual(["report.pdfAdded"]);
+
+    await dialog
+      .getByRole("button", { name: "Remove the workbook samples.xlsx" })
+      .click();
+
+    await expect
+      .element(dialog.getByLabelText("choose one"))
+      .toHaveAttribute("accept", ".xlsx");
+    expect(dialog.getByRole("list").elements()).toHaveLength(0);
+    expect(dialog.getByText("samples.xlsx").elements()).toHaveLength(0);
+    await expect.element(importButton).toBeDisabled();
+  });
+
+  it("should reject a file whose name is already added", async () => {
+    const { dialog, addDocuments, statuses } = await dropWorkbookNaming([
+      "report.pdf",
+    ]);
+    await addDocuments([attachmentFile("report.pdf")]);
+    await expect.poll(statuses).toEqual(["report.pdfAdded"]);
+
+    await addDocuments([attachmentFile("report.pdf")]);
+
+    await expect
+      .element(dialog.getByRole("alert"))
+      .toHaveTextContent("report.pdf is already added.");
+    expect(statuses()).toEqual(["report.pdfAdded"]);
+  });
+
+  it("should reject a document over the attachment size limit, its name staying missing", async () => {
+    const { dialog, importButton, statuses } = await dropWorkbookNaming([
+      "report.pdf",
+    ]);
+    await expect.poll(statuses).toEqual(["report.pdfMissing"]);
+    const oversized = attachmentFile("report.pdf");
+    Object.defineProperty(oversized, "size", {
+      value: ATTACHMENT_MAX_BYTES + 1,
+    });
+
+    drop(dialog.getByText("Drop the documents here, or").element(), oversized);
+
+    await expect
+      .element(dialog.getByRole("alert"))
+      .toHaveTextContent("report.pdf is larger than 100 MB.");
+    expect(statuses()).toEqual(["report.pdfMissing"]);
+    await expect.element(importButton).toBeDisabled();
+  });
+
+  it("should post the workbook and the staged ids of its documents", async () => {
+    const tus = fakeTus();
+    const posted = recordImports(() => HttpResponse.json({ count: 1 }));
+    const { importButton, addDocuments } = await dropWorkbookNaming([
+      "report.pdf",
+      "photo.jpg",
+    ]);
+    await addDocuments([
+      attachmentFile("report.pdf"),
+      attachmentFile("photo.jpg"),
+    ]);
+
+    await importButton.click();
+
+    await expect.poll(() => posted).toHaveLength(1);
+    expect(posted).toEqual([
+      [
+        ["file", "samples.xlsx"],
+        ["stagedUploadIds[]", tus.idOf("report.pdf")],
+        ["stagedUploadIds[]", tus.idOf("photo.jpg")],
+      ],
+    ]);
+  });
+
+  it("should show one bar following the current file, named with its retry, then the next file, then the import step", async () => {
+    fakeTus({ patch: (call) => (call === 1 ? 500 : null) });
+    const retriedChunk = Promise.withResolvers<void>();
+    const secondFileChunk = Promise.withResolvers<void>();
+    let patches = 0;
+    worker.use(
+      http.patch("*/admin/samples/import/uploads/:id", async () => {
+        patches += 1;
+        if (patches === 2) await retriedChunk.promise;
+        if (patches === 3) await secondFileChunk.promise;
+      }),
+    );
+    const { promise: importHeld, resolve: releaseImport } =
+      Promise.withResolvers<void>();
+    recordImports(async () => {
+      await importHeld;
+      return HttpResponse.json({ count: 1 });
+    });
+    const { screen, dialog, importButton, addDocuments } =
+      await dropWorkbookNaming(["report.pdf", "photo.jpg"]);
+    await addDocuments([
+      attachmentFile("report.pdf"),
+      new File(["photo content"], "photo.jpg", { type: "image/jpeg" }),
+    ]);
+
+    await importButton.click();
+
+    const upload = screen.getByRole("dialog", { name: "Importing samples" });
+    const bar = upload.getByRole("progressbar", {
+      name: "Uploading the documents",
+    });
+    await expect.element(dialog).not.toBeInTheDocument();
+    await expect.element(bar).toHaveAttribute("max", "7");
+    await expect
+      .element(
+        upload.getByText("File 1/2: report.pdf, retrying (attempt 2 of 4)"),
+        { timeout: 3_000 },
+      )
+      .toBeVisible();
+    retriedChunk.resolve();
+    await expect
+      .element(upload.getByText("File 2/2: photo.jpg", { exact: true }))
+      .toBeVisible();
+    await expect.element(bar).toHaveAttribute("max", "13");
+    expect(upload.getByRole("progressbar").elements()).toHaveLength(1);
+    secondFileChunk.resolve();
+    await expect
+      .element(
+        upload.getByRole("progressbar", { name: "Creating the samples" }),
+      )
+      .toBeVisible();
+    releaseImport();
+    await expect.element(upload).not.toBeInTheDocument();
+  });
+
+  it("should reopen the import dialog with its report after a 422, a resubmit posting the same staged ids without uploading again", async () => {
+    const tus = fakeTus();
+    const posted = recordImports(invalidImport);
+    const { dialog, importButton, addDocuments, statuses } =
+      await dropWorkbookNaming(["report.pdf"]);
+    await addDocuments([attachmentFile("report.pdf")]);
+
+    await importButton.click();
+
+    await expect
+      .element(dialog.getByRole("table", { name: "Samples" }))
+      .toHaveTextContent("The file holds no sample.");
+    expect(statuses()).toEqual(["report.pdfAdded"]);
+    await importButton.click();
+    await expect.poll(() => posted).toHaveLength(2);
+    const entries = [
+      ["file", "samples.xlsx"],
+      ["stagedUploadIds[]", tus.idOf("report.pdf")],
+    ];
+    expect(posted).toEqual([entries, entries]);
+    expect(tus.requests).toEqual([
+      "POST report.pdf application/pdf",
+      "PATCH report.pdf 0",
+    ]);
+  });
+
+  it("should keep the documents staged before a failed upload, Import again staging only the rest", async () => {
+    let posts = 0;
+    const tus = fakeTus({ post: () => (++posts === 2 ? 413 : null) });
+    const posted = recordImports(() => HttpResponse.json({ count: 1 }));
+    const { dialog, importButton, dropDocuments } = await dropWorkbookNaming([
+      "report.pdf",
+      "photo.jpg",
+    ]);
+    await dropDocuments([
+      attachmentFile("report.pdf"),
+      attachmentFile("photo.jpg"),
+    ]);
+    await importButton.click();
+    await expect.element(dialog).toBeVisible();
+
+    await importButton.click();
+
+    await expect.poll(() => posted).toHaveLength(1);
+    expect(tus.requests.filter((r) => r.startsWith("POST"))).toEqual([
+      "POST report.pdf application/pdf",
+      "POST photo.jpg application/pdf",
+      "POST photo.jpg application/pdf",
+    ]);
+    expect(posted[0]).toEqual([
+      ["file", "samples.xlsx"],
+      ["stagedUploadIds[]", tus.idOf("report.pdf")],
+      ["stagedUploadIds[]", tus.idOf("photo.jpg")],
+    ]);
+  });
+
+  it("should re-stage after a 422 only the document replaced by another file", async () => {
+    const tus = fakeTus();
+    const posted = recordImports(invalidImport);
+    const photo = attachmentFile("photo.jpg");
+    const { dialog, importButton, dropDocuments } = await dropWorkbookNaming([
+      "report.pdf",
+      "photo.jpg",
+    ]);
+    await dropDocuments([attachmentFile("report.pdf"), photo]);
+    await importButton.click();
+    await expect.element(dialog.getByRole("table")).toBeVisible();
+
+    await dialog
+      .getByRole("button", { name: "Remove the workbook samples.xlsx" })
+      .click();
+    await dialog
+      .getByLabelText("choose one")
+      .upload([await buildAttachmentWorkbook(["report.pdf", "photo.jpg"])]);
+    await dropDocuments([
+      new File(["revised content"], "report.pdf", { type: "application/pdf" }),
+      photo,
+    ]);
+    await importButton.click();
+
+    await expect.poll(() => posted).toHaveLength(2);
+    expect(tus.requests.filter((r) => r.startsWith("POST"))).toEqual([
+      "POST report.pdf application/pdf",
+      "POST photo.jpg application/pdf",
+      "POST report.pdf application/pdf",
+    ]);
+    expect(posted[1]).toEqual([
+      ["file", "samples.xlsx"],
+      ["stagedUploadIds[]", tus.idOf("report.pdf", 1)],
+      ["stagedUploadIds[]", tus.idOf("photo.jpg")],
+    ]);
+  });
+
+  it.each([
+    {
+      ending: "a successful import",
+      answer: () => HttpResponse.json({ count: 1 }),
+      settle: (dialog: Dialog) =>
+        expect.element(dialog).not.toBeInTheDocument(),
+    },
+    {
+      ending: "closing the dialog after a 422",
+      answer: invalidImport,
+      settle: async (dialog: Dialog) => {
+        await expect.element(dialog.getByRole("table")).toBeVisible();
+        await dialog.getByRole("button", { name: "Cancel" }).click();
+      },
+    },
+  ])(
+    "should stage the documents again after $ending",
+    async ({ answer, settle }) => {
+      const tus = fakeTus();
+      const posted = recordImports(answer);
+      const report = attachmentFile("report.pdf");
+      const { screen, dialog, importButton, dropDocuments } =
+        await dropWorkbookNaming(["report.pdf"]);
+      await dropDocuments([report]);
+      await importButton.click();
+      await settle(dialog);
+
+      await screen.getByRole("button", { name: "Import" }).click();
+      await dialog
+        .getByLabelText("choose one")
+        .upload([await buildAttachmentWorkbook(["report.pdf"])]);
+      await dropDocuments([report]);
+      await importButton.click();
+
+      await expect.poll(() => posted).toHaveLength(2);
+      expect(tus.requests.filter((r) => r.startsWith("POST"))).toEqual([
+        "POST report.pdf application/pdf",
+        "POST report.pdf application/pdf",
+      ]);
     },
   );
 });

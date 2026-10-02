@@ -25,10 +25,16 @@ export function BulkEditDialog({
   const [isOpen, setIsOpen] = useState(false);
   const exportSamples = useExportSamples();
   const bulkEdit = useBulkEditSamples();
+  const [file, setFile] = useState<File | null>(null);
+
+  function pick(picked: File | null) {
+    setFile(picked);
+    bulkEdit.reset();
+  }
 
   function close() {
     setIsOpen(false);
-    bulkEdit.reset();
+    pick(null);
   }
 
   return (
@@ -55,7 +61,28 @@ export function BulkEditDialog({
             {m.action_export_samples()}
           </Button>
         </div>
-        <ImportFileUpload upload={bulkEdit} onImported={close} />
+        <ImportFileUpload
+          dropZone={{
+            hint: m.import_samples_drop_hint(),
+            browseLabel: m.import_samples_choose_file(),
+            accept: ".xlsx",
+            onFiles: ([picked]) => pick(picked ?? null),
+          }}
+          file={file}
+          onRemove={() => pick(null)}
+          issues={bulkEdit.data?.issues}
+          isReady={!bulkEdit.isPending}
+          onImport={(picked) =>
+            bulkEdit.mutate(
+              { file: picked },
+              {
+                onSuccess: ({ issues }) => {
+                  if (issues.length === 0) close();
+                },
+              },
+            )
+          }
+        />
       </DialogContent>
     </Dialog>
   );

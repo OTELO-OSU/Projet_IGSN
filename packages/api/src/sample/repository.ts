@@ -7,6 +7,8 @@ import type { DataCiteConfig } from "../datacite/config.ts";
 import type { DB } from "../db.ts";
 
 import { syncDoi } from "../datacite/sync-doi.ts";
+import { stagedUploadPathOf } from "../staged-upload/staged-path.ts";
+import { consumeStagedUploads } from "../staged-upload/staged-uploads.ts";
 import {
   type Transactional,
   transactionally,
@@ -22,6 +24,7 @@ import { getPublicSampleByIgsn } from "./service/get-public-sample-by-igsn.ts";
 import { getSampleById } from "./service/get-sample-by-id.ts";
 import { getSampleLineage } from "./service/get-sample-lineage.ts";
 import { getSample } from "./service/get-sample.ts";
+import { insertSampleAttachment } from "./service/insert-sample-attachment.ts";
 import { insertSampleRows } from "./service/insert-sample.ts";
 import { isSampleModerated } from "./service/is-sample-moderated.ts";
 import {
@@ -55,6 +58,7 @@ async function insertOwnedSample(
 
 export function createSampleRepository(
   db: Kysely<DB>,
+  attachmentsDir: string,
   dataCite: DataCiteConfig | null = null,
 ): SampleRepository {
   const tx = transactionally(db);
@@ -88,18 +92,34 @@ export function createSampleRepository(
           await insertOwnedSample(trx, input, owner.id, owner),
         ),
       ),
-    createPublishing: (samples, owner) =>
-      withTransaction(db, async (trx) => {
-        for (const { input, internalNumber } of samples) {
+    createPublishing: async (samples, owner) => {
+      const count = await withTransaction(db, async (trx) => {
+        for (const { input, internalNumber, attachments } of samples) {
           const id = await insertOwnedSample(trx, input, owner.id, owner);
           await trx
             .updateTable("sample")
             .set({ status: "publishing", internal_number: internalNumber })
             .where("id", "=", id)
             .execute();
+          for (const attachment of attachments)
+            await insertSampleAttachment(
+              trx,
+              attachmentsDir,
+              id,
+              attachment.input,
+              { from: stagedUploadPathOf(attachmentsDir, attachment.stagedId) },
+            );
         }
         return samples.length;
-      }),
+      });
+      await consumeStagedUploads(
+        attachmentsDir,
+        samples.flatMap(({ attachments }) =>
+          attachments.map(({ stagedId }) => stagedId),
+        ),
+      );
+      return count;
+    },
     listByInternalNumbers: tx(listSamplesByInternalNumbers),
     updatePublishing: (samples) =>
       withTransaction(db, async (trx) => {

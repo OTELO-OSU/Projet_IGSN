@@ -8,13 +8,16 @@ import {
   type SampleAttachment,
   sampleAttachmentSchema,
 } from "@projet-igsn/domain/sample/attachment/model";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { v7 as uuidv7 } from "uuid";
+import { readFile, rm } from "node:fs/promises";
 
 import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
+import {
+  attachmentDirOf,
+  attachmentPathOf,
+  insertSampleAttachment,
+} from "./service/insert-sample-attachment.ts";
 import { uploadLimit } from "./upload-limit.ts";
 
 function toAttachment(
@@ -34,12 +37,8 @@ export function createSampleAttachmentRepository(
   db: Kysely<DB>,
   storageDir: string,
 ): SampleAttachmentRepository {
-  const dirFor = (sampleId: string) => join(storageDir, sampleId);
   const pathFor = (sampleId: string, id: string, name: string) =>
-    join(
-      dirFor(sampleId),
-      `${id}-${name.replace(/[^\w.-]/g, "_").slice(0, 100)}`,
-    );
+    attachmentPathOf(storageDir, sampleId, id, name);
 
   return {
     create: (
@@ -63,21 +62,13 @@ export function createSampleAttachmentRepository(
           .where("sample_id", "=", sampleId)
           .executeTakeFirstOrThrow();
         if (Number(count) >= uploadLimit) return "limit_reached";
-        const row = await trx
-          .insertInto("sample_attachment")
-          .values({
-            id: uuidv7(),
-            sample_id: sampleId,
-            name: input.name,
-            media_type: input.mediaType,
-            title: input.title,
-            target_resource_type: input.targetResourceType,
-            description: input.description,
-          })
-          .returningAll()
-          .executeTakeFirstOrThrow();
-        await mkdir(dirFor(sampleId), { recursive: true });
-        await writeFile(pathFor(sampleId, row.id, row.name), content);
+        const row = await insertSampleAttachment(
+          trx,
+          storageDir,
+          sampleId,
+          input,
+          content,
+        );
         return toAttachment(row);
       }),
 
@@ -127,7 +118,10 @@ export function createSampleAttachmentRepository(
       }),
 
     removeAll: (sampleId: string) =>
-      rm(dirFor(sampleId), { recursive: true, force: true }),
+      rm(attachmentDirOf(storageDir, sampleId), {
+        recursive: true,
+        force: true,
+      }),
 
     getContent: (sampleId: string, attachmentId: string) =>
       withTransaction(db, async (trx) => {

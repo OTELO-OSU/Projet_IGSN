@@ -21,6 +21,8 @@
     "@hono/swagger-ui": "catalog:",
     "@hono/zod-openapi": "catalog:",
     "@projet-igsn/domain": "workspace:*",
+    "@tus/file-store": "catalog:",
+    "@tus/server": "catalog:",
     "croner": "catalog:",
     "exceljs": "catalog:",
     "hono": "catalog:",

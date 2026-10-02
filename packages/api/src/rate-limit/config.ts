@@ -1,3 +1,4 @@
+import { UPLOAD_RATE_WINDOW_SECONDS } from "@projet-igsn/domain/staged-upload/limits";
 import { z } from "zod";
 
 export type RateLimitScope = "ip" | "user";
@@ -11,6 +12,11 @@ export const MAIL_REQUEST_USER_BUDGET = {
   duration: 3600,
 } as const;
 export const IMPORT_TEMPLATE_USER_BUDGET = { points: 5, duration: 60 } as const;
+// ponytail: ~2 requests per document, so the 2500-id import cap (~5000 requests) spans ~9 windows, the client's last retry waiting each one out; raise it if a real import finds that too slow.
+export const UPLOAD_USER_BUDGET = {
+  points: 600,
+  duration: UPLOAD_RATE_WINDOW_SECONDS,
+} as const;
 
 export type RateLimitConfig = {
   enabled: boolean;

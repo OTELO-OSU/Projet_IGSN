@@ -1,4 +1,5 @@
 import { sql } from "kysely";
+import { join } from "node:path";
 import { describe, expect } from "vitest";
 
 import type { DB } from "../../db.ts";
@@ -9,6 +10,14 @@ import { type Transactional } from "../../transaction.ts";
 import { createSampleRepository } from "../repository.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
+
+const attachmentsDir = join(
+  import.meta.dirname,
+  "..",
+  "..",
+  "..",
+  "attachments",
+);
 
 async function lockAndDraw(db: Transactional<DB>): Promise<number> {
   await sql`lock table sample in share row exclusive mode`.execute(db);
@@ -30,8 +39,10 @@ describe("reserveInternalNumbers", () => {
       // Arrange
       const last = await lockAndDraw(db);
       // Act
-      const reserved =
-        await createSampleRepository(db).reserveInternalNumbers(160);
+      const reserved = await createSampleRepository(
+        db,
+        attachmentsDir,
+      ).reserveInternalNumbers(160);
       // Assert
       expect(reserved).toEqual(
         Array.from({ length: 160 }, (_, index) => last + 1 + index),
@@ -46,7 +57,7 @@ describe("unavailableInternalNumbers", () => {
     "should flag a used, an unissued and a beyond-int number and pass a reserved unused one",
     async ({ db }) => {
       // Arrange
-      const repository = createSampleRepository(db);
+      const repository = createSampleRepository(db, attachmentsDir);
       await lockAndDraw(db);
       const [reserved] = await repository.reserveInternalNumbers(1);
       const used = (await publishedNumber(db))!;

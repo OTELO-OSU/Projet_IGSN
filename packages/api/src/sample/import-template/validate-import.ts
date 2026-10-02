@@ -37,7 +37,10 @@ import {
   resolveImportParents,
 } from "./resolve-import-parents.ts";
 import { templateLayout } from "./template-layout.ts";
-import { validateSamples } from "./validate-samples.ts";
+import {
+  type AttachmentMetadata,
+  validateSamples,
+} from "./validate-samples.ts";
 
 const displayedText = (value: Date | string) => {
   if (!(value instanceof Date)) return value;
@@ -115,7 +118,12 @@ export function byPosition(a: ImportIssue, b: ImportIssue): number {
   return p[0] - q[0] || p[1] - q[1] || p[2] - q[2];
 }
 
-type ValidatedImport = { issues: ImportIssue[]; samples: ImportedSample[] };
+type ValidatedImport = {
+  issues: ImportIssue[];
+  samples: (Omit<ImportedSample, "attachments"> & {
+    attachments: AttachmentMetadata[];
+  })[];
+};
 
 export const rejected = (
   issues: ImportIssue[],
@@ -147,6 +155,7 @@ export async function validateRows(
   defaults: Readonly<Record<string, string>>,
   manualGroups: readonly ManualGroup[],
   resolveParentsByIgsn: ResolveParentsByIgsn,
+  providedFileNames: ReadonlySet<string>,
   prepare: (candidate: SampleCandidate, index: number) => SampleCandidate = (
     candidate,
   ) => candidate,
@@ -161,7 +170,10 @@ export async function validateRows(
   );
   const reported = new Set([...built.issues, ...parents.issues].map(fieldOf));
   const unresolved = new Set(parents.issues.map(({ row }) => row));
-  const { issues, inputs } = validateSamples(parents.samples.map(prepare));
+  const { issues, samples } = validateSamples(
+    parents.samples.map(prepare),
+    providedFileNames,
+  );
   return {
     issues: [
       ...built.issues,
@@ -172,8 +184,8 @@ export async function validateRows(
           !(unresolved.has(issue.row) && isInheritedField(issue)),
       ),
     ],
-    samples: inputs.map((input, index) => ({
-      input,
+    samples: samples.map((sample, index) => ({
+      ...sample,
       internalNumber: internalNumberOf(parsed.samples[index]!) ?? null,
     })),
   };
@@ -230,6 +242,7 @@ async function internalIdIssues(
 
 export function validateImport(
   bytes: ArrayBuffer,
+  providedFileNames: ReadonlySet<string>,
   unavailableInternalNumbers: UnavailableInternalNumbers,
   attachableManualGroups: AttachableManualGroups,
   resolveParentsByIgsn: ResolveParentsByIgsn,
@@ -252,6 +265,7 @@ export function validateImport(
       absentDefaultsOf(layout),
       await attachableManualGroups(),
       resolveParentsByIgsn,
+      providedFileNames,
     );
     return {
       issues: [
