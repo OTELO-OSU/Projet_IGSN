@@ -48,7 +48,7 @@ describe("sampleDraftFieldErrors", () => {
         { path: ["location", "region", "kind"] },
       ]),
     ).toEqual({
-      name: { message: "Invalid value." },
+      name: { message: "Name is required" },
       typePath: { message: "Invalid value." },
       collectionMethodPath: { message: "Invalid value." },
       "location.longitude": { message: "Invalid value." },

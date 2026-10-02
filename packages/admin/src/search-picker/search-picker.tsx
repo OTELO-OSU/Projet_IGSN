@@ -63,12 +63,13 @@ export function SearchPicker<T extends { id: string }>({
 
   return (
     <Popover open={picker.isOpen} onOpenChange={picker.setIsOpen}>
-      <ComboboxTrigger id={id} open={picker.isOpen} {...aria}>
-        {value ? (
-          valueLabel(value)
-        ) : (
-          <span className="text-muted-foreground">{placeholder}</span>
-        )}
+      <ComboboxTrigger
+        id={id}
+        open={picker.isOpen}
+        placeholder={placeholder}
+        {...aria}
+      >
+        {value ? valueLabel(value) : undefined}
       </ComboboxTrigger>
       <PopoverContent className="w-96 max-w-[calc(100vw-2rem)] min-w-[var(--radix-popover-trigger-width)] p-0">
         <Command shouldFilter={false} label={searchPlaceholder}>

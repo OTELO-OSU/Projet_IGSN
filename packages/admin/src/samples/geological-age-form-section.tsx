@@ -40,18 +40,16 @@ export function GeologicalAgeFormSection() {
           />
 
           {mode === "range" ? (
-            <div className="grid gap-4">
+            <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
               <AgeBoundField
                 control="geological"
                 name="geologicalAgeMin"
                 label={m.field_geological_age_min()}
-                requiredWhenName="geologicalAgeMax"
               />
               <AgeBoundField
                 control="geological"
                 name="geologicalAgeMax"
                 label={m.field_geological_age_max()}
-                requiredWhenName="geologicalAgeMin"
               />
             </div>
           ) : (

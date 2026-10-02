@@ -59,13 +59,11 @@ export function NumericAgeFormSection() {
                   control="numeric"
                   name="numericAgeMin"
                   label={m.field_numeric_age_min()}
-                  requiredWhenName="numericAgeMax"
                 />
                 <AgeBoundField
                   control="numeric"
                   name="numericAgeMax"
                   label={m.field_numeric_age_max()}
-                  requiredWhenName="numericAgeMin"
                 />
               </>
             ) : (
@@ -86,7 +84,6 @@ export function NumericAgeFormSection() {
                     {(field) => (
                       <field.ComboboxField
                         label={m.field_numeric_unit()}
-                        requiredToPublish
                         items={numericUnitItems}
                         placeholder={m.age_unit_placeholder()}
                         searchPlaceholder={m.age_unit_search_placeholder()}
@@ -108,7 +105,6 @@ export function NumericAgeFormSection() {
                     {(field) => (
                       <field.ComboboxField
                         label={m.field_numeric_years_unit()}
-                        requiredToPublish
                         items={yearsUnitItems}
                         placeholder={m.age_years_placeholder()}
                         searchPlaceholder={m.age_years_search_placeholder()}

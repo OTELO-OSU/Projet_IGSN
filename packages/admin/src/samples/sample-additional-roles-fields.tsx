@@ -39,7 +39,6 @@ export function SampleAdditionalRolesFields() {
                     role: additionalRoleLabel(row.role),
                   })}
                   person={`${ROLES_FIELD}[${index}].person`}
-                  requiredToPublish
                   action={
                     <FieldListRemoveButton
                       label={m.action_remove_additional_role({

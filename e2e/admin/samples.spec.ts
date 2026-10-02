@@ -254,6 +254,21 @@ test.describe("samples", () => {
     await search.expectSampleLink(name, igsn);
   });
 
+  test("a researcher sees a measurement unit counted once its value is entered", async ({
+    page,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await sampleListPage(page).goToCreate();
+
+    const create = sampleCreatePage(page);
+    await create.openTab("Physical description");
+    await create.fillMeasurement("Length", "12");
+    await create.expectTabCount("Physical description", "0/1");
+    await create.pick("Length unit", "cm");
+
+    await create.expectTabCount("Physical description", "1/1");
+  });
+
   test("the create form rejects a sample without a name", async ({ page }) => {
     await signInAsResearcher(page, RESEARCHERS.camille);
 

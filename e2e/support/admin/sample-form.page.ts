@@ -239,6 +239,12 @@ export function sampleFormPage(page: Page) {
         .getByRole("option", { name: "Stop here", exact: true })
         .click();
     },
+    fillMeasurement: (label: string, value: string) =>
+      page.getByRole("spinbutton", { name: label, exact: true }).fill(value),
+    expectTabCount: (tab: string, count: string) =>
+      expect(
+        page.getByRole("tab", { name: `${tab} (${count})`, exact: true }),
+      ).toBeVisible(),
     setOriented: async (explanation: string) => {
       await openTab("Physical description");
       await page.getByRole("switch", { name: "Oriented sample" }).click();

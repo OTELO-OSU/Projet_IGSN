@@ -957,7 +957,12 @@ describe("samplePublishBlockers", () => {
 });
 
 describe("samplePublishRequirements", () => {
-  const requirementsStartingWith = (sample: Sample, prefixes: string[]) =>
+  type CheckedSample = Parameters<typeof samplePublishRequirements>[0];
+
+  const requirementsStartingWith = (
+    sample: CheckedSample,
+    prefixes: string[],
+  ) =>
     samplePublishRequirements(sample).filter(({ blocker }) =>
       prefixes.some((prefix) => blocker.startsWith(prefix)),
     );
@@ -984,6 +989,42 @@ describe("samplePublishRequirements", () => {
       { blocker: "numeric_age_range_incomplete", isMet: false },
     ]);
   });
+
+  it.each<[string, Partial<CheckedSample>, number[]]>([
+    ["relation", { relations: [{}, {}] }, [0, 1]],
+    ["process_step", { processSteps: [{}, {}] }, [0, 1]],
+    [
+      "additional_role",
+      {
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorFirstname: "Pierre",
+          collectorLastname: "Curie",
+          additionalRoles: [{ role: "researcher" }, { role: "data_manager" }],
+        },
+      },
+      [0, 0, 1, 1],
+    ],
+    [
+      "attachment",
+      {
+        attachments: [
+          { targetResourceType: null },
+          { targetResourceType: null },
+        ],
+      },
+      [0, 1],
+    ],
+  ])(
+    "should carry each %s row's index on its requirements",
+    (prefix, rows, indexes) => {
+      expect(
+        requirementsStartingWith({ ...base, ...rows }, [prefix]).map(
+          ({ index }) => index,
+        ),
+      ).toEqual(indexes);
+    },
+  );
 
   it("should require an optional chief scientist's names only once one is typed, a linked user meeting both", () => {
     const withChiefScientist = (chiefScientist: {

@@ -72,7 +72,7 @@ export function SampleRepositoryFields() {
 
       <fieldset className="grid gap-4">
         <legend className="mb-2 font-medium">{m.legend_contact()}</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
           <form.AppField name="repository.currentArchiveContactFirstname">
             {(field) => <field.TextField label={m.field_firstname()} />}
           </form.AppField>

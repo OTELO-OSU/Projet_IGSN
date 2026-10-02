@@ -53,7 +53,6 @@ export function SampleMineralClassificationsFields() {
                     label={m.field_mineral_classification()}
                     hierarchy={MINERAL_HIERARCHY}
                     translate={mineralClassificationLabel}
-                    requiredToPublish
                     placeholder={m.mineral_classification_placeholder()}
                     searchPlaceholder={m.mineral_classification_search_placeholder()}
                     emptyText={m.mineral_classification_empty()}

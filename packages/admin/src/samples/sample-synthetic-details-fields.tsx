@@ -44,7 +44,7 @@ const experimentTypeItems = toComboboxItems(
   experimentTypeLabel,
 );
 
-const measurements = [
+export const SYNTHESIS_MEASUREMENTS = [
   {
     key: "temperature" as const,
     label: m.field_synthesis_temperature,
@@ -62,10 +62,15 @@ const measurements = [
   },
 ];
 
-const durationUnitItems = toComboboxItems(
-  EXPERIMENT_DURATION_UNITS,
-  (value) => experimentDurationUnitLabel[value],
-);
+export const EXPERIMENT_DURATION = {
+  key: "experimentDuration" as const,
+  label: m.field_experiment_duration,
+  unitLabel: m.field_experiment_duration_unit,
+  items: toComboboxItems(
+    EXPERIMENT_DURATION_UNITS,
+    (value) => experimentDurationUnitLabel[value],
+  ),
+};
 
 export function SampleSyntheticDetailsFields() {
   const form = useSampleForm();
@@ -75,7 +80,6 @@ export function SampleSyntheticDetailsFields() {
         {(field) => (
           <field.ComboboxField
             label={m.field_starting_material()}
-            requiredToPublish
             items={startingMaterialItems}
             placeholder={m.starting_material_placeholder()}
             searchPlaceholder={m.starting_material_search_placeholder()}
@@ -109,7 +113,6 @@ export function SampleSyntheticDetailsFields() {
               {(field) => (
                 <field.TextField
                   label={m.field_starting_material_composition()}
-                  requiredToPublish
                   multiline
                 />
               )}
@@ -122,7 +125,6 @@ export function SampleSyntheticDetailsFields() {
         {(field) => (
           <field.ComboboxField
             label={m.field_final_product()}
-            requiredToPublish
             items={finalProductItems}
             placeholder={m.final_product_placeholder()}
             searchPlaceholder={m.final_product_search_placeholder()}
@@ -148,9 +150,9 @@ export function SampleSyntheticDetailsFields() {
         selectValue={(values) =>
           values.syntheticDetails.experimentDurationValue
         }
-        label={m.field_experiment_duration}
-        unitLabel={m.field_experiment_duration_unit}
-        items={durationUnitItems}
+        label={EXPERIMENT_DURATION.label}
+        unitLabel={EXPERIMENT_DURATION.unitLabel}
+        items={EXPERIMENT_DURATION.items}
       />
 
       <DateRangeField
@@ -164,13 +166,11 @@ export function SampleSyntheticDetailsFields() {
         startLabel={m.field_synthesis_date_start()}
         endLabel={m.field_synthesis_date_end()}
         identicalMessage={m.synthesis_date_range_identical}
-        requiredToPublish={false}
       />
 
       <ContactNameFields
         label={m.field_operator_name()}
         person="syntheticDetails.operator"
-        requiredToPublish
         selfFirst
       />
 
@@ -189,7 +189,7 @@ export function SampleSyntheticDetailsFields() {
         )}
       </form.AppField>
 
-      {measurements.map(({ key, label, unitLabel, items }) => (
+      {SYNTHESIS_MEASUREMENTS.map(({ key, label, unitLabel, items }) => (
         <MeasurementFieldPair
           key={key}
           name={`syntheticDetails.${key}`}

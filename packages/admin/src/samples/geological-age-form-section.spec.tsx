@@ -114,23 +114,6 @@ describe("GeologicalAgeFormSection", () => {
     await expect.element(combobox).toHaveTextContent("Select a geological age");
   });
 
-  it("should mark the other bound required once one range bound has a value", async () => {
-    await render(<Harness values={{ geologicalAgeMin: "1" }} />);
-
-    await expect
-      .element(
-        page.getByRole("combobox", {
-          name: "Geological age (max) time scale *",
-        }),
-      )
-      .toBeInTheDocument();
-    await expect
-      .element(
-        page.getByRole("combobox", { name: "Geological age (min) time scale" }),
-      )
-      .toBeInTheDocument();
-  });
-
   it("should start enabled in range mode when a range value is prefilled", async () => {
     await render(<Harness values={{ geologicalAgeMin: "1" }} />);
 

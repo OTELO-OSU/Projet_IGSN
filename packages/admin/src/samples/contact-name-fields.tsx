@@ -1,4 +1,5 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
+import { useFieldRequiredRule } from "@projet-igsn/design-system/components/form/field-required-context";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import {
@@ -9,10 +10,10 @@ import {
 import { cn } from "@projet-igsn/design-system/lib/utils";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { UserRoundSearchIcon } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 
 import { m } from "#/paraglide/messages.js";
-import { isTypedContact } from "#/samples/compose-contact.ts";
+import { isTypedPerson } from "#/samples/compose-contact.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 import { ContactNamePicker } from "#/users/contact-name-picker.tsx";
 
@@ -25,13 +26,11 @@ type ContactPerson =
 export function ContactNameFields({
   label,
   person,
-  requiredToPublish = false,
   selfFirst,
   action,
 }: {
   label: string;
   person: ContactPerson;
-  requiredToPublish?: boolean;
   selfFirst?: boolean;
   action?: ReactNode;
 }) {
@@ -40,13 +39,7 @@ export function ContactNameFields({
   const firstnameName = `${person}Firstname` as const;
   const lastnameName = `${person}Lastname` as const;
   const isFrozen = useIsFieldDisabled(userIdName);
-  const [isTyped, setIsTyped] = useState(() =>
-    isTypedContact({
-      userId: form.getFieldValue(userIdName),
-      firstname: form.getFieldValue(firstnameName),
-      lastname: form.getFieldValue(lastnameName),
-    }),
-  );
+  const isRequired = useFieldRequiredRule();
 
   const clearTypedNames = () => {
     form.setFieldValue(firstnameName, undefined);
@@ -56,21 +49,11 @@ export function ContactNameFields({
   const typedNames = (
     <div className="grid gap-4 sm:flex sm:flex-wrap">
       <form.AppField name={firstnameName}>
-        {(field) => (
-          <field.TextField
-            label={m.field_firstname()}
-            requiredToPublish={requiredToPublish}
-          />
-        )}
+        {(field) => <field.TextField label={m.field_firstname()} />}
       </form.AppField>
 
       <form.AppField name={lastnameName}>
-        {(field) => (
-          <field.TextField
-            label={m.field_lastname()}
-            requiredToPublish={requiredToPublish}
-          />
-        )}
+        {(field) => <field.TextField label={m.field_lastname()} />}
       </form.AppField>
 
       {isFrozen ? null : (
@@ -82,10 +65,7 @@ export function ContactNameFields({
               size="icon"
               className="self-end"
               aria-label={m.contact_name_search_action()}
-              onClick={() => {
-                clearTypedNames();
-                setIsTyped(false);
-              }}
+              onClick={clearTypedNames}
             >
               <UserRoundSearchIcon />
             </Button>
@@ -101,7 +81,7 @@ export function ContactNameFields({
       {(field) => (
         <div className="grid w-full gap-2 sm:w-72">
           <Label htmlFor={userIdName}>
-            {withRequired(label, requiredToPublish)}
+            {withRequired(label, isRequired(userIdName))}
           </Label>
           <ContactNamePicker
             id={userIdName}
@@ -110,7 +90,7 @@ export function ContactNameFields({
             onChange={(user) => field.handleChange(user?.id)}
             onFreeText={() => {
               field.handleChange(undefined);
-              setIsTyped(true);
+              form.setFieldValue(firstnameName, "");
             }}
           />
         </div>
@@ -118,28 +98,35 @@ export function ContactNameFields({
     </form.AppField>
   );
 
-  const isPicker = !isFrozen && !isTyped;
-
   return (
-    <div className="relative">
-      <fieldset className="grid gap-4">
-        <legend
-          className={cn(
-            isPicker ? "sr-only" : "mb-2 font-medium",
-            action && "pr-10",
-          )}
-        >
-          {withRequired(label, requiredToPublish)}
-        </legend>
-        {isPicker ? picker : typedNames}
-      </fieldset>
-      {action ? (
-        <div
-          className={cn("absolute right-0", isPicker ? "-top-3" : "-top-1.5")}
-        >
-          {action}
+    <form.Subscribe
+      selector={(state) => !isFrozen && !isTypedPerson(state.values, person)}
+    >
+      {(isPicker) => (
+        <div className="relative">
+          <fieldset className="grid gap-4">
+            <legend
+              className={cn(
+                isPicker ? "sr-only" : "mb-2 font-medium",
+                action && "pr-10",
+              )}
+            >
+              {label}
+            </legend>
+            {isPicker ? picker : typedNames}
+          </fieldset>
+          {action ? (
+            <div
+              className={cn(
+                "absolute right-0",
+                isPicker ? "-top-3" : "-top-1.5",
+              )}
+            >
+              {action}
+            </div>
+          ) : null}
         </div>
-      ) : null}
-    </div>
+      )}
+    </form.Subscribe>
   );
 }

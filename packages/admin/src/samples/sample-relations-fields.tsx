@@ -72,7 +72,6 @@ export function SampleRelationsFields() {
                 {(field) => (
                   <field.TextField
                     label={identifierTypeLabel[relation.identifierType]}
-                    requiredToPublish
                     placeholder={IDENTIFIER_PLACEHOLDER[
                       relation.identifierType
                     ]?.()}
@@ -88,7 +87,6 @@ export function SampleRelationsFields() {
                 {(field) => (
                   <field.ComboboxField
                     label={m.field_relation_type()}
-                    requiredToPublish
                     items={relationTypeItems}
                     placeholder={m.relation_type_placeholder()}
                     searchPlaceholder={m.relation_type_search_placeholder()}
@@ -100,7 +98,6 @@ export function SampleRelationsFields() {
                 {(field) => (
                   <field.ComboboxField
                     label={m.field_relation_target_resource_type()}
-                    requiredToPublish
                     items={resourceTypeItems}
                     placeholder={m.relation_resource_type_placeholder()}
                     searchPlaceholder={m.relation_resource_type_search_placeholder()}

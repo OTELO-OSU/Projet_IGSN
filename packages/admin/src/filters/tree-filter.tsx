@@ -124,8 +124,8 @@ export function TreeFilter({
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <ComboboxTrigger id={id} open={isOpen}>
-        {selectedLabel ?? anyLabel}
+      <ComboboxTrigger id={id} open={isOpen} placeholder={anyLabel}>
+        {selectedLabel}
       </ComboboxTrigger>
       <PopoverContent className="w-96 max-w-[calc(100vw-2rem)] p-2">
         <SearchInput

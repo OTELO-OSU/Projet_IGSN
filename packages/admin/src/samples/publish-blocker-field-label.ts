@@ -2,9 +2,11 @@ import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/samp
 
 import { m } from "#/paraglide/messages.js";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
+import { publishBlockerField } from "#/samples/sample-draft-field-errors.ts";
 import {
-  PUBLISH_BLOCKER_TAB,
   SAMPLE_FORM_TABS,
+  sampleFieldTab,
+  type SampleFormTab,
 } from "#/samples/sample-form-tabs.ts";
 
 const PUBLISH_BLOCKER_FIELD_LABELS: Record<
@@ -48,27 +50,42 @@ const PUBLISH_BLOCKER_FIELD_LABELS: Record<
   user_not_verified: null,
 };
 
-const tabOrder = (blocker: PublishBlocker): number => {
-  const index = SAMPLE_FORM_TABS.findIndex(
-    ({ value }) => value === PUBLISH_BLOCKER_TAB[blocker],
-  );
+const blockerTab = (blocker: PublishBlocker) => {
+  const field = publishBlockerField(blocker);
+  return field === null ? undefined : sampleFieldTab(field);
+};
+
+const tabOrder = (tab: SampleFormTab | undefined): number => {
+  const index = SAMPLE_FORM_TABS.findIndex(({ value }) => value === tab);
   return index === -1 ? SAMPLE_FORM_TABS.length : index;
 };
 
-const blockerLine = (blocker: PublishBlocker): string => {
-  const tab = SAMPLE_FORM_TABS.find(
-    ({ value }) => value === PUBLISH_BLOCKER_TAB[blocker],
-  );
+const tabLabel = (tab: SampleFormTab | undefined) =>
+  SAMPLE_FORM_TABS.find(({ value }) => value === tab)?.label();
+
+const blockerLine = (
+  blocker: PublishBlocker,
+  tab: SampleFormTab | undefined,
+): string => {
+  const tabName = tabLabel(tab);
   const fieldLabel = PUBLISH_BLOCKER_FIELD_LABELS[blocker];
-  return tab && fieldLabel
-    ? `${tab.label()} > ${fieldLabel()}`
+  return tabName && fieldLabel
+    ? `${tabName} > ${fieldLabel()}`
     : publishBlockerLabel(blocker);
 };
 
 export function publishBlockerLines(
   blockers: readonly PublishBlocker[],
-): { blocker: PublishBlocker; line: string }[] {
-  return blockers
-    .toSorted((a, b) => tabOrder(a) - tabOrder(b))
-    .map((blocker) => ({ blocker, line: blockerLine(blocker) }));
+  fields: readonly { name: string; label: () => string }[],
+): { key: string; line: string }[] {
+  return [
+    ...blockers.map((blocker) => {
+      const tab = blockerTab(blocker);
+      return { key: blocker, tab, line: blockerLine(blocker, tab) };
+    }),
+    ...fields.map(({ name, label }) => {
+      const tab = sampleFieldTab(name);
+      return { key: name, tab, line: `${tabLabel(tab)} > ${label()}` };
+    }),
+  ].toSorted((a, b) => tabOrder(a.tab) - tabOrder(b.tab));
 }

@@ -35,7 +35,6 @@ export function SampleScientificContextFields() {
                   <ContactNameFields
                     label={m.field_collector_name()}
                     person="scientificContext.collector"
-                    requiredToPublish
                   />
 
                   <ContactNameFields
@@ -140,7 +139,6 @@ export function SampleScientificContextFields() {
                   {(field) => (
                     <field.ComboboxField
                       label={m.field_collection_origin()}
-                      requiredToPublish
                       items={collectionOriginItems}
                       placeholder={m.collection_origin_placeholder()}
                       searchPlaceholder={m.collection_origin_search_placeholder()}

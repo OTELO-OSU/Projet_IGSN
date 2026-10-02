@@ -1,7 +1,5 @@
 import type { LocationType } from "@projet-igsn/domain/sample/location/location-type";
 
-import { Fragment } from "react";
-
 import type { LocationDraft } from "#/samples/compose-location.ts";
 
 import { m } from "#/paraglide/messages.js";
@@ -16,125 +14,79 @@ type NumberKey = {
 
 type Label = () => string;
 
-type CoordinateField = readonly [NumberKey, Label, Label];
+type PositionField = readonly [NumberKey, Label, Label];
 
-type VerticalField = {
-  key: NumberKey;
-  label: Label;
-  siblingKey?: NumberKey;
+type PositionRow = readonly [PositionField, ...PositionField[]];
+
+type Position = {
+  coordinates: readonly PositionRow[];
+  vertical: PositionRow;
 };
 
-type PositionRow = {
-  coordinates: readonly CoordinateField[];
-  vertical: VerticalField;
+const LONGITUDE_HINT = m.field_longitude_hint;
+const LATITUDE_HINT = m.field_latitude_hint;
+const VERTICAL_HINT = m.field_vertical_position_hint;
+
+export const ROWS: Record<LocationType, Position> = {
+  point: {
+    coordinates: [
+      [["longitude", m.field_longitude, LONGITUDE_HINT]],
+      [["latitude", m.field_latitude, LATITUDE_HINT]],
+    ],
+    vertical: [["verticalPosition", m.field_vertical_position, VERTICAL_HINT]],
+  },
+  area: {
+    coordinates: [
+      [
+        ["westLongitude", m.field_west_longitude, LONGITUDE_HINT],
+        ["eastLongitude", m.field_east_longitude, LONGITUDE_HINT],
+      ],
+      [
+        ["southLatitude", m.field_south_latitude, LATITUDE_HINT],
+        ["northLatitude", m.field_north_latitude, LATITUDE_HINT],
+      ],
+    ],
+    vertical: [
+      ["verticalPositionMin", m.field_vertical_position_min, VERTICAL_HINT],
+      ["verticalPositionMax", m.field_vertical_position_max, VERTICAL_HINT],
+    ],
+  },
+  line: {
+    coordinates: [
+      [
+        ["startLongitude", m.field_start_longitude, LONGITUDE_HINT],
+        ["endLongitude", m.field_end_longitude, LONGITUDE_HINT],
+      ],
+      [
+        ["startLatitude", m.field_start_latitude, LATITUDE_HINT],
+        ["endLatitude", m.field_end_latitude, LATITUDE_HINT],
+      ],
+    ],
+    vertical: [
+      ["startVerticalPosition", m.field_start_vertical_position, VERTICAL_HINT],
+      ["endVerticalPosition", m.field_end_vertical_position, VERTICAL_HINT],
+    ],
+  },
 };
 
-const ROWS: Record<LocationType, readonly PositionRow[]> = {
-  point: [
-    {
-      coordinates: [
-        ["longitude", m.field_longitude, m.field_longitude_hint],
-        ["latitude", m.field_latitude, m.field_latitude_hint],
-      ],
-      vertical: { key: "verticalPosition", label: m.field_vertical_position },
-    },
-  ],
-  area: [
-    {
-      coordinates: [
-        ["westLongitude", m.field_west_longitude, m.field_longitude_hint],
-        ["southLatitude", m.field_south_latitude, m.field_latitude_hint],
-      ],
-      vertical: {
-        key: "verticalPositionMin",
-        siblingKey: "verticalPositionMax",
-        label: m.field_vertical_position_min,
-      },
-    },
-    {
-      coordinates: [
-        ["eastLongitude", m.field_east_longitude, m.field_longitude_hint],
-        ["northLatitude", m.field_north_latitude, m.field_latitude_hint],
-      ],
-      vertical: {
-        key: "verticalPositionMax",
-        siblingKey: "verticalPositionMin",
-        label: m.field_vertical_position_max,
-      },
-    },
-  ],
-  line: [
-    {
-      coordinates: [
-        ["startLongitude", m.field_start_longitude, m.field_longitude_hint],
-        ["startLatitude", m.field_start_latitude, m.field_latitude_hint],
-      ],
-      vertical: {
-        key: "startVerticalPosition",
-        siblingKey: "endVerticalPosition",
-        label: m.field_start_vertical_position,
-      },
-    },
-    {
-      coordinates: [
-        ["endLongitude", m.field_end_longitude, m.field_longitude_hint],
-        ["endLatitude", m.field_end_latitude, m.field_latitude_hint],
-      ],
-      vertical: {
-        key: "endVerticalPosition",
-        siblingKey: "startVerticalPosition",
-        label: m.field_end_vertical_position,
-      },
-    },
-  ],
-};
-
-export function LocationPositionFields({
-  type,
-  requiredToPublish,
-}: {
-  type: LocationType;
-  requiredToPublish: boolean;
-}) {
+export function LocationPositionFields({ type }: { type: LocationType }) {
   const form = useSampleForm();
+  const { coordinates, vertical } = ROWS[type];
   return (
     <div className="grid gap-4">
-      {ROWS[type].map(
-        ({ coordinates, vertical: { key, label, siblingKey } }) => (
-          <Fragment key={key}>
-            {coordinates.map(([name, coordinateLabel, hint]) => (
-              <form.AppField key={name} name={`location.${name}`}>
-                {(field) => (
-                  <field.NumberField
-                    label={coordinateLabel()}
-                    requiredToPublish={requiredToPublish}
-                    hint={hint()}
-                  />
-                )}
-              </form.AppField>
-            ))}
-            <form.AppField name={`location.${key}`}>
-              {(field) => (
-                <form.Subscribe
-                  selector={(state) =>
-                    siblingKey !== undefined &&
-                    state.values.location[siblingKey] !== undefined
-                  }
-                >
-                  {(required) => (
-                    <field.NumberField
-                      label={label()}
-                      requiredToPublish={required}
-                      hint={m.field_vertical_position_hint()}
-                    />
-                  )}
-                </form.Subscribe>
-              )}
+      {[...coordinates, vertical].map((row) => (
+        <div
+          key={row[0][0]}
+          className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto"
+        >
+          {row.map(([name, label, hint]) => (
+            <form.AppField key={name} name={`location.${name}`}>
+              {(field) => <field.NumberField label={label()} hint={hint()} />}
             </form.AppField>
-          </Fragment>
-        ),
-      )}
-      <LocationVerticalFields />
+          ))}
+          {row === vertical ? <LocationVerticalFields /> : null}
+        </div>
+      ))}
     </div>
   );
 }

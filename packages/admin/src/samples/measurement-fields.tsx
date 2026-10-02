@@ -21,7 +21,7 @@ const volumeUnitItems = toComboboxItems(
   (value) => volumeUnitLabel[value],
 );
 
-const measurements = [
+export const MEASUREMENTS = [
   {
     key: "length" as const,
     label: m.field_length,
@@ -64,25 +64,18 @@ export function MeasurementFieldPair({
   label,
   unitLabel,
   items,
-  requiredToPublish = false,
 }: {
   name: MeasurementName;
   selectValue: (values: SampleDraft) => number | undefined;
   label: () => string;
   unitLabel: () => string;
   items: ComboboxItem[];
-  requiredToPublish?: boolean;
 }) {
   const form = useSampleForm();
   return (
     <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
       <form.AppField name={`${name}Value`}>
-        {(field) => (
-          <field.NumberField
-            label={label()}
-            requiredToPublish={requiredToPublish}
-          />
-        )}
+        {(field) => <field.NumberField label={label()} />}
       </form.AppField>
       <form.Subscribe
         selector={(state) => hasMeasurementValue(selectValue(state.values))}
@@ -93,7 +86,6 @@ export function MeasurementFieldPair({
               {(field) => (
                 <field.ComboboxField
                   label={unitLabel()}
-                  requiredToPublish
                   items={items}
                   placeholder={m.unit_placeholder()}
                   searchPlaceholder={m.unit_search_placeholder()}
@@ -111,7 +103,7 @@ export function MeasurementFieldPair({
 export function MeasurementFields() {
   return (
     <>
-      {measurements.map(({ key, label, unitLabel, items }) => (
+      {MEASUREMENTS.map(({ key, label, unitLabel, items }) => (
         <MeasurementFieldPair
           key={key}
           name={`description.${key}`}

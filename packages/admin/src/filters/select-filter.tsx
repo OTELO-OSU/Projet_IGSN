@@ -28,13 +28,13 @@ export function SelectFilter({
     <>
       <Label htmlFor={id}>{label}</Label>
       <Select
-        value={value ?? ANY_VALUE}
+        value={value ?? ""}
         onValueChange={(next) =>
           onChange(next === ANY_VALUE ? undefined : next)
         }
       >
         <SelectTrigger id={id} className="w-full">
-          <SelectValue />
+          <SelectValue placeholder={anyLabel} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ANY_VALUE}>{anyLabel}</SelectItem>

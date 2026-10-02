@@ -42,7 +42,7 @@ const storageConditionItems = toComboboxItems(
   storageConditionLabel,
 );
 
-const readings = [
+export const READINGS = [
   {
     key: "temperature" as const,
     label: m.field_temperature,
@@ -121,9 +121,9 @@ export function SampleConditionFields() {
         )}
       </form.AppField>
 
-      {readings.map((reading) => (
+      {READINGS.map((reading) => (
         <ControlledReadingFields key={reading.key} reading={reading.key}>
-          <div className="grid gap-4">
+          <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
             <form.AppField name={`condition.${reading.key}Type`}>
               {(field) => (
                 <field.ComboboxField
@@ -142,7 +142,7 @@ export function SampleConditionFields() {
             >
               {(hasType) =>
                 hasType ? (
-                  <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
+                  <>
                     <form.AppField name={`condition.${reading.key}Value`}>
                       {(field) => (
                         <field.NumberField label={reading.valueLabel()} />
@@ -161,7 +161,6 @@ export function SampleConditionFields() {
                             {(field) => (
                               <field.ComboboxField
                                 label={reading.unitLabel()}
-                                requiredToPublish
                                 items={reading.unitItems}
                                 placeholder={m.unit_placeholder()}
                                 searchPlaceholder={m.unit_search_placeholder()}
@@ -172,7 +171,7 @@ export function SampleConditionFields() {
                         ) : null
                       }
                     </form.Subscribe>
-                  </div>
+                  </>
                 ) : null
               }
             </form.Subscribe>
@@ -181,7 +180,7 @@ export function SampleConditionFields() {
       ))}
 
       <ControlledReadingFields reading="humidity">
-        <div className="grid gap-4">
+        <div className="flex flex-wrap gap-4 [&>*]:w-full sm:[&>*]:w-auto">
           <form.AppField name="condition.humidityType">
             {(field) => (
               <field.ComboboxField

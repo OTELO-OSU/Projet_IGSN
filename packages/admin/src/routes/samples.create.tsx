@@ -2,7 +2,7 @@ import type { SampleParent } from "@projet-igsn/domain/sample/parent/model";
 
 import { sampleParentSchema } from "@projet-igsn/domain/sample/parent/model";
 import { useQueries } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -10,6 +10,7 @@ import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { useAttachableManualGroups } from "#/manual-groups/use-attachable-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import { parentFieldSuggestions } from "#/samples/parent-field-suggestions.ts";
+import { sampleFormTabSchema } from "#/samples/sample-form-tabs.ts";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { SecondParentDialog } from "#/samples/second-parent-dialog.tsx";
 import { toDuplicateDefaults } from "#/samples/to-duplicate-defaults.ts";
@@ -27,13 +28,14 @@ export const Route = createFileRoute("/samples/create")({
   validateSearch: z.object({
     parent: z.uuid().optional().catch(undefined),
     duplicate: z.uuid().optional().catch(undefined),
+    tab: sampleFormTabSchema.optional().catch(undefined),
   }),
   component: CreateSamplePage,
 });
 
 function CreateSamplePage() {
-  const navigate = useNavigate();
-  const { parent: parentId, duplicate: duplicateId } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const { parent: parentId, duplicate: duplicateId, tab } = Route.useSearch();
   const [picked, setPicked] = useState<SampleParent | null | undefined>(
     undefined,
   );
@@ -136,6 +138,13 @@ function CreateSamplePage() {
         }
         isPending={createSample.isPending || publishSample.isPending}
         manualGroupOptions={manualGroupOptions}
+        defaultTab={tab}
+        onTabChange={(next) =>
+          navigate({
+            search: (prev) => ({ ...prev, tab: next }),
+            replace: true,
+          })
+        }
         onCancel={() => navigate({ to: "/" })}
         secondaryAction={{
           kind: "submit",
@@ -146,6 +155,7 @@ function CreateSamplePage() {
                 navigate({
                   to: "/samples/$sampleId",
                   params: { sampleId: sample.id },
+                  search: { tab },
                 }),
             }),
         }}
@@ -164,6 +174,7 @@ function CreateSamplePage() {
                       navigate({
                         to: "/samples/$sampleId",
                         params: { sampleId: sample.id },
+                        search: { tab },
                       }),
                   },
                 ),

@@ -225,7 +225,7 @@ describe("ContactNameFields", () => {
     const screen = await renderCollector();
 
     await expect
-      .element(screen.getByRole("group", { name: "Collector name *" }))
+      .element(screen.getByRole("combobox", { name: "Collector name *" }))
       .toBeVisible();
   });
 

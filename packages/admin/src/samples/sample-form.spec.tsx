@@ -13,6 +13,7 @@ import type { SampleAttachmentChanges } from "./use-attachment-changes.ts";
 import { worker } from "../../test/msw.ts";
 import { pickPath, repickPath } from "../../test/pick-hierarchy.ts";
 import { render } from "../../test/render.tsx";
+import { SAMPLE_FORM_TABS } from "./sample-form-tabs.ts";
 import { SampleForm } from "./sample-form.tsx";
 
 const noop = () => {};
@@ -59,6 +60,20 @@ async function renderLocation(
   await screen.getByRole("option", { name: typeOption }).click();
   return screen;
 }
+
+const FORM_TAB_LABELS = SAMPLE_FORM_TABS.filter(
+  ({ value }) => value !== "parent",
+).map(({ label }) => label());
+
+const EMPTY_AGE = {
+  numericAgeMin: null,
+  numericAgeMax: null,
+  numericAgeUnit: null,
+  numericAgeYearsUnit: null,
+  geologicalAgeMin: null,
+  geologicalAgeMax: null,
+  geologicalUnit: null,
+};
 
 const MSL_SYSTEM = "MSL height (EPSG:5714) - Mean sea level";
 
@@ -1397,14 +1412,14 @@ describe("SampleForm", () => {
     );
 
     await expect
-      .element(screen.getByRole("tab", { name: "Identity (1/4)" }))
+      .element(screen.getByRole("tab", { name: "Identity (1/5)" }))
       .toBeVisible();
 
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
 
     await expect
-      .element(screen.getByRole("tab", { name: "Identity (2/4)" }))
+      .element(screen.getByRole("tab", { name: "Identity (2/5)" }))
       .toBeVisible();
   });
 
@@ -1418,9 +1433,101 @@ describe("SampleForm", () => {
     await screen.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
 
     await expect
-      .element(screen.getByRole("tab", { name: "Age (1/2)" }))
+      .element(screen.getByRole("tab", { name: "Age (0/1)" }))
       .toBeVisible();
   });
+
+  it.each<[string, Partial<CreateSample>]>([
+    [
+      "a natural rock",
+      {
+        name: "Basalt",
+        material: "rock_and_sediment.rock",
+        location: {
+          position: {
+            type: "point",
+            longitude: 3,
+            latitude: null,
+            vertical: { position: 100 },
+          },
+        } as unknown as CreateSample["location"],
+        age: { ...EMPTY_AGE, numericAgeMin: 10, geologicalAgeMin: 1 },
+        description: {
+          oriented: false,
+          collectionDate: {
+            precision: "hour",
+            start: "2026-01-01T10:00",
+            end: "2026-02-01T10:00",
+          },
+          length: { value: 3 },
+        } as CreateSample["description"],
+        condition: {
+          storageConditions: ["temperature_controlled"],
+          temperature: { type: "frozen", measurement: { value: -20 } },
+        } as CreateSample["condition"],
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          additionalRoles: [],
+          collectorFirstname: "Marie",
+          chiefScientistLastname: "Curie",
+        },
+        relations: [
+          {
+            relationType: "is_cited_by",
+            identifierType: "doi",
+            identifier: "",
+          },
+        ] as CreateSample["relations"],
+      },
+    ],
+    [
+      "a synthetic sample",
+      {
+        name: "Glass",
+        material: "rock_and_sediment.synthetic_rock_mineral",
+        scientificContext: { provenanceStatus: "collection_specimen" },
+        syntheticDetails: {
+          startingMaterial: "synthetic",
+          operatorFirstname: "Paul",
+          temperature: { value: 800 },
+        } as CreateSample["syntheticDetails"],
+      },
+    ],
+  ])(
+    "should mark as many fields with a * as each tab counts for %s",
+    async (_fixture, defaultValues) => {
+      const screen = await render(
+        <SampleForm
+          onCancel={noop}
+          defaultValues={defaultValues}
+          primaryAction={createAction(noop)}
+        />,
+      );
+
+      const counts = [];
+      for (const label of FORM_TAB_LABELS) {
+        const tab = screen.getByRole("tab", { name: new RegExp(`^${label}`) });
+        if (tab.element().hasAttribute("disabled")) continue;
+        await tab.click();
+        await expect
+          .element(
+            screen.getByRole("tabpanel", { name: new RegExp(`^${label}`) }),
+          )
+          .toBeVisible();
+        const marked = [
+          ...screen.getByRole("tabpanel").element().querySelectorAll("label"),
+        ].filter((each) => each.textContent?.endsWith(" *")).length;
+        const counted = Number(
+          /\(\d+\/(\d+)\)$/.exec(tab.element().textContent ?? "")?.[1] ?? 0,
+        );
+        counts.push({ label, marked, counted });
+      }
+
+      expect(counts).toEqual(
+        counts.map((count) => ({ ...count, marked: count.counted })),
+      );
+    },
+  );
 
   it.each([
     ["a mineral lacks a specific name", "rock_and_sediment.mineral", null],
@@ -1523,6 +1630,56 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByRole("button", { name: "Save & Publish" }))
       .toBeEnabled();
+  });
+
+  it("should block publish on a measurement unit required once its value is set", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: "dredge",
+            material: "rock_and_sediment.mineral",
+            collectionMethod: null,
+            collectionMethodDescription: null,
+            location: {
+              position: { type: "point", longitude: 3, latitude: 45 },
+            },
+            description: {
+              collectionDate: {
+                precision: "day",
+                start: "2026-01-01",
+                end: "2026-01-01",
+              },
+            },
+            scientificContext: publishableScientificContext,
+            repository: publishableRepository,
+          }}
+          primaryAction={{
+            kind: "publish",
+            label: "Save & Publish",
+            onPublish: noop,
+          }}
+        />
+      </TooltipProvider>,
+    );
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+
+    await screen.getByRole("tab", { name: /^Physical description/ }).click();
+    await screen.getByLabelText("Length", { exact: true }).fill("10");
+
+    await expect.element(publish).toBeDisabled();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Physical description > Length unit");
+
+    await screen.getByRole("combobox", { name: "Length unit" }).click();
+    await screen.getByRole("option", { name: "cm", exact: true }).click();
+
+    await expect.element(publish).toBeEnabled();
   });
 
   it("should narrow the availability status to the only one an existence status allows", async () => {
@@ -1697,7 +1854,7 @@ describe("SampleForm", () => {
 
     await screen.getByRole("tab", { name: "Location" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
+      .element(screen.getByRole("combobox", { name: "Type", exact: true }))
       .toBeVisible();
     await expect
       .element(
@@ -2841,7 +2998,7 @@ describe("SampleForm post-publication field lock", () => {
         />,
       );
 
-      const group = screen.getByRole("group", { name: "Collection date *" });
+      const group = screen.getByRole("group", { name: "Collection date" });
       if (shown) {
         await expect.element(group).toBeVisible();
       } else {

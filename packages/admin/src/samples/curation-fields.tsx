@@ -39,7 +39,6 @@ export function ExistenceStatusField() {
       {(field) => (
         <field.ComboboxField
           label={m.field_existence_status()}
-          requiredToPublish
           items={existenceStatusItems}
           placeholder={m.existence_status_placeholder()}
           searchPlaceholder={m.existence_status_search_placeholder()}
@@ -59,7 +58,6 @@ export function AvailabilityStatusField() {
           {(field) => (
             <field.ComboboxField
               label={m.field_availability_status()}
-              requiredToPublish
               items={toComboboxItems(
                 allowedAvailabilityStatuses(existenceStatus),
                 availabilityStatusLabel,

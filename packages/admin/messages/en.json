@@ -314,6 +314,8 @@
   "publish_blocked_parent_not_found": "The parent sample could not be found or is not eligible.",
   "publish_blocked_attachment_metadata_missing": "Give every attached file a resource type before publishing.",
   "publish_blocked_attachment_limit_exceeded": "Keep at most {limit} attached files before publishing.",
+  "sample_save_attachment_limit": "Keep at most {limit} attached files before saving.",
+  "sample_save_invalid": "Some fields need fixing before saving.",
   "publish_blocked_synthetic_starting_material_missing": "Set the starting material before publishing.",
   "publish_blocked_synthetic_starting_material_composition_missing": "Describe the starting material composition before publishing.",
   "publish_blocked_synthetic_final_product_missing": "Set the final product before publishing.",

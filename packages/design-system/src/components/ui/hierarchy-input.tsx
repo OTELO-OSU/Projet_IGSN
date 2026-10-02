@@ -26,6 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "./popover.tsx";
+import { TruncatedText } from "./truncated-text.tsx";
 
 // ponytail: no virtualization, so a short query over a large tree renders at most this many; virtualize the list or require a longer query to lift it.
 const MAX_SEARCH_RESULTS = 100;
@@ -143,13 +144,14 @@ export function HierarchyInput({
                 <Badge
                   variant="secondary"
                   className={cn(
+                    "max-w-full min-w-0",
                     !locked && "gap-1 pr-1",
                     level === depth && "ring-2 ring-ring",
                     level > depth && "opacity-50",
                   )}
                 >
                   {locked ? (
-                    nodeLabel
+                    <TruncatedText>{nodeLabel}</TruncatedText>
                   ) : (
                     <>
                       <button
@@ -158,15 +160,15 @@ export function HierarchyInput({
                           setEditingDepth(level);
                           setOpen(true);
                         }}
-                        className="hover:underline"
+                        className="min-w-0 hover:underline"
                       >
-                        {nodeLabel}
+                        <TruncatedText>{nodeLabel}</TruncatedText>
                       </button>
                       <button
                         type="button"
                         aria-label={removeLabel(nodeLabel)}
                         onClick={() => onChange(path.slice(0, level))}
-                        className="hover:bg-foreground/10 rounded-full"
+                        className="hover:bg-foreground/10 shrink-0 rounded-full"
                       >
                         <XIcon className="size-3" />
                       </button>
@@ -193,7 +195,7 @@ export function HierarchyInput({
               aria-expanded={open}
               disabled={isLocked(path.length) || isLeaf}
               onBlur={onBlur}
-              className="text-muted-foreground h-7 flex-1 justify-between px-1 font-normal hover:bg-transparent"
+              className="text-muted-foreground h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent"
               {...aria}
             >
               {path.length === 0 ? placeholder : null}

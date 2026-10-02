@@ -58,10 +58,10 @@ export function ManagedGroupsFields({
   ] as const;
 
   return (
-    <FormSection title={m.user_managed_groups_title()}>
-      <p className="text-muted-foreground text-sm">
-        {m.user_managed_groups_cascade()}
-      </p>
+    <FormSection
+      title={m.user_managed_groups_title()}
+      description={m.user_managed_groups_cascade()}
+    >
       {fields.map(({ name, label, items, placeholder, emptyText }) => (
         <form.AppField key={name} name={name}>
           {(field) => (

@@ -108,7 +108,7 @@ export function ServiceAccountForm({
         </p>
       )}
 
-      <div className="grid gap-2">
+      <div className="grid gap-2 sm:max-w-72">
         <Label htmlFor={OWNER_FIELD_ID}>
           {withRequired(m.field_service_account_owner(), true)}
         </Label>
