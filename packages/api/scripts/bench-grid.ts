@@ -11,10 +11,17 @@ import { parseArgs } from "node:util";
 import postgres from "postgres";
 
 import type { DB } from "../src/db.ts";
+import type { Transactional } from "../src/transaction.ts";
 
 import { dbConfig } from "../src/db-config.ts";
+import { countPublishedFacets } from "../src/sample/service/count-facets.ts";
 import { listPublishedSamples } from "../src/sample/service/list-sample.ts";
-import { appendCsv, type CsvCell } from "./bench-lib.ts";
+import {
+  appendCsv,
+  type CsvCell,
+  type Endpoint,
+  parseEndpoints,
+} from "./bench-lib.ts";
 
 const FILTERS = [
   ["material", "rock_and_sediment.rock"],
@@ -25,15 +32,26 @@ const FILTERS = [
 ] as const;
 const FILTER_COUNTS = [0, 1, 3, 5];
 
+type Call = (
+  db: Transactional<DB>,
+  params: ListSamplesQuery,
+) => Promise<unknown>;
+const CALLS: Record<Endpoint, Call> = {
+  list: listPublishedSamples,
+  facets: countPublishedFacets,
+};
+
 type Plan = { "Execution Time": number; "Planning Time": number };
 
 const { values } = parseArgs({
   options: {
     size: { type: "string", default: "" },
     runs: { type: "string", default: "30" },
+    endpoints: { type: "string", default: "list,facets" },
     out: { type: "string", default: "benchmark-results" },
   },
 });
+const endpoints = parseEndpoints(values.endpoints);
 const out = (file: string) => path.join(values.out, file);
 mkdirSync(out("plans"), { recursive: true });
 
@@ -66,9 +84,9 @@ const BASES: Record<string, Record<string, string>> = {
   },
 };
 
-async function explain(params: ListSamplesQuery) {
+async function explain(call: Call, params: ListSamplesQuery) {
   recorded = [];
-  await listPublishedSamples(db, params);
+  await call(db, params);
   const statements = recorded.filter(
     ({ sql }) => !/^(begin|commit|rollback)\b/i.test(sql),
   );
@@ -77,7 +95,7 @@ async function explain(params: ListSamplesQuery) {
   return db.transaction().execute(async (trx) => {
     const explained = [];
     for (const statement of statements) {
-      if (statement.sql.startsWith("select set_config(")) {
+      if (/^(select set_config\(|set )/i.test(statement.sql)) {
         await trx.executeQuery(statement);
         continue;
       }
@@ -104,47 +122,61 @@ for (const [base, baseQuery] of Object.entries(BASES)) {
       ...Object.fromEntries(FILTERS.slice(0, filters)),
     });
     const { total: matched } = await listPublishedSamples(db, params);
-    const labels: CsvCell[] = [values.size, base, filters, matched];
 
-    const statements = await explain(params);
-    appendCsv(
-      out("explain.csv"),
-      [
-        "size",
-        "case",
-        "filters",
-        "matched_rows",
-        "statement",
-        "execution_ms",
-        "planning_ms",
-        "plan_file",
-      ],
-      statements.map((statement, index) => {
-        const planFile = `plans/${values.size}-${base}-${filters}-${index + 1}.json`;
-        writeFileSync(out(planFile), JSON.stringify(statement, null, 2));
-        const { plan } = statement;
-        return [
-          ...labels,
-          index + 1,
-          plan["Execution Time"],
-          plan["Planning Time"],
-          planFile,
-        ];
-      }),
-    );
+    for (const endpoint of endpoints) {
+      const call = CALLS[endpoint];
+      const labels: CsvCell[] = [values.size, base, filters, matched, endpoint];
 
-    const timings: CsvCell[][] = [];
-    for (let run = 1; run <= Number(values.runs); run++) {
-      const start = performance.now();
-      await listPublishedSamples(db, params);
-      const ms = (performance.now() - start).toFixed(2);
-      timings.push([...labels, run, ms, loadavg()[0]!.toFixed(2)]);
+      const statements = await explain(call, params);
+      appendCsv(
+        out("explain.csv"),
+        [
+          "size",
+          "case",
+          "filters",
+          "matched_rows",
+          "endpoint",
+          "statement",
+          "execution_ms",
+          "planning_ms",
+          "plan_file",
+        ],
+        statements.map((statement, index) => {
+          const planFile = `plans/${values.size}-${base}-${filters}-${endpoint}-${index + 1}.json`;
+          writeFileSync(out(planFile), JSON.stringify(statement, null, 2));
+          const { plan } = statement;
+          return [
+            ...labels,
+            index + 1,
+            plan["Execution Time"],
+            plan["Planning Time"],
+            planFile,
+          ];
+        }),
+      );
+
+      const timings: CsvCell[][] = [];
+      for (let run = 1; run <= Number(values.runs); run++) {
+        const start = performance.now();
+        await call(db, params);
+        const ms = (performance.now() - start).toFixed(2);
+        timings.push([...labels, run, ms, loadavg()[0]!.toFixed(2)]);
+      }
+      appendCsv(
+        out("grid.csv"),
+        [
+          "size",
+          "case",
+          "filters",
+          "matched_rows",
+          "endpoint",
+          "run",
+          "ms",
+          "load_avg",
+        ],
+        timings,
+      );
     }
-    appendCsv(
-      out("grid.csv"),
-      ["size", "case", "filters", "matched_rows", "run", "ms", "load_avg"],
-      timings,
-    );
     console.info(`${values.size} ${base} +${filters}: ${matched} matched`);
   }
 }

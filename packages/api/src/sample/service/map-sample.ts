@@ -13,7 +13,7 @@ import type { DB } from "../../db.ts";
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { personFacetValues } from "./facet-filter.ts";
 import { publishedScope, sampleFilters } from "./list-sample.ts";
-import { applyFuzzyThreshold } from "./search-filter.ts";
+import { applyFuzzyThreshold, forceCustomPlan } from "./search-filter.ts";
 
 const MARKER_PX = 60;
 const TILE_PX = 256;
@@ -36,7 +36,8 @@ export async function mapPublishedSamples(
   query: SampleMapQuery,
 ): Promise<SampleMapResponse> {
   return withTransaction(db, async (trx) => {
-    await applyFuzzyThreshold(trx, [query.search, ...personFacetValues(query)]);
+    if (query.search !== undefined) await forceCustomPlan(trx);
+    await applyFuzzyThreshold(trx, personFacetValues(query));
     const filters = [
       ...sampleFilters({ ...query, viewport: undefined }),
       ...publishedScope(query),

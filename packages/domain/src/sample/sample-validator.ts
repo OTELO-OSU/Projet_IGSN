@@ -146,6 +146,22 @@ export const listSamplesResponseSchema = z.object({
 
 export type ListSamplesResponse = z.infer<typeof listSamplesResponseSchema>;
 
+// Counts are disjunctive, each facet ignoring its own filter, and a hierarchy node's count includes its descendants.
+export const sampleFacetCountsSchema = z.record(
+  z.string(),
+  z.record(z.string(), z.number()),
+);
+
+export type SampleFacetCounts = z.infer<typeof sampleFacetCountsSchema>;
+
+export const sampleFacetCountsResponseSchema = z.object({
+  data: sampleFacetCountsSchema,
+});
+
+export type SampleFacetCountsResponse = z.infer<
+  typeof sampleFacetCountsResponseSchema
+>;
+
 export const sampleResponseSchema = z.object({ data: sampleSchema });
 
 export type SampleResponse = z.infer<typeof sampleResponseSchema>;

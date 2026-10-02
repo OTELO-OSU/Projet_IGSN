@@ -26,6 +26,22 @@ test.describe("search facets", () => {
     await list.expectLanding();
   });
 
+  test("a reader's word narrows the facet counts to the matching sample", async ({
+    page,
+    samples,
+  }) => {
+    const { granite } = published(samples);
+    const list = sampleListPage(page);
+
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
+    await list.expectResultCount(2);
+
+    await list.search("granite");
+    await list.expectResultCount(1);
+    await list.expectSampleLink("Granite 7", granite);
+    await list.expectFacetOptionAbsent("Nature", natureLabel("hand_sample"));
+  });
+
   test("a shared facet URL restores the filtered results", async ({
     page,
     samples,

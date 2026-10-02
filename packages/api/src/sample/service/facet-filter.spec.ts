@@ -3,6 +3,7 @@ import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
 import { facetFilters } from "./facet-filter.ts";
+import { sampleFilters } from "./list-sample.ts";
 
 describe("facetFilters", () => {
   pgTest(
@@ -65,6 +66,34 @@ describe("facetFilters", () => {
         .explain();
       // Assert
       expect(JSON.stringify(plan)).toContain(indexName);
+    },
+  );
+
+  pgTest.for([
+    ["nature", "powder"],
+    ["material", "rock_and_sediment.rock"],
+    ["hostInstitution", "02feahw73"],
+    ["manualGroup", "5d1c7a2e-3f4b-4c6d-8e9a-1b2c3d4e5f60"],
+  ] as const)(
+    "should narrow a searched list by the %s facet inside the ParadeDB scan",
+    async ([facet, value], { db }) => {
+      // Act
+      const plan = await db
+        .selectFrom("sample")
+        .select("id")
+        .where((eb) =>
+          eb.and(
+            sampleFilters({
+              page: 1,
+              perPage: 10,
+              search: "gres",
+              [facet]: value,
+            }),
+          ),
+        )
+        .explain();
+      // Assert
+      expect(JSON.stringify(plan)).toContain(`\\"value\\":\\"${value}\\"`);
     },
   );
 });

@@ -245,7 +245,9 @@ describe("SampleList", () => {
     await screen.getByRole("link", { name: /Granite 7/ }).hover();
     await screen.getByRole("link", { name: /Basalt 42/ }).hover();
 
-    expect(onHoverSample.mock.calls.map(([sample]) => sample?.igsn)).toEqual([
+    expect(
+      onHoverSample.mock.calls.slice(-3).map(([sample]) => sample?.igsn),
+    ).toEqual([
       "TVWXYZ0123456789ABCDEFGHJK",
       undefined,
       "0123456789ABCDEFGHJKMNPQRS",

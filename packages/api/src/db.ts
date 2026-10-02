@@ -161,6 +161,14 @@ type SampleTable = {
   institutional_osu: string | null;
   institutional_laboratory: string | null;
   status: Generated<SampleStatus>;
+  type_paths: Generated<string[] | null>;
+  material_paths: Generated<string[] | null>;
+  collection_method_paths: Generated<string[] | null>;
+  is_sub_sample: Generated<boolean>;
+  manual_group_ids: Generated<string[]>;
+  contributor_ids: Generated<string[]>;
+  mineral_classification_paths: Generated<string[]>;
+  location_geom: Generated<string | null>;
   publishing_error: string | null;
   created_at: Generated<Date>;
   published_at: Generated<Date | null>;

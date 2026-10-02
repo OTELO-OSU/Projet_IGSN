@@ -129,16 +129,16 @@ describe("listSamplesQuerySchema", () => {
     expect(listSamplesQuerySchema.parse({ search: 42 }).search).toBeUndefined();
   });
 
-  it("should accept a search of exactly 200 characters", () => {
-    const search = "a".repeat(200);
+  it("should accept a search of exactly 128 characters", () => {
+    const search = "a".repeat(128);
 
     expect(listSamplesQuerySchema.parse({ search }).search).toBe(search);
   });
 
-  it("should truncate a search longer than 200 characters", () => {
+  it("should truncate a search longer than 128 characters", () => {
     expect(
-      listSamplesQuerySchema.parse({ search: "a".repeat(201) }).search,
-    ).toBe("a".repeat(200));
+      listSamplesQuerySchema.parse({ search: "a".repeat(129) }).search,
+    ).toBe("a".repeat(128));
   });
 
   it("should pass through valid facet filters", () => {

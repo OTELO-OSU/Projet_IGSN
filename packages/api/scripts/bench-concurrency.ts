@@ -5,6 +5,9 @@ import { parseArgs } from "node:util";
 import {
   appendCsv,
   type CsvCell,
+  type Endpoint,
+  ENDPOINT_PATHS,
+  parseEndpoints,
   seededMix,
   summarizeByKind,
   type Timing,
@@ -18,25 +21,35 @@ const { values } = parseArgs({
     users: { type: "string", default: "1,5,10,20" },
     duration: { type: "string", default: "30" },
     url: { type: "string", default: "http://localhost:3000/api" },
+    endpoints: { type: "string", default: "list,facets" },
     out: { type: "string", default: "benchmark-results" },
   },
 });
+const endpoints = parseEndpoints(values.endpoints);
 mkdirSync(values.out, { recursive: true });
 
-async function send(query: URLSearchParams): Promise<string> {
+async function send(
+  endpoint: Endpoint,
+  query: URLSearchParams,
+): Promise<{ status: string; ms: number }> {
+  const start = performance.now();
   try {
-    const response = await fetch(`${values.url}/samples?${query.toString()}`);
+    const response = await fetch(
+      `${values.url}/${ENDPOINT_PATHS[endpoint]}?${query.toString()}`,
+    );
     await response.arrayBuffer();
-    return String(response.status);
+    return { status: String(response.status), ms: performance.now() - start };
   } catch {
-    return "network_error";
+    return { status: "network_error", ms: performance.now() - start };
   }
 }
 
 for (const users of values.users.split(/[ ,]+/).map(Number)) {
   const next = seededMix(SEED);
-  const rows: CsvCell[][] = [];
-  const timings: Timing[] = [];
+  const rows: CsvCell[][][] = [];
+  const timings = new Map<Endpoint, Timing[]>(
+    endpoints.map((endpoint) => [endpoint, []]),
+  );
   let sent = 0;
   const start = performance.now();
   const deadline = start + Number(values.duration) * 1000;
@@ -46,26 +59,30 @@ for (const users of values.users.split(/[ ,]+/).map(Number)) {
       const index = sent++;
       const { query, facets, hasAge } = next();
       const startedAt = new Date().toISOString();
-      const requestStart = performance.now();
-      const status = await send(query);
-      const ms = performance.now() - requestStart;
-      timings.push({
-        search: query.has("search"),
-        ms,
-        error: status !== "200",
+      const responses = await Promise.all(
+        endpoints.map((endpoint) => send(endpoint, query)),
+      );
+      rows[index] = responses.map(({ status, ms }, position) => {
+        const endpoint = endpoints[position]!;
+        timings.get(endpoint)!.push({
+          search: query.has("search"),
+          ms,
+          error: status !== "200",
+        });
+        return [
+          values.size,
+          users,
+          index,
+          endpoint,
+          facets,
+          query.has("search"),
+          query.has("bbox"),
+          hasAge,
+          status,
+          ms.toFixed(2),
+          startedAt,
+        ];
       });
-      rows[index] = [
-        values.size,
-        users,
-        index,
-        facets,
-        query.has("search"),
-        query.has("bbox"),
-        hasAge,
-        status,
-        ms.toFixed(2),
-        startedAt,
-      ];
     }
   }
   await Promise.all(Array.from({ length: users }, virtualUser));
@@ -77,6 +94,7 @@ for (const users of values.users.split(/[ ,]+/).map(Number)) {
       "size",
       "users",
       "request_index",
+      "endpoint",
       "filters_count",
       "has_search",
       "has_bbox",
@@ -85,15 +103,21 @@ for (const users of values.users.split(/[ ,]+/).map(Number)) {
       "ms",
       "started_at",
     ],
-    rows,
+    rows.flat(),
   );
 
-  const summary = summarizeByKind(timings, elapsedS);
+  const summary = endpoints.flatMap((endpoint) =>
+    summarizeByKind(timings.get(endpoint)!, elapsedS).map((row) => [
+      endpoint,
+      ...row,
+    ]),
+  );
   appendCsv(
     path.join(values.out, "concurrency-summary.csv"),
     [
       "size",
       "users",
+      "endpoint",
       "kind",
       "requests",
       "rps",

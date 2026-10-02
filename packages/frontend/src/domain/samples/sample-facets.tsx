@@ -1,4 +1,5 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { SampleFacetCounts } from "@projet-igsn/domain/sample/sample-validator";
 import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
@@ -86,6 +87,17 @@ const NARROWED_VALUES: Record<
   },
 };
 
+function withCounts(
+  items: ComboboxItem[],
+  counts: Record<string, number> | undefined,
+): ComboboxItem[] {
+  if (!counts) return items;
+  return items.flatMap((item) => {
+    const count = counts[item.value] ?? 0;
+    return count > 0 ? [{ ...item, label: `${item.label} (${count})` }] : [];
+  });
+}
+
 function withSelected(
   items: { value: string; label: string }[],
   selected: string | undefined,
@@ -102,6 +114,7 @@ type SampleFacetsProps = {
   onClearAll: () => void;
   manualGroups?: ManualGroup[];
   contributors?: PublicUser[];
+  counts?: SampleFacetCounts;
 };
 
 export function SampleFacets({
@@ -110,10 +123,12 @@ export function SampleFacets({
   onClearAll,
   manualGroups = [],
   contributors = [],
+  counts,
 }: SampleFacetsProps) {
   const [resetNonce, setResetNonce] = useState(0);
   const hasActive = facetParamKeys().some((key) => values[key] !== undefined);
 
+  const countsOf = (key: string) => counts && (counts[key] ?? {});
   const byKey = new Map(SAMPLE_FACETS.map((facet) => [facet.key, facet]));
   const fetchedItems: Record<string, ComboboxItem[]> = {
     manualGroup: manualGroups.map((group) => ({
@@ -134,6 +149,7 @@ export function SampleFacets({
           <HierarchyFacet
             key={facet.key}
             hierarchy={facet.hierarchy}
+            counts={countsOf(facet.key)}
             translate={facetValueLabel(facet.key)}
             label={label}
             value={values[facet.key] as string | undefined}
@@ -147,12 +163,15 @@ export function SampleFacets({
       case "linked": {
         const selected = values[facet.key] as string | undefined;
         const items = withSelected(
-          facet.kind === "enum"
-            ? toComboboxItems(
-                NARROWED_VALUES[facet.key]?.(values) ?? facet.values,
-                facetValueLabel(facet.key),
-              )
-            : (fetchedItems[facet.key] ?? []),
+          withCounts(
+            facet.kind === "enum"
+              ? toComboboxItems(
+                  NARROWED_VALUES[facet.key]?.(values) ?? facet.values,
+                  facetValueLabel(facet.key),
+                )
+              : (fetchedItems[facet.key] ?? []),
+            countsOf(facet.key),
+          ),
           selected,
           facetValueLabel(facet.key),
         );

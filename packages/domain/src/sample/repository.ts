@@ -15,6 +15,7 @@ import type {
   AdminSampleListItem,
   ListSamplesQuery,
   PublishStatus,
+  SampleFacetCounts,
   SearchEligibleParentsQuery,
   SetSampleStatusBody,
 } from "./sample-validator.ts";
@@ -57,6 +58,7 @@ export type SampleRepository = {
   ): Promise<SampleParent[]>;
   listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
   mapPublished(query: SampleMapQuery): Promise<SampleMapResponse>;
+  countPublishedFacets(params: ListSamplesQuery): Promise<SampleFacetCounts>;
   listExportable(
     request: ExportSamplesRequest,
     userId: string,

@@ -62,19 +62,27 @@ is missing, that is a domain/API change first (see the `add-domain-entity` and
    own builder; a `linked` facet goes in `FACET_JOIN` instead (its link table
    and column). `facet-column.spec` guards both lists against the registry.
 
-4. **Endpoint-backed options (rare)**: a facet whose values aren't a static
+4. **Counts**: `GET /samples/facets` (`api/sample/service/count-facets.ts`)
+   counts every `enum`, `hierarchy` and `linked` facet of `SAMPLE_FACETS`; a
+   `text` or `numericRange` facet is never counted. A counted facet needs its
+   `INDEXED_FIELD` entry there: a `sample` column (an ancestor-path `text[]`
+   for a hierarchy), maintained by a trigger when the value lives in a joined
+   table, and a migration rebuilding `sample_search_idx` with that field as
+   `::pdb.literal`.
+
+5. **Endpoint-backed options (rare)**: a facet whose values aren't a static
    catalog (the `linked` ones) fetches them instead of reading the registry's
    `values`: add a repository method, a rate-limited public route, and a
    frontend client/hook, then pass the fetched list into `SampleFacets` as a
    prop and map it in `fetchedItems`, the way `manualGroups`/`contributors` do.
 
-5. **Labels** (`frontend/domain/samples/facet-labels.ts`): add a `facetLabel`
+6. **Labels** (`frontend/domain/samples/facet-labels.ts`): add a `facetLabel`
    case (reuse a `sample_field_*` message where one exists, else a `facet_*`
    key). For a `hierarchy` or `enum` facet, add a `facetValueLabel` case
    resolving option codes; `text`, `numericRange` and `linked` need none,
    their label riding on the value itself.
 
-6. **i18n**: add any new `facet_*` keys to the message catalogs. Shared enum
+7. **i18n**: add any new `facet_*` keys to the message catalogs. Shared enum
    text lives in `domain`; app-only copy in the app catalog (see the i18n rule).
 
 ## Tests

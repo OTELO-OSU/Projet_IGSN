@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-import { pickHierarchyLevel } from "../pick-hierarchy.ts";
+import { pickHierarchyLevel, withOptionalCount } from "../pick-hierarchy.ts";
 import { frontendUrl } from "../urls";
 
 export function sampleListPage(page: Page) {
@@ -35,7 +35,9 @@ export function sampleListPage(page: Page) {
       await page.waitForURL(/[?&]includeSubSamples=true/);
     },
     expectFacetValue: (facet: string, value: string) =>
-      expect(page.getByRole("combobox", { name: facet })).toHaveText(value),
+      expect(page.getByRole("combobox", { name: facet })).toHaveText(
+        withOptionalCount(value),
+      ),
     expectFacetOptionAbsent: async (facet: string, option: string) => {
       await page.getByRole("combobox", { name: facet }).click();
       await expect(page.getByRole("option", { name: option })).toHaveCount(0);
