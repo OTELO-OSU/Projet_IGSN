@@ -1,4 +1,8 @@
-import { publishBlockerSchema } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
+import {
+  type PublishBlocker,
+  publishBlockerSchema,
+} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
 import type { LocationDraft } from "#/samples/compose-location.ts";
 
@@ -78,6 +82,11 @@ const draftFieldName = (issuePath: string): string => {
   return path;
 };
 
+export function publishBlockerField(blocker: PublishBlocker): string | null {
+  const path = PUBLISH_BLOCKER_PATH[blocker];
+  return path.length === 0 ? null : draftFieldName(path.join("."));
+}
+
 const DATE_ORDER_CODE = /_date_order$/;
 
 const REASON_MESSAGES: Record<string, (() => string) | undefined> = {
@@ -97,6 +106,9 @@ type DraftIssue = {
 };
 
 function issueMessage(path: string, issue: DraftIssue): string {
+  if (path === "name") {
+    return m.field_name_required();
+  }
   const reason = (issue.params as { code?: string } | undefined)?.code;
   const blocker = publishBlockerSchema.safeParse(reason);
   if (blocker.success) {

@@ -46,7 +46,7 @@ describe("SampleDescriptionFields", () => {
     const screen = await renderSampleForm(onSubmit);
 
     await expect
-      .element(screen.getByRole("group", { name: "Collection date *" }))
+      .element(screen.getByRole("group", { name: "Collection date" }))
       .toBeVisible();
     await expect
       .element(screen.getByLabelText("Start date"))

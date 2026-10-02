@@ -91,7 +91,7 @@ describe("NumericAgeFormSection", () => {
 
     await toggle().click();
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
-    await page.getByRole("combobox", { name: "Units *" }).click();
+    await page.getByRole("combobox", { name: "Units" }).click();
     await page.getByRole("option", { name: "Ma", exact: true }).click();
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("");
 
@@ -101,7 +101,7 @@ describe("NumericAgeFormSection", () => {
 
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
     await expect
-      .element(page.getByRole("combobox", { name: "Units *" }))
+      .element(page.getByRole("combobox", { name: "Units" }))
       .toHaveTextContent("Ma");
   });
 
@@ -110,9 +110,9 @@ describe("NumericAgeFormSection", () => {
 
     await toggle().click();
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
-    await page.getByRole("combobox", { name: "Units *" }).click();
+    await page.getByRole("combobox", { name: "Units" }).click();
     await page.getByRole("option", { name: "Year" }).click();
-    await page.getByRole("combobox", { name: "Age reference *" }).click();
+    await page.getByRole("combobox", { name: "Age reference" }).click();
     await page
       .getByRole("option", { name: "BP - Before Present", exact: true })
       .click();
@@ -131,14 +131,14 @@ describe("NumericAgeFormSection", () => {
 
     await toggle().click();
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("3");
-    await page.getByRole("combobox", { name: "Units *" }).click();
+    await page.getByRole("combobox", { name: "Units" }).click();
     await expect
       .element(page.getByRole("option", { name: "Month", exact: true }))
       .toBeInTheDocument();
     await page.getByRole("option", { name: "Day", exact: true }).click();
 
     await expect
-      .element(page.getByRole("combobox", { name: "Units *" }))
+      .element(page.getByRole("combobox", { name: "Units" }))
       .toHaveTextContent("Day");
     await expect
       .element(page.getByRole("combobox", { name: "Age reference" }))
@@ -155,23 +155,6 @@ describe("NumericAgeFormSection", () => {
     await expect
       .element(page.getByRole("spinbutton", { name: "Numeric age" }))
       .toHaveValue(5);
-  });
-
-  it("should mark the other bound required once one range bound has a value", async () => {
-    await render(<Harness />);
-
-    await toggle().click();
-    await page.getByRole("radio", { name: "Range (min / max)" }).click();
-    await page
-      .getByRole("spinbutton", { name: "Numeric age minimum" })
-      .fill("10");
-
-    await expect
-      .element(page.getByRole("spinbutton", { name: "Numeric age maximum *" }))
-      .toBeInTheDocument();
-    await expect
-      .element(page.getByRole("spinbutton", { name: "Numeric age minimum" }))
-      .toBeInTheDocument();
   });
 
   it("should start enabled in range mode when a range value is prefilled", async () => {

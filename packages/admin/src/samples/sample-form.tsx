@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
+import { FieldRequiredProvider } from "@projet-igsn/design-system/components/form/field-required-context";
 import {
   type FieldSuggestionRule,
   FieldSuggestionProvider,
@@ -17,6 +18,7 @@ import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { Input } from "@projet-igsn/design-system/components/ui/input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import {
   Tabs,
   TabsContent,
@@ -28,8 +30,6 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
-import { allowsSpecificName } from "@projet-igsn/domain/sample/material/allows-specific-name";
-import { allowsMineralClassifications } from "@projet-igsn/domain/sample/mineral/allows-mineral-classifications";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
@@ -46,6 +46,7 @@ import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
 import { ExternalLinkIcon } from "lucide-react";
 import { useState } from "react";
+import { flushSync } from "react-dom";
 
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
@@ -63,13 +64,12 @@ import {
 import { DuplicateSamplesDialog } from "#/samples/duplicate-samples-dialog.tsx";
 import { LocalIdFields } from "#/samples/local-id-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
-import { MaterialField } from "#/samples/material-field.tsx";
-import { MetamorphicDetails } from "#/samples/metamorphic-details.tsx";
 import { ProvenanceStatusField } from "#/samples/provenance-status-field.tsx";
 import { publishBlockerLines } from "#/samples/publish-blocker-field-label.ts";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "#/samples/sample-attachments.tsx";
+import { SampleClassificationTab } from "#/samples/sample-classification-tab.tsx";
 import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
@@ -79,26 +79,29 @@ import {
   sampleDraftSchema,
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
-import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
 import { SampleFormTabList } from "#/samples/sample-form-tab-list.tsx";
 import {
   parentTabLabel,
+  SAMPLE_FORM_TABS,
+  sampleFieldTab,
   type SampleFormTab,
+  tabCompleteness,
 } from "#/samples/sample-form-tabs.ts";
 import { SampleGeologicalContextFields } from "#/samples/sample-geological-context-fields.tsx";
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
-import { SampleMineralClassificationsFields } from "#/samples/sample-mineral-classifications-fields.tsx";
 import { SampleProcessStepsFields } from "#/samples/sample-process-steps-fields.tsx";
 import { samplePublishInput } from "#/samples/sample-publish-input.ts";
 import { SampleRelationsFields } from "#/samples/sample-relations-fields.tsx";
 import { SampleRepositoryFields } from "#/samples/sample-repository-fields.tsx";
+import {
+  sampleRequiredFields,
+  saveRequiredFields,
+} from "#/samples/sample-required-fields.ts";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
-import { SampleSyntheticDetailsFields } from "#/samples/sample-synthetic-details-fields.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
-import { TextureField } from "#/samples/texture-field.tsx";
 import {
   keptAttachmentMetadata,
   type SampleAttachmentChanges,
@@ -210,6 +213,8 @@ export type SampleFormProps = {
   currentUser?: Pick<User, "status" | "superAdmin">;
   readOnlyReason?: string;
   manualGroupOptions?: ManualGroup[];
+  defaultTab?: SampleFormTab;
+  onTabChange?: (tab: SampleFormTab) => void;
 };
 
 export function SampleForm({
@@ -229,8 +234,14 @@ export function SampleForm({
   currentUser,
   readOnlyReason,
   manualGroupOptions = [],
+  defaultTab = DEFAULT_TAB,
+  onTabChange,
 }: SampleFormProps) {
-  const [tab, setTab] = useState<SampleFormTab>(DEFAULT_TAB);
+  const [tab, setTabState] = useState(defaultTab);
+  const setTab = (next: SampleFormTab) => {
+    setTabState(next);
+    onTabChange?.(next);
+  };
   const roleOnSample = useUserRoleOnSample(sampleId);
   const wasPublished = hasPermanentIgsn({ status });
   const validate = validateDraft(
@@ -351,10 +362,26 @@ export function SampleForm({
       },
       onSubmit: validate,
     },
+    onSubmitInvalid: ({ formApi }) => {
+      const invalidTabs = Object.entries(formApi.state.fieldMeta)
+        .filter(([, meta]) => (meta?.errors.length ?? 0) > 0)
+        .map(([name]) => sampleFieldTab(name));
+      const first = SAMPLE_FORM_TABS.find(({ value }) =>
+        invalidTabs.includes(value),
+      );
+      if (first && first.value !== tab) {
+        flushSync(() => setTab(first.value));
+        void formApi.validate("submit");
+      }
+      toast.error(m.sample_save_invalid());
+    },
     onSubmit: async ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);
       if (!parsed.success) return;
-      if (keptAttachments.length > UPLOAD_LIMIT) return;
+      if (keptAttachments.length > UPLOAD_LIMIT) {
+        toast.error(m.sample_save_attachment_limit({ limit: UPLOAD_LIMIT }));
+        return;
+      }
       if (meta.checkDuplicates) {
         const duplicates = await findDuplicates(parsed.data);
         if (duplicates === null) return;
@@ -396,6 +423,7 @@ export function SampleForm({
             UPLOAD_LIMIT,
             currentUser,
           ),
+          saveRequiredFields(values).filter(({ isMet }) => !isMet),
         );
         const button = renderButton(
           isReadOnly || isPending || !canSubmit || reasons.length > 0,
@@ -408,8 +436,8 @@ export function SampleForm({
             <TooltipContent>
               <p className="font-medium">{m.publish_blocked_title()}</p>
               <ul className="list-disc ps-4">
-                {reasons.map(({ blocker, line }) => (
-                  <li key={blocker}>{line}</li>
+                {reasons.map(({ key, line }) => (
+                  <li key={key}>{line}</li>
                 ))}
               </ul>
             </TooltipContent>
@@ -514,251 +542,187 @@ export function SampleForm({
           }}
           className="flex flex-col gap-6 pb-20"
         >
-          <form.Subscribe
-            selector={(state) => ({
-              material: composeHierarchyValue(state.values.materialPath),
-              provenanceStatus: state.values.scientificContext.provenanceStatus,
-            })}
-          >
-            {({ material, provenanceStatus }) => {
-              const showSynthetic = isSyntheticMaterial(material);
+          <form.Subscribe selector={(state) => state.values}>
+            {(values) => {
+              const material = composeHierarchyValue(values.materialPath);
+              const provenanceStatus =
+                values.scientificContext.provenanceStatus;
+              const required = sampleRequiredFields(values, keptAttachments);
               const isTabDisabled = (value: SampleFormTab) =>
+                (value === "parent" && parents.length === 0) ||
                 (value === "location" && !allowsLocation(material)) ||
                 (value === "scientific-context" && !provenanceStatus);
               return (
-                <Tabs
-                  value={isTabDisabled(tab) ? DEFAULT_TAB : tab}
-                  onValueChange={(value) => setTab(value as SampleFormTab)}
+                // ponytail: a new rule per change re-renders every mounted kit field; pass a joined-names string as its dependency if typing lags.
+                <FieldRequiredProvider
+                  value={(name) =>
+                    required.some((field) => field.name === name)
+                  }
                 >
                   <form.AppForm>
-                    <SampleFormTabList
-                      parentCount={parents.length}
-                      attachments={keptAttachments}
-                      isTabDisabled={isTabDisabled}
-                    />
-                  </form.AppForm>
+                    <Tabs
+                      value={isTabDisabled(tab) ? DEFAULT_TAB : tab}
+                      onValueChange={(value) => setTab(value as SampleFormTab)}
+                    >
+                      <SampleFormTabList
+                        parentCount={parents.length}
+                        completeness={tabCompleteness(required)}
+                        isTabDisabled={isTabDisabled}
+                      />
 
-                  {parents.length > 0 ? (
-                    <TabsContent value="parent" className="grid gap-4">
-                      <FormSection title={parentTabLabel(parents.length)}>
-                        {parents.map((each, index) => (
-                          <ParentSampleField
-                            key={each.igsn}
-                            parent={each}
-                            label={
-                              parents.length > 1
-                                ? m.field_parent_numbered({ index: index + 1 })
-                                : m.field_parent()
+                      {parents.length > 0 ? (
+                        <TabsContent value="parent" className="grid gap-4">
+                          <FormSection title={parentTabLabel(parents.length)}>
+                            {parents.map((each, index) => (
+                              <ParentSampleField
+                                key={each.igsn}
+                                parent={each}
+                                label={
+                                  parents.length > 1
+                                    ? m.field_parent_numbered({
+                                        index: index + 1,
+                                      })
+                                    : m.field_parent()
+                                }
+                              />
+                            ))}
+                          </FormSection>
+                        </TabsContent>
+                      ) : null}
+
+                      <TabsContent value={DEFAULT_TAB} className="grid gap-4">
+                        <FormSection title={m.section_sample()}>
+                          <form.AppField name="name">
+                            {(field) => (
+                              <field.TextField label={m.field_name()} />
+                            )}
+                          </form.AppField>
+
+                          <LocalIdFields />
+
+                          <SampleTypeFields />
+
+                          <form.AppField name="nature">
+                            {(field) => (
+                              <field.ComboboxField
+                                label={m.field_nature()}
+                                items={natureItems}
+                                placeholder={m.nature_placeholder()}
+                                searchPlaceholder={m.nature_search_placeholder()}
+                                emptyText={m.nature_empty()}
+                              />
+                            )}
+                          </form.AppField>
+
+                          <CollectionMethodField />
+
+                          <ProvenanceStatusField />
+
+                          {parents.length === 0 ? (
+                            <CollectionDateField />
+                          ) : null}
+                        </FormSection>
+
+                        {parents.length > 0 ? (
+                          <SampleProcessStepsFields />
+                        ) : null}
+
+                        <SampleManualGroupsField options={manualGroupOptions} />
+                      </TabsContent>
+
+                      <TabsContent
+                        value="classification"
+                        className="grid gap-4"
+                      >
+                        <SampleClassificationTab material={material} />
+                      </TabsContent>
+
+                      <TabsContent value="location" className="grid gap-4">
+                        {onlyParent && allowsLocation(onlyParent.material) ? (
+                          <FormSection
+                            title={m.section_location()}
+                            description={
+                              <>
+                                {m.location_inherited_from()}{" "}
+                                <ParentSampleLink parent={onlyParent} />
+                              </>
                             }
                           />
-                        ))}
-                      </FormSection>
-                    </TabsContent>
-                  ) : null}
+                        ) : (
+                          <>
+                            <FormSection title={m.section_location()}>
+                              <LocationFields />
+                            </FormSection>
 
-                  <TabsContent value={DEFAULT_TAB} className="grid gap-4">
-                    <FormSection title={m.section_sample()}>
-                      <form.AppField
-                        name="name"
-                        validators={{
-                          onChange: ({ value }) =>
-                            value?.trim()
-                              ? undefined
-                              : { message: m.field_name_required() },
-                        }}
+                            <FormSection title={m.section_geological_context()}>
+                              <SampleGeologicalContextFields />
+                            </FormSection>
+                          </>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="age" className="grid gap-4">
+                        <AgeFields />
+                      </TabsContent>
+
+                      <TabsContent
+                        value="physical-description"
+                        className="grid gap-4"
                       >
-                        {(field) => (
-                          <field.TextField
-                            label={m.field_name()}
-                            requiredToPublish
-                          />
-                        )}
-                      </form.AppField>
+                        <FormSection title={m.section_description()}>
+                          <SampleDescriptionFields />
+                        </FormSection>
+                      </TabsContent>
 
-                      <form.AppForm>
-                        <LocalIdFields />
-                      </form.AppForm>
+                      <TabsContent
+                        value="scientific-context"
+                        className="grid gap-4"
+                      >
+                        <SampleScientificContextFields />
+                      </TabsContent>
 
-                      <form.AppForm>
-                        <SampleTypeFields />
-                      </form.AppForm>
-
-                      <form.AppField name="nature">
-                        {(field) => (
-                          <field.ComboboxField
-                            label={m.field_nature()}
-                            requiredToPublish
-                            items={natureItems}
-                            placeholder={m.nature_placeholder()}
-                            searchPlaceholder={m.nature_search_placeholder()}
-                            emptyText={m.nature_empty()}
-                          />
-                        )}
-                      </form.AppField>
-
-                      <form.AppForm>
-                        <CollectionMethodField />
-                      </form.AppForm>
-
-                      <form.AppForm>
-                        <ProvenanceStatusField />
-                      </form.AppForm>
-
-                      {parents.length === 0 ? (
-                        <form.AppForm>
-                          <CollectionDateField />
-                        </form.AppForm>
-                      ) : null}
-                    </FormSection>
-
-                    {parents.length > 0 ? (
-                      <form.AppForm>
-                        <SampleProcessStepsFields />
-                      </form.AppForm>
-                    ) : null}
-
-                    <form.AppForm>
-                      <SampleManualGroupsField options={manualGroupOptions} />
-                    </form.AppForm>
-                  </TabsContent>
-
-                  <TabsContent value="classification" className="grid gap-4">
-                    <FormSection title={m.section_material()}>
-                      <form.AppForm>
-                        <MaterialField />
-                      </form.AppForm>
-                      <form.AppForm>
-                        <TextureField />
-                      </form.AppForm>
-                      <form.AppForm>
-                        <MetamorphicDetails />
-                      </form.AppForm>
-                      {allowsMineralClassifications(material) ? (
-                        <form.AppForm>
-                          <SampleMineralClassificationsFields />
-                        </form.AppForm>
-                      ) : null}
-                      {allowsSpecificName(material) ? (
-                        <form.AppField name="specificName">
-                          {(field) => (
-                            <field.TextField label={m.field_specific_name()} />
-                          )}
-                        </form.AppField>
-                      ) : null}
-                    </FormSection>
-
-                    <form.AppForm>
-                      <SampleEconomicInterestFields />
-                    </form.AppForm>
-
-                    {showSynthetic ? (
-                      <FormSection title={m.section_synthetic_details()}>
-                        <form.AppForm>
-                          <SampleSyntheticDetailsFields />
-                        </form.AppForm>
-                      </FormSection>
-                    ) : null}
-                  </TabsContent>
-
-                  <TabsContent value="location" className="grid gap-4">
-                    {onlyParent && allowsLocation(onlyParent.material) ? (
-                      <FormSection title={m.section_location()}>
-                        <p className="text-muted-foreground text-sm">
-                          {m.location_inherited_from()}{" "}
-                          <ParentSampleLink parent={onlyParent} />
-                        </p>
-                      </FormSection>
-                    ) : (
-                      <>
-                        <FormSection title={m.section_location()}>
-                          <form.AppForm>
-                            <LocationFields />
-                          </form.AppForm>
+                      <TabsContent value="conservation" className="grid gap-4">
+                        <FormSection title={m.section_condition()}>
+                          <SampleConditionFields />
                         </FormSection>
 
-                        <FormSection title={m.section_geological_context()}>
-                          <form.AppForm>
-                            <SampleGeologicalContextFields />
-                          </form.AppForm>
+                        <FormSection title={m.section_security()}>
+                          <SampleSecurityFields />
                         </FormSection>
-                      </>
-                    )}
-                  </TabsContent>
+                      </TabsContent>
 
-                  <TabsContent value="age" className="grid gap-4">
-                    <form.AppForm>
-                      <AgeFields />
-                    </form.AppForm>
-                  </TabsContent>
+                      <TabsContent value="curation" className="grid gap-4">
+                        <FormSection title={m.section_curation()}>
+                          <ExistenceStatusField />
+                          <AvailabilityStatusField />
+                        </FormSection>
 
-                  <TabsContent
-                    value="physical-description"
-                    className="grid gap-4"
-                  >
-                    <FormSection title={m.section_description()}>
-                      <form.AppForm>
-                        <SampleDescriptionFields />
-                      </form.AppForm>
-                    </FormSection>
-                  </TabsContent>
+                        <FormSection title={m.section_repository()}>
+                          <SampleRepositoryFields />
+                        </FormSection>
+                      </TabsContent>
 
-                  <TabsContent
-                    value="scientific-context"
-                    className="grid gap-4"
-                  >
-                    <form.AppForm>
-                      <SampleScientificContextFields />
-                    </form.AppForm>
-                  </TabsContent>
-
-                  <TabsContent value="conservation" className="grid gap-4">
-                    <FormSection title={m.section_condition()}>
-                      <form.AppForm>
-                        <SampleConditionFields />
-                      </form.AppForm>
-                    </FormSection>
-
-                    <FormSection title={m.section_security()}>
-                      <form.AppForm>
-                        <SampleSecurityFields />
-                      </form.AppForm>
-                    </FormSection>
-                  </TabsContent>
-
-                  <TabsContent value="curation" className="grid gap-4">
-                    <FormSection title={m.section_curation()}>
-                      <form.AppForm>
-                        <ExistenceStatusField />
-                        <AvailabilityStatusField />
-                      </form.AppForm>
-                    </FormSection>
-
-                    <FormSection title={m.section_repository()}>
-                      <form.AppForm>
-                        <SampleRepositoryFields />
-                      </form.AppForm>
-                    </FormSection>
-                  </TabsContent>
-
-                  <TabsContent value="related-resources" className="grid gap-6">
-                    <form.AppForm>
-                      <SampleRelationsFields />
-                    </form.AppForm>
-                    {sampleId && attachmentChanges ? (
-                      <SampleAttachments
-                        sampleId={sampleId}
-                        attachments={attachments}
-                        changes={attachmentChanges}
-                      />
-                    ) : (
-                      <FormSection title={m.section_attachments()}>
-                        <p className="text-muted-foreground text-sm">
-                          {m.attachments_unsaved_hint()}
-                        </p>
-                      </FormSection>
-                    )}
-                  </TabsContent>
-                </Tabs>
+                      <TabsContent
+                        value="related-resources"
+                        className="grid gap-6"
+                      >
+                        <SampleRelationsFields />
+                        {sampleId && attachmentChanges ? (
+                          <SampleAttachments
+                            sampleId={sampleId}
+                            attachments={attachments}
+                            changes={attachmentChanges}
+                          />
+                        ) : (
+                          <FormSection
+                            title={m.section_attachments()}
+                            description={m.attachments_unsaved_hint()}
+                          />
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                  </form.AppForm>
+                </FieldRequiredProvider>
               );
             }}
           </form.Subscribe>

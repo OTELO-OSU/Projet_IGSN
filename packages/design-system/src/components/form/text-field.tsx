@@ -6,6 +6,7 @@ import { Label } from "../ui/label.tsx";
 import { Textarea } from "../ui/textarea.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
+import { useFieldRequired } from "./field-required-context.tsx";
 import { FieldRow } from "./field-row.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 import { RevealField } from "./reveal-field.tsx";
@@ -40,13 +41,12 @@ export function TextField({
   const hintId = hint ? `${field.name}-hint` : undefined;
   const { error, errorId, ariaProps } = useFieldError({ hintId });
   const isDisabled = useFieldDisabled(disabled);
+  const isRequired = useFieldRequired(requiredToPublish);
   const [isBadInput, setIsBadInput] = useState(false);
   const Control = multiline ? Textarea : Input;
   const row = (
     <FieldRow isFullWidth={isFullWidth}>
-      <Label htmlFor={field.name}>
-        {withRequired(label, requiredToPublish)}
-      </Label>
+      <Label htmlFor={field.name}>{withRequired(label, isRequired)}</Label>
       <Control
         id={field.name}
         {...(number ? { type: "number", step: "any" } : {})}

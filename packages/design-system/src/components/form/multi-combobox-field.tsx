@@ -6,6 +6,7 @@ import { Label } from "../ui/label.tsx";
 import { MultiCombobox } from "../ui/multi-combobox.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
+import { useFieldRequired } from "./field-required-context.tsx";
 import { FieldRow } from "./field-row.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
@@ -32,11 +33,10 @@ export function MultiComboboxField({
   const field = useFieldContext<string[]>();
   const { error, errorId, ariaProps } = useFieldError({ waitForTouch: true });
   const isDisabled = useFieldDisabled(disabled);
+  const isRequired = useFieldRequired(requiredToPublish);
   return (
     <FieldRow format={comboboxItemFormat(items)}>
-      <Label htmlFor={field.name}>
-        {withRequired(label, requiredToPublish)}
-      </Label>
+      <Label htmlFor={field.name}>{withRequired(label, isRequired)}</Label>
       <div className="sm:max-w-72">
         <MultiCombobox
           id={field.name}

@@ -14,6 +14,7 @@ import {
   CommandList,
 } from "./command.tsx";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover.tsx";
+import { TruncatedText } from "./truncated-text.tsx";
 
 export type ComboboxItem = {
   value: string;
@@ -41,7 +42,8 @@ type ComboboxTriggerProps = {
   open: boolean;
   disabled?: boolean;
   onBlur?: () => void;
-  children: ReactNode;
+  placeholder: string;
+  children?: ReactNode;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 };
@@ -51,6 +53,7 @@ export function ComboboxTrigger({
   open,
   disabled,
   onBlur,
+  placeholder,
   children,
   ...aria
 }: ComboboxTriggerProps) {
@@ -67,7 +70,11 @@ export function ComboboxTrigger({
         className="w-full min-w-0 justify-between font-normal"
         {...aria}
       >
-        <span className="truncate">{children}</span>
+        <span className="truncate">
+          {children ?? (
+            <span className="text-muted-foreground">{placeholder}</span>
+          )}
+        </span>
         <ChevronsUpDownIcon className="opacity-50" />
       </Button>
     </PopoverTrigger>
@@ -112,9 +119,14 @@ export function Combobox({
         open={open}
         disabled={disabled}
         onBlur={onBlur}
+        placeholder={placeholder}
         {...aria}
       >
-        {selected ? (selected.display ?? selected.label) : placeholder}
+        {selected
+          ? (selected.display ?? (
+              <TruncatedText>{selected.label}</TruncatedText>
+            ))
+          : undefined}
       </ComboboxTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>

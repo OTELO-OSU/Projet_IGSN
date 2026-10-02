@@ -27,12 +27,11 @@ export function LocationVerticalFields() {
     >
       {(entered) =>
         entered ? (
-          <div className="grid gap-4">
+          <>
             <form.AppField name="location.verticalReference">
               {(field) => (
                 <field.ComboboxField
                   label={m.field_vertical_reference()}
-                  requiredToPublish
                   items={referenceItems}
                   placeholder={m.vertical_reference_placeholder()}
                   searchPlaceholder={m.vertical_reference_search_placeholder()}
@@ -51,7 +50,7 @@ export function LocationVerticalFields() {
                 />
               )}
             </form.AppField>
-          </div>
+          </>
         ) : null
       }
     </form.Subscribe>

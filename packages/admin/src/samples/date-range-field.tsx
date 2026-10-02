@@ -2,7 +2,6 @@ import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/f
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
-import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { getBy } from "@tanstack/react-form";
 import { useState } from "react";
 
@@ -23,7 +22,6 @@ type DateRangeFieldProps = {
   startLabel: string;
   endLabel: string;
   identicalMessage: () => string;
-  requiredToPublish?: boolean;
 };
 
 const timeZoneItems = toComboboxItems(
@@ -42,7 +40,6 @@ export function DateRangeField({
   startLabel,
   endLabel,
   identicalMessage,
-  requiredToPublish = true,
 }: DateRangeFieldProps) {
   const startName = `${prefix}Start` as const;
   const endName = `${prefix}End` as const;
@@ -110,7 +107,7 @@ export function DateRangeField({
         >
           <div className="flex items-center gap-4">
             <span id={`${id}-label`} className="font-medium">
-              {withRequired(groupLabel, requiredToPublish)}
+              {groupLabel}
             </span>
             <div className="flex items-center gap-2">
               <Switch
@@ -143,11 +140,7 @@ export function DateRangeField({
                     }}
                   >
                     {(field) => (
-                      <field.DateField
-                        label={startLabel}
-                        requiredToPublish
-                        withTime={isHour}
-                      />
+                      <field.DateField label={startLabel} withTime={isHour} />
                     )}
                   </form.AppField>
                 </div>
@@ -160,11 +153,7 @@ export function DateRangeField({
                     }}
                   >
                     {(field) => (
-                      <field.DateField
-                        label={endLabel}
-                        requiredToPublish
-                        withTime={isHour}
-                      />
+                      <field.DateField label={endLabel} withTime={isHour} />
                     )}
                   </form.AppField>
                 </div>
@@ -178,30 +167,27 @@ export function DateRangeField({
                   }}
                 >
                   {(field) => (
-                    <field.DateField
-                      label={singleLabel}
-                      requiredToPublish
-                      withTime={isHour}
-                    />
+                    <field.DateField label={singleLabel} withTime={isHour} />
                   )}
                 </form.AppField>
               </div>
             )}
+            {isHour ? (
+              <div className="w-full sm:w-72">
+                <form.AppField name={timeZoneName}>
+                  {(field) => (
+                    <field.ComboboxField
+                      label={timeZoneLabel}
+                      items={timeZoneItems}
+                      placeholder={m.time_zone_placeholder()}
+                      searchPlaceholder={m.time_zone_search_placeholder()}
+                      emptyText={m.time_zone_empty()}
+                    />
+                  )}
+                </form.AppField>
+              </div>
+            ) : null}
           </div>
-          {isHour ? (
-            <form.AppField name={timeZoneName}>
-              {(field) => (
-                <field.ComboboxField
-                  label={timeZoneLabel}
-                  requiredToPublish
-                  items={timeZoneItems}
-                  placeholder={m.time_zone_placeholder()}
-                  searchPlaceholder={m.time_zone_search_placeholder()}
-                  emptyText={m.time_zone_empty()}
-                />
-              )}
-            </form.AppField>
-          ) : null}
         </div>
       )}
     </form.Subscribe>

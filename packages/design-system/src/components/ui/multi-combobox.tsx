@@ -20,6 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "./popover.tsx";
+import { TruncatedText } from "./truncated-text.tsx";
 
 // ponytail: fixed cap, lift it to a prop if another caller needs one.
 const UNSEARCHED_LIMIT = 10;
@@ -91,11 +92,11 @@ export function MultiCombobox({
                 key={item.value}
                 variant="secondary"
                 className={cn(
-                  "max-w-full shrink break-words whitespace-normal",
+                  "max-w-full min-w-0 shrink",
                   !locked && "gap-1 pr-1",
                 )}
               >
-                {item.label}
+                <TruncatedText>{item.label}</TruncatedText>
                 {locked ? null : (
                   <button
                     type="button"
@@ -119,7 +120,7 @@ export function MultiCombobox({
               aria-expanded={open}
               disabled={disabled}
               onBlur={onBlur}
-              className="text-muted-foreground h-7 flex-1 justify-between px-1 font-normal hover:bg-transparent"
+              className="text-muted-foreground h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent"
               {...aria}
             >
               {selected.length === 0 ? placeholder : null}

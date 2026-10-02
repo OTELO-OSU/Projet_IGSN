@@ -102,7 +102,11 @@ type NamedPerson =
   | "additional_role"
   | "synthetic_operator";
 
-export type PublishRequirement = { blocker: PublishBlocker; isMet: boolean };
+export type PublishRequirement = {
+  blocker: PublishBlocker;
+  isMet: boolean;
+  index?: number;
+};
 
 type PublishCheckedSample = PublishableFields & {
   attachments?: readonly Pick<SampleAttachment, "targetResourceType">[];
@@ -113,6 +117,7 @@ const nameRequirements = (
   person: NamedPerson,
   { userId, firstname, lastname }: ContactLink,
   presence: "required" | "optional",
+  index?: number,
 ): PublishRequirement[] => {
   if (presence === "optional" && firstname == null && lastname == null)
     return [];
@@ -120,10 +125,12 @@ const nameRequirements = (
     {
       blocker: `${person}_firstname_missing`,
       isMet: userId != null || firstname != null,
+      index,
     },
     {
       blocker: `${person}_lastname_missing`,
       isMet: userId != null || lastname != null,
+      index,
     },
   ];
 };
@@ -246,7 +253,7 @@ const fieldRequirements = (
         },
         "optional",
       ),
-      ...context.additionalRoles.flatMap((role) =>
+      ...context.additionalRoles.flatMap((role, index) =>
         nameRequirements(
           "additional_role",
           {
@@ -255,6 +262,7 @@ const fieldRequirements = (
             lastname: role.personLastname,
           },
           "required",
+          index,
         ),
       ),
     );
@@ -311,13 +319,15 @@ const fieldRequirements = (
   }
 
   requirements.push(
-    ...sample.relations.map((relation) => ({
+    ...sample.relations.map((relation, index) => ({
       blocker: "relation_resource_type_missing" as const,
       isMet: relation.targetResourceType != null,
+      index,
     })),
-    ...sample.processSteps.map((step) => ({
+    ...sample.processSteps.map((step, index) => ({
       blocker: "process_step_date_missing" as const,
       isMet: step.date != null,
+      index,
     })),
   );
 
@@ -327,9 +337,10 @@ const fieldRequirements = (
 const attachmentRequirements = (
   sample: PublishCheckedSample,
 ): PublishRequirement[] =>
-  (sample.attachments ?? []).map((attachment) => ({
+  (sample.attachments ?? []).map((attachment, index) => ({
     blocker: "attachment_metadata_missing",
     isMet: attachment.targetResourceType != null,
+    index,
   }));
 
 const unmet = (requirements: PublishRequirement[]): PublishBlocker[] =>

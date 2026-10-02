@@ -8,6 +8,7 @@ import {
   useFieldDisabledRule,
 } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
+import { useFieldRequired } from "./field-required-context.tsx";
 import { FieldRow } from "./field-row.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
@@ -45,13 +46,12 @@ export function HierarchyField({
     hintId,
   });
   const isDisabled = useFieldDisabled(disabled);
+  const isRequired = useFieldRequired(requiredToPublish);
   const isLevelDisabled = useFieldDisabledRule();
 
   return (
     <FieldRow format={(value) => toPath(value).map(translate).join(" / ")}>
-      <Label htmlFor={field.name}>
-        {withRequired(label, requiredToPublish === true)}
-      </Label>
+      <Label htmlFor={field.name}>{withRequired(label, isRequired)}</Label>
       <div className="sm:max-w-72">
         <HierarchyInput
           id={field.name}

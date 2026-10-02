@@ -230,13 +230,14 @@ requirements.push({
 });
 ```
 
-`samplePublishBlockers` derives from `samplePublishRequirements`: it needs no edit of its own. `samplePublishRequirements` also drives the admin tab's live `(filled/total)` counter and its tooltip, so a new requirement needs three admin entries besides the domain one:
+`samplePublishBlockers` derives from `samplePublishRequirements`: it needs no edit of its own. `samplePublishRequirements` also drives the admin tab's live `(filled/total)` counter and its tooltip, so a new requirement needs two admin entries besides the domain one:
 
 - `publish-blocker-label.ts`: the full sentence, still an exhaustive `Record`, so the build fails until you add it.
 - `publish-blocker-field-label.ts`: the short field label shown after the tab name in the "Tab > Field" tooltip line, also exhaustive.
-- `sample-form-tabs.ts`'s `PUBLISH_BLOCKER_TAB`: which tab the field renders in, so the counter and the tooltip point at the right tab. `null` only for a non-field or unconditional blocker (`user_not_verified`).
 
-All three are exhaustive `Record`s over `PublishBlocker`, so the build fails until each carries the new code: forgetting one is impossible.
+Both are exhaustive `Record`s over `PublishBlocker`, so the build fails until each carries the new code: forgetting one is impossible.
+
+The tab the counter, the tooltip and the invalid-Save jump point at needs no entry: `publishBlockerField` derives the form field from the blocker's `publish-blocker-path.ts` entry, and `sampleFieldTab` resolves its tab.
 
 ### 5. Publish: decide if it can still change after publishing
 
@@ -334,7 +335,7 @@ To hide, wrap the field in `form.Subscribe` and return `null` when it does not a
 Two things to settle with any hide:
 
 - **A matching exclusion in `composeCreateSample`, on the same condition, unless the hidden value must still be saved.** A hidden field keeps its value in the form store (so switching back restores it), but on save the compose step must drop it. Read the display condition and the compose exclusion off one shared helper, not two expressions that happen to agree: a coincidental pairing drifts the moment either side changes on its own. Miss the exclusion entirely and a hidden value reaches validation and fails silently: the save errors with no message the user can see or fix. The exception is a field hidden because it is not the user's to set, yet still required: a sub-sample's collection date is hidden and still submitted, since excluding it would block publication (ADR [0045](adr/0045-sub-sample-collection-date-and-public-list-default.md)).
-- **Toggle the required marker with `withRequired`** if the field is a conditional publish requirement, so the trailing `*` appears exactly when the requirement holds. A field only ever rendered while its requirement holds can pass a bare `requiredToPublish` instead: there is no moment it is shown and not required, so nothing needs toggling.
+- **List the field in `sampleRequiredFields`** (`sample-required-fields.ts`) if it is required, so the trailing `*` and the tab counter follow. A publish requirement arrives from `samplePublishRequirements`, a field required once shown goes in `saveRequiredFields`. Never set `requiredToPublish` or `withRequired` in the sample form.
 
 A requirement driven by another field (for example `allowsLocation(material)`, or `requiresLocation(provenanceStatus)` which drops the requirement for a `collection_specimen`) lives in `domain`, so the form and the publish tooltip always agree.
 

@@ -17,7 +17,6 @@ export function ProvenanceStatusField() {
       {(field) => (
         <field.ComboboxField
           label={m.field_provenance_status()}
-          requiredToPublish
           items={provenanceStatusItems}
           placeholder={m.provenance_status_placeholder()}
           searchPlaceholder={m.provenance_status_search_placeholder()}

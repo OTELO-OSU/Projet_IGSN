@@ -5,17 +5,17 @@ const HEADINGS = {
     Tag: "h2",
     className:
       "text-sm font-semibold tracking-wide text-muted-foreground uppercase",
-    rowClassName: "mt-4 border-b pb-1",
+    rowClassName: "mt-8 max-w-2xl border-b pb-1",
   },
-  3: { Tag: "h3", className: "font-medium", rowClassName: "" },
+  3: { Tag: "h3", className: "font-medium", rowClassName: "mt-4" },
 } as const;
 
 type FormSectionProps = {
   title: string;
-  description?: string;
+  description?: ReactNode;
   level?: keyof typeof HEADINGS;
   action?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
 };
 
 export function FormSection({
@@ -41,7 +41,10 @@ export function FormSection({
         {action}
       </div>
       {description && (
-        <p id={descriptionId} className="text-muted-foreground text-sm">
+        <p
+          id={descriptionId}
+          className="text-muted-foreground max-w-2xl text-sm"
+        >
           {description}
         </p>
       )}

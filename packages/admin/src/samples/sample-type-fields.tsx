@@ -14,7 +14,6 @@ export function SampleTypeFields() {
           label={m.field_type()}
           hierarchy={SAMPLE_TYPE_HIERARCHY}
           translate={typeLabel}
-          requiredToPublish
           placeholder={m.type_placeholder()}
           searchPlaceholder={m.type_search_placeholder()}
           emptyText={m.type_empty()}

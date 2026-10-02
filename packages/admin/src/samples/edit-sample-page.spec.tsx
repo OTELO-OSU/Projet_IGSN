@@ -1133,6 +1133,43 @@ describe("EditSamplePage", () => {
     );
   });
 
+  it.each([
+    ["?tab=age", "rock_and_sediment.mineral", "Age"],
+    ["?tab=location", "rock_and_sediment.synthetic_rock_mineral", "Identity"],
+    ["?tab=parent", "rock_and_sediment.mineral", "Identity"],
+  ])(
+    "should open %s of a %s sample on the %s tab",
+    async (search, material, tab) => {
+      editPageSearch = search;
+      const { screen } = await renderEditPage("draft", material);
+
+      await expect
+        .element(screen.getByRole("tab", { name: new RegExp(`^${tab}`) }))
+        .toHaveAttribute("aria-selected", "true");
+    },
+  );
+
+  it("should tell why a save carrying more files than the limit does nothing", async () => {
+    const { screen, calls } = await renderEditPage(
+      "draft",
+      "rock_and_sediment.mineral",
+      false,
+      null,
+      null,
+      "exists",
+      null,
+      null,
+      overLimitAttachments,
+    );
+
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Keep at most 5 attached files before saving.");
+    expect(calls).toEqual([]);
+  });
+
   it("should refuse publishing a sample whose attachment carries no metadata", async () => {
     const { screen } = await renderEditPage(
       "draft",

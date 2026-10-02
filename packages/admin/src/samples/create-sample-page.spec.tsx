@@ -391,6 +391,35 @@ describe("CreateSamplePage", () => {
       .toHaveTextContent("Sample created");
   });
 
+  it("should reopen the created sample on the tab its first save came from", async () => {
+    const screen = await renderCreatePage();
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await openTab(screen, "Age");
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("tab", { name: /^Age/ }))
+      .toHaveAttribute("aria-selected", "true");
+  });
+
+  it("should open Identity on a blank name saved from another tab, with its error and a toast", async () => {
+    const screen = await renderCreatePage();
+    await openTab(screen, "Age");
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("tab", { name: /^Identity/ }))
+      .toHaveAttribute("aria-selected", "true");
+    await expect.element(screen.getByText("Name is required")).toBeVisible();
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Some fields need fixing before saving.");
+    expect(screen.calls).toEqual([]);
+  });
+
   it("should ask for an optional second parent before offering any form", async () => {
     const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
 
@@ -680,7 +709,10 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("heading", { name: "Edit sample" }))
       .toBeVisible();
-    await expect.element(screen.getByLabelText(/name/i)).toHaveValue("Gneiss");
+    expect(screen.created()).toMatchObject({
+      name: "Gneiss",
+      metamorphicFacies: null,
+    });
   });
 
   it("should send a relation added on the create page in the POST body", async () => {

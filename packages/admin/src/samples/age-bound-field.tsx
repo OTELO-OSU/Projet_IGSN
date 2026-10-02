@@ -15,13 +15,11 @@ export function AgeBoundField({
   control,
   name,
   label,
-  requiredWhenName,
   mirrorName,
 }: {
   control: "numeric" | "geological";
   name: keyof AgeFormValues;
   label: string;
-  requiredWhenName?: keyof AgeFormValues;
   mirrorName?: keyof AgeFormValues;
 }) {
   const form = useSampleForm();
@@ -37,30 +35,19 @@ export function AgeBoundField({
           : undefined
       }
     >
-      {(field) => (
-        <form.Subscribe
-          selector={(state) =>
-            requiredWhenName
-              ? state.values.age[requiredWhenName] != null
-              : false
-          }
-        >
-          {(required) =>
-            control === "numeric" ? (
-              <field.NumberField label={label} requiredToPublish={required} />
-            ) : (
-              <field.ComboboxField
-                label={label}
-                requiredToPublish={required}
-                items={geologicalAgeItems}
-                placeholder={m.age_geological_placeholder()}
-                searchPlaceholder={m.age_geological_search_placeholder()}
-                emptyText={m.age_geological_empty()}
-              />
-            )
-          }
-        </form.Subscribe>
-      )}
+      {(field) =>
+        control === "numeric" ? (
+          <field.NumberField label={label} />
+        ) : (
+          <field.ComboboxField
+            label={label}
+            items={geologicalAgeItems}
+            placeholder={m.age_geological_placeholder()}
+            searchPlaceholder={m.age_geological_search_placeholder()}
+            emptyText={m.age_geological_empty()}
+          />
+        )
+      }
     </form.AppField>
   );
 }

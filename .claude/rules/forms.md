@@ -16,13 +16,16 @@ paths:
 
 - Required means required to publish, not to save a draft: a field whose absence blocks publication carries a trailing "\*" in its label, in text, never color alone.
 - A conditional requirement adds the marker the moment it starts to hold and drops it when it stops (`withRequired`).
+- In the sample form every "\*" comes from `sampleRequiredFields` through `FieldRequiredProvider`, never a hand-set `requiredToPublish`.
+- The tab `(filled/total)` counter counts that same list.
+- A group label (date range, typed-contact legend) carries no "\*", its fields do.
 
 ## Dependent fields
 
 A field meaningless until a sibling is filled (a unit without its value):
 
 - Hide it until the sibling is set.
-- Mark it required once shown.
+- Mark it required once shown: in the sample form, add its entry to `saveRequiredFields`, gated by the same helper as its render.
 - Have the schema reject its value while the sibling is missing.
 - Gate the render and the compose exclusion on one shared helper, never two expressions that happen to agree.
 

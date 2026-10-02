@@ -71,10 +71,11 @@ A sample carries 0, 1 or 2 parents, capped in `createSampleSchema` and `coreSamp
 
 Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`), itself derived from `samplePublishRequirements` (every applicable requirement with its `isMet` state; `samplePublishBlockers` keeps its exact signature and just filters the unmet ones plus the non-field blockers).
 
-- The api publish guard, the admin publish tooltip and the admin sample form's live per-tab `(filled/total)` counter (`sample-form-tabs.ts`'s `tabCompleteness`) all derive from `samplePublishRequirements`.
+- The api publish guard, the admin publish tooltip and the admin sample form's live per-tab `(filled/total)` counter (`sample-form-tabs.ts`'s `tabCompleteness`) all derive from `samplePublishRequirements`, the counter and every "\*" through `sampleRequiredFields` (`admin/src/samples/sample-required-fields.ts`).
 - Add a constraint by adding a code to `publishBlockerSchema` and pushing a requirement in `samplePublishRequirements` under the field's applicability condition.
 - The function has no I/O, so a caller resolves the parent and passes it in `parents`, a `null` entry firing `parent_not_found`; `publish-blocker-path.ts` is the single blocker-to-path map, read by `publishedSampleSchema` and the `/service` 422 body.
-- Three admin `Record<PublishBlocker, ...>`s stay exhaustive so a new code fails the build until translated: the admin label map (`publish-blocker-label.ts`, the full sentence), `publish-blocker-field-label.ts` (the short field label in the "Tab > Field" tooltip line) and `sample-form-tabs.ts`'s `PUBLISH_BLOCKER_TAB` (which tab the field renders in).
+- Two admin `Record<PublishBlocker, ...>`s stay exhaustive so a new code fails the build until translated: the admin label map (`publish-blocker-label.ts`, the full sentence) and `publish-blocker-field-label.ts` (the short field label in the "Tab > Field" tooltip line).
+- A blocker's form field derives from `publish-blocker-path.ts` through `publishBlockerField` (`sample-draft-field-errors.ts`), and its tab from that field through `sampleFieldTab`.
 
 What a published sample may still change lives in ONE place too, the lock maps at the top of `published-field-lock.ts`.
 

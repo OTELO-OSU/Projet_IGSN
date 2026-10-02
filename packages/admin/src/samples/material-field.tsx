@@ -40,7 +40,6 @@ export function MaterialField() {
             label={m.field_material()}
             hierarchy={MATERIAL_HIERARCHY}
             translate={materialPathLabel}
-            requiredToPublish
             placeholder={m.material_placeholder()}
             searchPlaceholder={m.material_search_placeholder()}
             emptyText={m.material_empty()}

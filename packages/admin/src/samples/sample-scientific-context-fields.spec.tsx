@@ -136,10 +136,10 @@ describe("SampleScientificContextFields", () => {
     await expect
       .poll(() => fieldLabels(screen))
       .toEqual([
-        "Collector name *",
+        "Collector name",
         "Chief scientist / Project leader",
         "Host institution (project leader)",
-        "1. Researcher *",
+        "1. Researcher",
         "Funder organizations",
         "Funding",
         "Name of the Research Programm/Campaign/Mission/Field/Cruise",
