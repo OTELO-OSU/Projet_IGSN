@@ -97,7 +97,9 @@ async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
       cells: sampleRow(sample, EXPORT_SAMPLE_COLUMNS).with(0, keyOf(sample)),
     })),
   );
+  const hasSubSample = samples.some(({ parents }) => parents.length > 0);
   for (const child of EXPORT_CHILD_SHEETS) {
+    if (!hasSubSample && child.name === SHEETS.processSteps) continue;
     const rows = samples.flatMap((sample) =>
       childRows(sample, child.columns.slice(KEY_COLUMNS)).map((cells) => ({
         sample,

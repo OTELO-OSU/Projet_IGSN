@@ -252,6 +252,14 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
     },
   },
   {
+    paths: ["processSteps.date.timeZone"],
+    condition: {
+      path: "processSteps.date.precision",
+      match: "is",
+      values: [DATE_PRECISION_LABEL.hour],
+    },
+  },
+  {
     paths: ["age.numericAgeYearsUnit"],
     condition: {
       path: "age.numericAgeUnit",

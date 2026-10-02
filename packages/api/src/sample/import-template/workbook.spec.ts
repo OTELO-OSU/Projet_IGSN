@@ -442,22 +442,35 @@ describe("customized import template workbook", () => {
     customized = await loaded(rows, [], customization, GROUPS);
   }, 30_000);
 
-  it("should keep the Parent IGSN column only when sub-samples are expected", async () => {
+  it("should keep the Parent IGSN column and the Process steps sheet only when sub-samples are expected", async () => {
     const withoutSubSamples = await loaded(
       rows,
       [],
       { ...customization, subSamples: undefined },
       GROUPS,
     );
+    const sheetsOf = (source: ExcelJS.Workbook) =>
+      source.worksheets.map((worksheet) => worksheet.name);
 
     expect({
-      expected: headersOf(customized).includes("Parent IGSN"),
-      omitted: headersOf(withoutSubSamples),
+      expected: {
+        parent: headersOf(customized).includes("Parent IGSN"),
+        processSteps: sheetsOf(customized).includes(SHEETS.processSteps),
+      },
+      omitted: {
+        headers: headersOf(withoutSubSamples),
+        sheets: sheetsOf(withoutSubSamples),
+      },
     }).toEqual({
-      expected: true,
-      omitted: headersOf(customized).filter(
-        (header) => header !== "Parent IGSN",
-      ),
+      expected: { parent: true, processSteps: true },
+      omitted: {
+        headers: headersOf(customized).filter(
+          (header) => header !== "Parent IGSN",
+        ),
+        sheets: sheetsOf(customized).filter(
+          (name) => name !== SHEETS.processSteps,
+        ),
+      },
     });
   });
 

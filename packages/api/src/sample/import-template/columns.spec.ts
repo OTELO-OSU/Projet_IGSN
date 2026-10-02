@@ -11,11 +11,7 @@ import {
   SHEETS,
 } from "./columns.ts";
 
-const DEFERRED_FIELDS = [
-  "processSteps",
-  "syntheticDetails",
-  "mineralClassifications",
-];
+const DEFERRED_FIELDS = ["syntheticDetails", "mineralClassifications"];
 
 const ATTACHMENT_ID_FIELD = "attachments.id";
 

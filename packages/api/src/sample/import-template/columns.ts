@@ -61,12 +61,15 @@ export const SHEETS = {
   rightsHolders: "Rights holders",
   elementsOfInterest: "Elements of interest",
   storageConditions: "Storage conditions",
+  processSteps: "Process steps",
   vocabularies: "Vocabularies",
 } as const;
 
 export const SAMPLE_KEY_HEADER = "Sample #";
 
 export const SAMPLE_NAME_HEADER = "Name";
+
+export const PARENT_IGSN_HEADER = "Parent IGSN";
 
 export const SAMPLE_LOOKUP_HEADER = "Sample name (filled automatically)";
 
@@ -131,7 +134,7 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
   ...grouped("Sample", [{ header: SAMPLE_KEY_HEADER }]),
   ...grouped("Identity", [
     field(SAMPLE_NAME_HEADER, "name"),
-    field("Parent IGSN", "parentIds"),
+    field(PARENT_IGSN_HEADER, "parentIds"),
     field("Local ID", "localId"),
     field("Local ID description", "localIdDescription"),
     ...tree("type", "sample_type", "Sample type", SAMPLE_TYPES),
@@ -418,6 +421,20 @@ const STORAGE_CONDITION_COLUMNS: readonly Column[] = marked([
   ]),
 ]);
 
+const PROCESS_STEP = "processSteps";
+
+const PROCESS_STEP_COLUMNS: readonly Column[] = marked([
+  ...KEY_COLUMNS,
+  ...grouped("Identity", [
+    field("Kind", `${PROCESS_STEP}.kind`, "process_step_kind"),
+    field("Date precision", `${PROCESS_STEP}.date.precision`, "date_precision"),
+    field("Date start", `${PROCESS_STEP}.date.start`),
+    field("Date end", `${PROCESS_STEP}.date.end`),
+    field("Date time zone", `${PROCESS_STEP}.date.timeZone`),
+    field("Description", `${PROCESS_STEP}.description`),
+  ]),
+]);
+
 export const CHILD_SHEETS: readonly {
   name: string;
   columns: readonly Column[];
@@ -454,6 +471,7 @@ export const CHILD_SHEETS: readonly {
     "element",
   ),
   { name: SHEETS.storageConditions, columns: STORAGE_CONDITION_COLUMNS },
+  { name: SHEETS.processSteps, columns: PROCESS_STEP_COLUMNS },
 ];
 
 export const DATA_SHEETS: readonly {

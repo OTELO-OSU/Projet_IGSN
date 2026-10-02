@@ -990,6 +990,7 @@
   "import_issue_multiple_parent_igsns": "Only one parent IGSN per row.",
   "import_issue_location_inherited_from_parent": "The location is inherited from the parent, leave it empty.",
   "import_issue_collection_date_inherited_from_parent": "The collection date is inherited from the parent, leave it empty.",
+  "import_issue_process_steps_without_parent": "Only a sample with a parent IGSN carries process steps, delete this row.",
   "import_issue_unknown_sample": "No sample has this Sample #.",
   "import_issue_sample_not_published": "This sample is not published.",
   "import_issue_synthetic_sample": "A synthetic sample cannot be edited in bulk.",
