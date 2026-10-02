@@ -486,6 +486,52 @@ describe("EditSamplePage", () => {
       );
   });
 
+  it("should open the import template dialog prefilled from a published sample of an importable material", async () => {
+    worker.use(
+      http.get("*/admin/currentUser/attachable-manual-groups", () =>
+        HttpResponse.json({ data: MANUAL_GROUPS }),
+      ),
+    );
+    const { screen } = await renderEditPage(
+      "published",
+      "rock_and_sediment.rock",
+    );
+    await screen.getByRole("button", { name: "Sample actions" }).click();
+
+    await screen
+      .getByRole("menuitem", { name: "Create an import template" })
+      .click();
+
+    await expect
+      .element(
+        screen
+          .getByRole("dialog", { name: "Customize the template" })
+          .getByRole("combobox", { name: /^Provenance status/ }),
+      )
+      .toHaveTextContent("Collection specimen");
+  });
+
+  it.each<[string, SampleStatus, string]>([
+    ["a draft", "draft", "rock_and_sediment.rock"],
+    ["a mineral", "published", "rock_and_sediment.mineral"],
+  ])("should offer no import template on %s", async (_, status, material) => {
+    const { screen } = await renderEditPage(status, material);
+    await screen.getByRole("button", { name: "Sample actions" }).click();
+
+    await expect
+      .element(
+        screen.getByRole("menuitem", {
+          name: "Duplicate Basalte du Massif Central",
+        }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("menuitem", { name: "Create an import template" }),
+      )
+      .not.toBeInTheDocument();
+  });
+
   it("should show the parent tab and the location inherited from the parent on a sub sample", async () => {
     sampleParents = [PARENT];
     const { screen } = await renderEditPage();

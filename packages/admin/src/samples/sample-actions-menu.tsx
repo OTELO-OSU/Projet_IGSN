@@ -9,6 +9,7 @@ import { Link } from "@tanstack/react-router";
 import {
   CopyIcon,
   EllipsisVerticalIcon,
+  FileDownIcon,
   GitBranchPlusIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -16,6 +17,10 @@ import { useState } from "react";
 
 import { ConfirmDialog } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
+import {
+  CustomizeTemplateDialog,
+  type TemplateDialogValues,
+} from "#/samples/customize-template-dialog.tsx";
 import { RequestSampleDeletionDialog } from "#/samples/request-sample-deletion-dialog.tsx";
 
 export function SampleActionsMenu({
@@ -27,6 +32,7 @@ export function SampleActionsMenu({
   canRequestDeletion,
   isDeleteDisabled,
   onDelete,
+  templateInitialValues,
 }: {
   sampleId: string;
   sampleName: string;
@@ -36,8 +42,10 @@ export function SampleActionsMenu({
   canRequestDeletion: boolean;
   isDeleteDisabled: boolean;
   onDelete: () => void;
+  templateInitialValues?: TemplateDialogValues;
 }) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
   const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
 
   return (
@@ -70,6 +78,12 @@ export function SampleActionsMenu({
               </Link>
             </DropdownMenuItem>
           ) : null}
+          {templateInitialValues ? (
+            <DropdownMenuItem onSelect={() => setIsCreatingTemplate(true)}>
+              <FileDownIcon aria-hidden />
+              {m.sample_create_import_template()}
+            </DropdownMenuItem>
+          ) : null}
           {canDelete ? (
             <DropdownMenuItem
               disabled={isDeleteDisabled}
@@ -92,6 +106,13 @@ export function SampleActionsMenu({
         open={isRequestingDeletion}
         onOpenChange={setIsRequestingDeletion}
       />
+      {templateInitialValues && isCreatingTemplate ? (
+        <CustomizeTemplateDialog
+          open
+          initialValues={templateInitialValues}
+          onBack={() => setIsCreatingTemplate(false)}
+        />
+      ) : null}
       {isConfirmingDelete ? (
         <ConfirmDialog
           open

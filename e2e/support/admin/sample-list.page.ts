@@ -6,6 +6,9 @@ export const sampleRow = (page: Page, name: string) =>
     .filter({ has: page.getByRole("cell", { name, exact: true }) });
 
 export function sampleListPage(page: Page) {
+  const openRowMenu = (name: string) =>
+    page.getByRole("button", { name: `Actions for ${name}` }).click();
+
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "My samples" })).toBeVisible(),
@@ -23,12 +26,20 @@ export function sampleListPage(page: Page) {
     },
     openSample: (name: string) =>
       page.getByRole("link", { name, exact: true }).click(),
-    addSubSample: (name: string) =>
-      page.getByRole("link", { name: `Add a sub sample of ${name}` }).click(),
-    expectNoSubSampleAction: (name: string) =>
-      expect(
-        page.getByRole("link", { name: `Add a sub sample of ${name}` }),
-      ).toHaveCount(0),
+    addSubSample: async (name: string) => {
+      await openRowMenu(name);
+      await page
+        .getByRole("menuitem", { name: `Add a sub sample of ${name}` })
+        .click();
+    },
+    expectNoSubSampleAction: async (name: string) => {
+      await openRowMenu(name);
+      await expect(page.getByRole("menu")).toBeVisible();
+      await expect(
+        page.getByRole("menuitem", { name: `Add a sub sample of ${name}` }),
+      ).toHaveCount(0);
+      await page.keyboard.press("Escape");
+    },
     expectColumns: async () => {
       for (const name of [
         "IGSN",

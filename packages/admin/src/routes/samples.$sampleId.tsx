@@ -9,6 +9,7 @@ import {
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
+import { canCreateImportTemplate } from "@projet-igsn/domain/user-sample/can-create-import-template";
 import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicate-sample";
@@ -32,6 +33,7 @@ import {
 } from "#/samples/sample-form.tsx";
 import { SetStatusButton } from "#/samples/set-status-button.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
+import { templateCustomizationOfSample } from "#/samples/template-customization-of-sample.ts";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useDeleteSample } from "#/samples/use-delete-sample.ts";
 import { parentSampleQueryOptions } from "#/samples/use-parent-sample.ts";
@@ -239,6 +241,11 @@ function EditSamplePage() {
               canRequestSampleDeletion(query.data.role, query.data, me.data)
             }
             isDeleteDisabled={deleteSample.isPending || heldByOther != null}
+            templateInitialValues={
+              canCreateImportTemplate(query.data)
+                ? templateCustomizationOfSample(query.data)
+                : undefined
+            }
             onDelete={() =>
               deleteSample.mutate(undefined, {
                 onSuccess: () => void navigate({ to: listRoute }),
