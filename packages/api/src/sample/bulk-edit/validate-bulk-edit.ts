@@ -5,6 +5,7 @@ import type {
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 
 import type { ParsedRows } from "../import-template/read-rows.ts";
 import type { TemplateLayout } from "../import-template/template-layout.ts";
@@ -27,6 +28,7 @@ import {
   validateRows,
   withValue,
 } from "../import-template/validate-import.ts";
+import { uploadLimit } from "../upload-limit.ts";
 import {
   EXPORT_CHILD_SHEETS,
   EXPORT_SAMPLE_COLUMNS,
@@ -171,10 +173,18 @@ async function validateMatched(
     [],
     NO_PARENTS,
     new Set(),
-    (candidate, index) => ({
-      ...candidate,
-      input: mergeStoredSample(matched[index]!.sample, candidate.input),
-    }),
+    (candidate, index) => {
+      const { sample } = matched[index]!;
+      return {
+        ...candidate,
+        input: mergeStoredSample(sample, candidate.input),
+        existingBlockers: publishBlockersOf(
+          sample,
+          uploadLimit,
+          sample.parents,
+        ),
+      };
+    },
   );
   return {
     issues: [...frozen, ...parentless, ...validated.issues],

@@ -5,7 +5,7 @@ import type { z } from "zod";
 import { ATTACHMENT_FILE_NAME_HEADER } from "@projet-igsn/domain/sample/import/attachment-sheet";
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
-import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import { publishedEditSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
   publishBlockerSchema,
   samplePublishBlockers,
@@ -152,7 +152,8 @@ function keptFieldBlockers(
     .filter(
       (blocker) =>
         !unknowable.has(String(PUBLISH_BLOCKER_PATH[blocker][0])) &&
-        !reported.has(blocker),
+        !reported.has(blocker) &&
+        !sample.existingBlockers?.includes(blocker),
     )
     .map((blocker) => ({
       ...placeOf(sample, PUBLISH_BLOCKER_PATH[blocker]),
@@ -253,7 +254,9 @@ export function validateSamples(
   const issues: ImportIssue[] = [];
   const validated: ValidatedSample[] = [];
   for (const sample of samples) {
-    const parsed = publishedSampleSchema.safeParse(sample.input);
+    const parsed = publishedEditSchema(sample.existingBlockers ?? []).safeParse(
+      sample.input,
+    );
     const attachments = sample.attachments.map(parsedAttachmentOf);
     const found = [
       ...(parsed.success
