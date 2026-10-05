@@ -90,3 +90,4 @@
 - **Creation**: File layout conventions (file-layout-conventions)
 - **Creation**: Package layering (package-layering)
 - **Creation**: IGSN registry (igsn-registry)
+- **Creation**: Updating the Excel import template (excel-import-template-guide)

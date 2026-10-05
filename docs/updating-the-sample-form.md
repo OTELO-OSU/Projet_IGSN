@@ -313,6 +313,10 @@ frozenMaterialPrefix("rock_and_sediment.mineral");
 
 The merge accepts an incoming path only at or under that prefix (another root keeps the stored value, a cross-branch move under the same root is accepted). The form asks the same question one level at a time: `HierarchyField` renders each selected level as a Badge chip, and for each depth asks the form-level disabled predicate for `name[depth]` (`useFieldDisabledRule`) whether that level is frozen; a frozen level shows as a plain-text chip with no remove button, and the trigger that would append the next level is disabled when that next level is frozen. Both the merge and the form read the same `frozenWhenPublished` flag, so you never state the rule twice. Background: ADR [0022](adr/0022-editable-material-levels-after-publication.md), ADR [0037](adr/0037-relaxed-publish-and-post-publication-rules.md) and ADR [0038](adr/0038-explicit-material-root.md).
 
+### 6. Template and service: the two other faces
+
+A new field is also an Excel column and a `/service` Core slot. The template coverage spec (`columns.spec.ts`) and the Core path spec (`core-path.spec.ts`) are red until both exist: follow [updating-the-excel-import-template.md](updating-the-excel-import-template.md).
+
 ## Add/remove a display condition
 
 Background: ADR [0015](adr/0015-form-hidden-value-lifecycle.md) / [0016](adr/0016-undetermined-location-requirement.md).
