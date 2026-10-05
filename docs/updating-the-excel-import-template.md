@@ -44,7 +44,7 @@ The template code lives in `packages/api/src/sample/import-template/` (download 
 - Columns are matched by header name on row 2, never by position.
 - There is no version check: every template ever downloaded must stay uploadable.
 - A label or its raw code is accepted in a vocabulary cell.
-- The server alone validates; dropdowns and grey cells are guidance.
+- The server alone validates. Dropdowns and grey cells are guidance.
 
 ## Add a column
 
@@ -172,7 +172,7 @@ Append `{ name: SHEETS.thinSections, columns: THIN_SECTION_COLUMNS }` to `CHILD_
 ### 4. Know the semantics you get
 
 - A scalar beside the array is allowed (the storage-condition readings). It is set once per sample. A second row giving a different value is a `duplicate_value`.
-- Export writes one row per element (`childRows`); "Attachments" is the one tab the export leaves out (`EXPORT_CHILD_SHEETS`).
+- Export writes one row per element (`childRows`). "Attachments" is the one tab the export leaves out (`EXPORT_CHILD_SHEETS`).
 - Bulk edit: an absent tab keeps the stored values (`withStoredCells`). A present tab must carry every column. `mergeStoredSample` replaces only template paths. A whole-list replacement with its own persistence, like process steps (`packages/api/src/sample/service/replace-sample-process-steps.ts`), is a service call of its own. Say in the PR which you want.
 
 ### 5. Tests
@@ -280,13 +280,13 @@ Three rules keep them aligned:
 
 ## Other maintenance points
 
-- **Templates live long.** `TEMPLATE_VERSION` is written to Read me B1 and never checked. A new required column breaks every file downloaded before it; a new optional one is simply empty.
+- **Templates live long.** `TEMPLATE_VERSION` is written to Read me B1 and never checked. A new required column breaks every file downloaded before it. A new optional one is simply empty.
 - **Customization** is one JSON cell, Read me `C1`: `{ provenanceStatus, materialPath, manualGroupLabel }`. The section flags stay out of it since headers suffice. A new kind of pre-fill touches `storedCustomizationSchema`, `prefillOf` and `possibleLabelsOf` ([customization.ts](../packages/api/src/sample/import-template/customization.ts)). It also touches `withoutPrefilledRows` ([validate-import.ts](../packages/api/src/sample/import-template/validate-import.ts)), since a row equal to its pre-fills and defaults is not a sample.
 - **Defaults.** `IMPORT_DEFAULTS` pre-fills the cell and keeps the column out of the required set. The server applies the default when the column is absent.
 - **Issue codes.** A new one is `importIssueCodeSchema` (`packages/domain/src/sample/import/import-report.ts`), `IMPORT_ISSUE_LABELS` (`packages/admin/src/samples/import-issue-label.ts`, exhaustive) and both admin catalogs. A blocker code is labelled by `publishBlockerLabel`, a zod code falls back to its message.
 - **Excel limits.** A validation formula is capped at 255 characters (spec) and a sheet name at 31. A file holds at most `MAX_IMPORT_ROWS` samples. Dropdown errors are warnings by design, and "Vocabularies" is the only protected sheet.
-- **Build and parse are serialized** through `queueBuild`, since both are CPU-bound; keep per-cell work cheap.
-- **Attachments.** File names match staged uploads exactly (ADR [0054](adr/0054-tus-staged-uploads-for-import-documents.md)); `admin` reads that tab client-side through the shared header constants in `packages/domain/src/sample/import/attachment-sheet.ts`, nothing else.
+- **Build and parse are serialized** through `queueBuild`, since both are CPU-bound. Keep per-cell work cheap.
+- **Attachments.** File names match staged uploads exactly (ADR [0054](adr/0054-tus-staged-uploads-for-import-documents.md)). `admin` reads that tab client-side through the shared header constants in `packages/domain/src/sample/import/attachment-sheet.ts`, nothing else.
 - **Sub-samples.** "Parent IGSN" and "Process steps" exist only when the download asks for sub-samples. Location and collection date are inherited, and a filled one is refused (ADR [0053](adr/0053-ancestor-location-inheritance.md)).
 - **The legacy dump import** (`packages/api/scripts/import-legacy.ts`, ADR [0027](adr/0027-legacy-dump-import.md)) is a different mechanism with its own mapping, not this template.
 - **Rate limits.** Upload and duplicate check are 5 per minute per user.
