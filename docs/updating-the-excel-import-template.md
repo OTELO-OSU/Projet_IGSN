@@ -1,6 +1,6 @@
 # Updating the Excel import template
 
-This guide is for a developer changing the xlsx a researcher downloads to declare samples in bulk: adding a column, a tab for a repeated value, a dropdown, moving or removing a column. One column registry builds the template, parses the upload, writes the bulk-edit export and parses its re-import, so one change reaches all four. Every field starts in the declaration form, which has its own guide, [updating-the-sample-form.md](updating-the-sample-form.md).
+One column registry builds the xlsx a researcher downloads to declare samples in bulk, parses the upload, writes the bulk-edit export and parses its re-import, so one change reaches all four. Every field starts in the declaration form, which has its own guide, [updating-the-sample-form.md](updating-the-sample-form.md).
 
 ## A few terms first
 
