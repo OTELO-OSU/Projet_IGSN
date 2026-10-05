@@ -55,7 +55,7 @@ Accepted, then amended.
 
 ### 2026-10-01, `POST /service/samples/batch` and `GET /service/batches/:id`
 
-- The batch body is 1 to 500 items `{ partnerId, sample }`, `sample` an IGSN Core record.
+- The batch body is `{ items, webhook? }`, `items` 1 to 500 `{ partnerId, sample }`, `sample` an IGSN Core record; see the 2026-10-05 amendment for `webhook`.
 - `partnerId` is required and not unique.
 - With `identification.sampleIdentifier` the item updates that published sample inside the account's `managerScope`, like `PUT /service/samples/:igsn`.
 - Without one the item creates a sample owned by the account owner with the account's trio, like `POST /service/samples`.
@@ -63,7 +63,7 @@ Accepted, then amended.
 - `service-sample-checks.ts` carries those checks out of the single routes so both share them.
 - An update item with no changed field is neither written nor queued, stays `published` and is still listed by the batch read.
 - All or nothing: any refusal writes nothing.
-- 422 `{ error: "Invalid sample", issues }` prefixes every path with `<i>.sample` plus `.<core path>`, matching schema-level paths.
+- 422 `{ error: "Invalid sample", issues }` prefixes every path with `items.<i>.sample` plus `.<core path>`, matching schema-level paths.
 - The batch adds five codes to the single route's vocabulary: `sample_not_found` and `sample_not_editable` (an unknown or out-of-reach IGSN), `duplicate_sample_key` (the same IGSN on two items), `sample_publishing` (the IGSN's sample is still queued) and `sample_locked` (another user holds the edit lock, as bulk edit refuses it).
 - The single `PUT` still answers 404 for a queued sample and still ignores the edit lock.
 - 409 `{ error, reason: "duplicates", items: [{ index, duplicates, batchDuplicates }] }` answers a suspected duplicate.
@@ -77,10 +77,33 @@ Accepted, then amended.
 - The route has its own per-IP rate limit, the import template's budget (5/min), on top of the mount's.
 - A valid batch commits every row as `publishing` in one transaction, a create or an update (`published -> publishing`), the same queue ADR [0052](0052-async-import-publication-via-publishing-status.md) gives the import and bulk edit; no mail.
 - An update keeps its IGSN because `publishSample` keeps an existing one (`coalesce`), a legacy `CNRS…` IGSN included.
-- The answer is 202 `{ id }`, the batch id.
+- The answer is 202 with the batch read's own body, so each queued item reads `publishing` and each unchanged item `published` with its IGSN.
 - `GET /service/batches/{id}` needs a key (403 otherwise) and answers 404 for an unknown batch or another account's.
 - It lists `{ partnerId, id, status, igsn, publishingError }` per item in request order, reading `sample_batch_item` joined to `sample`.
 - `sample_batch_item` is indexed on `sample_id` and `service_account_id`.
+
+### 2026-10-05, batch webhook
+
+- The body changes from a bare array to `{ items, webhook?: { url, secret } }`.
+- `url` carries no credentials and is at most 2048 chars; `secret` is required with it, 16 to 255 chars, so every call is signed.
+- The route answers 422 on `webhook.url` unless it is https to a name or a public IP literal, a private literal being refusable before any call.
+- The 409 `index` stays the position in `items`.
+- `sample_batch_webhook` stores the url and secret once per batch, the secret in plaintext, cascading with the service account, never returned nor logged.
+- A successful `publishSample`, whoever calls it, and the publishing worker's fail-fast sweep each queue one `webhook_delivery` outbox row per sample in their own transaction.
+- Only the sample's newest batch counts (`batch_id` desc, uuidv7), and only when it has a webhook.
+- An unchanged item is never queued, so it is never called.
+- The body is `{ batchId, partnerId, id, status, igsn, publishingError }`, the batch read's item shape plus `batchId`.
+- Headers: `X-Webhook-Id` (the delivery id, the same across retries), `X-Webhook-Timestamp` (unix seconds at send time) and `X-Signature: sha256=<hex HMAC-SHA256 of "<timestamp>.<body>">`, so a partner can refuse a stale replay and dedupe a retry.
+- A later publication of the sample fires again.
+- `api/src/sample-batch/webhook-worker.ts`, started in `main.ts`, drains due deliveries in parallel pages of 50, waiting for the whole page before the next.
+- A 2xx deletes the row; a failure, a thrown send included, retries on `WEBHOOK_RETRY_DELAYS_MS` (1 min, 5 min, 30 min, 2 h, 6 h, 12 h), then drops the row and logs the batch and sample ids.
+- The retry wait lives in `webhook_delivery.next_attempt_at`, never in memory, so it survives a restart.
+- `api/src/sample-batch/public-host.ts` is the SSRF guard: a `net.BlockList` checked in `https.request`'s `lookup` (no DNS rebinding window) and on IP-literal hosts.
+- It refuses unspecified, loopback, private (RFC 1918, `fc00::/7`), shared (`100.64.0.0/10`), link-local, IETF (`192.0.0.0/24`), benchmark (`198.18.0.0/15`), multicast and reserved addresses, plus NAT64 and 6to4 prefixes, IPv4-mapped v6 included.
+- Redirects are not followed and a request times out at 10s.
+- The api's `WEBHOOK_DEV_HOSTS` (comma-separated, trimmed, case-insensitive) lets those hosts take a plain `http` url and skip the address guard.
+- Only `docker-compose.dev.yml` sets it, to its `webhook-sink` service, which logs each call it receives; preprod, prod and e2e leave it unset.
+- [api-samples-batch.md](../api-samples-batch.md) is the partner-facing guide to the batch API and its webhook.
 
 ## Context
 

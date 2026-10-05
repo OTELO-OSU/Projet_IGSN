@@ -1,7 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import {
-  acceptedSampleBatchSchema,
   sampleBatchBodySchema,
   sampleBatchConflictSchema,
   sampleBatchSchema,
@@ -296,7 +295,7 @@ export const createSampleBatchRoute = createRoute({
   tags: TAGS,
   summary: "Create or update samples in one batch",
   description:
-    "Checks every item as POST /samples or PUT /samples/{igsn} would, then queues them all for publication, owned by the account's owner and snapshotting the account's own institutional codes, or refuses the whole batch. Poll GET /batches/{id} for each item's outcome.",
+    "Checks every item as POST /samples or PUT /samples/{igsn} would, then queues them all for publication, owned by the account's owner and snapshotting the account's own institutional codes, or refuses the whole batch. An update item changing nothing is not queued and stays published. Poll GET /batches/{id} for each item's outcome, or pass a webhook to be called each time an item's publication succeeds or fails.",
   security: SECURITY,
   middleware: [
     bodyLimit({
@@ -313,8 +312,8 @@ export const createSampleBatchRoute = createRoute({
   },
   responses: {
     202: json(
-      acceptedSampleBatchSchema,
-      "The batch is queued for publication.",
+      sampleBatchSchema,
+      "The batch is queued for publication: each queued item reads publishing, each unchanged item keeps its published status and IGSN.",
     ),
     403: FORBIDDEN,
     409: json(
@@ -325,7 +324,7 @@ export const createSampleBatchRoute = createRoute({
     415: UNSUPPORTED_MEDIA_TYPE,
     422: json(
       invalidServiceSampleSchema,
-      "Items cannot be published as they stand, one issue per reason, each path starting with the item's index.",
+      "Items cannot be published as they stand, or the webhook is refused, one issue per reason, an item's paths starting with items.<index> and the webhook's with webhook.",
     ),
     429: THROTTLED,
     500: FAILED,

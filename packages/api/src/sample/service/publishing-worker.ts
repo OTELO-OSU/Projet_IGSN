@@ -5,12 +5,13 @@ import { setTimeout } from "node:timers/promises";
 import type { DataCiteConfig } from "../../datacite/config.ts";
 import type { DB } from "../../db.ts";
 
+import { queueBatchWebhooks } from "../../sample-batch/queue-batch-webhooks.ts";
 import { withTransaction } from "../../transaction.ts";
 import { publishSample } from "./publish-sample.ts";
 
 export const RETRY_DELAYS_MS = [10_000, 60_000, 240_000, 600_000, 900_000];
 
-export const POLL_MS = 10_000;
+const POLL_MS = 10_000;
 
 function messageOf(error: unknown): string {
   const cause = error instanceof Error ? error.cause : undefined;
@@ -55,29 +56,42 @@ export async function drainPublishingQueue(
     const failure = await publishWithRetry(db, next.id, dataCite, delays);
     if (failure === null) continue;
     // ponytail: fail fast also sweeps a concurrent import's waiting rows (single-user alpha); scoping it per import needs an import-id column.
-    await db
-      .updateTable("sample")
-      .set({ status: "publish_failed", publishing_error: failure })
-      .where((eb) =>
-        eb.or([eb("status", "=", "publishing"), eb("id", "=", next.id)]),
-      )
-      .execute();
+    await withTransaction(db, async (trx) => {
+      const failed = await trx
+        .updateTable("sample")
+        .set({ status: "publish_failed", publishing_error: failure })
+        .where((eb) =>
+          eb.or([eb("status", "=", "publishing"), eb("id", "=", next.id)]),
+        )
+        .returning("id")
+        .execute();
+      await queueBatchWebhooks(
+        trx,
+        failed.map(({ id }) => id),
+      );
+    });
     return;
   }
+}
+
+export function startPolling(label: string, drain: () => Promise<void>): void {
+  void (async () => {
+    for (;;) {
+      try {
+        await drain();
+      } catch (error) {
+        console.error(label, error);
+      }
+      await setTimeout(POLL_MS);
+    }
+  })();
 }
 
 export function startPublishingWorker(
   db: Kysely<DB>,
   dataCite: DataCiteConfig | null,
 ): void {
-  void (async () => {
-    for (;;) {
-      try {
-        await drainPublishingQueue(db, dataCite);
-      } catch (error) {
-        console.error("Publishing queue drain failed", error);
-      }
-      await setTimeout(POLL_MS);
-    }
-  })();
+  startPolling("Publishing queue drain failed", () =>
+    drainPublishingQueue(db, dataCite),
+  );
 }

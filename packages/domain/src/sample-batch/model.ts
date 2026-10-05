@@ -23,27 +23,52 @@ export const sampleBatchItemSchema = z
 
 export type SampleBatchItem = z.infer<typeof sampleBatchItemSchema>;
 
+const hasNoCredentials = (url: string): boolean => {
+  const parsed = URL.parse(url);
+  return parsed?.username === "" && parsed.password === "";
+};
+
+export const sampleBatchWebhookSchema = z
+  .strictObject({
+    url: z
+      .url({ protocol: /^https?$/ })
+      .max(2048)
+      .refine(hasNoCredentials, "The url must not carry credentials.")
+      .meta({
+        description:
+          "The https url of a public host, without credentials, receiving one POST { batchId, partnerId, id, status, igsn, publishingError } per sample each time its publication succeeds or fails, with X-Webhook-Id (the same across retries) and X-Webhook-Timestamp (unix seconds) headers. An unchanged item is not queued, so it is never called. A call answered with anything but 2xx is retried with growing delays over about 21 hours, then dropped.",
+      }),
+    secret: z.string().min(16).max(255).meta({
+      description:
+        'Each call carries X-Signature: sha256=<hex HMAC-SHA256 of "<X-Webhook-Timestamp>.<body>"> keyed with it.',
+    }),
+  })
+  .meta({
+    id: "SampleBatchWebhook",
+    description:
+      "The url called once per sample each time its publication succeeds or fails, signed with the secret.",
+  });
+
+export type SampleBatchWebhook = z.infer<typeof sampleBatchWebhookSchema>;
+
 export const sampleBatchBodySchema = z
-  .array(sampleBatchItemSchema)
-  .min(1)
-  .max(MAX_IMPORT_ROWS)
+  .strictObject({
+    items: z
+      .array(sampleBatchItemSchema)
+      .min(1)
+      .max(MAX_IMPORT_ROWS)
+      .meta({
+        description: `Between 1 and ${MAX_IMPORT_ROWS} samples, accepted or refused as a whole. An item whose identification.sampleIdentifier is present updates that published sample, and an item without it creates a new sample.`,
+      }),
+    webhook: sampleBatchWebhookSchema.optional(),
+  })
   .meta({
     id: "SampleBatchBody",
-    description: `Between 1 and ${MAX_IMPORT_ROWS} samples, accepted or refused as a whole. An item whose identification.sampleIdentifier is present updates that published sample, and an item without it creates a new sample.`,
+    description:
+      "The samples of a batch and the optional webhook told of each publication.",
   });
 
 export type SampleBatchBody = z.infer<typeof sampleBatchBodySchema>;
-
-export const acceptedSampleBatchSchema = z
-  .object({
-    id: z.uuid().meta({ description: "Identifier of the accepted batch." }),
-  })
-  .meta({
-    id: "AcceptedSampleBatch",
-    description: "Body returned when the batch is queued for publication.",
-  });
-
-export type AcceptedSampleBatch = z.infer<typeof acceptedSampleBatchSchema>;
 
 export const batchSuspectedDuplicateSchema = suspectedDuplicateSchema
   .extend({
