@@ -128,12 +128,6 @@ describe("samplePublishBlockers", () => {
     ).toEqual(["availability_status_missing"]);
   });
 
-  it("should report type_incomplete when the type is an ancestor path", () => {
-    expect(samplePublishBlockers({ ...base, type: "core" })).toEqual([
-      "type_incomplete",
-    ]);
-  });
-
   it("should report material_incomplete for a family, which has sub-levels", () => {
     expect(
       samplePublishBlockers({ ...base, material: "rock_and_sediment.rock" }),

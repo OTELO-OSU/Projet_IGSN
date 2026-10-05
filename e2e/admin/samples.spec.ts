@@ -222,6 +222,32 @@ test.describe("samples", () => {
     await detail.expectInternalId(internalId);
   });
 
+  test("a researcher publishes a hand sample core, stopping at Core", async ({
+    page,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    await list.goToCreate();
+
+    const create = sampleCreatePage(page);
+    const name = `Stopped at core ${Date.now()}`;
+    await create.fillName(name);
+    await create.expectNature("Hand sample");
+    await create.expectLastNatureOption("Inapplicable");
+    await create.pickType("Core");
+    await create.expectCompleteTypeWithoutRepeatedLevel("Core");
+    await create.fillPublishableFields({ type: "Core" });
+    await create.publish();
+    await list.expectVisible();
+
+    await list.openSample(name);
+    const igsn = await sampleEditPage(page).publicPageIgsn();
+    const detail = sampleDetailPage(page);
+    await detail.goto(igsn);
+    await detail.expectType("Core");
+    await detail.expectNature("Hand sample");
+  });
+
   test("a researcher classifies a mineral sample that readers find by its Strunz class", async ({
     page,
   }) => {

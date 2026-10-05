@@ -184,7 +184,6 @@ test.describe("manual groups", () => {
     await list.goToCreate();
     await create.expectVisible();
     await create.fillName(sampleName);
-    await create.selectNature("Hand sample");
     await create.attachManualGroup(name);
     await create.submit();
     await edit.expectName(sampleName);
@@ -231,7 +230,6 @@ test.describe("manual groups", () => {
     await create.expectNoManualGroupOffered();
 
     await create.fillName(sampleName);
-    await create.selectNature("Hand sample");
     await create.submit();
 
     await edit.expectName(sampleName);
@@ -271,7 +269,6 @@ test.describe("manual groups", () => {
     await list.goToCreate();
     await create.expectVisible();
     await create.fillName(sampleName);
-    await create.selectNature("Hand sample");
     await create.attachManualGroup(attached);
     await create.submit();
     await edit.expectName(sampleName);

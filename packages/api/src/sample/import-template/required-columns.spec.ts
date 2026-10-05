@@ -8,7 +8,6 @@ describe("REQUIRED_SAMPLE_COLUMNS", () => {
     expect(REQUIRED_SAMPLE_COLUMNS.map(plainHeader)).toEqual([
       "Name",
       "Sample type (level 1)",
-      "Sample type (level 2)",
       "Nature",
       "Provenance status",
       "Material (level 1)",

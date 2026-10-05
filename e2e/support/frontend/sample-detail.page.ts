@@ -56,6 +56,12 @@ export function sampleDetailPage(page: Page) {
         "content",
         "noindex",
       ),
+    expectType: (label: string) =>
+      expect(
+        page
+          .getByRole("list", { name: "Type" })
+          .getByText(label, { exact: true }),
+      ).toBeVisible(),
     expectNature: async (label: string) => {
       await expect(page.getByText("Nature")).toBeVisible();
       await expect(page.getByText(label)).toBeVisible();

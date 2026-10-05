@@ -228,6 +228,8 @@ const withResearchers = (body: CoreSample, researchers: CoreAgentRole[]) => ({
 
 const NEW_BODY = core(COLLECTION_SPECIMEN);
 
+const HALF_GEOLOGICAL_AGE = ageSchema.parse({ geologicalAgeMin: 30 });
+
 const parentRelation = (igsn: string) => ({
   relationType: "IsDerivedFrom",
   targetIdentifier: {
@@ -1042,11 +1044,7 @@ describe("POST /service/samples", () => {
         .execute();
       // Act
       const res = await postSample(app, {
-        ...NEW_BODY,
-        classification: {
-          ...NEW_BODY.classification,
-          sampleObjectTypes: [toConcept("sample-type", "core")],
-        },
+        ...core({ ...COLLECTION_SPECIMEN, age: HALF_GEOLOGICAL_AGE }),
         manualGroups: [{ id: FOREIGN_GROUP_ID, name: FOREIGN_GROUP_NAME }],
       });
       // Assert
@@ -1055,8 +1053,8 @@ describe("POST /service/samples", () => {
         error: "Invalid sample",
         issues: [
           {
-            path: "classification.sampleObjectTypes.0",
-            code: "type_incomplete",
+            path: "extensions.geology",
+            code: "geological_age_range_incomplete",
           },
           { path: "manualGroups.0.id", code: "manual_group_not_attachable" },
         ],
@@ -1928,23 +1926,20 @@ describe("PUT /service/samples/:igsn", () => {
       // Arrange
       const { app } = await arrangeAccount(db);
       const created = await publishedInReach(db);
-      const body = renamed(created, "Renamed");
       // Act
-      const res = await putSample(app, created.igsn!, {
-        ...body,
-        classification: {
-          ...body.classification,
-          sampleObjectTypes: [toConcept("sample-type", "core")],
-        },
-      });
+      const res = await putSample(
+        app,
+        created.igsn!,
+        renamed({ ...created, age: HALF_GEOLOGICAL_AGE }, "Renamed"),
+      );
       // Assert
       expect(res.status).toBe(422);
       expect(await res.json()).toEqual({
         error: "Invalid sample",
         issues: [
           {
-            path: "classification.sampleObjectTypes.0",
-            code: "type_incomplete",
+            path: "extensions.geology",
+            code: "geological_age_range_incomplete",
           },
         ],
       });

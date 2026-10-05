@@ -27,7 +27,7 @@ const CONTRIBUTOR = {
 };
 const COUNTS: SampleFacetCounts = {
   nature: { hand_sample: 3, powder: 0 },
-  type: { core: 2, "core.core": 2 },
+  type: { core: 2, "core.piece": 2 },
   mineralClassification: { "9": 1 },
   institutionalLaboratory: { UMR7359: 1, UMR5275: 1 },
   manualGroup: { [GROUP.id]: 1 },
@@ -71,9 +71,11 @@ describe("SampleFacets", () => {
     await screen
       .getByRole("combobox", { name: TYPE_FACET, exact: true })
       .click();
-    await screen.getByRole("option", { name: "Core (2)", exact: true }).click();
+    await screen
+      .getByRole("option", { name: "Core Piece (2)", exact: true })
+      .click();
 
-    expect(onChange).toHaveBeenCalledWith("type", "core.core");
+    expect(onChange).toHaveBeenCalledWith("type", "core.piece");
   });
 
   it("should clear a hierarchy facet when its root chip is removed", async () => {
