@@ -18,6 +18,12 @@ async function saveDownload(
 
 export function importSamplesPage(page: Page) {
   const dialog = page.getByRole("dialog", { name: "Import samples" });
+  const expectQueued = () =>
+    expect(
+      page.getByText(
+        "1 samples imported. Publication is running in the background.",
+      ),
+    ).toBeVisible();
   return {
     open: () =>
       page.getByRole("button", { name: "Import", exact: true }).click(),
@@ -87,13 +93,17 @@ export function importSamplesPage(page: Page) {
           .filter({ has: page.getByRole("cell", { name: problem }) }),
       ).toBeVisible();
     },
+    continueDespiteDuplicate: async (name: string) => {
+      const warning = page.getByRole("dialog", {
+        name: "Possible duplicate sample",
+      });
+      await expect(warning.getByRole("link", { name })).toBeVisible();
+      await warning.getByRole("button", { name: "Continue anyway" }).click();
+    },
+    expectQueued,
     expectOpen: () => expect(dialog).toBeVisible(),
     expectPublishedInBackground: async (name: string) => {
-      await expect(
-        page.getByText(
-          "1 samples imported. Publication is running in the background.",
-        ),
-      ).toBeVisible();
+      await expectQueued();
       await expect(async () => {
         await page.reload();
         await expect(
