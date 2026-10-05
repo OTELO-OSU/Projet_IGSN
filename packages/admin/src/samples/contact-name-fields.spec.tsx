@@ -89,7 +89,7 @@ describe("ContactNameFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
             collectorUserId: WEGENER.id,
           },
@@ -118,7 +118,7 @@ describe("ContactNameFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",
@@ -132,7 +132,7 @@ describe("ContactNameFields", () => {
     const screen = await renderCollector({
       defaultValues: {
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorFirstname: "Alfred",
           collectorLastname: "Wegener",
@@ -147,7 +147,7 @@ describe("ContactNameFields", () => {
     const screen = await renderCollector({
       defaultValues: {
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorUserId: WEGENER.id,
         },
@@ -167,7 +167,7 @@ describe("ContactNameFields", () => {
       onSubmit,
       defaultValues: {
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
@@ -194,7 +194,7 @@ describe("ContactNameFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
             collectorUserId: WEGENER.id,
           },
@@ -207,7 +207,7 @@ describe("ContactNameFields", () => {
     const screen = await renderCollector({
       defaultValues: {
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
@@ -234,7 +234,7 @@ describe("ContactNameFields", () => {
       status: "published",
       defaultValues: {
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorFirstname: "Alfred",
           collectorLastname: "Wegener",

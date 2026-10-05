@@ -1451,7 +1451,7 @@ export const DEMO_PROCESS_STEPS: Record<string, SampleProcessStep[]> = {
 
 const DRAFTS: DemoRow[] = [
   {
-    name: "Unclassified field sample 001",
+    name: "Unclassified research project sample 001",
     nature: "hand_sample",
   },
   {
@@ -1629,8 +1629,8 @@ const DRAFTS: DemoRow[] = [
 const demoId = (index: number): string =>
   `019f5b01-0000-7000-8000-${index.toString(16).padStart(12, "0")}`;
 
-const FIELD_SAMPLE_CONTEXT: SampleRow["scientificContext"] = {
-  provenanceStatus: "field_sample",
+const RESEARCH_PROJECT_SAMPLE_CONTEXT: SampleRow["scientificContext"] = {
+  provenanceStatus: "research_project_sample",
   funderOrganizations: ["02feahw73"],
   researchProgramName: "Solid Earth Demo Survey",
   chiefScientistFirstname: "Jean",
@@ -1696,7 +1696,7 @@ export const DEMO_SAMPLES: SampleRow[] = [
             scientificContext:
               row.scientificContext ??
               (index % 2 === 0
-                ? FIELD_SAMPLE_CONTEXT
+                ? RESEARCH_PROJECT_SAMPLE_CONTEXT
                 : COLLECTION_SPECIMEN_CONTEXT),
             repository: row.repository ?? DEMO_REPOSITORY,
             existenceStatus: row.existenceStatus ?? "exists",
@@ -1719,7 +1719,7 @@ export const DEMO_SAMPLES: SampleRow[] = [
       description: on(failed.collectedOn),
       existenceStatus: "exists",
       availabilityStatus: "available",
-      scientificContext: FIELD_SAMPLE_CONTEXT,
+      scientificContext: RESEARCH_PROJECT_SAMPLE_CONTEXT,
       repository: DEMO_REPOSITORY,
       status: "publish_failed",
       publishingError: failed.publishingError,

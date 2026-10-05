@@ -39,7 +39,7 @@ const stored: Sample = sampleSchema.parse({
   name: "Stored name",
   material: "rock_and_sediment.rock.igneous.plutonic",
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     collectorFirstname: "Stored",
     collectorLastname: "collector",
@@ -70,7 +70,7 @@ describe("frozenFieldEdits", () => {
     // Arrange
     const payload = body({
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
         collectorFirstname: "Edited",
         collectorLastname: "editor",
@@ -105,7 +105,7 @@ describe("frozenFieldEdits", () => {
     const payload = body({
       manualGroupIds: undefined,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
       },
     });

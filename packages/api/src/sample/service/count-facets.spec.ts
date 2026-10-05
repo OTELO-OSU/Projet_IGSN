@@ -69,11 +69,11 @@ const mineral = (strunzId: string, mindatId: number | null = null) => ({
   abundance: null,
 });
 
-const fieldSample = (
+const researchProjectSample = (
   chiefScientistLastname: string,
   researchProgramName: string,
 ) => ({
-  provenanceStatus: "field_sample" as const,
+  provenanceStatus: "research_project_sample" as const,
   additionalRoles: [],
   chiefScientistFirstname: "Marie",
   chiefScientistLastname,
@@ -217,7 +217,7 @@ describe("countPublishedFacets", () => {
     async ({ db }) => {
       // Arrange
       const scientificContext = (hostInstitution: string[]) => ({
-        provenanceStatus: "field_sample" as const,
+        provenanceStatus: "research_project_sample" as const,
         additionalRoles: [],
         hostInstitution,
       });
@@ -416,7 +416,7 @@ describe("countPublishedFacets", () => {
         location: point(5, 45),
         manualGroupIds: [GROUP],
         scientificContext: {
-          ...fieldSample("Curie", "Volcans d'Auvergne"),
+          ...researchProjectSample("Curie", "Volcans d'Auvergne"),
           collectorUserId: pasteur.id,
         },
         age: numericAge(10, 20),
@@ -426,7 +426,7 @@ describe("countPublishedFacets", () => {
         material: ROCK,
         nature: "thin_section",
         location: point(-50, 0),
-        scientificContext: fieldSample("Darwin", "Glaciers"),
+        scientificContext: researchProjectSample("Darwin", "Glaciers"),
         age: numericAge(500, 600),
       });
       const params = { ...page, ...filters, material: ROCK };

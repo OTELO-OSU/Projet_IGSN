@@ -24,13 +24,13 @@ const NAME = "Échantillon de Basalte";
 
 const COLLECTOR = { firstname: "Inge", name: "Lehmann" };
 
-const fieldSample = (collector: {
+const researchProjectSample = (collector: {
   collectorUserId?: string;
   collectorFirstname?: string;
   collectorLastname?: string;
 }) =>
   ({
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     ...collector,
   }) satisfies CreateSample["scientificContext"];
@@ -41,7 +41,7 @@ const sample = (overrides: Partial<CreateSample> = {}): CreateSample => ({
   type: null,
   collectionMethod: null,
   material: MATERIAL,
-  scientificContext: fieldSample({
+  scientificContext: researchProjectSample({
     collectorFirstname: COLLECTOR.firstname,
     collectorLastname: COLLECTOR.name,
   }),
@@ -137,7 +137,9 @@ describe("findDuplicateSamples", () => {
       // Arrange
       const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
       const existing = await publish(db, {
-        scientificContext: fieldSample({ collectorUserId: account.id }),
+        scientificContext: researchProjectSample({
+          collectorUserId: account.id,
+        }),
       });
       // Act
       const duplicates = await findDuplicateSamples(
@@ -156,7 +158,9 @@ describe("findDuplicateSamples", () => {
       const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
       const other = await insertUser(db, tokenEmail("inge.other"), COLLECTOR);
       await publish(db, {
-        scientificContext: fieldSample({ collectorUserId: account.id }),
+        scientificContext: researchProjectSample({
+          collectorUserId: account.id,
+        }),
       });
       // Act
       const duplicates = await findDuplicateSamples(
@@ -174,7 +178,9 @@ describe("findDuplicateSamples", () => {
       // Arrange
       const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
       const existing = await publish(db, {
-        scientificContext: fieldSample({ collectorUserId: account.id }),
+        scientificContext: researchProjectSample({
+          collectorUserId: account.id,
+        }),
       });
       // Act
       const duplicates = await findDuplicateSamples(db, CRITERIA);
@@ -204,7 +210,7 @@ describe("findDuplicateSamples", () => {
     async ({ db }) => {
       // Arrange
       const existing = await publish(db, {
-        scientificContext: fieldSample({}),
+        scientificContext: researchProjectSample({}),
       });
       // Act
       const duplicates = await findDuplicateSamples(db, NO_COLLECTOR_CRITERIA);
@@ -233,7 +239,7 @@ describe("findDuplicateSamples", () => {
     async ([, linked], { db }) => {
       // Arrange
       const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
-      await publish(db, { scientificContext: fieldSample({}) });
+      await publish(db, { scientificContext: researchProjectSample({}) });
       // Act
       const duplicates = await findDuplicateSamples(
         db,
@@ -290,7 +296,7 @@ describe("findDuplicateSamplesOfEach", () => {
       // Arrange
       const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
       const uncollected = await publish(db, {
-        scientificContext: fieldSample({}),
+        scientificContext: researchProjectSample({}),
       });
       const collected = await publish(db);
       // Act

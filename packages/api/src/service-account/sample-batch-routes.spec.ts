@@ -131,10 +131,10 @@ const renamed = (sample: Sample, name: string): CoreSample => {
   };
 };
 
-const fieldSample = {
+const researchProjectSample = {
   ...publishableSample,
   scientificContext: {
-    provenanceStatus: "field_sample" as const,
+    provenanceStatus: "research_project_sample" as const,
     additionalRoles: [],
     collectorFirstname: "Georges",
     collectorLastname: "Cuvier",
@@ -339,7 +339,10 @@ describe("POST /service/samples/batch", () => {
       code: "field_frozen",
       path: "0.sample.responsibility",
       items: async (db: Kysely<DB>) => {
-        const body = renamed(await publishedIn(db, fieldSample), "Renamed");
+        const body = renamed(
+          await publishedIn(db, researchProjectSample),
+          "Renamed",
+        );
         return [
           {
             partnerId: "p-1",
@@ -434,7 +437,7 @@ describe("POST /service/samples/batch", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const existing = await publishedIn(db, fieldSample);
+      const existing = await publishedIn(db, researchProjectSample);
       // Act
       const res = await postBatch(app, [
         { partnerId: "p-1", sample: created("Basalt A") },
@@ -492,7 +495,7 @@ describe("POST /service/samples/batch", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const existing = await publishedIn(db, fieldSample);
+      const existing = await publishedIn(db, researchProjectSample);
       const copy = withoutIdentifier(core(existing), existing.name);
       // Act
       const res = await postBatch(
@@ -562,7 +565,7 @@ describe("POST /service/samples/batch", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const existing = await publishedIn(db, fieldSample);
+      const existing = await publishedIn(db, researchProjectSample);
       await db
         .updateTable("sample")
         .set({ status: "publishing", igsn: null })

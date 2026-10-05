@@ -58,7 +58,7 @@ describe("CustomizeTemplateDialog", () => {
     const { download, pick } = await openDialog();
     await expect.element(download).toBeDisabled();
 
-    await pick(/^Provenance status/, "Field sample");
+    await pick(/^Provenance status/, "Research project sample");
 
     await expect.element(download).toBeEnabled();
   });
@@ -67,7 +67,7 @@ describe("CustomizeTemplateDialog", () => {
     const { reserve, pick } = await openDialog();
     await expect.element(reserve).toBeDisabled();
 
-    await pick(/^Provenance status/, "Field sample");
+    await pick(/^Provenance status/, "Research project sample");
 
     await expect.element(reserve).toBeEnabled();
   });
@@ -76,7 +76,7 @@ describe("CustomizeTemplateDialog", () => {
     "should refuse the mass import of %s",
     async (material) => {
       const { dialog, download, pick, pickMaterial } = await openDialog();
-      await pick(/^Provenance status/, "Field sample");
+      await pick(/^Provenance status/, "Research project sample");
 
       await pickMaterial(material);
 
@@ -110,7 +110,7 @@ describe("CustomizeTemplateDialog", () => {
     await pickMaterial("Rock", "Igneous");
     await userEvent.keyboard("{Escape}");
     await pick("Manual group", GROUP.name);
-    await pick(/^Provenance status/, "Field sample");
+    await pick(/^Provenance status/, "Research project sample");
 
     await download.click();
 
@@ -118,7 +118,7 @@ describe("CustomizeTemplateDialog", () => {
     expect(Object.fromEntries(requested[0]!)).toEqual({
       materialPath: "rock_and_sediment.rock.igneous",
       manualGroupId: GROUP.id,
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
     });
     expect(savedNames).toEqual([IMPORT_TEMPLATE_FILENAME]);
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
@@ -145,7 +145,7 @@ describe("CustomizeTemplateDialog", () => {
     await pickMaterial("Rock", "Igneous");
     await userEvent.keyboard("{Escape}");
     await pick("Manual group", GROUP.name);
-    await pick(/^Provenance status/, "Field sample");
+    await pick(/^Provenance status/, "Research project sample");
 
     await reserve.click();
     const reserveDialog = screen.getByRole("dialog", {
@@ -160,7 +160,7 @@ describe("CustomizeTemplateDialog", () => {
     expect(posted).toEqual([
       {
         count: 3,
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         materialPath: "rock_and_sediment.rock.igneous",
         manualGroupId: GROUP.id,
         subSamples: false,
@@ -188,14 +188,14 @@ describe("CustomizeTemplateDialog", () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const { download, pick } = await openDialog();
-    await pick(/^Provenance status/, "Field sample");
+    await pick(/^Provenance status/, "Research project sample");
 
     await download.click();
 
     await expect.poll(() => requested.length).toBe(1);
     expect(Object.fromEntries(requested[0]!)).toEqual({
       materialPath: "rock_and_sediment",
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
     });
   });
 
@@ -210,7 +210,7 @@ describe("CustomizeTemplateDialog", () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const { dialog, download, pick } = await openDialog();
-    await pick(/^Provenance status/, "Field sample");
+    await pick(/^Provenance status/, "Research project sample");
 
     await dialog
       .getByRole("checkbox", { name: "The file will contain sub-samples" })
@@ -220,7 +220,7 @@ describe("CustomizeTemplateDialog", () => {
     await expect.poll(() => requested.length).toBe(1);
     expect(Object.fromEntries(requested[0]!)).toEqual({
       materialPath: "rock_and_sediment",
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       subSamples: "true",
     });
   });
@@ -236,7 +236,7 @@ describe("CustomizeTemplateDialog", () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const { dialog, download, pick } = await openDialog();
-    await pick(/^Provenance status/, "Field sample");
+    await pick(/^Provenance status/, "Research project sample");
     const section = (name: string) =>
       dialog.getByRole("checkbox", { name, exact: true });
     for (const name of [
@@ -257,7 +257,7 @@ describe("CustomizeTemplateDialog", () => {
     await expect.poll(() => requested.length).toBe(1);
     expect(Object.fromEntries(requested[0]!)).toEqual({
       materialPath: "rock_and_sediment",
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       repository: "false",
       geologicalContext: "false",
     });
@@ -271,7 +271,7 @@ describe("CustomizeTemplateDialog", () => {
         "rock_and_sediment.rock.igneous",
       ],
       groupId: GROUP.id,
-      provenanceValue: "field_sample",
+      provenanceValue: "research_project_sample",
       subSamples: true,
       sections: {
         physicalDescription: true,
@@ -318,7 +318,7 @@ describe("CustomizeTemplateDialog", () => {
       expect(Object.fromEntries(requested[0]!)).toEqual({
         materialPath: "rock_and_sediment.rock.igneous",
         manualGroupId: GROUP.id,
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         subSamples: "true",
         age: "false",
         conservationSecurity: "false",

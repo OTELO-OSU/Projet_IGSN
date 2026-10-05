@@ -5,7 +5,7 @@ import { core, corePaths } from "../core/core-paths-fixture.ts";
 import { ORGANIZATION_NAME } from "../core/core-record-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
-  FIELD_SAMPLE,
+  RESEARCH_PROJECT_SAMPLE,
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
@@ -133,13 +133,13 @@ const COMPLIES_WITH = ["https://w3id.org/isample/schema/2.0"];
 const DC_RIGHTS = "https://creativecommons.org/licenses/by/4.0/";
 
 const METEORITE_SAMPLE = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   material: "rock_and_sediment.extraterrestrial_rock.micrometeorites",
 };
 
 describe("a Core record mapped to iSamples", () => {
-  it("should project a field sample onto its iSamples record", () => {
-    expect(toISamplesSample(core(FIELD_SAMPLE))).toEqual({
+  it("should project a research project sample onto its iSamples record", () => {
+    expect(toISamplesSample(core(RESEARCH_PROJECT_SAMPLE))).toEqual({
       pid: "ABCDEFGHJKMNPQRSTVWXYZ0123",
       sample_identifier:
         "https://igsn.example.org/samples/ABCDEFGHJKMNPQRSTVWXYZ0123",
@@ -262,7 +262,7 @@ describe("the Strunz-Mindat keywords of an iSamples record", () => {
 
 describe("the related resources of an iSamples record", () => {
   it("should carry the description of the related resource", () => {
-    const sample = core(FIELD_SAMPLE);
+    const sample = core(RESEARCH_PROJECT_SAMPLE);
 
     expect(
       toISamplesSample({
@@ -300,7 +300,7 @@ describe("the sample location of an iSamples record", () => {
   });
 
   it("should withhold the coordinates and keep the place names of a sensitive location", () => {
-    const sample = core(FIELD_SAMPLE);
+    const sample = core(RESEARCH_PROJECT_SAMPLE);
 
     const producedBy = toISamplesSample({
       ...sample,
@@ -327,7 +327,7 @@ describe("the iSamples categories of a Core record", () => {
   });
 
   it("should map every head material onto an iSamples concept", () => {
-    const sample = core(FIELD_SAMPLE);
+    const sample = core(RESEARCH_PROJECT_SAMPLE);
 
     const unmapped = (MATERIAL_TREE.rock_and_sediment.choices ?? []).filter(
       (choice) =>

@@ -177,10 +177,10 @@ const listSamples = (
     accept,
   );
 
-const fieldSample = {
+const researchProjectSample = {
   ...publishableSample,
   scientificContext: {
-    provenanceStatus: "field_sample" as const,
+    provenanceStatus: "research_project_sample" as const,
     additionalRoles: [],
     collectorFirstname: "Georges",
     collectorLastname: "Cuvier",
@@ -207,8 +207,11 @@ const insertResearchers = (db: Kysely<DB>) =>
 
 const withAdditionalRoles = (additionalRoles: SampleAdditionalRole[]) =>
   ({
-    ...fieldSample,
-    scientificContext: { ...fieldSample.scientificContext, additionalRoles },
+    ...researchProjectSample,
+    scientificContext: {
+      ...researchProjectSample.scientificContext,
+      additionalRoles,
+    },
   }) satisfies CreateSample;
 
 const researcherAgentRole = (firstname: string, lastname: string) => ({
@@ -486,10 +489,10 @@ describe("GET /service/samples", () => {
       rule: "the collector full name in either order",
       param: "collector",
       value: "cuvier georges",
-      matching: { scientificContext: fieldSample.scientificContext },
+      matching: { scientificContext: researchProjectSample.scientificContext },
       other: {
         scientificContext: {
-          ...fieldSample.scientificContext,
+          ...researchProjectSample.scientificContext,
           collectorFirstname: "Alfred",
           collectorLastname: "Wegener",
         },
@@ -713,9 +716,9 @@ describe("GET /service/samples/:igsn", () => {
       const sample = await inLaboratory(
         db,
         {
-          ...fieldSample,
+          ...researchProjectSample,
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             collectorUserId: collector!.id,
             additionalRoles: [
               { role: "researcher", personUserId: researcher!.id },
@@ -1471,7 +1474,7 @@ describe("POST /service/samples", () => {
   );
 
   pgTest(
-    "should credit the synthesis operator and the Researcher of a synthetic field sample apart",
+    "should credit the synthesis operator and the Researcher of a synthetic research project sample apart",
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
@@ -1673,7 +1676,7 @@ type FrozenCase = {
 const FROZEN_CASES: FrozenCase[] = [
   {
     field: "the collector name",
-    seed: fieldSample,
+    seed: researchProjectSample,
     edit: (body) => ({
       ...body,
       responsibility: body.responsibility.map((agentRole) =>
@@ -1788,7 +1791,7 @@ describe("PUT /service/samples/:igsn", () => {
       const created = await publishedInReach(db, {
         ...publishableSample,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorUserId: linked.id,
           chiefScientistUserId: linked.id,
@@ -1827,7 +1830,7 @@ describe("PUT /service/samples/:igsn", () => {
       const created = await publishedInReach(db, {
         ...publishableSample,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           chiefScientistUserId: linked.id,
         },
@@ -2054,9 +2057,9 @@ describe("PUT /service/samples/:igsn", () => {
       const { app } = await arrangeAccount(db);
       const [collector, researcher] = await insertResearchers(db);
       const created = await publishedInReach(db, {
-        ...fieldSample,
+        ...researchProjectSample,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           collectorUserId: collector!.id,
           additionalRoles: [
             { role: "researcher", personUserId: researcher!.id },
@@ -2160,9 +2163,9 @@ describe("a suspected duplicate over /service", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const existing = await publishedInReach(db, fieldSample);
+      const existing = await publishedInReach(db, researchProjectSample);
       const subject = await publishedInReach(db, {
-        ...fieldSample,
+        ...researchProjectSample,
         name: "Autre basalte",
       });
       // Act
@@ -2188,8 +2191,8 @@ describe("a suspected duplicate over /service", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      await publishedInReach(db, fieldSample);
-      const subject = await publishedInReach(db, fieldSample);
+      await publishedInReach(db, researchProjectSample);
+      const subject = await publishedInReach(db, researchProjectSample);
       // Act
       const res = await putSample(app, subject.igsn!, core(subject));
       // Assert
@@ -2202,9 +2205,9 @@ describe("a suspected duplicate over /service", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const existing = await publishedInReach(db, fieldSample);
+      const existing = await publishedInReach(db, researchProjectSample);
       const subject = await publishedInReach(db, {
-        ...fieldSample,
+        ...researchProjectSample,
         name: "Autre basalte",
       });
       // Act

@@ -50,7 +50,7 @@ const insertCollectors = async (db: Transactional<DB>) => {
     ...bare,
     name: "By Curie",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       collectorFirstname: "Marie",
       collectorLastname: "Curié",
@@ -60,7 +60,7 @@ const insertCollectors = async (db: Transactional<DB>) => {
     ...bare,
     name: "By Darwin",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       collectorFirstname: "Charles",
       collectorLastname: "Darwin",
@@ -86,7 +86,7 @@ const insertLinkedCollectors = async (db: Transactional<DB>) => {
     ...bare,
     name: "Linked to Curie",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       collectorUserId: curie.id,
     },
@@ -95,7 +95,7 @@ const insertLinkedCollectors = async (db: Transactional<DB>) => {
     ...bare,
     name: "Linked to Darwin",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       collectorUserId: darwin.id,
     },
@@ -107,7 +107,7 @@ const insertCharpentier = (db: Transactional<DB>) =>
     ...bare,
     name: "By Charpentier",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       collectorFirstname: "Jean",
       collectorLastname: "Charpentier",
@@ -348,7 +348,7 @@ describe("listSamples", () => {
           type: null,
           collectionMethod: null,
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
             hostInstitution,
           },
@@ -577,7 +577,7 @@ describe("listSamples", () => {
         ...bare,
         name: "Surveyed",
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           researchProgramName: "Forêt Profonde",
         },
@@ -586,7 +586,7 @@ describe("listSamples", () => {
         ...bare,
         name: "Unsurveyed",
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           researchProgramName: "Deep Biosphere",
         },

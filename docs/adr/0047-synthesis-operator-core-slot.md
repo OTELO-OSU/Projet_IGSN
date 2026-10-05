@@ -8,7 +8,7 @@ Accepted. Supersedes the "The `Researcher` disambiguation" section of ADR [0046]
 
 ## Context
 
-`/service` treated a synthetic sample's `syntheticDetails.operator*` and a field sample's `scientificContext.additionalRoles[]` `researcher` row as the same Core term, `Researcher`, told apart by POSITION in `responsibility`: the first `Researcher` agent was the operator, the rest were additional-role credits (ADR [0046](0046-additional-scientific-roles.md), "The `Researcher` disambiguation" section).
+`/service` treated a synthetic sample's `syntheticDetails.operator*` and a research project sample's `scientificContext.additionalRoles[]` `researcher` row as the same Core term, `Researcher`, told apart by POSITION in `responsibility`: the first `Researcher` agent was the operator, the rest were additional-role credits (ADR [0046](0046-additional-scientific-roles.md), "The `Researcher` disambiguation" section).
 
 That guess misfires on client-authored input. A `POST /service/samples` with an experiment, no operator and a `Researcher` credit recorded that person as the operator, dropped the credit, then published cleanly since the publish guard found an operator. Silent misattribution of a real person.
 

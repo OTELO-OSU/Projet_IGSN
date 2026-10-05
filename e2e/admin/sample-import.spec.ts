@@ -84,7 +84,7 @@ async function templateWithAttachments(
   await fillTemplateSample(template, {
     ...CUSTOMIZED_SAMPLE,
     "Material (level 1)": "Rock and sediment",
-    "Provenance status": "Field sample",
+    "Provenance status": "Research project sample",
     ...sample,
   });
   await fillTemplateAttachments(template, attachments);
@@ -188,7 +188,7 @@ test.describe("sample import", () => {
     await importSamples.open();
     const template = await importSamples.downloadCustomizedTemplate(
       {
-        provenance: "Field sample",
+        provenance: "Research project sample",
         manualGroup: MANUAL_GROUP,
         uncheckSections: ["Curation and repository"],
       },

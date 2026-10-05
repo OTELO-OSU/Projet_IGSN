@@ -28,7 +28,7 @@ export function SampleScientificContextFields() {
         selector={(state) => state.values.scientificContext.provenanceStatus}
       >
         {(provenanceStatus) => {
-          if (provenanceStatus === "field_sample") {
+          if (provenanceStatus === "research_project_sample") {
             return (
               <>
                 <FormSection title={m.section_scientific_context()}>

@@ -26,7 +26,7 @@ export const SYNTHETIC_DETAILS: SyntheticDetails = {
   equipmentUsed: "Piston cylinder press",
 };
 
-export const FIELD_SAMPLE: Sample = {
+export const RESEARCH_PROJECT_SAMPLE: Sample = {
   id: "11111111-1111-4111-8111-111111111111",
   name: "Granite outcrop block",
   localId: "NCY-2024-017",
@@ -98,7 +98,7 @@ export const FIELD_SAMPLE: Sample = {
   geologicalContextDescription: "Hercynian basement",
   physiographicEnvironment: "continental.badlands",
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     funderOrganizations: [ORGANIZATION_ROR],
     researchProgramName: "GEOLOR",
     chiefScientistFirstname: "Alfred",
@@ -331,7 +331,7 @@ export const SYNTHETIC_SAMPLE: Sample = {
   geologicalContextDescription: null,
   physiographicEnvironment: null,
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     funderOrganizations: null,
     researchProgramName: null,
     chiefScientistFirstname: null,

@@ -1,6 +1,6 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { FIELD_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
+import { RESEARCH_PROJECT_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { REQUIRED_MARKER } from "@projet-igsn/domain/sample/import/template-header";
 import ExcelJS from "exceljs";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -13,7 +13,7 @@ const HEADER_ROW = 2;
 const FIRST_DATA_ROW = 3;
 
 const ROOT_ONLY: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   id: "66666666-6666-4666-8666-666666666666",
   igsn: "ZYXWVTSRQPNMKJHGFEDCBA9876",
   name: "Root only",
@@ -22,7 +22,7 @@ const ROOT_ONLY: Sample = {
 };
 
 const SUB_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   processSteps: [
     {
       kind: "subsampling",
@@ -105,9 +105,9 @@ describe("samples export workbook", () => {
   it("should write a sample's codes as the labels the dropdowns offer and leave an unset value empty", () => {
     expect(rowOf(SHEETS.samples, FIRST_DATA_ROW)).toMatchObject({
       "Sample #": "sample-7",
-      IGSN: FIELD_SAMPLE.igsn,
-      Name: FIELD_SAMPLE.name,
-      "Parent IGSN": FIELD_SAMPLE.parents[0]?.igsn,
+      IGSN: RESEARCH_PROJECT_SAMPLE.igsn,
+      Name: RESEARCH_PROJECT_SAMPLE.name,
+      "Parent IGSN": RESEARCH_PROJECT_SAMPLE.parents[0]?.igsn,
       Nature: "Hand sample",
       "Material (level 1)": "Rock and sediment",
       "Material (level 2)": "Rock",
@@ -142,11 +142,14 @@ describe("samples export workbook", () => {
               .sheetProtection?.sheet === true,
         )
         .map((sheet) => sheet.name),
-      fieldSample: greyedHeadersOf(SHEETS.samples, FIRST_DATA_ROW).sort(),
+      researchProjectSample: greyedHeadersOf(
+        SHEETS.samples,
+        FIRST_DATA_ROW,
+      ).sort(),
       rootOnly: greyedHeadersOf(SHEETS.samples, FIRST_DATA_ROW + 1).sort(),
     }).toEqual({
       protectedSheets: [],
-      fieldSample: [
+      researchProjectSample: [
         ...always,
         ...collector,
         "Material (level 1)",

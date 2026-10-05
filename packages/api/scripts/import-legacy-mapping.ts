@@ -589,7 +589,7 @@ function mapScientificContext(row: LegacyRow): ScientificContext | null {
     return null;
   }
   return {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     ...(collectorFirstname ? { collectorFirstname } : {}),
     ...(collectorLastname ? { collectorLastname } : {}),

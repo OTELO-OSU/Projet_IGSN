@@ -4,7 +4,10 @@ import type { Sample } from "../sample.ts";
 
 import { toConcept } from "./concept.ts";
 import { FRONTEND_URL } from "./core-record-fixture.ts";
-import { COLLECTION_SPECIMEN, FIELD_SAMPLE } from "./core-sample-fixture.ts";
+import {
+  COLLECTION_SPECIMEN,
+  RESEARCH_PROJECT_SAMPLE,
+} from "./core-sample-fixture.ts";
 import {
   coreSampleBodySchema,
   coreSampleSchema,
@@ -12,7 +15,7 @@ import {
 import { CORE_SAMPLE_FIXTURES } from "./core-sample-variant-fixture.ts";
 import { toCoreSample } from "./to-core-sample.ts";
 
-const core = toCoreSample(FIELD_SAMPLE, FRONTEND_URL);
+const core = toCoreSample(RESEARCH_PROJECT_SAMPLE, FRONTEND_URL);
 const area = toCoreSample(COLLECTION_SPECIMEN, FRONTEND_URL);
 
 const parses = (value: unknown) => coreSampleSchema.safeParse(value).success;
@@ -230,7 +233,7 @@ const USER_ID = "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10";
 const linked = (sample: Sample): Sample => ({
   ...sample,
   scientificContext:
-    sample.scientificContext?.provenanceStatus === "field_sample"
+    sample.scientificContext?.provenanceStatus === "research_project_sample"
       ? {
           ...sample.scientificContext,
           collectorUserId: USER_ID,

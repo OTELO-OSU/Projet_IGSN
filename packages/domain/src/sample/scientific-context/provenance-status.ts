@@ -1,5 +1,5 @@
 export const PROVENANCE_STATUSES = [
-  "field_sample",
+  "research_project_sample",
   "collection_specimen",
 ] as const;
 

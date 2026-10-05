@@ -74,7 +74,7 @@ describe("SampleList", () => {
           region: { kind: "country", country: "FR" },
         },
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           collectorFirstname: "Marie",
           collectorLastname: "Curie",
           additionalRoles: [],
@@ -201,7 +201,7 @@ describe("SampleList", () => {
     const screen = await renderSampleList([
       sampleItem({
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           collectorLastname: "Curie",
           additionalRoles: [],
         },
@@ -218,7 +218,7 @@ describe("SampleList", () => {
       [
         sampleItem({
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             chiefScientistFirstname: "Marie",
             chiefScientistLastname: "Curie",
             additionalRoles: [],

@@ -6,7 +6,7 @@ import { toConcept } from "../core/concept.ts";
 import { core, corePaths } from "../core/core-paths-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
-  FIELD_SAMPLE,
+  RESEARCH_PROJECT_SAMPLE,
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
@@ -134,7 +134,11 @@ const FIELD_FEATURE = {
       toConcept("physiographic-environment", "continental.badlands"),
       toConcept("resource-type", "mineral_and_ore.uranium"),
       toConcept("geologicalContext", "Hercynian basement"),
-      toConcept("scientificContext", "field_sample", "provenance-status"),
+      toConcept(
+        "scientificContext",
+        "research_project_sample",
+        "provenance-status",
+      ),
     ],
     placeName: "Nancy quarry",
     locationDescription: "Northern face of the quarry",
@@ -182,7 +186,11 @@ const SYNTHETIC_FEATURE = {
     ),
     contextCategory: [
       toConcept("material", "rock_and_sediment.synthetic_rock_mineral"),
-      toConcept("scientificContext", "field_sample", "provenance-status"),
+      toConcept(
+        "scientificContext",
+        "research_project_sample",
+        "provenance-status",
+      ),
     ],
     isResultOf: {
       startTime: "2025-01-12",
@@ -232,8 +240,8 @@ const TWO_PARENT_SUB_SAMPLE: Sample = {
 };
 
 describe("a Core record mapped to an OMS feature", () => {
-  it("should project a field sample onto its SOSA sample feature", () => {
-    expect(toOmsSample(core(FIELD_SAMPLE))).toEqual({
+  it("should project a research project sample onto its SOSA sample feature", () => {
+    expect(toOmsSample(core(RESEARCH_PROJECT_SAMPLE))).toEqual({
       "@context": OMS_SAMPLE_CONTEXT,
       ...FIELD_FEATURE,
     });
@@ -279,7 +287,10 @@ describe("a Core record mapped to an OMS feature", () => {
 describe("a page of Core records mapped to an OMS feature collection", () => {
   it("should hold the total, the returned count and the features without their own context", () => {
     expect(
-      toOmsSampleCollection([core(FIELD_SAMPLE), core(SYNTHETIC_SAMPLE)], 7),
+      toOmsSampleCollection(
+        [core(RESEARCH_PROJECT_SAMPLE), core(SYNTHETIC_SAMPLE)],
+        7,
+      ),
     ).toEqual({
       "@context": OMS_SAMPLE_COLLECTION_CONTEXT,
       type: "FeatureCollection",

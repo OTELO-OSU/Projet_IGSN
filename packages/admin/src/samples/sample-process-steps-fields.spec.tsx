@@ -39,7 +39,7 @@ const publishableValues = {
   existenceStatus: "exists",
   availabilityStatus: "available",
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     collectorFirstname: "Pierre",
     collectorLastname: "Curie",

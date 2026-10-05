@@ -341,13 +341,13 @@ export const coreProductionSchema = z
     samplingPurpose: freeTextSchema
       .meta({
         description:
-          "Mission the sample was collected for, on a field sample alone.",
+          "Mission the sample was collected for, on a research project sample alone.",
       })
       .optional(),
     samplingSite_name: freeTextSchema
       .meta({
         description:
-          "Name of the field the sample was collected on, on a field sample alone.",
+          "Name of the field the sample was collected on, on a research project sample alone.",
       })
       .optional(),
     projects: z

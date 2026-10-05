@@ -91,7 +91,7 @@ export const CLEAN_SAMPLE: Cells = {
   "Material (level 1)": "Rock and sediment",
   "Material (level 2)": "Rock",
   "Material (level 3)": "Igneous",
-  "Provenance status": "Field sample",
+  "Provenance status": "Research project sample",
   "Collector first name": "Marie",
   "Collector last name": "Curie",
   "Collection date precision": "Day",
@@ -117,7 +117,7 @@ export const CLEAN_INPUT = {
   nature: "hand_sample",
   material: "rock_and_sediment.rock.igneous",
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     collectorFirstname: "Marie",
     collectorLastname: "Curie",
   },
@@ -159,7 +159,7 @@ export const CLEAN_DUPLICATE = {
   collectionMethod: null,
   material: "rock_and_sediment.rock.igneous",
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     collectorFirstname: "Marie",
     collectorLastname: "Curie",

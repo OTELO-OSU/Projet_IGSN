@@ -14,9 +14,9 @@ import {
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
-type FieldSample = Extract<
+type ResearchProjectSample = Extract<
   ScientificContext,
-  { provenanceStatus: "field_sample" }
+  { provenanceStatus: "research_project_sample" }
 >;
 type CollectionSpecimen = Extract<
   ScientificContext,
@@ -55,7 +55,11 @@ function AdditionalRoleRows({ roles }: { roles: SampleAdditionalRole[] }) {
   });
 }
 
-function FieldSampleRows({ context }: { context: FieldSample }) {
+function ResearchProjectSampleRows({
+  context,
+}: {
+  context: ResearchProjectSample;
+}) {
   return (
     <>
       <FieldRow
@@ -148,8 +152,8 @@ export function ScientificContextView({
 }) {
   return (
     <FieldRows>
-      {scientificContext.provenanceStatus === "field_sample" ? (
-        <FieldSampleRows context={scientificContext} />
+      {scientificContext.provenanceStatus === "research_project_sample" ? (
+        <ResearchProjectSampleRows context={scientificContext} />
       ) : (
         <CollectionSpecimenRows context={scientificContext} />
       )}

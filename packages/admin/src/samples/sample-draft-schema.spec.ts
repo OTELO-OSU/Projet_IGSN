@@ -86,7 +86,7 @@ describe("sampleDraftSchema", () => {
         chemicalRisk: false,
       },
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
       },
       manualGroupIds: [],
@@ -209,7 +209,7 @@ describe("sampleDraftSchema", () => {
         chemicalRisk: false,
       },
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
       },
       manualGroupIds: [],

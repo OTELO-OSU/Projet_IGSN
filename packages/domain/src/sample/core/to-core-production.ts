@@ -16,7 +16,7 @@ import { toCoreLocation } from "./to-core-location.ts";
 
 function toCoreProjects(sample: Sample): CoreProduction["projects"] {
   const context = sample.scientificContext;
-  if (context?.provenanceStatus !== "field_sample") return undefined;
+  if (context?.provenanceStatus !== "research_project_sample") return undefined;
   const project = {
     name: context.researchProgramName ?? undefined,
     fundingReferences: context.funderOrganizations?.map((ror) => ({

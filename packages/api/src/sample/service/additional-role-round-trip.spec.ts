@@ -24,14 +24,17 @@ const typed = (
   personLastname: lastname,
 });
 
-const fieldSample = (
+const researchProjectSample = (
   additionalRoles: SampleAdditionalRole[],
 ): CreateSample => ({
   name: "Basalte du Massif Central",
   nature: "hand_sample",
   type: null,
   collectionMethod: null,
-  scientificContext: { provenanceStatus: "field_sample", additionalRoles },
+  scientificContext: {
+    provenanceStatus: "research_project_sample",
+    additionalRoles,
+  },
 });
 
 const insertAccount = (db: Transactional<DB>) =>
@@ -60,7 +63,7 @@ describe("sample additional roles persistence", () => {
         typed("data_manager", "Hopper"),
       ];
       // Act
-      const created = await insertSample(db, fieldSample(roles));
+      const created = await insertSample(db, researchProjectSample(roles));
       // Assert
       expect(created.scientificContext).toMatchObject({
         additionalRoles: roles,
@@ -77,7 +80,9 @@ describe("sample additional roles persistence", () => {
       // Act
       const created = await insertSample(
         db,
-        fieldSample([{ role: "researcher", personUserId: account.id }]),
+        researchProjectSample([
+          { role: "researcher", personUserId: account.id },
+        ]),
       );
       // Assert
       expect(created.scientificContext).toMatchObject({
@@ -100,10 +105,14 @@ describe("sample additional roles persistence", () => {
       // Arrange
       const created = await insertSample(
         db,
-        fieldSample([typed("researcher", "Curié")]),
+        researchProjectSample([typed("researcher", "Curié")]),
       );
       // Act
-      const updated = await updateSample(db, created.id, fieldSample([]));
+      const updated = await updateSample(
+        db,
+        created.id,
+        researchProjectSample([]),
+      );
       // Assert
       expect(updated?.scientificContext).toMatchObject({
         additionalRoles: [],
@@ -121,7 +130,7 @@ describe("sample additional roles persistence", () => {
       await expect(
         insertSample(
           db,
-          fieldSample([
+          researchProjectSample([
             {
               role: "researcher",
               personUserId: account.id,
@@ -137,7 +146,7 @@ describe("sample additional roles persistence", () => {
     // Arrange
     const created = await insertSample(
       db,
-      fieldSample([typed("researcher", "Curié")]),
+      researchProjectSample([typed("researcher", "Curié")]),
     );
     // Act
     await db.deleteFrom("sample").where("id", "=", created.id).execute();
@@ -152,7 +161,9 @@ describe("sample additional roles persistence", () => {
       const account = await insertAccount(db);
       await insertSample(
         db,
-        fieldSample([{ role: "researcher", personUserId: account.id }]),
+        researchProjectSample([
+          { role: "researcher", personUserId: account.id },
+        ]),
       );
       // Act & Assert
       await expect(

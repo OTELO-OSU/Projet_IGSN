@@ -63,7 +63,7 @@ const clearProvenance = async (screen: Screen) => {
   await screen
     .getByRole("combobox", { name: "Provenance status *", exact: true })
     .click();
-  await screen.getByRole("option", { name: "Field sample" }).click();
+  await screen.getByRole("option", { name: "Research project sample" }).click();
 };
 
 const goToScientificContext = async (screen: Screen) => {
@@ -112,7 +112,9 @@ describe("SampleScientificContextFields", () => {
     await screen
       .getByRole("combobox", { name: "Provenance status *", exact: true })
       .click();
-    await screen.getByRole("option", { name: "Field sample" }).click();
+    await screen
+      .getByRole("option", { name: "Research project sample" })
+      .click();
 
     await expect
       .element(screen.getByRole("tab", { name: "Scientific context" }))
@@ -166,7 +168,7 @@ describe("SampleScientificContextFields", () => {
       ]);
   });
 
-  it("should submit a field sample with organizations picked from the reference list", async () => {
+  it("should submit a research project sample with organizations picked from the reference list", async () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
@@ -205,7 +207,7 @@ describe("SampleScientificContextFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
             funderOrganizations: ["02feahw73", "04kdfz702"],
             researchProgramName: "Deep Biosphere Survey",
@@ -290,7 +292,7 @@ describe("SampleScientificContextFields", () => {
       )
       .toHaveValue("Curie");
 
-    await pickProvenance(screen, "Field sample");
+    await pickProvenance(screen, "Research project sample");
     await expect
       .element(
         screen.getByLabelText(

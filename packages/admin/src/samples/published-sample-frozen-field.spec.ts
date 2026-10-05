@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 
 describe("publishedSampleFrozenField", () => {
-  const isFrozen = publishedSampleFrozenField("field_sample", null);
+  const isFrozen = publishedSampleFrozenField("research_project_sample", null);
 
   it.each([
     "manualGroupIds",
@@ -27,7 +27,7 @@ describe("publishedSampleFrozenField", () => {
     "scientificContext.collectorUserId",
     "scientificContext.collectorFirstname",
     "scientificContext.collectorLastname",
-  ])("freezes %s only on the field-sample branch", (field) => {
+  ])("freezes %s only on the research-project-sample branch", (field) => {
     expect(isFrozen(field)).toBe(true);
     expect(publishedSampleFrozenField("collection_specimen", null)(field)).toBe(
       false,
@@ -53,7 +53,7 @@ describe("publishedSampleFrozenField", () => {
 
   describe("material levels", () => {
     const isFrozenLevel = publishedSampleFrozenField(
-      "field_sample",
+      "research_project_sample",
       "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
     );
 

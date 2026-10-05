@@ -103,7 +103,7 @@ describe("sampleSchema", () => {
   it("should accept a linked person together with the names resolved from the account", () => {
     // Arrange
     const scientificContext = {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       collectorUserId: LINKED_USER_ID,
       collectorFirstname: "Marie",
       collectorLastname: "Curie",
@@ -552,7 +552,7 @@ describe("the write schemas", () => {
       const result = schema.safeParse({
         name: "Basalte du Massif Central",
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           collectorUserId: LINKED_USER_ID,
           collectorFirstname: "Marie",
         },

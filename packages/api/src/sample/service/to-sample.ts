@@ -139,13 +139,13 @@ function toScientificContext(row: SampleRow) {
     firstname: row.sc_collector_firstname,
     lastname: row.sc_collector_lastname,
   });
-  if (row.sc_provenance_status === "field_sample") {
+  if (row.sc_provenance_status === "research_project_sample") {
     const chiefScientist = resolveContact(row.chiefScientistAccount, {
       firstname: row.sc_chief_scientist_firstname,
       lastname: row.sc_chief_scientist_lastname,
     });
     return scientificContextSchema.parse({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: (row.additionalRoles ?? []).map((additional) => {
         const person = resolveContact(additional.account, {
           firstname: additional.person_firstname,

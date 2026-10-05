@@ -506,7 +506,7 @@ describe("toCreateSample", () => {
       collector: "Jostein Bakke (ORCID:0000-0001-6114-0400)",
     });
     expect(toCreateSample(row).scientificContext).toEqual({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       collectorFirstname: "Jostein",
       collectorLastname: "Bakke",

@@ -695,7 +695,7 @@ describe("public sample routes", () => {
             existenceStatus: "exists",
             availabilityStatus: "available",
             scientificContext: {
-              provenanceStatus: "field_sample",
+              provenanceStatus: "research_project_sample",
               collectorFirstname: "Georges",
               collectorLastname: "Cuvier",
               additionalRoles: [

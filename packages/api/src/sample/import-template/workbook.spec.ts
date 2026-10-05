@@ -409,14 +409,14 @@ describe("customized import template workbook", () => {
   const rows = 3;
   const lastRow = FIRST_DATA_ROW + rows - 1;
   const prefilled = {
-    "Provenance status": "Field sample",
+    "Provenance status": "Research project sample",
     "Manual group": "Alps",
     "Material (level 1)": "Rock and sediment",
     "Material (level 2)": "Rock",
     "Material (level 3)": "Igneous",
   };
   const customization: TemplateCustomization = {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     materialPath: "rock_and_sediment.rock.igneous",
     manualGroup: GROUPS[0],
     subSamples: true,
@@ -590,7 +590,7 @@ describe("customized import template workbook", () => {
       c2: readMe.getCell("C2").value,
     }).toEqual({
       stored: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         materialPath: "rock_and_sediment.rock.igneous",
         manualGroupLabel: "Alps",
       },

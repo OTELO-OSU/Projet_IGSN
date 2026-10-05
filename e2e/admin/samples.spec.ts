@@ -126,7 +126,7 @@ test.describe("samples", () => {
     await edit.expectSaveMenuItem("Withdraw");
   });
 
-  test("a researcher credits additional roles on a field sample", async ({
+  test("a researcher credits additional roles on a research project sample", async ({
     page,
   }) => {
     await signInAsResearcher(page, RESEARCHERS.pierre);
@@ -139,7 +139,7 @@ test.describe("samples", () => {
     await create.selectNature("Thin section");
     await create.fillPublishableFields();
     await create.openTab("Identity");
-    await create.pick("Provenance status", "Field sample");
+    await create.pick("Provenance status", "Research project sample");
     await create.openTab("Scientific context");
     await create.fillPersonName(/^Collector name/, "Pierre", "Curie");
     await create.addAdditionalRole("Researcher", {

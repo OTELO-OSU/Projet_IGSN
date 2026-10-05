@@ -18,8 +18,8 @@ export const uniqueRorArraySchema = (code: string) =>
     .refine((rors) => new Set(rors).size === rors.length, { params: { code } })
     .nullish();
 
-const fieldSampleSchema = z.object({
-  provenanceStatus: z.literal("field_sample"),
+const researchProjectSampleSchema = z.object({
+  provenanceStatus: z.literal("research_project_sample"),
   funderOrganizations: uniqueRorArraySchema("funder_organizations_duplicate"),
   researchProgramName: freeTextSchema.nullish(),
   chiefScientistUserId: z.uuid().nullish(),
@@ -49,12 +49,12 @@ const collectionSpecimenSchema = z.object({
 
 export const scientificContextSchema = z.discriminatedUnion(
   "provenanceStatus",
-  [fieldSampleSchema, collectionSpecimenSchema],
+  [researchProjectSampleSchema, collectionSpecimenSchema],
 );
 
 export type ScientificContext = z.infer<typeof scientificContextSchema>;
 
-export const createFieldSampleSchema = fieldSampleSchema
+export const createResearchProjectSampleSchema = researchProjectSampleSchema
   .omit({ chiefScientistOrcid: true, collectorOrcid: true })
   .extend({
     additionalRoles: z.array(createSampleAdditionalRoleSchema).default([]),
@@ -62,7 +62,7 @@ export const createFieldSampleSchema = fieldSampleSchema
 
 export const createScientificContextSchema = z
   .discriminatedUnion("provenanceStatus", [
-    createFieldSampleSchema,
+    createResearchProjectSampleSchema,
     collectionSpecimenSchema,
   ])
   .superRefine(checkContactLinks);
