@@ -256,13 +256,13 @@ Three rules keep them aligned:
 
 ### New-field checklist
 
-| Step                  | Where                                                                          | The red test                                                                                   |
-| --------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| Schema                | `createSampleSchema` in `packages/domain/src/sample/sample.ts`                 | none, start here                                                                               |
-| Form                  | draft, compose, field, tab                                                     | `FIELD_TAB` fails to compile                                                                   |
-| Template column       | `columns.ts`, a condition, a block                                             | the coverage test in `columns.spec.ts`                                                         |
-| Core slot             | `CORE_PATH_BY_FIELD`, `toCore*` / `fromCore*`, a row in `igsn-core-mapping.md` | the coverage test in `core-path.spec.ts`, or the field in its `NOT_IN_CORE` list with a reason |
-| Fixtures, if required | `CLEAN_SAMPLE`, `required-columns.spec.ts`, the e2e fixture, the seed          | those specs                                                                                    |
+| Step                  | Where                                                                          | The red test                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Schema                | `createSampleSchema` in `packages/domain/src/sample/sample.ts`                 | none, start here                                                                                              |
+| Form                  | draft, compose, field, tab                                                     | `FIELD_TAB` fails to compile                                                                                  |
+| Template column       | `columns.ts`, a condition, a block                                             | the coverage test in `columns.spec.ts`                                                                        |
+| Core slot             | `CORE_PATH_BY_FIELD`, `toCore*` / `fromCore*`, a row in `igsn-core-mapping.md` | the coverage test in `core-path.spec.ts`, or the field in its `NOT_IN_CORE` list, the reason stated in the PR |
+| Fixtures, if required | `CLEAN_SAMPLE`, `required-columns.spec.ts`, the e2e fixture, the seed          | those specs                                                                                                   |
 
 ## Other maintenance points
 
