@@ -3,35 +3,39 @@ import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-co
 export function scientificContextColumns(
   context: ScientificContext | null | undefined,
 ) {
-  const fieldSample =
-    context?.provenanceStatus === "field_sample" ? context : null;
+  const researchProjectSample =
+    context?.provenanceStatus === "research_project_sample" ? context : null;
   const collectionSpecimen =
     context?.provenanceStatus === "collection_specimen" ? context : null;
   return {
     sc_provenance_status: context?.provenanceStatus ?? null,
-    sc_funder_organizations: fieldSample?.funderOrganizations ?? null,
-    sc_research_program_name: fieldSample?.researchProgramName ?? null,
-    sc_chief_scientist_user_id: fieldSample?.chiefScientistUserId ?? null,
-    sc_chief_scientist_firstname: fieldSample?.chiefScientistFirstname ?? null,
-    sc_chief_scientist_lastname: fieldSample?.chiefScientistLastname ?? null,
-    sc_host_institution: fieldSample?.hostInstitution ?? null,
+    sc_funder_organizations: researchProjectSample?.funderOrganizations ?? null,
+    sc_research_program_name:
+      researchProjectSample?.researchProgramName ?? null,
+    sc_chief_scientist_user_id:
+      researchProjectSample?.chiefScientistUserId ?? null,
+    sc_chief_scientist_firstname:
+      researchProjectSample?.chiefScientistFirstname ?? null,
+    sc_chief_scientist_lastname:
+      researchProjectSample?.chiefScientistLastname ?? null,
+    sc_host_institution: researchProjectSample?.hostInstitution ?? null,
     sc_collector_user_id:
-      fieldSample?.collectorUserId ??
+      researchProjectSample?.collectorUserId ??
       collectionSpecimen?.collectorUserId ??
       null,
     sc_collector_firstname:
-      fieldSample?.collectorFirstname ??
+      researchProjectSample?.collectorFirstname ??
       collectionSpecimen?.collectorFirstname ??
       null,
     sc_collector_lastname:
-      fieldSample?.collectorLastname ??
+      researchProjectSample?.collectorLastname ??
       collectionSpecimen?.collectorLastname ??
       null,
-    sc_funding: fieldSample?.funding ?? null,
+    sc_funding: researchProjectSample?.funding ?? null,
     sc_research_program_description:
-      fieldSample?.researchProgramDescription ?? null,
-    sc_platform_type: fieldSample?.platformType ?? null,
-    sc_launch_platform_name: fieldSample?.launchPlatformName ?? null,
+      researchProjectSample?.researchProgramDescription ?? null,
+    sc_platform_type: researchProjectSample?.platformType ?? null,
+    sc_launch_platform_name: researchProjectSample?.launchPlatformName ?? null,
     sc_collection_origin: collectionSpecimen?.collectionOrigin ?? null,
     sc_collection_context_description:
       collectionSpecimen?.collectionContextDescription ?? null,

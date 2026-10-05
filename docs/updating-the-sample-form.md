@@ -252,7 +252,7 @@ Everything is editable by default. To freeze a field, add one entry to the match
 const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   manualGroupIds: ["manualGroupIds"],
 } as const;
-const LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS = {
+const LOCKED_RESEARCH_PROJECT_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   collectorFirstname: ["scientificContext.collectorFirstname"],
   collectorLastname: ["scientificContext.collectorLastname"],
 } as const;

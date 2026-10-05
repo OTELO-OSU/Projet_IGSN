@@ -128,7 +128,7 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
     condition: {
       path: "scientificContext.provenanceStatus",
       match: "is",
-      values: [labels.provenanceStatusLabel("field_sample")],
+      values: [labels.provenanceStatusLabel("research_project_sample")],
     },
   },
   {

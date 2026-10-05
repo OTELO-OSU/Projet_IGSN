@@ -59,7 +59,7 @@ const stored: Sample = {
   geologicalContextDescription: "stored geological context",
   physiographicEnvironment: "marine.fjord",
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     funderOrganizations: ["https://ror.org/00stored"],
     researchProgramName: "Stored program",
@@ -155,7 +155,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     geologicalContextDescription: "edited geological context",
     physiographicEnvironment: "wetland.peat_bog",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       funderOrganizations: ["https://ror.org/00edited"],
       researchProgramName: "Edited program",
@@ -255,7 +255,7 @@ describe("mergePublishedEdit", () => {
     expect(merged.location).toEqual(payload.location);
   });
 
-  it("keeps every part of the frozen collector but takes the other field-sample leaves", () => {
+  it("keeps every part of the frozen collector but takes the other research-project-sample leaves", () => {
     const payload = incoming();
     const merged = mergePublishedEdit(stored, payload);
     expect(merged.scientificContext).toEqual({
@@ -286,14 +286,14 @@ describe("mergePublishedEdit", () => {
       stored,
       incoming({
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles,
         },
       }),
     );
 
     expect(merged.scientificContext).toEqual({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles,
       collectorFirstname: "Stored",
       collectorLastname: "collector",
@@ -304,7 +304,7 @@ describe("mergePublishedEdit", () => {
     const linked: Sample = {
       ...stored,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
         collectorUserId: LINKED_USER_ID,
         collectorFirstname: "Marie",
@@ -316,7 +316,7 @@ describe("mergePublishedEdit", () => {
       incoming({ scientificContext: null }),
     );
     expect(merged.scientificContext).toEqual({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       collectorUserId: LINKED_USER_ID,
       collectorFirstname: null,
@@ -331,7 +331,7 @@ describe("mergePublishedEdit", () => {
     const linked: Sample = {
       ...stored,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [
           {
             role: "researcher",
@@ -347,7 +347,7 @@ describe("mergePublishedEdit", () => {
       incoming({ scientificContext: null }),
     );
     expect(merged.scientificContext).toEqual({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [
         {
           role: "researcher",
@@ -366,7 +366,7 @@ describe("mergePublishedEdit", () => {
     const linked: Sample = {
       ...stored,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
         collectorUserId: LINKED_USER_ID,
         collectorFirstname: "Marie",
@@ -377,7 +377,7 @@ describe("mergePublishedEdit", () => {
       linked,
       incoming({
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorFirstname: "Edited",
           collectorLastname: "editor",
@@ -386,7 +386,7 @@ describe("mergePublishedEdit", () => {
       }),
     );
     expect(merged.scientificContext).toEqual({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [],
       collectorUserId: LINKED_USER_ID,
       collectorFirstname: null,

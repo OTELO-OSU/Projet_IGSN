@@ -40,7 +40,7 @@ const base: Sample = {
   geologicalContextDescription: null,
   physiographicEnvironment: null,
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     funderOrganizations: ["02feahw73"],
     researchProgramName: "Deep Biosphere Survey",
@@ -475,12 +475,12 @@ describe("samplePublishBlockers", () => {
     );
   });
 
-  it("should report each missing mandatory field of the field-sample branch", () => {
+  it("should report each missing mandatory field of the research-project-sample branch", () => {
     expect(
       samplePublishBlockers({
         ...base,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
         },
       }),
@@ -499,13 +499,13 @@ describe("samplePublishBlockers", () => {
       "collector_firstname_missing",
     ],
   ] as const)(
-    "should report the missing half when a field sample names %s of the collector",
+    "should report the missing half when a research project sample names %s of the collector",
     (_case, collector, blocker) => {
       expect(
         samplePublishBlockers({
           ...base,
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
             ...collector,
           },
@@ -526,13 +526,13 @@ describe("samplePublishBlockers", () => {
       "chief_scientist_firstname_missing",
     ],
   ] as const)(
-    "should report the missing half when a field sample names %s of the chief scientist",
+    "should report the missing half when a research project sample names %s of the chief scientist",
     (_case, chiefScientist, blocker) => {
       expect(
         samplePublishBlockers({
           ...base,
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",
@@ -543,12 +543,12 @@ describe("samplePublishBlockers", () => {
     },
   );
 
-  it("should report no blocker for a field sample naming no chief scientist at all", () => {
+  it("should report no blocker for a research project sample naming no chief scientist at all", () => {
     expect(
       samplePublishBlockers({
         ...base,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
@@ -583,7 +583,7 @@ describe("samplePublishBlockers", () => {
       samplePublishBlockers({
         ...base,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
           additionalRoles: [...additionalRoles],
@@ -597,7 +597,7 @@ describe("samplePublishBlockers", () => {
       samplePublishBlockers({
         ...base,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
           additionalRoles: [{ role: "project_manager" }],
@@ -896,11 +896,11 @@ describe("samplePublishBlockers", () => {
 
   it.each([
     [
-      "a field sample's collector and chief scientist",
+      "a research project sample's collector and chief scientist",
       {
         ...base,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorUserId: LINKED_USER_ID,
           chiefScientistUserId: LINKED_USER_ID,
@@ -919,11 +919,11 @@ describe("samplePublishBlockers", () => {
       },
     ],
     [
-      "a field sample's collector whose account resolves to a partial person",
+      "a research project sample's collector whose account resolves to a partial person",
       {
         ...base,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorUserId: LINKED_USER_ID,
           collectorFirstname: "Marie",
@@ -991,7 +991,7 @@ describe("samplePublishRequirements", () => {
       "additional_role",
       {
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
           additionalRoles: [{ role: "researcher" }, { role: "data_manager" }],
@@ -1029,7 +1029,7 @@ describe("samplePublishRequirements", () => {
         {
           ...base,
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",

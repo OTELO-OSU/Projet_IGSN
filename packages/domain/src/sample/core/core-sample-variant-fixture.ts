@@ -4,7 +4,7 @@ import type { Sample } from "../sample.ts";
 
 import {
   COLLECTION_SPECIMEN,
-  FIELD_SAMPLE,
+  RESEARCH_PROJECT_SAMPLE,
   LINE_SAMPLE,
   SYNTHETIC_DETAILS,
   SYNTHETIC_SAMPLE,
@@ -15,7 +15,7 @@ type PointVertical = NonNullable<
 >;
 
 const pointSample = (name: string, vertical: PointVertical): Sample => ({
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name,
   location: {
     position: { type: "point", longitude: 6.18, latitude: 48.69, vertical },
@@ -27,14 +27,14 @@ const pointSample = (name: string, vertical: PointVertical): Sample => ({
 });
 
 const VOLCANIC_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Basalt flow chip",
   material: "rock_and_sediment.rock.igneous.volcanic.mafic.basalt",
   texture: "vesicular",
 };
 
 const METAMORPHIC_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Gneiss block",
   material: "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
   texture: null,
@@ -43,7 +43,7 @@ const METAMORPHIC_SAMPLE: Sample = {
 };
 
 const OTHER_MATERIAL_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Unidentified dark rock",
   material: "rock_and_sediment.rock.other",
   specificName: "Dark fine grained rock",
@@ -51,7 +51,7 @@ const OTHER_MATERIAL_SAMPLE: Sample = {
 };
 
 export const MINERAL_RESOURCE_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Gold bearing ore",
   material: "rock_and_sediment.mineral",
   texture: null,
@@ -94,7 +94,7 @@ const OTHER_REFERENCE_SAMPLE = pointSample("Unreferenced depth", {
 });
 
 const COLD_STORED_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Frozen vial",
   description: {
     collectionDate: {
@@ -131,7 +131,7 @@ const COLD_STORED_SAMPLE: Sample = {
 };
 
 const WARM_STORED_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Ambient stored chip",
   condition: {
     packaging: "paper_bag",
@@ -148,7 +148,7 @@ const WARM_STORED_SAMPLE: Sample = {
 };
 
 const CALENDAR_AGE_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Calibrated radiocarbon sample",
   age: {
     numericAgeMin: 1200,
@@ -162,7 +162,7 @@ const CALENDAR_AGE_SAMPLE: Sample = {
 };
 
 const HAZARDOUS_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Asbestos bearing serpentinite",
   security: {
     radioactivity: false,
@@ -175,7 +175,7 @@ const HAZARDOUS_SAMPLE: Sample = {
 };
 
 const RELATED_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Sample with a legacy parent",
   relations: [
     {
@@ -270,13 +270,13 @@ const withAdditionalRoles = (
   ...sample,
   name,
   scientificContext:
-    sample.scientificContext?.provenanceStatus === "field_sample"
+    sample.scientificContext?.provenanceStatus === "research_project_sample"
       ? { ...sample.scientificContext, additionalRoles }
       : sample.scientificContext,
 });
 
 export const TEAM_SAMPLE = withAdditionalRoles(
-  FIELD_SAMPLE,
+  RESEARCH_PROJECT_SAMPLE,
   "Non-synthetic sample credited to several people per role",
   [
     { role: "researcher", personFirstname: "Ada", personLastname: "Lovelace" },
@@ -306,7 +306,7 @@ const SYNTHETIC_TEAM_SAMPLE = withAdditionalRoles(
 );
 
 export const SUB_SAMPLE: Sample = {
-  ...FIELD_SAMPLE,
+  ...RESEARCH_PROJECT_SAMPLE,
   name: "Thin section of the block",
   processSteps: [
     {
@@ -336,7 +336,7 @@ export const SYNTHETIC_SUB_SAMPLE: Sample = {
 };
 
 export const CORE_SAMPLE_FIXTURES: readonly Sample[] = [
-  FIELD_SAMPLE,
+  RESEARCH_PROJECT_SAMPLE,
   SUB_SAMPLE,
   SYNTHETIC_SUB_SAMPLE,
   COLLECTION_SPECIMEN,

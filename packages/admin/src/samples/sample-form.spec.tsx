@@ -31,7 +31,10 @@ const publishableRepository = { currentArchiveLaboratory: "UMR6112" } as const;
 const NO_ANSWERS = {
   description: { oriented: false },
   security: { radioactivity: false, asbestosRich: false, chemicalRisk: false },
-  scientificContext: { provenanceStatus: "field_sample", additionalRoles: [] },
+  scientificContext: {
+    provenanceStatus: "research_project_sample",
+    additionalRoles: [],
+  },
 } as const;
 
 type Screen = Awaited<ReturnType<typeof render>>;
@@ -504,14 +507,14 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
   });
 
-  it("should pre-fill the provenance status of a new declaration with Field sample", async () => {
+  it("should pre-fill the provenance status of a new declaration with Research project sample", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
     await expect
       .element(screen.getByRole("combobox", { name: "Provenance status *" }))
-      .toHaveTextContent("Field sample");
+      .toHaveTextContent("Research project sample");
   });
 
   it("should show and submit a metamorphic facies for a metamorphic material", async () => {
@@ -1466,7 +1469,7 @@ describe("SampleForm", () => {
           temperature: { type: "frozen", measurement: { value: -20 } },
         } as CreateSample["condition"],
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorFirstname: "Marie",
           chiefScientistLastname: "Curie",
@@ -1795,7 +1798,7 @@ describe("SampleForm", () => {
           collectionMethod: null,
           collectionMethodDescription: null,
           scientificContext: {
-            provenanceStatus: "field_sample",
+            provenanceStatus: "research_project_sample",
             additionalRoles: [],
           },
         }}
@@ -1867,13 +1870,13 @@ describe("SampleForm", () => {
   });
 
   it.each([
-    ["field_sample", "Type *"],
+    ["research_project_sample", "Type *"],
     ["collection_specimen", "Type"],
   ] as const)(
     "marks the location type required to publish under %s as %s",
     async (provenanceStatus, name) => {
       const scientificContext =
-        provenanceStatus === "field_sample"
+        provenanceStatus === "research_project_sample"
           ? { provenanceStatus, additionalRoles: [] }
           : { provenanceStatus };
       const screen = await render(
@@ -2426,7 +2429,7 @@ const publishedFixture: CreateSample = {
   repository: publishableRepository,
 };
 
-const publishedFieldSampleFixture: CreateSample = {
+const publishedResearchProjectSampleFixture: CreateSample = {
   ...publishedFixture,
   location: {
     position: {
@@ -2439,7 +2442,7 @@ const publishedFieldSampleFixture: CreateSample = {
     localityName: "Massif Central",
   },
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     funderOrganizations: ["03fd77x13"],
     researchProgramName: "GEOSAMPLE",
@@ -2648,7 +2651,7 @@ describe("SampleForm post-publication field lock", () => {
           onCancel={noop}
           status="published"
           defaultValues={{
-            ...publishedFieldSampleFixture,
+            ...publishedResearchProjectSampleFixture,
             geologicalContextDescription: "Basaltic plateau",
           }}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
@@ -2747,13 +2750,13 @@ describe("SampleForm post-publication field lock", () => {
     },
   );
 
-  it("freezes the whole collector on a published field sample", async () => {
+  it("freezes the whole collector on a published research project sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
           status="published"
-          defaultValues={publishedFieldSampleFixture}
+          defaultValues={publishedResearchProjectSampleFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
       </TooltipProvider>,

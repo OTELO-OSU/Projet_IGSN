@@ -33,7 +33,7 @@ export async function replaceSampleAdditionalRoles(
 }
 
 export function additionalRolesOf(input: CreateSample): SampleAdditionalRole[] {
-  return input.scientificContext?.provenanceStatus === "field_sample"
+  return input.scientificContext?.provenanceStatus === "research_project_sample"
     ? input.scientificContext.additionalRoles
     : [];
 }

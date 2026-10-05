@@ -251,7 +251,7 @@ describe("import template route", () => {
 
       const res = await download(
         db,
-        `?rows=1&provenanceStatus=field_sample&materialPath=rock_and_sediment.rock.igneous&manualGroupId=${GROUP.id}`,
+        `?rows=1&provenanceStatus=research_project_sample&materialPath=rock_and_sediment.rock.igneous&manualGroupId=${GROUP.id}`,
       );
       const book = new ExcelJS.Workbook();
       await book.xlsx.load(await res.arrayBuffer());
@@ -266,7 +266,7 @@ describe("import template route", () => {
         group: prefillOf("Manual group"),
       }).toEqual({
         status: 200,
-        provenance: "Field sample",
+        provenance: "Research project sample",
         material: "Igneous",
         group: GROUP.name,
       });
@@ -282,7 +282,7 @@ describe("import template route", () => {
     async ([subSamples, isKept], { db }) => {
       const res = await download(
         db,
-        `?rows=1&provenanceStatus=field_sample${subSamples}`,
+        `?rows=1&provenanceStatus=research_project_sample${subSamples}`,
       );
 
       expect({
@@ -351,7 +351,7 @@ describe("import template reservation route", () => {
 
       const res = await reserve(db, {
         count: 2,
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         materialPath: "rock_and_sediment.rock.igneous",
         manualGroupId: GROUP.id,
       });
@@ -373,7 +373,7 @@ describe("import template reservation route", () => {
       }).toEqual({
         status: 200,
         consecutive: [0, 1],
-        provenance: "Field sample",
+        provenance: "Research project sample",
         material: "Igneous",
         group: GROUP.name,
       });
@@ -401,7 +401,7 @@ describe("import template reservation route", () => {
     async ({ db }) => {
       const res = await reserve(db, {
         count: 1,
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         subSamples: true,
       });
 

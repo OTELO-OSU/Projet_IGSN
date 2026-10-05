@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FRONTEND_URL } from "./core-record-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
-  FIELD_SAMPLE,
+  RESEARCH_PROJECT_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "./core-sample-fixture.ts";
 import { SYNTHETIC_SUB_SAMPLE } from "./core-sample-variant-fixture.ts";
@@ -12,7 +12,8 @@ import { toCoreSample } from "./to-core-sample.ts";
 describe("toCoreSample", () => {
   it("should record the creation, publication and edition as lifecycle events", () => {
     expect(
-      toCoreSample(FIELD_SAMPLE, FRONTEND_URL).record.lifecycleEvents,
+      toCoreSample(RESEARCH_PROJECT_SAMPLE, FRONTEND_URL).record
+        .lifecycleEvents,
     ).toEqual([
       { eventType: "created", timestamp: "2024-06-02T10:00:00.000Z" },
       { eventType: "published", timestamp: "2024-06-03T10:00:00.000Z" },
@@ -31,15 +32,19 @@ describe("toCoreSample", () => {
 
   it("should omit the published event when the sample has no publication date", () => {
     expect(
-      toCoreSample({ ...FIELD_SAMPLE, publishedAt: null }, FRONTEND_URL).record
-        .lifecycleEvents,
+      toCoreSample(
+        { ...RESEARCH_PROJECT_SAMPLE, publishedAt: null },
+        FRONTEND_URL,
+      ).record.lifecycleEvents,
     ).toEqual([
       { eventType: "created", timestamp: "2024-06-02T10:00:00.000Z" },
     ]);
   });
 
   it("should point the landing page at the frontend", () => {
-    expect(toCoreSample(FIELD_SAMPLE, FRONTEND_URL).identification).toEqual({
+    expect(
+      toCoreSample(RESEARCH_PROJECT_SAMPLE, FRONTEND_URL).identification,
+    ).toEqual({
       sampleIdentifier: "ABCDEFGHJKMNPQRSTVWXYZ0123",
       doi: "10.5072/ABCDEFGHJKMNPQRSTVWXYZ0123",
       landingPage:
@@ -60,7 +65,7 @@ describe("toCoreSample", () => {
 
   it("should name OTELo as the registrant", () => {
     expect(
-      toCoreSample(FIELD_SAMPLE, FRONTEND_URL).responsibility,
+      toCoreSample(RESEARCH_PROJECT_SAMPLE, FRONTEND_URL).responsibility,
     ).toContainEqual({
       agent: {
         id: "https://ror.org/02cyw3861",
@@ -73,7 +78,7 @@ describe("toCoreSample", () => {
 
   it("should affiliate the creator with the institutional trio", () => {
     expect(
-      toCoreSample(FIELD_SAMPLE, FRONTEND_URL).responsibility,
+      toCoreSample(RESEARCH_PROJECT_SAMPLE, FRONTEND_URL).responsibility,
     ).toContainEqual({
       agent: {
         firstname: "Marie",
@@ -97,9 +102,9 @@ describe("toCoreSample", () => {
 
   it("should carry the ORCID a person's linked account resolved to as their agent id", () => {
     const sample = {
-      ...FIELD_SAMPLE,
+      ...RESEARCH_PROJECT_SAMPLE,
       scientificContext: {
-        provenanceStatus: "field_sample" as const,
+        provenanceStatus: "research_project_sample" as const,
         collectorFirstname: "Inge",
         collectorLastname: "Lehmann",
         collectorOrcid: "0000-0001-5109-3700",
@@ -138,7 +143,7 @@ describe("toCoreSample", () => {
 
   it("should give a known vertical reference system its EPSG datum", () => {
     expect(
-      toCoreSample(FIELD_SAMPLE, FRONTEND_URL).production.location
+      toCoreSample(RESEARCH_PROJECT_SAMPLE, FRONTEND_URL).production.location
         ?.verticalExtent,
     ).toEqual({
       minimum: {
@@ -153,14 +158,14 @@ describe("toCoreSample", () => {
 
   it("should convert a pressure in kbar to bar", () => {
     expect(
-      toCoreSample(FIELD_SAMPLE, FRONTEND_URL).curation.sampleCondition
-        ?.pressure,
+      toCoreSample(RESEARCH_PROJECT_SAMPLE, FRONTEND_URL).curation
+        .sampleCondition?.pressure,
     ).toEqual({ value: 1100, unitCode: "bar", unitLabel: "kbar" });
   });
 
   it("should emit the archive contact first and last names apart", () => {
     const { currentRepository } = toCoreSample(
-      FIELD_SAMPLE,
+      RESEARCH_PROJECT_SAMPLE,
       FRONTEND_URL,
     ).curation;
     expect(currentRepository).toMatchObject({
@@ -220,7 +225,7 @@ describe("toCoreSample", () => {
   it("should name the other material through the local name, never a material notation", () => {
     const core = toCoreSample(
       {
-        ...FIELD_SAMPLE,
+        ...RESEARCH_PROJECT_SAMPLE,
         material: "rock_and_sediment.rock.other",
         texture: null,
         specificName: "Dark fine grained rock",
@@ -244,8 +249,8 @@ describe("toCoreSample", () => {
 
   it("should carry no title on a relation without one", () => {
     const sample = {
-      ...FIELD_SAMPLE,
-      relations: FIELD_SAMPLE.relations.map((relation) => ({
+      ...RESEARCH_PROJECT_SAMPLE,
+      relations: RESEARCH_PROJECT_SAMPLE.relations.map((relation) => ({
         ...relation,
         targetTitle: null,
       })),
@@ -261,7 +266,7 @@ describe("toCoreSample", () => {
     ["CNRS1234567890", "IGSN"],
   ])("should carry the parent IGSN %s as a %s identifier", (igsn, type) => {
     const sample = {
-      ...FIELD_SAMPLE,
+      ...RESEARCH_PROJECT_SAMPLE,
       parents: [
         {
           id: "88888888-8888-4888-8888-888888888888",

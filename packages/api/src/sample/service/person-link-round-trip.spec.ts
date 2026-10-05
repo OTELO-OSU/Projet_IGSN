@@ -31,11 +31,11 @@ type PersonCase = [
 
 const personCases: PersonCase[] = [
   [
-    "a field sample's chief scientist",
+    "a research project sample's chief scientist",
     (userId) => ({
       ...base,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
         chiefScientistUserId: userId,
       },
@@ -43,7 +43,7 @@ const personCases: PersonCase[] = [
     (userId) => ({
       ...base,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
         chiefScientistUserId: userId,
         chiefScientistFirstname: "Marie",
@@ -51,11 +51,11 @@ const personCases: PersonCase[] = [
     }),
   ],
   [
-    "a field sample's collector",
+    "a research project sample's collector",
     (userId) => ({
       ...base,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
         collectorUserId: userId,
       },
@@ -63,7 +63,7 @@ const personCases: PersonCase[] = [
     (userId) => ({
       ...base,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
         collectorUserId: userId,
         collectorLastname: "Curie",
@@ -126,14 +126,14 @@ describe("sample person account link persistence", () => {
       const created = await insertSample(db, {
         ...base,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorUserId: account.id,
         },
       });
       // Assert
       expect(created.scientificContext).toEqual({
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles: [],
         collectorUserId: account.id,
         collectorFirstname: "Marie",
@@ -151,7 +151,7 @@ describe("sample person account link persistence", () => {
       await insertSample(db, {
         ...base,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [],
           collectorUserId: account.id,
         },

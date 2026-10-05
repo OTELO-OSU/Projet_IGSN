@@ -298,7 +298,7 @@
   "publish_blocked_vertical_position_incomplete": "A vertical position needs every value and a reference before publishing.",
   "publish_blocked_existence_status_missing": "State whether the sample still exists before publishing.",
   "publish_blocked_availability_status_missing": "State whether the sample is available before publishing.",
-  "publish_blocked_scientific_context_missing": "Set the provenance status (field sample or collection specimen) before publishing.",
+  "publish_blocked_scientific_context_missing": "Set the provenance status (research project sample or collection specimen) before publishing.",
   "publish_blocked_collector_firstname_missing": "Set the collector first name before publishing.",
   "publish_blocked_collector_lastname_missing": "Set the collector last name before publishing.",
   "publish_blocked_chief_scientist_firstname_missing": "Set the chief scientist first name before publishing.",

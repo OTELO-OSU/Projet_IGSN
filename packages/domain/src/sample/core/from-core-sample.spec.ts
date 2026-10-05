@@ -5,11 +5,14 @@ import type { CoreSampleBody } from "./core-sample-schema.ts";
 
 import {
   CORE_RECORD_FIXTURES,
-  FIELD_SAMPLE_RECORD,
+  RESEARCH_PROJECT_SAMPLE_RECORD,
   ORGANIZATION_NAME,
   SYNTHETIC_SAMPLE_RECORD,
 } from "./core-record-fixture.ts";
-import { FIELD_SAMPLE, toCreateSample } from "./core-sample-fixture.ts";
+import {
+  RESEARCH_PROJECT_SAMPLE,
+  toCreateSample,
+} from "./core-sample-fixture.ts";
 import { coreSampleBodySchema } from "./core-sample-schema.ts";
 import { fromCoreSample } from "./from-core-sample.ts";
 
@@ -43,18 +46,18 @@ describe("fromCoreSample", () => {
         ...identification
       },
       ...body
-    } = FIELD_SAMPLE_RECORD;
+    } = RESEARCH_PROJECT_SAMPLE_RECORD;
 
     expect(
       fromCoreSample(coreSampleBodySchema.parse({ ...body, identification })),
-    ).toEqual(reversed(FIELD_SAMPLE));
+    ).toEqual(reversed(RESEARCH_PROJECT_SAMPLE));
   });
 
   it("should tell the sample name from the local id by title type whatever their order", () => {
     const body = coreSampleBodySchema.parse({
-      ...FIELD_SAMPLE_RECORD,
+      ...RESEARCH_PROJECT_SAMPLE_RECORD,
       identification: {
-        ...FIELD_SAMPLE_RECORD.identification,
+        ...RESEARCH_PROJECT_SAMPLE_RECORD.identification,
         titles: [
           { value: "NCY-2024-017", titleType: "Other" },
           { value: "Granite outcrop block", titleType: "Main" },
@@ -70,33 +73,34 @@ describe("fromCoreSample", () => {
 
   it("should ignore the doi a body carries", () => {
     const body = coreSampleBodySchema.parse({
-      ...FIELD_SAMPLE_RECORD,
+      ...RESEARCH_PROJECT_SAMPLE_RECORD,
       identification: {
-        ...FIELD_SAMPLE_RECORD.identification,
+        ...RESEARCH_PROJECT_SAMPLE_RECORD.identification,
         doi: "10.5072/OTHER",
       },
     });
 
-    expect(fromCoreSample(body)).toEqual(reversed(FIELD_SAMPLE));
+    expect(fromCoreSample(body)).toEqual(reversed(RESEARCH_PROJECT_SAMPLE));
   });
 
   it("should ignore the ORCID a body carries for a person", () => {
     const body = coreSampleBodySchema.parse({
-      ...FIELD_SAMPLE_RECORD,
-      responsibility: FIELD_SAMPLE_RECORD.responsibility.map((agentRole) =>
-        agentRole.agent.agentType === "Person"
-          ? {
-              ...agentRole,
-              agent: {
-                ...agentRole.agent,
-                id: "https://orcid.org/0000-0002-1825-0097",
-              },
-            }
-          : agentRole,
+      ...RESEARCH_PROJECT_SAMPLE_RECORD,
+      responsibility: RESEARCH_PROJECT_SAMPLE_RECORD.responsibility.map(
+        (agentRole) =>
+          agentRole.agent.agentType === "Person"
+            ? {
+                ...agentRole,
+                agent: {
+                  ...agentRole.agent,
+                  id: "https://orcid.org/0000-0002-1825-0097",
+                },
+              }
+            : agentRole,
       ),
     });
 
-    expect(fromCoreSample(body)).toEqual(reversed(FIELD_SAMPLE));
+    expect(fromCoreSample(body)).toEqual(reversed(RESEARCH_PROJECT_SAMPLE));
   });
 
   it.each([
@@ -106,7 +110,7 @@ describe("fromCoreSample", () => {
     "should read the parent %s carried as a %s identifier",
     (value, identifierType) => {
       const body: CoreSampleBody = {
-        ...FIELD_SAMPLE_RECORD,
+        ...RESEARCH_PROJECT_SAMPLE_RECORD,
         relations: [
           {
             relationType: "IsDerivedFrom",
@@ -125,9 +129,9 @@ describe("fromCoreSample", () => {
 
   it("should read the archive contact first and last names as sent", () => {
     const body: CoreSampleBody = {
-      ...FIELD_SAMPLE_RECORD,
+      ...RESEARCH_PROJECT_SAMPLE_RECORD,
       curation: {
-        ...FIELD_SAMPLE_RECORD.curation,
+        ...RESEARCH_PROJECT_SAMPLE_RECORD.curation,
         currentRepository: {
           organizations: [
             { id: "urn:otelo:osu:OASU", name: "OASU (OASU)" },

@@ -108,7 +108,7 @@ describe("validateBulkEdit", () => {
       const sample = await published(db, {
         ...STORED,
         scientificContext: {
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           collectorUserId: collector.id,
           additionalRoles: [],
         },

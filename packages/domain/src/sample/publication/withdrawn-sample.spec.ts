@@ -29,7 +29,7 @@ const withdrawn: Sample = {
   geologicalContextDescription: "kept out of the public view",
   physiographicEnvironment: "continental.plain",
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     collectorFirstname: "Claire",
     collectorLastname: "Martin",
     additionalRoles: [

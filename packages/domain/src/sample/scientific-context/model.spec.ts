@@ -5,8 +5,8 @@ import {
   scientificContextSchema,
 } from "./model.ts";
 
-const fieldSample = {
-  provenanceStatus: "field_sample",
+const researchProjectSample = {
+  provenanceStatus: "research_project_sample",
   funderOrganizations: ["02feahw73", "04kdfz702"],
   researchProgramName: "Deep Biosphere Survey",
   chiefScientistFirstname: "Marie",
@@ -32,8 +32,10 @@ const collectionSpecimen = {
 };
 
 describe("scientificContextSchema", () => {
-  it("should accept a full field-sample context", () => {
-    expect(scientificContextSchema.parse(fieldSample)).toEqual(fieldSample);
+  it("should accept a full research-project-sample context", () => {
+    expect(scientificContextSchema.parse(researchProjectSample)).toEqual(
+      researchProjectSample,
+    );
   });
 
   it("should accept a full collection-specimen context", () => {
@@ -43,13 +45,13 @@ describe("scientificContextSchema", () => {
   });
 
   it.each([
-    { provenanceStatus: "field_sample" },
+    { provenanceStatus: "research_project_sample" },
     { provenanceStatus: "collection_specimen" },
   ])("should accept only the provenance status: %o", (input) => {
     expect(scientificContextSchema.safeParse(input).success).toBe(true);
   });
 
-  it("should accept several additional roles sharing one role on a field sample", () => {
+  it("should accept several additional roles sharing one role on a research project sample", () => {
     const additionalRoles = [
       { role: "researcher", personLastname: "Curie" },
       { role: "researcher", personLastname: "Lehmann" },
@@ -57,10 +59,10 @@ describe("scientificContextSchema", () => {
 
     expect(
       scientificContextSchema.parse({
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         additionalRoles,
       }),
-    ).toEqual({ provenanceStatus: "field_sample", additionalRoles });
+    ).toEqual({ provenanceStatus: "research_project_sample", additionalRoles });
   });
 
   it("should keep a collection specimen free of additional roles", () => {
@@ -75,11 +77,11 @@ describe("scientificContextSchema", () => {
   it("should trim free-text fields", () => {
     expect(
       scientificContextSchema.parse({
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         researchProgramName: "  Deep Biosphere Survey  ",
       }),
     ).toEqual({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       researchProgramName: "Deep Biosphere Survey",
       additionalRoles: [],
     });
@@ -88,37 +90,41 @@ describe("scientificContextSchema", () => {
   it.each([
     { case: "missing provenance status", input: { collectorLastname: "X" } },
     {
+      case: "the retired provenance status code",
+      input: { provenanceStatus: "field_sample" },
+    },
+    {
       case: "invalid ROR funder",
       input: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         funderOrganizations: ["nope"],
       },
     },
     {
       case: "duplicate funder organizations",
       input: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         funderOrganizations: ["02feahw73", "02feahw73"],
       },
     },
     {
       case: "empty host institutions (not filled is null, never [])",
       input: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         hostInstitution: [],
       },
     },
     {
       case: "duplicate host institutions",
       input: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         hostInstitution: ["04kdfz702", "04kdfz702"],
       },
     },
     {
       case: "malformed chief scientist ORCID",
       input: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         chiefScientistOrcid: "0000-0002-1825",
       },
     },
@@ -141,7 +147,7 @@ describe("a person is a link or a typed name, never both", () => {
     {
       case: "a person linked and named",
       input: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         chiefScientistUserId: USER_ID,
         chiefScientistFirstname: "Marie",
       },
@@ -152,14 +158,14 @@ describe("a person is a link or a typed name, never both", () => {
 
   it.each([
     {
-      case: "a field sample linking its chief scientist and its collector",
+      case: "a research project sample linking its chief scientist and its collector",
       input: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         chiefScientistUserId: USER_ID,
         collectorUserId: USER_ID,
       },
       parsed: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         chiefScientistUserId: USER_ID,
         collectorUserId: USER_ID,
         additionalRoles: [],
@@ -182,7 +188,7 @@ describe("a person is a link or a typed name, never both", () => {
 
   it("should reject an additional role both linked and named, reporting the row", () => {
     const result = createScientificContextSchema.safeParse({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       additionalRoles: [
         { role: "researcher", personUserId: USER_ID, personLastname: "Curie" },
       ],
@@ -201,7 +207,7 @@ describe("a write payload carries no ORCID", () => {
   it("should drop every submitted ORCID rather than reject it, since an ORCID comes from the linked account alone", () => {
     expect(
       createScientificContextSchema.parse({
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         chiefScientistLastname: "Curie",
         chiefScientistOrcid: "0000-0002-1825-0097",
         collectorLastname: "Lehmann",
@@ -215,7 +221,7 @@ describe("a write payload carries no ORCID", () => {
         ],
       }),
     ).toEqual({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       chiefScientistLastname: "Curie",
       collectorLastname: "Lehmann",
       additionalRoles: [{ role: "researcher", personLastname: "Lovelace" }],

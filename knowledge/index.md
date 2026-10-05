@@ -35,7 +35,7 @@ okf_version: "0.2"
 - [Sample parentage and sub-samples](sample-parentage.md) - A sample may have one parent, set at creation and never editable; it inherits the parent's location and, for a synthetic parent, its material branch.
 - [Sample status lifecycle and its three predicates](sample-status-lifecycle.md) - status is draft | published | withdrawn | tombstone, read through three distinct predicates for permanence, public visibility and public resolution.
 - [Sample vocabularies as segment-keyed trees](vocabulary-tree.md) - Every sample vocabulary is one segment-keyed TreeNode tree in domain, expanded to flat dot-paths by expandPaths, with per-node completeness.
-- [Scientific context: field sample or collection specimen](scientific-context.md) - A discriminated union on provenanceStatus (field_sample | collection_specimen) with per-branch mandatory fields, per-branch post-publish locks, and a location requirement that only the collection specimen relaxes.
+- [Scientific context: research project sample or collection specimen](scientific-context.md) - A discriminated union on provenanceStatus (research_project_sample | collection_specimen) with per-branch mandatory fields, per-branch post-publish locks, and a location requirement that only the collection specimen relaxes.
 - [Service accounts](service-accounts.md) - A super-admin-declared non-human account with a name, a required owner, an institutional trio and managed groups, its own table never a user row, with an owner-rotated API key for the `/service` machine mount.
 - [Synthetic sample details](synthetic-details.md) - syntheticDetails is the sub-block a synthetic sample carries instead of a location, gated by isSyntheticMaterial and required in seven fields to publish.
 

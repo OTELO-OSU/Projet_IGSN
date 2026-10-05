@@ -6,11 +6,11 @@ import { render } from "vitest-browser-react";
 import { ScientificContextView } from "./scientific-context-view.tsx";
 
 describe("ScientificContextView", () => {
-  it("should render every part of a field sample", async () => {
+  it("should render every part of a research project sample", async () => {
     const screen = await render(
       <ScientificContextView
         scientificContext={{
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           funderOrganizations: ["03fd77x13", "02cte4b68"],
           researchProgramName: "Deep Earth Sampling",
           chiefScientistFirstname: "Marie",
@@ -73,9 +73,9 @@ describe("ScientificContextView", () => {
 
   it.each<[string, ScientificContext, string[]]>([
     [
-      "field sample",
+      "research project sample",
       {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         funderOrganizations: ["03fd77x13"],
         researchProgramName: "Deep Earth Sampling",
         chiefScientistLastname: "Curie",
@@ -138,7 +138,7 @@ describe("ScientificContextView", () => {
     const screen = await render(
       <ScientificContextView
         scientificContext={{
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           researchProgramName: "Only the name",
           additionalRoles: [],
         }}
@@ -158,16 +158,16 @@ describe("ScientificContextView", () => {
     [
       "chief scientist",
       {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         chiefScientistLastname: "Curie",
         additionalRoles: [],
       },
       "Curie",
     ],
     [
-      "collector of a field sample",
+      "collector of a research project sample",
       {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         collectorLastname: "Field",
         additionalRoles: [],
       },
@@ -198,7 +198,7 @@ describe("ScientificContextView", () => {
     const screen = await render(
       <ScientificContextView
         scientificContext={{
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [
             {
               role: "project_member",
@@ -226,7 +226,7 @@ describe("ScientificContextView", () => {
     const screen = await render(
       <ScientificContextView
         scientificContext={{
-          provenanceStatus: "field_sample",
+          provenanceStatus: "research_project_sample",
           additionalRoles: [
             {
               role: "researcher",
@@ -247,8 +247,8 @@ describe("ScientificContextView", () => {
 
   it.each<[string, ScientificContext]>([
     [
-      "a field sample with no additional role",
-      { provenanceStatus: "field_sample", additionalRoles: [] },
+      "a research project sample with no additional role",
+      { provenanceStatus: "research_project_sample", additionalRoles: [] },
     ],
     ["a collection specimen", { provenanceStatus: "collection_specimen" }],
   ])("should render no additional-role row for %s", async (_case, context) => {

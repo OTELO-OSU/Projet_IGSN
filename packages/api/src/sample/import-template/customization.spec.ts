@@ -21,15 +21,15 @@ const readMeBook = () => {
 describe("import template customization", () => {
   it.each<[string, TemplateCustomization, string[]]>([
     [
-      "a field sample drops the collection specimen fields",
-      { provenanceStatus: "field_sample" },
+      "a research project sample drops the collection specimen fields",
+      { provenanceStatus: "research_project_sample" },
       [
         "scientificContext.collectionOrigin",
         "scientificContext.collectionContextDescription",
       ],
     ],
     [
-      "a collection specimen drops the field sample fields, child sheets included",
+      "a collection specimen drops the research project sample fields, child sheets included",
       { provenanceStatus: "collection_specimen" },
       [
         "scientificContext.chiefScientistFirstname",
@@ -75,7 +75,7 @@ describe("import template customization", () => {
 
   it("should pre-fill the provenance status, the manual group and each material level down to the fixed depth with its label", () => {
     const prefill = prefillOf({
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       materialPath: "rock_and_sediment.rock.igneous",
       manualGroupLabel: "Alps",
     });
@@ -86,7 +86,7 @@ describe("import template customization", () => {
         return label === undefined ? [] : [[plainHeader(column), label]];
       }),
     ).toEqual([
-      ["Provenance status", "Field sample"],
+      ["Provenance status", "Research project sample"],
       ["Manual group", "Alps"],
       ["Material (level 1)", "Rock and sediment"],
       ["Material (level 2)", "Rock"],
@@ -102,7 +102,7 @@ describe("import template customization", () => {
   });
 
   it.each([
-    ["no JSON", "field_sample"],
+    ["no JSON", "research_project_sample"],
     ["an unknown provenance status", '{"provenanceStatus":"lost"}'],
     [
       "a material outside the template",

@@ -1,6 +1,6 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { FIELD_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
+import { RESEARCH_PROJECT_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { HTTPException } from "hono/http-exception";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,9 +10,9 @@ const KEY = "topsecret";
 
 const CONFIG = { host: "http://datacite.test", key: KEY, prefix: "10.5072" };
 
-const DOI = `${CONFIG.prefix}/${FIELD_SAMPLE.igsn}`;
+const DOI = `${CONFIG.prefix}/${RESEARCH_PROJECT_SAMPLE.igsn}`;
 
-const LANDING_PAGE = `http://localhost:3000/samples/${FIELD_SAMPLE.igsn}`;
+const LANDING_PAGE = `http://localhost:3000/samples/${RESEARCH_PROJECT_SAMPLE.igsn}`;
 
 describe("syncDoi", () => {
   const fetchMock = vi.fn();
@@ -31,7 +31,7 @@ describe("syncDoi", () => {
     // Arrange
     fetchMock.mockResolvedValue(new Response("{}", { status: 201 }));
     // Act
-    await syncDoi(CONFIG, FIELD_SAMPLE);
+    await syncDoi(CONFIG, RESEARCH_PROJECT_SAMPLE);
     // Assert
     expect(fetchMock).toHaveBeenCalledWith(
       `${CONFIG.host}/dois/${DOI}`,
@@ -51,11 +51,15 @@ describe("syncDoi", () => {
   });
 
   it.each([
-    { rule: "DataCite is not configured", config: null, sample: FIELD_SAMPLE },
+    {
+      rule: "DataCite is not configured",
+      config: null,
+      sample: RESEARCH_PROJECT_SAMPLE,
+    },
     {
       rule: "the sample carries no DOI prefix",
       config: CONFIG,
-      sample: { ...FIELD_SAMPLE, doiPrefix: null },
+      sample: { ...RESEARCH_PROJECT_SAMPLE, doiPrefix: null },
     },
   ])("should send nothing when $rule", async ({ config, sample }) => {
     // Arrange
@@ -79,7 +83,7 @@ describe("syncDoi", () => {
     async ({ status, event, url }) => {
       // Arrange
       fetchMock.mockResolvedValue(new Response("{}", { status: 201 }));
-      const sample: Sample = { ...FIELD_SAMPLE, status };
+      const sample: Sample = { ...RESEARCH_PROJECT_SAMPLE, status };
       // Act
       await syncDoi(CONFIG, sample);
       // Assert
@@ -113,7 +117,7 @@ describe("syncDoi", () => {
         .spyOn(console, "error")
         .mockImplementation(() => undefined);
       // Act
-      const error = await syncDoi(CONFIG, FIELD_SAMPLE).catch(
+      const error = await syncDoi(CONFIG, RESEARCH_PROJECT_SAMPLE).catch(
         (reason: unknown) => reason,
       );
       // Assert

@@ -6,7 +6,7 @@ import { pathSegment } from "../path/segment.ts";
 import { sampleSchema } from "../sample.ts";
 import {
   COLLECTION_SPECIMEN,
-  FIELD_SAMPLE,
+  RESEARCH_PROJECT_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "./core-sample-fixture.ts";
 import { SUB_SAMPLE } from "./core-sample-variant-fixture.ts";
@@ -153,7 +153,7 @@ const RIGHTS_HOLDERS: CoreAgentRole[] = [
   },
 ];
 
-export const FIELD_SAMPLE_RECORD: CoreSample = {
+export const RESEARCH_PROJECT_SAMPLE_RECORD: CoreSample = {
   ...ENVELOPE,
   identification: {
     sampleIdentifier: IGSN,
@@ -178,7 +178,11 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
       concept("physiographic-environment", "continental.badlands"),
       concept("resource-type", "mineral_and_ore.uranium"),
       concept("geologicalContext", "Hercynian basement"),
-      concept("scientificContext", "field_sample", "provenance-status"),
+      concept(
+        "scientificContext",
+        "research_project_sample",
+        "provenance-status",
+      ),
     ],
   },
   responsibility: [
@@ -441,7 +445,11 @@ export const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
     ],
     contextCategories: [
       concept("material", "rock_and_sediment.synthetic_rock_mineral"),
-      concept("scientificContext", "field_sample", "provenance-status"),
+      concept(
+        "scientificContext",
+        "research_project_sample",
+        "provenance-status",
+      ),
     ],
   },
   responsibility: [
@@ -497,16 +505,16 @@ export const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
 };
 
 const SUB_SAMPLE_RECORD: CoreSample = {
-  ...FIELD_SAMPLE_RECORD,
+  ...RESEARCH_PROJECT_SAMPLE_RECORD,
   identification: {
-    ...FIELD_SAMPLE_RECORD.identification,
+    ...RESEARCH_PROJECT_SAMPLE_RECORD.identification,
     titles: [
       { value: "Thin section of the block", titleType: "Main" },
       { value: "NCY-2024-017", titleType: "Other" },
     ],
   },
   production: {
-    ...FIELD_SAMPLE_RECORD.production,
+    ...RESEARCH_PROJECT_SAMPLE_RECORD.production,
     processSteps: [
       {
         stepType: "Subsampling",
@@ -521,7 +529,11 @@ const SUB_SAMPLE_RECORD: CoreSample = {
 };
 
 export const CORE_RECORD_FIXTURES = [
-  { name: "a field sample", record: FIELD_SAMPLE_RECORD, sample: FIELD_SAMPLE },
+  {
+    name: "a research project sample",
+    record: RESEARCH_PROJECT_SAMPLE_RECORD,
+    sample: RESEARCH_PROJECT_SAMPLE,
+  },
   {
     name: "a collection specimen",
     record: COLLECTION_SPECIMEN_RECORD,

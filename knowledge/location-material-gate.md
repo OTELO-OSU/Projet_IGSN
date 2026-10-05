@@ -35,7 +35,7 @@ Whether publishing needs that location is a second predicate, `requiresLocation(
 
 - True unless the scientific context is a `collection_specimen` ([[scientific-context]]); an unset provenance still requires a location.
 - Read by `samplePublishBlockers` for `location_position_missing` and by the admin Location tab, where one `form.Subscribe` in `LocationFields` toggles the `*` marker on the type combobox and the coordinate fields. Vertical fields keep their own sibling gate.
-- A field sample therefore needs a position (point, area or line) to publish; a collection specimen publishes with or without one.
+- A research project sample therefore needs a position (point, area or line) to publish; a collection specimen publishes with or without one.
 
 - A synthetic material trades the Location tab for the Synthetic details tab, the two gates reading the same predicate.
 - Entering a location then picking a refusing material drops it on save, per the hidden-value rules of [[form-kit-and-hidden-values]].

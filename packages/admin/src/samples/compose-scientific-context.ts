@@ -31,7 +31,7 @@ export type ScientificContextDraft = {
 
 type ScientificContextCandidate =
   | {
-      provenanceStatus: "field_sample";
+      provenanceStatus: "research_project_sample";
       funderOrganizations: string[] | undefined;
       researchProgramName: string | undefined;
       chiefScientistUserId: string | undefined;
@@ -72,9 +72,9 @@ export function composeScientificContext(
     draft.collectorFirstname,
     draft.collectorLastname,
   );
-  if (draft.provenanceStatus === "field_sample") {
+  if (draft.provenanceStatus === "research_project_sample") {
     return {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       funderOrganizations: nonEmpty(draft.funderOrganizations),
       researchProgramName: draft.researchProgramName || undefined,
       chiefScientistUserId: chiefScientist.userId,
@@ -121,43 +121,50 @@ export function toScientificContextDraft(
   value: ScientificContext | null | undefined,
   options: DraftOptions = {},
 ): ScientificContextDraft {
-  const fieldSample =
-    value?.provenanceStatus === "field_sample" ? value : undefined;
+  const researchProjectSample =
+    value?.provenanceStatus === "research_project_sample" ? value : undefined;
   const collectionSpecimen =
     value?.provenanceStatus === "collection_specimen" ? value : undefined;
   return {
     provenanceStatus:
-      value?.provenanceStatus ?? draftDefault(options, "field_sample"),
-    funderOrganizations: fieldSample?.funderOrganizations ?? [],
-    researchProgramName: fieldSample?.researchProgramName ?? undefined,
-    chiefScientistUserId: fieldSample?.chiefScientistUserId ?? undefined,
-    chiefScientistFirstname: fieldSample?.chiefScientistFirstname ?? undefined,
-    chiefScientistLastname: fieldSample?.chiefScientistLastname ?? undefined,
-    hostInstitution: fieldSample?.hostInstitution ?? [],
+      value?.provenanceStatus ??
+      draftDefault(options, "research_project_sample"),
+    funderOrganizations: researchProjectSample?.funderOrganizations ?? [],
+    researchProgramName:
+      researchProjectSample?.researchProgramName ?? undefined,
+    chiefScientistUserId:
+      researchProjectSample?.chiefScientistUserId ?? undefined,
+    chiefScientistFirstname:
+      researchProjectSample?.chiefScientistFirstname ?? undefined,
+    chiefScientistLastname:
+      researchProjectSample?.chiefScientistLastname ?? undefined,
+    hostInstitution: researchProjectSample?.hostInstitution ?? [],
     collectorUserId:
-      fieldSample?.collectorUserId ??
+      researchProjectSample?.collectorUserId ??
       collectionSpecimen?.collectorUserId ??
       undefined,
     collectorFirstname:
-      fieldSample?.collectorFirstname ??
+      researchProjectSample?.collectorFirstname ??
       collectionSpecimen?.collectorFirstname ??
       undefined,
     collectorLastname:
-      fieldSample?.collectorLastname ??
+      researchProjectSample?.collectorLastname ??
       collectionSpecimen?.collectorLastname ??
       undefined,
-    funding: fieldSample?.funding ?? undefined,
+    funding: researchProjectSample?.funding ?? undefined,
     researchProgramDescription:
-      fieldSample?.researchProgramDescription ?? undefined,
-    platformType: fieldSample?.platformType ?? undefined,
-    launchPlatformName: fieldSample?.launchPlatformName ?? undefined,
-    additionalRoles: (fieldSample?.additionalRoles ?? []).map((row) => ({
-      key: crypto.randomUUID(),
-      role: row.role,
-      personUserId: row.personUserId ?? undefined,
-      personFirstname: row.personFirstname ?? undefined,
-      personLastname: row.personLastname ?? undefined,
-    })),
+      researchProjectSample?.researchProgramDescription ?? undefined,
+    platformType: researchProjectSample?.platformType ?? undefined,
+    launchPlatformName: researchProjectSample?.launchPlatformName ?? undefined,
+    additionalRoles: (researchProjectSample?.additionalRoles ?? []).map(
+      (row) => ({
+        key: crypto.randomUUID(),
+        role: row.role,
+        personUserId: row.personUserId ?? undefined,
+        personFirstname: row.personFirstname ?? undefined,
+        personLastname: row.personLastname ?? undefined,
+      }),
+    ),
     collectionOrigin: collectionSpecimen?.collectionOrigin ?? undefined,
     collectionContextDescription:
       collectionSpecimen?.collectionContextDescription ?? undefined,

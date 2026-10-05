@@ -1,4 +1,4 @@
-import { FIELD_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
+import { RESEARCH_PROJECT_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
@@ -25,7 +25,9 @@ const UNAVAILABLE = 404;
 
 const GROUP = { id: "0190c9a0-0000-7000-8000-000000000001", name: "Alps" };
 
-const PUBLISHED_PARENTS = new Map([[FIELD_SAMPLE.igsn!, FIELD_SAMPLE]]);
+const PUBLISHED_PARENTS = new Map([
+  [RESEARCH_PROJECT_SAMPLE.igsn!, RESEARCH_PROJECT_SAMPLE],
+]);
 
 const REPORT = "report.pdf";
 
@@ -70,7 +72,7 @@ const customizedBook = async () => {
       3,
       [],
       {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         materialPath: "rock_and_sediment.rock.igneous",
         manualGroup: GROUP,
       },
@@ -81,7 +83,7 @@ const customizedBook = async () => {
 };
 
 const subSampleBook = (cells: Record<string, ExcelJS.CellValue> = {}) =>
-  parentedBook(FIELD_SAMPLE.igsn!, cells);
+  parentedBook(RESEARCH_PROJECT_SAMPLE.igsn!, cells);
 
 const PROCESS_STEP_ROW = {
   "Sample #": 1,
@@ -418,7 +420,7 @@ describe("validateImport", () => {
       collectionDate: samples[0]?.input.description?.collectionDate,
     }).toEqual({
       issues: [],
-      parentIds: [FIELD_SAMPLE.id],
+      parentIds: [RESEARCH_PROJECT_SAMPLE.id],
       location: undefined,
       collectionDate: {
         precision: "day",
@@ -438,9 +440,11 @@ describe("validateImport", () => {
     ],
     [
       "two IGSNs in the cell",
-      { "Parent IGSN": `${FIELD_SAMPLE.igsn}, ZYXWVTSRQPNMKJHGFEDCBA9876` },
+      {
+        "Parent IGSN": `${RESEARCH_PROJECT_SAMPLE.igsn}, ZYXWVTSRQPNMKJHGFEDCBA9876`,
+      },
       "Parent IGSN",
-      `${FIELD_SAMPLE.igsn}, ZYXWVTSRQPNMKJHGFEDCBA9876`,
+      `${RESEARCH_PROJECT_SAMPLE.igsn}, ZYXWVTSRQPNMKJHGFEDCBA9876`,
       "multiple_parent_igsns",
     ],
     [

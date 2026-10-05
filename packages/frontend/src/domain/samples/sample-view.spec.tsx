@@ -127,7 +127,7 @@ const fullSample = () =>
       mass: { value: 1.4, unit: "kg" },
     },
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       funding: "ANR grant 42",
       additionalRoles: [],
     },
@@ -305,7 +305,7 @@ describe("SampleView", () => {
       "Collection date",
       "2024-03-05",
       "Provenance status",
-      "Field sample",
+      "Research project sample",
       "Publication year",
       "2026",
     ]) {
@@ -784,8 +784,8 @@ describe("SampleView", () => {
 
   it.each<[string, NonNullable<PublishedSample["scientificContext"]>]>([
     [
-      "a field sample",
-      { provenanceStatus: "field_sample", additionalRoles: [] },
+      "a research project sample",
+      { provenanceStatus: "research_project_sample", additionalRoles: [] },
     ],
     ["a collection specimen", { provenanceStatus: "collection_specimen" }],
   ])(

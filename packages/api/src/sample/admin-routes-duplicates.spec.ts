@@ -27,7 +27,7 @@ const authHeader = { Authorization: "Bearer test-token" };
 const COLLECTED = {
   ...publishableSample,
   scientificContext: {
-    provenanceStatus: "field_sample",
+    provenanceStatus: "research_project_sample",
     additionalRoles: [],
     collectorFirstname: "Inge",
     collectorLastname: "Lehmann",

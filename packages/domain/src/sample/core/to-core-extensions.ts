@@ -91,11 +91,14 @@ export function toCoreExtensions(sample: Sample): CoreExtensions | undefined {
     operator: isEmpty(operator) ? undefined : operator,
   };
   const context = sample.scientificContext;
-  const fieldSample =
-    context?.provenanceStatus === "field_sample" ? context : null;
+  const researchProjectSample =
+    context?.provenanceStatus === "research_project_sample" ? context : null;
   const fieldwork = {
-    platformType: optionalConcept("platform-type", fieldSample?.platformType),
-    launchPlatformName: fieldSample?.launchPlatformName ?? undefined,
+    platformType: optionalConcept(
+      "platform-type",
+      researchProjectSample?.platformType,
+    ),
+    launchPlatformName: researchProjectSample?.launchPlatformName ?? undefined,
   };
   const geology = {
     numericAge: isEmpty(numericAge) ? undefined : numericAge,

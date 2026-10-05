@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { core, corePaths } from "../core/core-paths-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
-  FIELD_SAMPLE,
+  RESEARCH_PROJECT_SAMPLE,
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
@@ -129,8 +129,8 @@ describe("a Core record mapped to DataCite", () => {
     ]);
   });
 
-  it("should project a field sample onto its DataCite record", () => {
-    expect(toDataCiteSample(core(FIELD_SAMPLE))).toEqual({
+  it("should project a research project sample onto its DataCite record", () => {
+    expect(toDataCiteSample(core(RESEARCH_PROJECT_SAMPLE))).toEqual({
       doi: "10.5072/ABCDEFGHJKMNPQRSTVWXYZ0123",
       url: "https://igsn.example.org/samples/ABCDEFGHJKMNPQRSTVWXYZ0123",
       titles: [{ title: "Granite outcrop block" }],
@@ -223,7 +223,7 @@ describe("a Core record mapped to DataCite", () => {
           schemeUri: "urn:otelo:vocabulary:geologicalContext",
         },
         {
-          subject: "field_sample",
+          subject: "research_project_sample",
           subjectScheme: "otelo:scientificContext",
           schemeUri: "urn:otelo:vocabulary:scientificContext",
         },
@@ -322,7 +322,7 @@ describe("a Core record mapped to DataCite", () => {
           schemeUri: "urn:otelo:vocabulary:material",
         },
         {
-          subject: "field_sample",
+          subject: "research_project_sample",
           subjectScheme: "otelo:scientificContext",
           schemeUri: "urn:otelo:vocabulary:scientificContext",
         },
@@ -390,7 +390,7 @@ describe("the Collected date of a DataCite record", () => {
     },
     {
       name: "a collection spread over time",
-      sample: FIELD_SAMPLE,
+      sample: RESEARCH_PROJECT_SAMPLE,
       date: "2024-06-01T08:30/2024-06-01T11:00",
     },
   ])("should carry the start alone for $name", ({ sample, date }) => {
@@ -405,7 +405,7 @@ describe("the geolocation of a DataCite record", () => {
   it.each([
     {
       name: "a point",
-      sample: FIELD_SAMPLE,
+      sample: RESEARCH_PROJECT_SAMPLE,
       geoLocation: {
         geoLocationPlace: "Nancy quarry",
         geoLocationPoint: { pointLongitude: 6.18, pointLatitude: 48.69 },
@@ -470,7 +470,7 @@ describe("the geolocation of a DataCite record", () => {
     expect(
       toDataCiteSample(
         core({
-          ...FIELD_SAMPLE,
+          ...RESEARCH_PROJECT_SAMPLE,
           location: { region: { kind: "country", country: "FR" } },
         }),
       ).geoLocations,
@@ -478,7 +478,7 @@ describe("the geolocation of a DataCite record", () => {
   });
 
   it("should keep the place alone when the location is sensitive", () => {
-    const sensitive = core(FIELD_SAMPLE);
+    const sensitive = core(RESEARCH_PROJECT_SAMPLE);
 
     expect(
       toDataCiteSample({
@@ -499,8 +499,8 @@ describe("the related identifiers of a DataCite record", () => {
       expect(
         toDataCiteSample(
           core({
-            ...FIELD_SAMPLE,
-            relations: FIELD_SAMPLE.relations.map((relation) => ({
+            ...RESEARCH_PROJECT_SAMPLE,
+            relations: RESEARCH_PROJECT_SAMPLE.relations.map((relation) => ({
               ...relation,
               targetResourceType,
             })),

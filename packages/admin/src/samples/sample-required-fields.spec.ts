@@ -29,11 +29,11 @@ const draftOf = (
   return { ...draft, ...patch(draft) };
 };
 
-const fieldSample = (context: Partial<Draft["scientificContext"]>) =>
+const researchProjectSample = (context: Partial<Draft["scientificContext"]>) =>
   draftOf({}, (draft) => ({
     scientificContext: {
       ...draft.scientificContext,
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       ...context,
     },
   }));
@@ -70,19 +70,21 @@ describe("sampleRequiredFields", () => {
     ["an empty age section requires nothing", draftOf({}), ["age."], []],
     [
       "a linked collector is one met entry",
-      fieldSample({ collectorUserId: "3f2504e0-4f89-41d3-9a0c-0305000000a1" }),
+      researchProjectSample({
+        collectorUserId: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
+      }),
       ["scientificContext.collector"],
       [{ name: "scientificContext.collectorUserId", isMet: true }],
     ],
     [
       "an unset collector is one picker entry",
-      fieldSample({}),
+      researchProjectSample({}),
       ["scientificContext.collector"],
       [{ name: "scientificContext.collectorUserId", isMet: false }],
     ],
     [
       "a typed collector requires a first and a last name",
-      fieldSample({ collectorFirstname: "Marie" }),
+      researchProjectSample({ collectorFirstname: "Marie" }),
       ["scientificContext.collector"],
       [
         { name: "scientificContext.collectorFirstname", isMet: true },
@@ -91,13 +93,13 @@ describe("sampleRequiredFields", () => {
     ],
     [
       "an untouched chief scientist requires nothing",
-      fieldSample({}),
+      researchProjectSample({}),
       ["scientificContext.chiefScientist"],
       [],
     ],
     [
       "a chief scientist with one name typed requires the other",
-      fieldSample({ chiefScientistLastname: "Curie" }),
+      researchProjectSample({ chiefScientistLastname: "Curie" }),
       ["scientificContext.chiefScientist"],
       [
         { name: "scientificContext.chiefScientistFirstname", isMet: false },

@@ -222,7 +222,7 @@ export const coreExtensionsSchema = z.strictObject({
         .meta({ description: "Name of that platform." })
         .optional(),
     })
-    .meta({ description: "Fieldwork conditions of a field sample." })
+    .meta({ description: "Fieldwork conditions of a research project sample." })
     .optional(),
 });
 

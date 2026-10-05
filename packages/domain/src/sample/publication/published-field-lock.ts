@@ -8,7 +8,7 @@ import { frozenMaterialPrefix } from "./frozen-material-prefix.ts";
 const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   manualGroupIds: ["manualGroupIds"],
 } as const;
-const LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS = {
+const LOCKED_RESEARCH_PROJECT_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   collectorUserId: ["scientificContext.collectorUserId"],
   collectorFirstname: ["scientificContext.collectorFirstname"],
   collectorLastname: ["scientificContext.collectorLastname"],
@@ -36,7 +36,9 @@ export const FROZEN_FORM_FIELDS_BY_PROVENANCE: Record<
   ProvenanceStatus,
   readonly string[]
 > = {
-  field_sample: Object.values(LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS).flat(),
+  research_project_sample: Object.values(
+    LOCKED_RESEARCH_PROJECT_SAMPLE_FIELDS_TO_FORM_FIELDS,
+  ).flat(),
   collection_specimen: Object.values(
     LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS,
   ).flat(),
@@ -47,9 +49,9 @@ export function frozenMaterialDepth(material: Sample["material"]): number {
 }
 
 type CreateScientificContext = NonNullable<CreateSample["scientificContext"]>;
-type FieldSample = Extract<
+type ResearchProjectSample = Extract<
   CreateScientificContext,
-  { provenanceStatus: "field_sample" }
+  { provenanceStatus: "research_project_sample" }
 >;
 type CollectionSpecimen = Extract<
   CreateScientificContext,
@@ -97,14 +99,14 @@ function mergeScientificContext(
   if (current == null) {
     return null;
   }
-  if (current.provenanceStatus === "field_sample") {
-    if (incoming?.provenanceStatus !== "field_sample")
+  if (current.provenanceStatus === "research_project_sample") {
+    if (incoming?.provenanceStatus !== "research_project_sample")
       return dropTypedNameWhenLinked(current);
-    const payload: FieldSample = { ...incoming };
+    const payload: ResearchProjectSample = { ...incoming };
     return freezeLocked(
       payload,
       current,
-      LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS,
+      LOCKED_RESEARCH_PROJECT_SAMPLE_FIELDS_TO_FORM_FIELDS,
     );
   }
   if (incoming?.provenanceStatus !== "collection_specimen")

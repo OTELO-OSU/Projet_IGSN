@@ -40,7 +40,7 @@ describe("redactPrivateContacts", () => {
       ...sample,
       repository: null,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         chiefScientistUserId: USER_ID,
         collectorUserId: USER_ID,
         launchPlatformName: "RV Marion Dufresne",
@@ -56,7 +56,7 @@ describe("redactPrivateContacts", () => {
       name: "Rhyolite 11",
       repository: null,
       scientificContext: {
-        provenanceStatus: "field_sample",
+        provenanceStatus: "research_project_sample",
         chiefScientistUserId: null,
         collectorUserId: null,
         launchPlatformName: "RV Marion Dufresne",

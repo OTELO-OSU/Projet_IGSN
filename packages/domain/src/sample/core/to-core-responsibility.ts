@@ -86,12 +86,12 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
         "Collector",
         context.collectorFirstname,
         context.collectorLastname,
-        context.provenanceStatus === "field_sample"
+        context.provenanceStatus === "research_project_sample"
           ? context.collectorOrcid
           : null,
       ),
     );
-    if (context.provenanceStatus === "field_sample") {
+    if (context.provenanceStatus === "research_project_sample") {
       roles.push(
         ...personRole(
           "ChiefScientist",

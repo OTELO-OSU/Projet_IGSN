@@ -1,4 +1,4 @@
-# 0046. Additional scientific roles on a field sample
+# 0046. Additional scientific roles on a research project sample
 
 Date: 2026-09-21
 
@@ -8,7 +8,7 @@ Accepted. Its "The `Researcher` disambiguation" section is superseded by ADR [00
 
 ## Context
 
-A field sample credits a fixed cast today: a collector, a chief scientist, a host institution. Contributors asked for a repeatable list of further credits (a project manager, other researchers, a data manager) without a cap on how many people hold a given role.
+A research project sample credits a fixed cast today: a collector, a chief scientist, a host institution. Contributors asked for a repeatable list of further credits (a project manager, other researchers, a data manager) without a cap on how many people hold a given role.
 
 IGSN Core v0.10.0's `responsibility` is a `min 1` list of `AgentRole` with no cross-agent uniqueness rule, and its controlled role vocabulary already includes `Researcher`, `ProjectManager`, `ProjectMember` and `DataManager` (verified against `IGSN-Core_v0.10.0.docx`). Nothing here is a deviation from Core; the mapping only starts using terms the vocabulary already admits.
 
@@ -16,11 +16,11 @@ A synthetic sample already maps `syntheticDetails.operator` to Core's `Researche
 
 ## Decision
 
-- Add `scientificContext.additionalRoles[]` to the `field_sample` branch of `scientificContext` alone: `{ role, personUserId | personFirstname/personLastname/personOrcid }`.
+- Add `scientificContext.additionalRoles[]` to the `research_project_sample` branch of `scientificContext` alone: `{ role, personUserId | personFirstname/personLastname/personOrcid }`.
 - `role` is one of `researcher | project_manager | project_member | data_manager`, repeatable, persisted in the new `sample_additional_role` table.
 - A row is editable after publication: no entry in `published-field-lock.ts` freezes it.
 - A row with neither an account link nor a typed name blocks publication (`additional_role_firstname_missing` / `additional_role_lastname_missing`).
-- It lives inside the `field_sample` branch, not as a top-level `Sample.additionalRoles`, so "field sample only" is structural: the type system rules out the field on a collection specimen or a synthetic sample, and the provenance-switch drop already wipes the whole branch for free, with no extra exclusion to write or maintain.
+- It lives inside the `research_project_sample` branch, not as a top-level `Sample.additionalRoles`, so "research project sample only" is structural: the type system rules out the field on a collection specimen or a synthetic sample, and the provenance-switch drop already wipes the whole branch for free, with no extra exclusion to write or maintain.
 
 ### The `Researcher` disambiguation (superseded)
 
@@ -36,7 +36,7 @@ Superseded by ADR [0047](0047-synthesis-operator-core-slot.md): the operator now
 ### Rejected alternatives
 
 - **Positional disambiguation alone, with no `experiment`/`step` guard.** Reading "first `Researcher` is the operator" without first checking synthesis would fabricate `syntheticDetails` on a non-synthetic sample that happens to credit a `Researcher` first.
-- **A top-level `Sample.additionalRoles`.** Available on every provenance status, so it would need a cross-field refinement to keep it off a collection specimen, and its own exclusion in the provenance-switch drop, duplicating a rule the field-sample branch gets for free.
+- **A top-level `Sample.additionalRoles`.** Available on every provenance status, so it would need a cross-field refinement to keep it off a collection specimen, and its own exclusion in the provenance-switch drop, duplicating a rule the research-project-sample branch gets for free.
 
 ## Consequences
 

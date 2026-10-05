@@ -45,7 +45,7 @@ describe("publishedSampleSchema", () => {
       {
         ...publishable,
         scientificContext: {
-          provenanceStatus: "field_sample" as const,
+          provenanceStatus: "research_project_sample" as const,
           collectorLastname: "Curie",
         },
       },

@@ -233,7 +233,7 @@ const fieldRequirements = (
     blocker: "scientific_context_missing",
     isMet: context != null,
   });
-  if (context?.provenanceStatus === "field_sample") {
+  if (context?.provenanceStatus === "research_project_sample") {
     requirements.push(
       ...nameRequirements(
         "collector",

@@ -21,7 +21,7 @@ export function fromCoreScientificContext(
   const project = body.production.projects?.[0];
   const fieldwork = body.extensions?.fieldwork;
 
-  if (provenanceStatus === "field_sample") {
+  if (provenanceStatus === "research_project_sample") {
     return {
       provenanceStatus,
       funderOrganizations:

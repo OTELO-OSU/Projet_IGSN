@@ -62,7 +62,7 @@ function benchSample(id: string) {
     numeric_age_min: ageMin,
     numeric_age_max: ageMin + faker.number.int({ max: 100 }),
     numeric_age_unit: "ma",
-    sc_provenance_status: "field_sample",
+    sc_provenance_status: "research_project_sample",
     sc_host_institution:
       faker.helpers.maybe(() =>
         faker.helpers.arrayElements(

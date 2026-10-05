@@ -698,7 +698,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     existenceStatus: "exists",
     availabilityStatus: "available",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       funderOrganizations: ["02feahw73"],
       researchProgramName: "Chaîne des Puys Survey",
       chiefScientistFirstname: "Jean",
@@ -763,7 +763,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     existenceStatus: "exists",
     availabilityStatus: "available",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       funderOrganizations: ["02feahw73"],
       researchProgramName: "Chaîne des Puys Survey",
       chiefScientistFirstname: "Jean",
@@ -799,7 +799,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     existenceStatus: "exists",
     availabilityStatus: "available",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       funderOrganizations: ["02feahw73"],
       researchProgramName: "Chaîne des Puys Survey",
       chiefScientistFirstname: "Jean",
@@ -833,7 +833,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     existenceStatus: "exists",
     availabilityStatus: "available",
     scientificContext: {
-      provenanceStatus: "field_sample",
+      provenanceStatus: "research_project_sample",
       funderOrganizations: ["02feahw73"],
       researchProgramName: "Chaîne des Puys Survey",
       chiefScientistFirstname: "Jean",
