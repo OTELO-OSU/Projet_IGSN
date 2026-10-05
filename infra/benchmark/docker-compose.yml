@@ -7,7 +7,7 @@ x-database: &database
 
 services:
   postgres:
-    image: postgis/postgis:17-3.5
+    image: paradedb/paradedb:0.25.11-pg17
     restart: unless-stopped
     cpus: 2
     mem_limit: 8g
@@ -22,7 +22,7 @@ services:
       timeout: 3s
       retries: 15
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - paradedb-data:/var/lib/postgresql/data
 
   api:
     image: igsn-api:bench
@@ -53,4 +53,4 @@ services:
         condition: service_healthy
 
 volumes:
-  pgdata:
+  paradedb-data:

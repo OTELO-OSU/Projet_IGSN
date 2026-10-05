@@ -27,6 +27,8 @@ import { NATURES, natureSchema } from "../nature.ts";
 import { expandPaths } from "../path/expand-paths.ts";
 import { type ListSamplesQuery, bboxSchema } from "../sample-validator.ts";
 import {
+  MAX_SEARCH_TERM_LENGTH,
+  MAX_TOKEN_LENGTH,
   searchTermSchema,
   truncatedTextSchema,
 } from "../search/search-tokens.ts";
@@ -61,8 +63,7 @@ export function coreFilterFields() {
   return {
     search: searchTermSchema.meta({
       type: "string",
-      description:
-        "Free-text search matching the sample identifier exactly, or the sample name and specific name on a fragment, truncated past 200 characters.",
+      description: `Free-text search matching the sample identifier exactly, or the sample name and specific name on a fragment, truncated past ${MAX_SEARCH_TERM_LENGTH} characters; a word longer than ${MAX_TOKEN_LENGTH} characters matches nothing.`,
     }),
     bbox: bboxSchema.optional().meta({
       type: "string",

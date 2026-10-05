@@ -7,7 +7,7 @@ x-healthcheck: &healthcheck
 
 services:
   postgres:
-    image: postgis/postgis:17-3.5-alpine
+    image: paradedb/paradedb:0.25.11-pg17
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DATABASE_USER}
@@ -23,7 +23,7 @@ services:
       timeout: 3s
       retries: 15
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - paradedb-data:/var/lib/postgresql/data
 
   migrate:
     image: igsn-api:preprod
@@ -115,7 +115,7 @@ services:
         condition: service_healthy
 
 volumes:
-  pgdata:
+  paradedb-data:
   attachments:
   caddy_data:
   caddy_config:

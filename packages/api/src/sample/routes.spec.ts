@@ -1,15 +1,18 @@
 import {
   listSamplesResponseSchema,
+  sampleFacetCountsResponseSchema,
   sampleResponseSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
 import { testClient } from "hono/testing";
-import { describe, expect, vi } from "vitest";
+import { describe, expect } from "vitest";
 
 import { createApp } from "../app.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
+
+const LONGEST_TOKEN = "⑽.😀".repeat(8);
 
 const authHeader = { Authorization: "Bearer test-token" };
 
@@ -113,6 +116,24 @@ describe("public sample routes", () => {
     });
   });
 
+  pgTest(
+    "should count the published samples per facet value",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      await createPublishedSample(client, "Grès de Fontainebleau");
+      await createSample(client, "Basalte du Massif Central");
+      // Act
+      const res = await client.samples.facets.$get({
+        query: { page: "1", perPage: "10" },
+      });
+      // Assert
+      expect(res.status).toBe(200);
+      const { data } = sampleFacetCountsResponseSchema.parse(await res.json());
+      expect(data.nature).toEqual({ powder: 1 });
+    },
+  );
+
   pgTest.for(["GRES", "facies"])(
     "should filter published samples on %j, ignoring case and diacritics",
     async (search, { db }) => {
@@ -210,13 +231,13 @@ describe("public sample routes", () => {
   );
 
   pgTest.for([
-    ["%", "Recovery 100% core"],
-    ["\\", "Path\\core"],
-    ["(", "Core (deep)"],
-    [".", "Core.A"],
-    ["|", "Core|A"],
-    ["（", "Core（deep）"],
-    ["©", "Core © 2026"],
+    ["%%", "Recovery %% core"],
+    ["\\\\", "Path\\\\core"],
+    ["((", "Core ((deep))"],
+    ["..", "Core..A"],
+    ["||", "Core||A"],
+    ["（（", "Core（（deep））"],
+    ["©©", "Core ©© 2026"],
   ] as const)(
     "should treat the pattern character %j literally",
     async ([character, matching], { db }) => {
@@ -231,7 +252,7 @@ describe("public sample routes", () => {
     },
   );
 
-  pgTest.for(["（", "©", "́", "((((", "a{2,"] as const)(
+  pgTest.for(["（（", "©©", "x\u0301y", "((((", "a{2,"] as const)(
     "should answer 200 for the hostile search %j",
     async (search, { db }) => {
       // Arrange
@@ -274,6 +295,7 @@ describe("public sample routes", () => {
 
   pgTest.for([
     ["bas*", "Basalt Core", "Embassy Deposit"],
+    ["bas*", "Basalt Core", "Rock-basalt"],
     ["*te", "Carbonate Core", "Textile Block"],
     ["carb*ate", "Carbonate Core", "Bicarbonate Block"],
     ["*bas*ic*", "Metabasaltic Rock", "Granite Block"],
@@ -292,6 +314,20 @@ describe("public sample routes", () => {
     },
   );
 
+  pgTest(
+    "should search only the first 6 words of a longer search",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      await createPublishedSample(client, "ab cd ef gh ij kl");
+      await createPublishedSample(client, "Sandstone Block");
+      // Act
+      const names = await searchNames(client, "ab cd ef gh ij kl zz");
+      // Assert
+      expect(names).toEqual(["ab cd ef gh ij kl"]);
+    },
+  );
+
   pgTest.for(["*", "** *", "   "])(
     "should return no sample for the intentless search %j",
     async (search, { db }) => {
@@ -306,39 +342,85 @@ describe("public sample routes", () => {
     },
   );
 
-  pgTest("should tolerate a plural in a long token", async ({ db }) => {
-    // Arrange
-    const client = await acceptedClient(db);
-    await createPublishedSample(client, "Stony Achondrite");
-    await createPublishedSample(client, "Sandstone Block");
-    // Act
-    const names = await searchNames(client, "achondrites");
-    // Assert
-    expect(names).toEqual(["Stony Achondrite"]);
-  });
-
-  pgTest("should reject a near-miss geological term", async ({ db }) => {
-    const client = await acceptedClient(db);
-    await createPublishedSample(client, "Chondrites Fragment");
-    // Act
-    const names = await searchNames(client, "achondrites");
-    // Assert
-    expect(names).toEqual([]);
-  });
+  pgTest.for([
+    ["achondrites", ["Chondrites Fragment", "Stony Achondrite"]],
+    ["basalts", ["Basalt"]],
+  ] as const)(
+    "should match %j to the words one edit away",
+    async ([search, expected], { db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      for (const name of [
+        "Stony Achondrite",
+        "Chondrites Fragment",
+        "Basalt",
+        "Sandstone Block",
+      ]) {
+        await createPublishedSample(client, name);
+      }
+      // Act
+      const names = await searchNames(client, search);
+      // Assert
+      expect(names.toSorted()).toEqual(expected);
+    },
+  );
 
   pgTest("should keep a short token exact", async ({ db }) => {
     // Arrange
-    process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD = "0.5";
-    vi.resetModules();
-    const { createApp: createLooseApp } = await import("../app.ts");
-    await provisionUser(db, "test-token", { status: "accepted" });
-    const client = testClient(createLooseApp(db).app);
-    await createPublishedSample(client, "Sandstone Block");
+    const client = await acceptedClient(db);
+    await createPublishedSample(client, "Sane Block");
     // Act
-    const names = await searchNames(client, "sane");
+    const names = await searchNames(client, "sand");
     // Assert
     expect(names).toEqual([]);
   });
+
+  pgTest.for([
+    ["as one segment", LONGEST_TOKEN],
+    [
+      "with two wildcards",
+      `${LONGEST_TOKEN.slice(0, 9)}*${LONGEST_TOKEN.slice(10, 21)}*${LONGEST_TOKEN.slice(22)}`,
+    ],
+  ] as const)(
+    "should find a sample by a token of the longest length %s",
+    async ([, search], { db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      await createPublishedSample(client, LONGEST_TOKEN);
+      await createPublishedSample(client, "Sandstone Block");
+      // Act
+      const names = await searchNames(client, search);
+      // Assert
+      expect([search.length, names]).toEqual([32, [LONGEST_TOKEN]]);
+    },
+  );
+
+  pgTest(
+    "should list and count nothing for a token past the longest length",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      await createPublishedSample(client, "a".repeat(33));
+      const query = { page: "1", perPage: "10", search: "a".repeat(33) };
+      // Act
+      const listed = await client.samples.$get({ query });
+      const counted = await client.samples.facets.$get({ query });
+      // Assert
+      const { data: facets } = sampleFacetCountsResponseSchema.parse(
+        await counted.json(),
+      );
+      expect({
+        listed: [listed.status, await listed.json()],
+        counted: [counted.status, facets],
+      }).toEqual({
+        listed: [200, { data: [], meta: { total: 0 } }],
+        counted: [
+          200,
+          Object.fromEntries(Object.keys(facets).map((key) => [key, {}])),
+        ],
+      });
+    },
+  );
 
   pgTest("should not match an igsn fuzzily", async ({ db }) => {
     // Arrange

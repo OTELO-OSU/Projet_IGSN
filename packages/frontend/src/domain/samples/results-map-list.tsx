@@ -6,6 +6,7 @@ import type { HoveredSample } from "#/domain/samples/results-map.tsx";
 
 import { useListSamplesInfinite } from "#/domain/samples/hook/list-samples-infinite.ts";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
+import { searchEmptyMessage } from "#/domain/samples/search-empty-message.ts";
 import { ResultsCount } from "#/domain/samples/search-results-view.tsx";
 import { useCardFields } from "#/domain/samples/use-card-fields.ts";
 import { m } from "#/paraglide/messages.js";
@@ -42,7 +43,7 @@ export function ResultsMapList({
       <div className="flex flex-col items-center gap-4">
         {actions}
         <p role="status" className="text-muted-foreground text-center">
-          {m.search_no_results()}
+          {searchEmptyMessage(filters)}
         </p>
       </div>
     );

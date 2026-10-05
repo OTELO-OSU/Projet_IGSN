@@ -83,16 +83,30 @@ const validClaims = () => ({
   identity_provider: "satosa",
 });
 
+const appByAudience = new Map<
+  string | undefined,
+  Promise<{ createApp: typeof createApp }>
+>();
+
+const importApp = (audience: string | undefined) => {
+  let app = appByAudience.get(audience);
+  if (!app) {
+    vi.stubEnv("OIDC_AUDIENCE", audience);
+    vi.stubEnv("OIDC_ISSUER", ISSUER);
+    vi.stubEnv("OIDC_CLIENT_ID", CLIENT_ID);
+    vi.resetModules();
+    app = import("../app.ts");
+    appByAudience.set(audience, app);
+  }
+  return app;
+};
+
 const getMe = async (
   db: Parameters<typeof createApp>[0],
   token: string,
   audience?: string,
 ) => {
-  vi.stubEnv("OIDC_AUDIENCE", audience);
-  vi.stubEnv("OIDC_ISSUER", ISSUER);
-  vi.stubEnv("OIDC_CLIENT_ID", CLIENT_ID);
-  vi.resetModules();
-  const { createApp } = await import("../app.ts");
+  const { createApp } = await importApp(audience);
 
   return testClient(createApp(db).app).admin.currentUser.$get(undefined, {
     headers: { Authorization: `Bearer ${token}` },

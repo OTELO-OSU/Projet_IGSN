@@ -10,8 +10,13 @@ an external database: see [prod-deploy.md](prod-deploy.md).
 - **EC2** host (Amazon Linux 2023, IMDSv2-only, encrypted root volume). cloud-init
   installs Docker + compose. Only 80/443 are public; SSH is opened per-deploy and
   revoked.
-- **Postgres** container with a persistent volume (`pgdata`), never exposed off
-  the host. Credentials live in the host `docker-compose.env`.
+- **Postgres** container (`paradedb/paradedb:0.25.11-pg17`) with a persistent
+  volume (`paradedb-data`), never exposed off the host. Credentials live in the host
+  `docker-compose.env`.
+- That volume replaced `pgdata` when the stack left the PostGIS image, so the
+  database starts empty: ParadeDB preloads `pg_search` and sets its collations
+  only when it creates the data directory. `docker volume rm` the old `pgdata`
+  once on the host to free its disk.
 - **Cloudflare** proxies the hostnames (orange cloud, SSL mode Full (strict)) and
   terminates TLS at its edge, re-originating HTTPS to the host.
 - **Auth** authenticates against the GaiaData test SSO, the only identity

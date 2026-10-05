@@ -3,6 +3,7 @@ import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   ListSamplesResponse,
   PublicSampleResponse,
+  SampleFacetCountsResponse,
   SampleLineageResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
@@ -44,6 +45,12 @@ export function createSampleRoutes(
     .get("/map", validatePublicMapQuery, async (c) =>
       c.json(await repository.mapPublished(c.req.valid("query"))),
     )
+    .get("/facets", validatePublicListQuery, async (c) => {
+      const body: SampleFacetCountsResponse = {
+        data: await repository.countPublishedFacets(c.req.valid("query")),
+      };
+      return c.json(body);
+    })
     .get("/:igsn", validateIgsnParam, async (c) => {
       const sample = await repository.getPublicByIgsn(
         c.req.valid("param").igsn,

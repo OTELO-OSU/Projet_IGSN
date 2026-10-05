@@ -26,6 +26,23 @@ test.describe("search facets", () => {
     await list.expectLanding();
   });
 
+  test("a reader's word clears the facets and narrows their counts to the matching sample", async ({
+    page,
+    samples,
+  }) => {
+    const { granite } = published(samples);
+    const list = sampleListPage(page);
+
+    await list.gotoWithSearch("nature=hand_sample");
+    await list.expectResultCount(1);
+    await list.expectSampleAbsent("Granite 7");
+
+    await list.search("granite");
+    await list.expectResultCount(1);
+    await list.expectSampleLink("Granite 7", granite);
+    await list.expectFacetOptionAbsent("Nature", natureLabel("hand_sample"));
+  });
+
   test("a shared facet URL restores the filtered results", async ({
     page,
     samples,

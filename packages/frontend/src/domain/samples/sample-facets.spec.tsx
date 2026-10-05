@@ -1,6 +1,8 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { SampleFacetCounts } from "@projet-igsn/domain/sample/sample-validator";
 import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 
+import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { render } from "vitest-browser-react";
 
@@ -9,15 +11,34 @@ import {
   type FacetValues,
   SampleFacets,
 } from "./sample-facets.tsx";
+import { natureLabel } from "./sample-labels.ts";
 
 const LORRAINE = "04vfs2w97";
 const TYPE_FACET = "Type";
 const MINERAL_CLASSIFICATION_FACET = "Strunz-Mindat (2026) Classifications";
+const GROUP = {
+  id: "01980e2d-6f9b-7000-9000-000000000001",
+  name: "ANR CritMet",
+};
+const CONTRIBUTOR = {
+  id: "01980e2d-6f9b-7000-9000-000000000002",
+  name: "Dupont",
+  firstname: "Marie",
+};
+const COUNTS: SampleFacetCounts = {
+  nature: { hand_sample: 3, powder: 0 },
+  type: { core: 2, "core.core": 2 },
+  mineralClassification: { "9": 1 },
+  institutionalLaboratory: { UMR7359: 1, UMR5275: 1 },
+  manualGroup: { [GROUP.id]: 1 },
+  contributor: { [CONTRIBUTOR.id]: 1 },
+};
 
 async function renderFacets(
   values: FacetValues = {},
   manualGroups: ManualGroup[] = [],
   contributors: PublicUser[] = [],
+  counts: SampleFacetCounts = COUNTS,
 ) {
   const onChange = vi.fn();
   const onClearAll = vi.fn();
@@ -28,6 +49,7 @@ async function renderFacets(
       onClearAll={onClearAll}
       manualGroups={manualGroups}
       contributors={contributors}
+      counts={counts}
     />,
   );
   return { screen, onChange, onClearAll };
@@ -49,7 +71,7 @@ describe("SampleFacets", () => {
     await screen
       .getByRole("combobox", { name: TYPE_FACET, exact: true })
       .click();
-    await screen.getByRole("option", { name: "Core", exact: true }).click();
+    await screen.getByRole("option", { name: "Core (2)", exact: true }).click();
 
     expect(onChange).toHaveBeenCalledWith("type", "core.core");
   });
@@ -58,7 +80,7 @@ describe("SampleFacets", () => {
     const { screen, onChange } = await renderFacets({ type: "core" });
 
     await screen
-      .getByRole("button", { name: "Remove Core", exact: true })
+      .getByRole("button", { name: "Remove Core (2)", exact: true })
       .click();
 
     expect(onChange).toHaveBeenCalledWith("type", undefined);
@@ -123,7 +145,7 @@ describe("SampleFacets", () => {
       .getByRole("combobox", { name: MINERAL_CLASSIFICATION_FACET })
       .click();
     await screen
-      .getByRole("option", { name: "Silicates", exact: true })
+      .getByRole("option", { name: "Silicates (1)", exact: true })
       .click();
 
     expect(onChange).toHaveBeenCalledWith("mineralClassification", "9");
@@ -195,29 +217,101 @@ describe("SampleFacets", () => {
   );
 
   it("should report the picked manual group", async () => {
-    const group = {
-      id: "01980e2d-6f9b-7000-9000-000000000001",
-      name: "ANR CritMet",
-    };
-    const { screen, onChange } = await renderFacets({}, [group]);
+    const { screen, onChange } = await renderFacets({}, [GROUP]);
 
     await screen.getByRole("combobox", { name: /other group/i }).click();
-    await screen.getByRole("option", { name: group.name }).click();
+    await screen.getByRole("option", { name: GROUP.name }).click();
 
-    expect(onChange).toHaveBeenCalledWith("manualGroup", group.id);
+    expect(onChange).toHaveBeenCalledWith("manualGroup", GROUP.id);
   });
 
   it("should report the picked contributor", async () => {
-    const contributor = {
-      id: "01980e2d-6f9b-7000-9000-000000000002",
-      name: "Dupont",
-      firstname: "Marie",
-    };
-    const { screen, onChange } = await renderFacets({}, [], [contributor]);
+    const { screen, onChange } = await renderFacets({}, [], [CONTRIBUTOR]);
 
     await screen.getByRole("combobox", { name: /contributor/i }).click();
     await screen.getByRole("option", { name: "Marie Dupont" }).click();
 
-    expect(onChange).toHaveBeenCalledWith("contributor", contributor.id);
+    expect(onChange).toHaveBeenCalledWith("contributor", CONTRIBUTOR.id);
+  });
+
+  it.each([
+    { facet: "Nature", values: {}, offered: ["Hand sample (3)"] },
+    {
+      facet: "Nature",
+      values: { nature: "powder" },
+      offered: ["Hand sample (3)", "Powder"],
+    },
+    { facet: TYPE_FACET, values: {}, offered: ["Core (2)"] },
+    { facet: /other group/i, values: {}, offered: ["ANR CritMet (1)"] },
+    {
+      facet: /other group/i,
+      values: { manualGroup: "01980e2d-6f9b-7000-9000-000000000003" },
+      offered: ["ANR CritMet (1)", "X"],
+    },
+  ])(
+    "should offer only the $facet options with results or selected",
+    async ({ facet, values, offered }) => {
+      const other = { id: "01980e2d-6f9b-7000-9000-000000000003", name: "X" };
+      const { screen } = await renderFacets(values, [GROUP, other]);
+
+      await screen.getByRole("combobox", { name: facet, exact: true }).click();
+
+      await expect
+        .poll(() =>
+          screen
+            .getByRole("option")
+            .elements()
+            .map((option) => option.textContent),
+        )
+        .toEqual(offered);
+    },
+  );
+
+  it("should name the selected contributor without results", async () => {
+    const { screen } = await renderFacets(
+      { contributor: CONTRIBUTOR.id },
+      [],
+      [CONTRIBUTOR],
+      {},
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: /contributor/i }))
+      .toHaveTextContent("Marie Dupont");
+  });
+
+  it("should keep offering the selected hierarchy node without results", async () => {
+    const { screen } = await renderFacets({ type: "core" }, [], [], {});
+
+    await screen.getByRole("button", { name: "Core", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("option", { name: "Core", exact: true }))
+      .toBeVisible();
+  });
+
+  it("should offer every option without a count until the counts load", async () => {
+    const screen = await render(
+      <SampleFacets values={{}} onChange={vi.fn()} onClearAll={vi.fn()} />,
+    );
+
+    await screen.getByRole("combobox", { name: "Nature", exact: true }).click();
+
+    await expect
+      .poll(() =>
+        screen
+          .getByRole("option")
+          .elements()
+          .map((option) => option.textContent),
+      )
+      .toEqual(NATURES.map((nature) => natureLabel(nature)));
+  });
+
+  it("should disable a facet whose options all have no results", async () => {
+    const { screen } = await renderFacets({}, [], [], {});
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Nature" }))
+      .toBeDisabled();
   });
 });

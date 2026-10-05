@@ -6,7 +6,7 @@ x-healthcheck: &healthcheck
 
 services:
   postgres:
-    image: postgis/postgis:17-3.5
+    image: paradedb/paradedb:0.25.11-pg17
     environment:
       POSTGRES_USER: igsn
       POSTGRES_PASSWORD: igsn
@@ -17,7 +17,7 @@ services:
       timeout: 3s
       retries: 15
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - paradedb-data:/var/lib/postgresql/data
 
   migrate:
     build:
@@ -199,5 +199,5 @@ services:
       - "11080:1080"
 
 volumes:
-  pgdata:
+  paradedb-data:
   attachments:
