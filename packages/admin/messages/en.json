@@ -276,6 +276,7 @@
   "publish_field_attachment_resource_type": "Attachment resource type",
   "reveal_collection_method_description": "Describe the collection method in detail",
   "reveal_geological_context_description": "Describe the geological context in detail",
+  "reveal_locality_description": "Describe the locality in detail",
   "reveal_research_program_description": "Describe the research program in detail",
   "reveal_collection_context_description": "Describe the collection context in detail",
   "reveal_specific_conditions": "Describe the specific conditions in detail",

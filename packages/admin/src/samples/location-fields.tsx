@@ -36,11 +36,26 @@ export function LocationFields() {
       <form.AppField name="location.localityName">
         {(field) => <field.TextField label={m.field_locality_name()} />}
       </form.AppField>
-      <form.AppField name="location.localityDescription">
-        {(field) => (
-          <field.TextField label={m.field_locality_description()} multiline />
+      <form.Subscribe
+        selector={(state) =>
+          Boolean(state.values.location.localityName?.trim())
+        }
+      >
+        {(hasLocalityName) => (
+          <form.AppField name="location.localityDescription">
+            {(field) => (
+              <field.TextField
+                label={m.field_locality_description()}
+                multiline
+                reveal={{
+                  label: m.reveal_locality_description(),
+                  canReveal: hasLocalityName,
+                }}
+              />
+            )}
+          </form.AppField>
         )}
-      </form.AppField>
+      </form.Subscribe>
     </div>
   );
 }
