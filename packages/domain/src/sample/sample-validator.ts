@@ -101,6 +101,24 @@ export const bboxSchema = z.string().transform((value, ctx) => {
 
 export type Bbox = z.infer<typeof bboxSchema>;
 
+export const MAX_SEARCH_BBOX_WORLD_FRACTION = 0.25;
+
+const radians = (degrees: number) => (degrees * Math.PI) / 180;
+
+const worldFractionOf = ({ west, south, east, north }: Bbox) => {
+  const widthDegrees = west > east ? 360 - west + east : east - west;
+  return (
+    ((widthDegrees / 360) *
+      (Math.sin(radians(north)) - Math.sin(radians(south)))) /
+    2
+  );
+};
+
+export const searchBboxSchema = bboxSchema.refine(
+  (bbox) => worldFractionOf(bbox) <= MAX_SEARCH_BBOX_WORLD_FRACTION,
+  { message: "Bounding box larger than a quarter of the world" },
+);
+
 export const pageSchema = z.coerce.number().int().min(1).default(1).catch(1);
 
 export const pageSizeSchema = (fallback: (typeof PAGE_SIZES)[number]) =>
@@ -125,7 +143,7 @@ export const listSamplesQuerySchema = z.object({
   ownerId: z.uuid().optional().catch(undefined),
   institution: institutionFilterSchema.optional().catch(undefined),
   ...facetQueryFields(),
-  bbox: bboxSchema.optional().catch(undefined),
+  bbox: searchBboxSchema.optional().catch(undefined),
   viewport: bboxSchema.optional().catch(undefined),
 });
 

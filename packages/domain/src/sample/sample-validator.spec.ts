@@ -212,6 +212,25 @@ describe("listSamplesQuerySchema", () => {
     expect(listSamplesQuerySchema.parse({ bbox }).bbox).toBeUndefined();
   });
 
+  it.each([
+    ["a country", "-5,42,8,51"],
+    ["a dateline-crossing box", "170,-10,-170,10"],
+    ["exactly a quarter of the world", "-90,0,90,90"],
+  ])("should keep a bbox within a quarter of the world: %s", (_case, bbox) => {
+    expect(listSamplesQuerySchema.parse({ bbox }).bbox).toBeDefined();
+  });
+
+  it.each([
+    ["the whole world", "-180,-90,180,90"],
+    ["a full-width northern band", "-180,0,180,40"],
+    ["a wide dateline-crossing box", "0,-60,-10,60"],
+  ])(
+    "should drop a bbox larger than a quarter of the world: %s",
+    (_case, bbox) => {
+      expect(listSamplesQuerySchema.parse({ bbox }).bbox).toBeUndefined();
+    },
+  );
+
   it("should keep page/perPage/search alongside a bbox", () => {
     expect(
       listSamplesQuerySchema.parse({

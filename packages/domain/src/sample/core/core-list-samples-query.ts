@@ -25,7 +25,10 @@ import {
 } from "../mineral/mineral-hierarchy.ts";
 import { NATURES, natureSchema } from "../nature.ts";
 import { expandPaths } from "../path/expand-paths.ts";
-import { type ListSamplesQuery, bboxSchema } from "../sample-validator.ts";
+import {
+  type ListSamplesQuery,
+  searchBboxSchema,
+} from "../sample-validator.ts";
 import {
   MAX_SEARCH_TERM_LENGTH,
   MAX_TOKEN_LENGTH,
@@ -65,10 +68,10 @@ export function coreFilterFields() {
       type: "string",
       description: `Free-text search matching the sample identifier exactly, or the sample name and specific name on a fragment, truncated past ${MAX_SEARCH_TERM_LENGTH} characters; a word longer than ${MAX_TOKEN_LENGTH} characters matches nothing.`,
     }),
-    bbox: bboxSchema.optional().meta({
+    bbox: searchBboxSchema.optional().meta({
       type: "string",
       description:
-        'Bounding box "west,south,east,north" in decimal degrees, keeping the samples collected inside it.',
+        'Bounding box "west,south,east,north" in decimal degrees, keeping the samples collected inside it; it must cover at most a quarter of the world.',
     }),
     sampleObjectType: sampleTypeSchema.optional().meta({
       enum: expandPaths(
