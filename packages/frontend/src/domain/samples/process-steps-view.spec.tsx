@@ -21,7 +21,7 @@ describe("ProcessStepsView", () => {
     );
 
     await expect
-      .element(screen.getByRole("heading", { name: "Sub-sampling" }))
+      .element(screen.getByRole("heading", { level: 4, name: "Sub-sampling" }))
       .toBeVisible();
     await expect
       .element(screen.getByText("2020-01-01 - 2020-01-05"))

@@ -10,7 +10,7 @@ export function sampleDetailPage(page: Page) {
   });
   const lineage = page.getByRole("region", { name: "Lineage" });
   const locationMap = page
-    .getByRole("region", { name: "Sample", exact: true })
+    .getByRole("region", { name: "Identity", exact: true })
     .getByRole("group", { name: "Sample location map" });
   const lineageLink = (name: string, relation: string) =>
     lineage.getByRole("link", { name: `${name} ${relation}` });
@@ -68,7 +68,9 @@ export function sampleDetailPage(page: Page) {
     },
     expectDeclaredBy: (owner: string) =>
       expect(
-        page.getByText(new RegExp(`Declared in \\d{4} by ${owner}`)),
+        page
+          .getByRole("region", { name: "Declaration" })
+          .getByText(owner, { exact: true }),
       ).toBeVisible(),
     expectNoHorizontalOverflow: () =>
       expect
@@ -97,7 +99,7 @@ export function sampleDetailPage(page: Page) {
     },
     expectManualGroup: (name: string) =>
       expect(
-        page.getByRole("region", { name: "Groups" }).getByText(name),
+        page.getByRole("region", { name: "Declaration" }).getByText(name),
       ).toBeVisible(),
     expectMineralClassification: (name: string) =>
       expect(

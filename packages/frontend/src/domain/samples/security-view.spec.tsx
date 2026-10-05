@@ -3,7 +3,7 @@ import { render } from "vitest-browser-react";
 import { SecurityView } from "./security-view.tsx";
 
 describe("SecurityView", () => {
-  it("should render each declared hazard with its explanation", async () => {
+  it("should render each declared hazard with its explanation, and omit a hazard set to No", async () => {
     const screen = await render(
       <SecurityView
         security={{
@@ -23,7 +23,9 @@ describe("SecurityView", () => {
       .element(screen.getByText("Radioactivity explanation"))
       .toBeInTheDocument();
     await expect.element(screen.getByText("3.2 kBq alpha")).toBeInTheDocument();
-    await expect.element(screen.getByText("Asbestos-rich")).toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Asbestos-rich"))
+      .not.toBeInTheDocument();
     await expect
       .element(screen.getByText("Chemical risk", { exact: true }))
       .toBeInTheDocument();
@@ -32,14 +34,14 @@ describe("SecurityView", () => {
 
   it("should omit a hazard's explanation when it has none", async () => {
     const screen = await render(
-      <SecurityView security={{ radioactivity: false }} />,
+      <SecurityView security={{ radioactivity: true }} />,
     );
 
     await expect
       .element(screen.getByText("Radioactivity", { exact: true }))
       .toBeInTheDocument();
     await expect
-      .element(screen.getByText("No", { exact: true }))
+      .element(screen.getByText("Yes", { exact: true }))
       .toBeInTheDocument();
     await expect
       .element(screen.getByText("Radioactivity explanation"))

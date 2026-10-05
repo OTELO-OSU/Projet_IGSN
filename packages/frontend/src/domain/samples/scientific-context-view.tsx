@@ -11,7 +11,6 @@ import {
   additionalRoleLabel,
   collectionOriginLabel,
   platformTypeLabel,
-  provenanceStatusLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
@@ -149,10 +148,6 @@ export function ScientificContextView({
 }) {
   return (
     <FieldRows>
-      <FieldRow
-        label={m.sample_field_provenance_status()}
-        value={provenanceStatusLabel(scientificContext.provenanceStatus)}
-      />
       {scientificContext.provenanceStatus === "field_sample" ? (
         <FieldSampleRows context={scientificContext} />
       ) : (
