@@ -21,7 +21,7 @@ export function userPage(page: Page) {
     expectVisible: (email: string) =>
       expect(page.getByText(email)).toBeVisible(),
     associateGroup: async (name: string) => {
-      await attachManualGroup(page, "Manual groups", name);
+      await attachManualGroup(page, "Groups this account belongs to", name);
       await save();
     },
     expectGroup: (name: string) => expect(detachButton(name)).toBeVisible(),

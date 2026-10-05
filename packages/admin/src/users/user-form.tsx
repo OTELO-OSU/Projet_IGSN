@@ -134,17 +134,17 @@ export function UserForm({
       }}
       className="grid w-full gap-4"
     >
-      <form.Subscribe
-        selector={(state) => state.values.institutionalOrganization ?? null}
-      >
-        {(organization) =>
-          shouldRePendOnInstitutionsUpdate(user, organization)
-            ? rePendNotice
-            : statusField
-        }
-      </form.Subscribe>
-
-      <hr />
+      <FormSection title={m.user_form_title()}>
+        <form.Subscribe
+          selector={(state) => state.values.institutionalOrganization ?? null}
+        >
+          {(organization) =>
+            shouldRePendOnInstitutionsUpdate(user, organization)
+              ? rePendNotice
+              : statusField
+          }
+        </form.Subscribe>
+      </FormSection>
 
       <FormSection title={m.settings_institution_title()}>
         <FieldDisabledProvider value={() => !rights.institutions}>
@@ -154,47 +154,45 @@ export function UserForm({
         </FieldDisabledProvider>
       </FormSection>
 
-      <hr />
-
-      <form.Subscribe selector={(state) => state.values.status}>
-        {(status) => (
-          <>
-            <form.AppField name="manualGroupIds">
-              {(field) => (
-                <field.MultiComboboxField
-                  label={m.user_manual_groups_title()}
-                  disabled={!rights.manualGroups}
-                  lockedValues={lockedGroupIds}
-                  items={canJoinManualGroup(status) ? groupItems : memberItems}
-                  placeholder={m.manual_group_placeholder()}
-                  searchPlaceholder={m.manual_groups_search_placeholder()}
-                  emptyText={m.manual_groups_empty()}
-                  removeLabel={(label) =>
-                    m.manual_group_detach_member({ name: label })
-                  }
-                />
+      <FormSection title={m.user_manual_groups_title()}>
+        <form.Subscribe selector={(state) => state.values.status}>
+          {(status) => (
+            <>
+              <form.AppField name="manualGroupIds">
+                {(field) => (
+                  <field.MultiComboboxField
+                    label={m.field_user_manual_groups()}
+                    disabled={!rights.manualGroups}
+                    lockedValues={lockedGroupIds}
+                    items={
+                      canJoinManualGroup(status) ? groupItems : memberItems
+                    }
+                    placeholder={m.manual_group_placeholder()}
+                    searchPlaceholder={m.manual_groups_search_placeholder()}
+                    emptyText={m.manual_groups_empty()}
+                    removeLabel={(label) =>
+                      m.manual_group_detach_member({ name: label })
+                    }
+                  />
+                )}
+              </form.AppField>
+              {canJoinManualGroup(status) ? null : (
+                <p className="text-muted-foreground text-sm">
+                  {m.user_manual_groups_locked()}
+                </p>
               )}
-            </form.AppField>
-            {canJoinManualGroup(status) ? null : (
-              <p className="text-muted-foreground text-sm">
-                {m.user_manual_groups_locked()}
-              </p>
-            )}
-          </>
-        )}
-      </form.Subscribe>
+            </>
+          )}
+        </form.Subscribe>
+      </FormSection>
 
       {rights.managedGroups && (
-        <>
-          <hr />
-
-          <form.AppForm>
-            <ManagedGroupsFields
-              granted={user.managedGroups}
-              manualGroups={catalog.data?.data ?? []}
-            />
-          </form.AppForm>
-        </>
+        <form.AppForm>
+          <ManagedGroupsFields
+            granted={user.managedGroups}
+            manualGroups={catalog.data?.data ?? []}
+          />
+        </form.AppForm>
       )}
 
       <div>

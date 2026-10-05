@@ -274,7 +274,10 @@ describe("UserDetailPage", () => {
       .toBeEnabled();
 
     await screen
-      .getByRole("combobox", { name: "Manual groups", exact: true })
+      .getByRole("combobox", {
+        name: "Groups this account belongs to",
+        exact: true,
+      })
       .click();
 
     expect(
@@ -302,7 +305,10 @@ describe("UserDetailPage", () => {
     const { screen, calls } = await renderUserPage({ status: "accepted" });
 
     await screen
-      .getByRole("combobox", { name: "Manual groups", exact: true })
+      .getByRole("combobox", {
+        name: "Groups this account belongs to",
+        exact: true,
+      })
       .click();
     await screen.getByRole("option", { name: METEORITE.name }).click();
 
@@ -318,7 +324,10 @@ describe("UserDetailPage", () => {
     await screen.getByRole("combobox", { name: "Status" }).click();
     await screen.getByRole("option", { name: "Active" }).click();
     await screen
-      .getByRole("combobox", { name: "Manual groups", exact: true })
+      .getByRole("combobox", {
+        name: "Groups this account belongs to",
+        exact: true,
+      })
       .click();
     await screen.getByRole("option", { name: METEORITE.name }).click();
     await screen.getByRole("button", { name: "Save" }).click();
@@ -486,7 +495,10 @@ describe("UserDetailPage", () => {
         institutions,
       );
       await expectEditable(
-        screen.getByRole("combobox", { name: "Manual groups", exact: true }),
+        screen.getByRole("combobox", {
+          name: "Groups this account belongs to",
+          exact: true,
+        }),
         groups,
       );
     },
@@ -503,7 +515,10 @@ describe("UserDetailPage", () => {
       .not.toBeInTheDocument();
 
     await screen
-      .getByRole("combobox", { name: "Manual groups", exact: true })
+      .getByRole("combobox", {
+        name: "Groups this account belongs to",
+        exact: true,
+      })
       .click();
 
     await expect
