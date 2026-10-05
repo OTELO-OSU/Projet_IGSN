@@ -12,28 +12,34 @@ const body = {
 };
 
 describe("contactSampleOwner", () => {
-  it("should post the message to the sample contact endpoint", async () => {
-    const { fetch, lastUrl, lastInit } = stubFetch(undefined, 204);
+  it.each([
+    ["owner", `/api/samples/${igsn}/contact`],
+    ["archive", `/api/samples/${igsn}/contact/archive`],
+  ] as const)(
+    "should post the message for the %s to %s",
+    async (recipient, pathname) => {
+      const { fetch, lastUrl, lastInit } = stubFetch(undefined, 204);
 
-    await contactSampleOwner(igsn, body, fetch);
+      await contactSampleOwner(igsn, recipient, body, fetch);
 
-    expect(new URL(lastUrl() ?? "").pathname).toBe(
-      `/api/samples/${igsn}/contact`,
-    );
-    expect(lastInit()?.method).toBe("POST");
-    expect(lastInit()?.body).toBe(JSON.stringify(body));
-  });
+      expect(new URL(lastUrl() ?? "").pathname).toBe(pathname);
+      expect(lastInit()?.method).toBe("POST");
+      expect(lastInit()?.body).toBe(JSON.stringify(body));
+    },
+  );
 
   it("should resolve to sent when the api accepts the message", async () => {
     const { fetch } = stubFetch(undefined, 204);
 
-    await expect(contactSampleOwner(igsn, body, fetch)).resolves.toBe("sent");
+    await expect(contactSampleOwner(igsn, "owner", body, fetch)).resolves.toBe(
+      "sent",
+    );
   });
 
   it("should resolve to no_recipient when the owner cannot be contacted", async () => {
     const { fetch } = stubFetch({ error: "No recipient" }, 409);
 
-    await expect(contactSampleOwner(igsn, body, fetch)).resolves.toBe(
+    await expect(contactSampleOwner(igsn, "owner", body, fetch)).resolves.toBe(
       "no_recipient",
     );
   });
@@ -43,9 +49,9 @@ describe("contactSampleOwner", () => {
     async (status) => {
       const { fetch } = stubFetch({ error: "Nope" }, status);
 
-      await expect(contactSampleOwner(igsn, body, fetch)).rejects.toThrow(
-        String(status),
-      );
+      await expect(
+        contactSampleOwner(igsn, "owner", body, fetch),
+      ).rejects.toThrow(String(status));
     },
   );
 });

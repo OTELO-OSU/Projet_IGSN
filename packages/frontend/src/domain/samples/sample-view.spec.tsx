@@ -1104,22 +1104,70 @@ describe("SampleView", () => {
     }
   });
 
-  it("should never show the archive contacts, which stay private to the admin", async () => {
+  it("should show the current archive contact name next to its contact button, never its email", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
+          canContactArchive: true,
           repository: {
             currentArchiveOsu: "OMP",
             currentArchiveContactFirstname: "Archibald",
             currentArchiveContactLastname: "Archivist",
+            currentArchiveContactEmail: "archive@example.org",
             rightsHolder: [],
           },
         })}
       />,
     );
 
-    for (const value of ["Archibald", "Archivist"]) {
-      await expect.element(screen.getByText(value)).not.toBeInTheDocument();
-    }
+    await expect
+      .element(
+        region(screen, "Repository")
+          .getByRole("definition")
+          .filter({ hasText: "Archibald Archivist" })
+          .getByRole("button", { name: "Contact the current archive" }),
+      )
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("archive@example.org"))
+      .not.toBeInTheDocument();
+  });
+
+  it("should offer a button opening the current archive contact form in the Repository when the archive can be contacted", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          canContactArchive: true,
+          repository: { currentArchiveOsu: "OMP", rightsHolder: [] },
+        })}
+      />,
+    );
+
+    await region(screen, "Repository")
+      .getByRole("button", { name: "Contact the current archive" })
+      .click();
+    await expect
+      .element(
+        screen.getByRole("dialog", { name: "Contact the current archive" }),
+      )
+      .toBeInTheDocument();
+  });
+
+  it("should offer no current archive contact when the archive cannot be contacted", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          canContactArchive: false,
+          repository: { currentArchiveOsu: "OMP", rightsHolder: [] },
+        })}
+      />,
+    );
+
+    await expect.element(region(screen, "Repository")).toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("button", { name: "Contact the current archive" })
+        .query(),
+    ).toBeNull();
   });
 });

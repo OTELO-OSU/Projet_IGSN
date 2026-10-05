@@ -17,8 +17,12 @@ const validate = zodFieldErrors(contactSampleOwnerBodySchema, (issue) =>
 );
 
 export function ContactOwnerForm({
+  title,
+  noRecipientMessage,
   onSend,
 }: {
+  title: string;
+  noRecipientMessage: string;
   onSend: (body: ContactSampleOwnerBody) => Promise<"sent" | "no_recipient">;
 }) {
   const [statusMessage, setStatusMessage] = useState("");
@@ -28,9 +32,7 @@ export function ContactOwnerForm({
     onSubmit: async ({ value }) => {
       try {
         const result = await onSend(value);
-        setStatusMessage(
-          result === "no_recipient" ? m.contact_no_recipient() : "",
-        );
+        setStatusMessage(result === "no_recipient" ? noRecipientMessage : "");
       } catch {
         setStatusMessage(m.contact_error());
       }
@@ -42,7 +44,7 @@ export function ContactOwnerForm({
       <p role="status">{statusMessage}</p>
       <form
         noValidate
-        aria-label={m.contact_title()}
+        aria-label={title}
         onSubmit={(event) => {
           event.preventDefault();
           void form.handleSubmit();

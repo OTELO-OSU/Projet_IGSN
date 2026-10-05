@@ -12,6 +12,7 @@ export const repositorySchema = z.object({
   currentArchiveLaboratory: laboratoryCodeSchema.nullish(),
   currentArchiveContactFirstname: freeTextSchema.nullish(),
   currentArchiveContactLastname: freeTextSchema.nullish(),
+  currentArchiveContactEmail: z.string().trim().pipe(z.email()).nullish(),
   collectionName: freeTextSchema.nullish(),
   rightsHolder: uniqueRorArraySchema("rights_holder_duplicate"),
 });

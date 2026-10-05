@@ -9,7 +9,7 @@ type FieldRowProps = { label: string; value: ReactNode; id?: string };
 export function FieldRow({ id, label, value }: FieldRowProps) {
   if (value == null || value === false || value === "") return null;
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1 px-4 py-3">
+    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3">
       <dt id={id} className="text-muted-foreground w-40 shrink-0">
         {label}
       </dt>

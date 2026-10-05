@@ -316,7 +316,7 @@ describe("GET /service/samples", () => {
   );
 
   pgTest(
-    "should list only published samples to an anonymous caller, archive contacts omitted",
+    "should list only published samples to an anonymous caller, redacted",
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
@@ -335,7 +335,6 @@ describe("GET /service/samples", () => {
       // Assert
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(JSON.stringify(body)).not.toContain("Durand");
       expect(coreListSamplesResponseSchema.parse(body)).toEqual({
         data: [core(redactPrivateContacts(published!))],
         meta: { total: 1 },
@@ -666,7 +665,7 @@ describe("GET /service/samples/:igsn", () => {
   });
 
   pgTest(
-    "should answer an anonymous caller the published sample, archive contact omitted",
+    "should answer an anonymous caller the published sample, redacted",
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
@@ -677,7 +676,6 @@ describe("GET /service/samples/:igsn", () => {
       // Assert
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(JSON.stringify(body)).not.toContain("Durand");
       expect(body).toEqual(
         core(redactPrivateContacts((await readSample(db, sample.id))!)),
       );
@@ -1778,6 +1776,41 @@ describe("PUT /service/samples/:igsn", () => {
       expected,
     );
   });
+
+  pgTest.for([
+    { record: "an unchanged record", body: core },
+    {
+      record: "a record omitting the current repository",
+      body: (sample: Sample): CoreSample => {
+        const body = core(sample);
+        return {
+          ...body,
+          curation: { ...body.curation, currentRepository: undefined },
+        };
+      },
+    },
+  ])(
+    "should keep the stored archive contact email through $record",
+    async ({ body }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const created = await publishedInReach(db, {
+        ...archivedSample,
+        repository: {
+          ...archivedSample.repository,
+          currentArchiveContactEmail: "archive-service@univ-lorraine.fr",
+        },
+      });
+      // Act
+      const res = await putSample(app, created.igsn!, body(created));
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        (await readSample(db, created.id))?.repository
+          ?.currentArchiveContactEmail,
+      ).toBe("archive-service@univ-lorraine.fr");
+    },
+  );
 
   pgTest(
     "should keep every person account link through an unchanged round trip",

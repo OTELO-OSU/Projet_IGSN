@@ -9,6 +9,8 @@ export function repositoryColumns(repository: Repository | null | undefined) {
       repository?.currentArchiveContactFirstname ?? null,
     rep_current_archive_contact_lastname:
       repository?.currentArchiveContactLastname ?? null,
+    rep_current_archive_contact_email:
+      repository?.currentArchiveContactEmail ?? null,
     rep_collection_name: repository?.collectionName ?? null,
     rep_rights_holder: repository?.rightsHolder ?? null,
   };

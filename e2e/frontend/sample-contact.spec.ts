@@ -42,4 +42,26 @@ test.describe("contact the record owner", () => {
       VISITOR.email,
     );
   });
+
+  test("a visitor emails the current archive contact", async ({
+    page,
+    request,
+    samples,
+  }) => {
+    const sample = sampleNamed(samples, "Basalt 42");
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(sample.igsn);
+    await detail.openArchiveContactForm();
+
+    await sampleContactPage(page).send(VISITOR);
+    await detail.expectArchiveContactSent();
+
+    await maildev(request).expectMail(
+      "archive@example.org",
+      `A visitor wants to contact you about the sample "${sample.name}"`,
+      [VISITOR.message],
+      VISITOR.email,
+    );
+  });
 });

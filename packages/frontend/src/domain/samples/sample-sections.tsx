@@ -57,6 +57,7 @@ export function sampleSections(
     manualGroups,
     owner,
     publicationYear,
+    canContactArchive,
   } = sample;
   const hasGeologicalContext =
     geologicalContextDescription != null || physiographicEnvironment != null;
@@ -150,7 +151,11 @@ export function sampleSections(
           )}
           {repository && (
             <SubSection title={m.sample_section_repository()}>
-              <RepositoryView repository={repository} />
+              <RepositoryView
+                repository={repository}
+                igsn={igsn}
+                canContactArchive={canContactArchive}
+              />
             </SubSection>
           )}
         </>
@@ -174,7 +179,9 @@ export function sampleSections(
               (owner != null || igsn != null) && (
                 <div className="flex flex-wrap items-center gap-4">
                   {owner && <span>{fullName(owner)}</span>}
-                  {igsn != null && <ContactOwnerDialog igsn={igsn} />}
+                  {igsn != null && (
+                    <ContactOwnerDialog igsn={igsn} recipient="owner" />
+                  )}
                 </div>
               )
             }

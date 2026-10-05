@@ -86,6 +86,7 @@ const row = {
   rep_current_archive_laboratory: null,
   rep_current_archive_contact_firstname: null,
   rep_current_archive_contact_lastname: null,
+  rep_current_archive_contact_email: null,
   rep_collection_name: null,
   rep_rights_holder: null,
   syn_starting_material: null,
