@@ -4,7 +4,7 @@ One column registry builds the xlsx a researcher downloads to declare samples in
 
 ## A few terms first
 
-- **Column registry**: the one list describing every column of every sheet, in `columns.ts`. Everything else in the template is computed from it.
+- **Column registry**: the one list describing every column of every sheet, in [columns.ts](../packages/api/src/sample/import-template/columns.ts). Everything else in the template is computed from it.
 - **Path**: where a column's value lands in the sample, as dotted keys (`description.mass.value`). It is the sample's own shape, the one `createSampleSchema` validates.
 - **Block**: a named list of allowed values, written once on the "Vocabularies" sheet and referenced by the columns whose dropdown it feeds (`nature`, `size_unit`, `material_2`).
 - **Child sheet**: a tab holding one value per row for a field a sample can have several of (relations, storage conditions), each row naming its sample by its `Sample #`.
@@ -28,9 +28,9 @@ The template code lives in `packages/api/src/sample/import-template/` (download 
 | Grey cells, input prompts, columns a customization drops | [conditional-fields.ts](../packages/api/src/sample/import-template/conditional-fields.ts)                                                                                                                                                                                                                                                  | the domain predicates (`texturesFor`, `isMetamorphicRock`, `allowsLocation`...)                                                                                         |
 | Reading an upload: headers, rows, child join, values     | [template-layout.ts](../packages/api/src/sample/import-template/template-layout.ts), [read-rows.ts](../packages/api/src/sample/import-template/read-rows.ts), [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts), [resolve-label.ts](../packages/api/src/sample/import-template/resolve-label.ts) | the same registry and blocks                                                                                                                                            |
 | Validating an upload                                     | [validate-samples.ts](../packages/api/src/sample/import-template/validate-samples.ts)                                                                                                                                                                                                                                                      | `publishedSampleSchema`, each issue placed back on its sheet, row and column through `rowsByPath`                                                                       |
-| Export and bulk edit                                     | [export-columns.ts](../packages/api/src/sample/bulk-edit/export-columns.ts), [sample-row.ts](../packages/api/src/sample/bulk-edit/sample-row.ts), [merge-stored-sample.ts](../packages/api/src/sample/bulk-edit/merge-stored-sample.ts)                                                                                                    | the same columns, frozen cells from `published-field-lock.ts`                                                                                                           |
+| Export and bulk edit                                     | [export-columns.ts](../packages/api/src/sample/bulk-edit/export-columns.ts), [sample-row.ts](../packages/api/src/sample/bulk-edit/sample-row.ts), [merge-stored-sample.ts](../packages/api/src/sample/bulk-edit/merge-stored-sample.ts)                                                                                                    | the same columns, frozen cells from [published-field-lock.ts](../packages/domain/src/sample/publication/published-field-lock.ts)                                        |
 
-**The upload flow.** `POST /admin/samples/import` opens the file, matches the row-2 headers by name (`templateLayout`), reads the rows and joins each child row to its sample by `Sample #` (`readRows`), turns the cells into one `createSampleSchema` input per sample (`buildSampleInputs`), resolves parents, validates each against `publishedSampleSchema` (`validateSamples`), then either answers 422 with every issue as `{ sheet, row, column, value, code }` or queues every sample as `publishing` (ADR [0052](adr/0052-async-import-publication-via-publishing-status.md)). The admin report translates `code` through `import-issue-label.ts`.
+**The upload flow.** `POST /admin/samples/import` opens the file, matches the row-2 headers by name (`templateLayout`), reads the rows and joins each child row to its sample by `Sample #` (`readRows`), turns the cells into one `createSampleSchema` input per sample (`buildSampleInputs`), resolves parents, validates each against `publishedSampleSchema` (`validateSamples`), then either answers 422 with every issue as `{ sheet, row, column, value, code }` or queues every sample as `publishing` (ADR [0052](adr/0052-async-import-publication-via-publishing-status.md)). The admin report translates `code` through [import-issue-label.ts](../packages/admin/src/samples/import-issue-label.ts).
 
 **The contract to keep** (ADR 0051):
 
@@ -45,7 +45,7 @@ For a scalar field of the sample: a text, a number, a yes/no, a code.
 
 ### 1. The field exists in `domain` and in the form first
 
-Follow the form guide's "Add/remove a characteristic". Once the field is in `createSampleSchema`, the template coverage spec is red (`columns.spec.ts`, "should carry a column for every createSampleSchema leaf"): that failure is your reminder that a column is owed.
+Follow the form guide's "Add/remove a characteristic". Once the field is in `createSampleSchema`, the template coverage spec is red ([columns.spec.ts](../packages/api/src/sample/import-template/columns.spec.ts), "should carry a column for every createSampleSchema leaf"): that failure is your reminder that a column is owed.
 
 ### 2. Add one line to the registry
 
@@ -66,7 +66,7 @@ In the `grouped(...)` call of the right group in `SAMPLE_COLUMNS`:
 
 ### 3. Nothing to declare for the type, the marker or the required check
 
-A number column parses `Number(cell)`, a text column takes the text, a `yes_no` block gives a boolean. A path in `PUBLISH_BLOCKER_PATH` gets its "\*" and joins the columns whose absence refuses the file. A date cell is written as `YYYY-MM-DD`, or to the minute when the sibling `precision` column of the same object says "Hour and minute" (`isHourPrecision` in `build-sample-inputs.ts`), so a new date field either follows the collection date's shape (`precision`, `start`, `end`, `timeZone`) or is read as a day.
+A number column parses `Number(cell)`, a text column takes the text, a `yes_no` block gives a boolean. A path in `PUBLISH_BLOCKER_PATH` gets its "\*" and joins the columns whose absence refuses the file. A date cell is written as `YYYY-MM-DD`, or to the minute when the sibling `precision` column of the same object says "Hour and minute" (`isHourPrecision` in [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts)), so a new date field either follows the collection date's shape (`precision`, `start`, `end`, `timeZone`) or is read as a day.
 
 ### 4. Mirror the form's display condition
 
@@ -82,7 +82,7 @@ If the form hides the field until a sibling holds a value, add an entry to `COND
 
 - `condition` greys the cell when the driver column does not match, adds the sentence to the input prompt, keeps the column out of the required set, and drops the column from a customized template whose pre-fill can never satisfy it.
 - `prompt` alone adds a sentence with no greying, for a rule Excel cannot evaluate.
-- `values` are the labels a cell holds, never codes (`conditional-fields.spec.ts`).
+- `values` are the labels a cell holds, never codes ([conditional-fields.spec.ts](../packages/api/src/sample/import-template/conditional-fields.spec.ts)).
 - A field exclusive to one provenance status is caught by that spec if you forget it.
 
 The schema stays the real guard: a value the schema drops because its condition fails is reported as `not_applicable`, whatever the greying says.
@@ -94,12 +94,12 @@ A column inside an existing group is already covered by that group's checkbox in
 ### 6. Fixtures, when the field is required
 
 - `CLEAN_SAMPLE` and `CLEAN_INPUT` in [import-fixture.ts](../packages/api/src/sample/import-template/import-fixture.ts): the one publishable file every api spec fills, also written by `packages/api/scripts/write-clean-import.ts` for the e2e clean import.
-- The literal header list in `required-columns.spec.ts`.
+- The literal header list in [required-columns.spec.ts](../packages/api/src/sample/import-template/required-columns.spec.ts).
 - The e2e form fixture (`fillPublishableFields`) and the demo seed, which self-validate against the blockers.
 
 ### 7. Export and bulk edit need nothing
 
-`EXPORT_SAMPLE_COLUMNS` derives from `SAMPLE_COLUMNS`. A cell frozen by publication is greyed and its change refused (`frozen_field`) from the lock maps in `published-field-lock.ts`, the form guide's step 5; only `igsn` and `parents.igsn` are special-cased in `export-workbook.ts`.
+`EXPORT_SAMPLE_COLUMNS` derives from `SAMPLE_COLUMNS`. A cell frozen by publication is greyed and its change refused (`frozen_field`) from the lock maps in `published-field-lock.ts`, the form guide's step 5; only `igsn` and `parents.igsn` are special-cased in [export-workbook.ts](../packages/api/src/sample/bulk-edit/export-workbook.ts).
 
 ### 8. The `/service` Core slot
 
@@ -163,7 +163,7 @@ Append `{ name: SHEETS.thinSections, columns: THIN_SECTION_COLUMNS }` to `CHILD_
 
 ### 5. Tests
 
-Add the path to the `it.each` "several values ... one per row on its own tab" in `columns.spec.ts`, and a join case in `build-sample-inputs.spec.ts`.
+Add the path to the `it.each` "several values ... one per row on its own tab" in `columns.spec.ts`, and a join case in [build-sample-inputs.spec.ts](../packages/api/src/sample/import-template/build-sample-inputs.spec.ts).
 
 **Gotcha**: the lookup formula is `VLOOKUP($A, Samples!$A:$B, 2)`, so `Name` must stay column B of "Samples".
 
@@ -171,7 +171,7 @@ Add the path to the `it.each` "several values ... one per row on its own tab" in
 
 ### A value in an existing vocabulary
 
-Nothing here. The blocks read the domain constants, so the form guide's "Add/remove a selector value" is the whole change. `vocabulary-sheet.spec.ts` fails on a label equal to its code or duplicated under one parent, and `workbook.spec.ts` on a validation formula over Excel's 255-character limit.
+Nothing here. The blocks read the domain constants, so the form guide's "Add/remove a selector value" is the whole change. [vocabulary-sheet.spec.ts](../packages/api/src/sample/import-template/vocabulary-sheet.spec.ts) fails on a label equal to its code or duplicated under one parent, and [workbook.spec.ts](../packages/api/src/sample/import-template/workbook.spec.ts) on a validation formula over Excel's 255-character limit.
 
 ### A new flat vocabulary
 
@@ -181,8 +181,8 @@ flat("grain_size", "Grain size", GRAIN_SIZES, labels.grainSizeLabel),
 ```
 
 - `id` is what the column's `block` names.
-- The label function comes from `createSampleLabels` in `domain` (`i18n.md`: a vocabulary's text lives in `domain/messages`); add it there, never a map in `api`.
-- Labels must be unique within the block: the parser turns a label back into its code (`resolve-label.ts`).
+- The label function comes from `createSampleLabels` in `domain` ([i18n.md](../.claude/rules/i18n.md): a vocabulary's text lives in `domain/messages`); add it there, never a map in `api`.
+- Labels must be unique within the block: the parser turns a label back into its code ([resolve-label.ts](../packages/api/src/sample/import-template/resolve-label.ts)).
 
 ### A new hierarchy
 
@@ -195,11 +195,11 @@ Columns and blocks pair by `block` and level:
 ...hierarchy("grain_shape", "Grain shape", GRAIN_SHAPE_PATHS, labels.grainShapeLabel),
 ```
 
-`tree` makes one column per level (`Grain shape (level 1)`...), `hierarchy` one block per level (`grain_shape_1`...) with a parent breadcrumb per row, the level-2 dropdown cascades off level 1 (`OFFSET`/`MATCH` in `workbook.ts`), and the parser resolves each level under its parent. If the hierarchy can block publication, register its completeness in `HIERARCHIES` (`required-columns.ts`) or the build throws `No completeness known`.
+`tree` makes one column per level (`Grain shape (level 1)`...), `hierarchy` one block per level (`grain_shape_1`...) with a parent breadcrumb per row, the level-2 dropdown cascades off level 1 (`OFFSET`/`MATCH` in [workbook.ts](../packages/api/src/sample/import-template/workbook.ts)), and the parser resolves each level under its parent. If the hierarchy can block publication, register its completeness in `HIERARCHIES` ([required-columns.ts](../packages/api/src/sample/import-template/required-columns.ts)) or the build throws `No completeness known`.
 
 ### Labels with no domain resolver
 
-Yes/no, position type, region kind and date precision are form chrome, not domain enums, so their labels are local maps in `vocabulary-sheet.ts` (`YES_NO_LABEL`...), reused by `conditional-fields.ts`. Add one only for chrome; a domain enum's labels belong in `domain`.
+Yes/no, position type, region kind and date precision are form chrome, not domain enums, so their labels are local maps in [vocabulary-sheet.ts](../packages/api/src/sample/import-template/vocabulary-sheet.ts) (`YES_NO_LABEL`...), reused by [conditional-fields.ts](../packages/api/src/sample/import-template/conditional-fields.ts). Add one only for chrome; a domain enum's labels belong in `domain`.
 
 ### A list known only at request time
 
@@ -242,11 +242,11 @@ For every file already downloaded, a renamed header reads as deleted (ADR 0051).
 
 `createSampleSchema` is the one truth. Each face derives from it and has its guard:
 
-| Face       | Derives                                                                                                                                 | Guard                                                                                                                                                   |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Excel      | columns from the schema leaves, type from the JSON schema, "\*" from the blockers, labels from `domain`                                 | the coverage test in `columns.spec.ts`, `column-kind.spec.ts`, `conditional-fields.spec.ts`                                                             |
-| Form       | `composeCreateSample` validates against the schema, `FIELD_TAB` is exhaustive over `SampleDraft`, "\*" from `samplePublishRequirements` | the compiler, over the draft type                                                                                                                       |
-| `/service` | `toCoreSample` / `fromCoreSample`, `CORE_PATH_BY_FIELD`                                                                                 | the field coverage test in `core-path.spec.ts`, the round trip in `core-round-trip.spec.ts` for the fields a fixture fills, `core-vocabularies.spec.ts` |
+| Face       | Derives                                                                                                                                 | Guard                                                                                                                                                                                                                                                                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Excel      | columns from the schema leaves, type from the JSON schema, "\*" from the blockers, labels from `domain`                                 | the coverage test in `columns.spec.ts`, [column-kind.spec.ts](../packages/api/src/sample/import-template/column-kind.spec.ts), `conditional-fields.spec.ts`                                                                                                                                                                             |
+| Form       | `composeCreateSample` validates against the schema, `FIELD_TAB` is exhaustive over `SampleDraft`, "\*" from `samplePublishRequirements` | the compiler, over the draft type                                                                                                                                                                                                                                                                                                       |
+| `/service` | `toCoreSample` / `fromCoreSample`, `CORE_PATH_BY_FIELD`                                                                                 | the field coverage test in [core-path.spec.ts](../packages/domain/src/sample/core/core-path.spec.ts), the round trip in [core-round-trip.spec.ts](../packages/domain/src/sample/core/core-round-trip.spec.ts) for the fields a fixture fills, [core-vocabularies.spec.ts](../packages/domain/src/sample/core/core-vocabularies.spec.ts) |
 
 Three rules keep them aligned:
 
@@ -256,18 +256,18 @@ Three rules keep them aligned:
 
 ### New-field checklist
 
-| Step                  | Where                                                                          | The red test                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Schema                | `createSampleSchema` in `packages/domain/src/sample/sample.ts`                 | none, start here                                                                                              |
-| Form                  | draft, compose, field, tab                                                     | `FIELD_TAB` fails to compile                                                                                  |
-| Template column       | `columns.ts`, a condition, a block                                             | the coverage test in `columns.spec.ts`                                                                        |
-| Core slot             | `CORE_PATH_BY_FIELD`, `toCore*` / `fromCore*`, a row in `igsn-core-mapping.md` | the coverage test in `core-path.spec.ts`, or the field in its `NOT_IN_CORE` list, the reason stated in the PR |
-| Fixtures, if required | `CLEAN_SAMPLE`, `required-columns.spec.ts`, the e2e fixture, the seed          | those specs                                                                                                   |
+| Step                  | Where                                                                                                        | The red test                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Schema                | `createSampleSchema` in `packages/domain/src/sample/sample.ts`                                               | none, start here                                                                                              |
+| Form                  | draft, compose, field, tab                                                                                   | `FIELD_TAB` fails to compile                                                                                  |
+| Template column       | `columns.ts`, a condition, a block                                                                           | the coverage test in `columns.spec.ts`                                                                        |
+| Core slot             | `CORE_PATH_BY_FIELD`, `toCore*` / `fromCore*`, a row in [igsn-core-mapping.md](../docs/igsn-core-mapping.md) | the coverage test in `core-path.spec.ts`, or the field in its `NOT_IN_CORE` list, the reason stated in the PR |
+| Fixtures, if required | `CLEAN_SAMPLE`, `required-columns.spec.ts`, the e2e fixture, the seed                                        | those specs                                                                                                   |
 
 ## Other maintenance points
 
 - **Templates live long.** `TEMPLATE_VERSION` is written to Read me B1 and never checked. A new required column breaks every file downloaded before it; a new optional one is simply empty.
-- **Customization** is one JSON cell, Read me `C1`: `{ provenanceStatus, materialPath, manualGroupLabel }`. The section flags stay out of it since headers suffice. A new kind of pre-fill touches `storedCustomizationSchema`, `prefillOf`, `possibleLabelsOf` (`customization.ts`) and `withoutPrefilledRows` (`validate-import.ts`): a row equal to its pre-fills and defaults is not a sample.
+- **Customization** is one JSON cell, Read me `C1`: `{ provenanceStatus, materialPath, manualGroupLabel }`. The section flags stay out of it since headers suffice. A new kind of pre-fill touches `storedCustomizationSchema`, `prefillOf`, `possibleLabelsOf` ([customization.ts](../packages/api/src/sample/import-template/customization.ts)) and `withoutPrefilledRows` ([validate-import.ts](../packages/api/src/sample/import-template/validate-import.ts)): a row equal to its pre-fills and defaults is not a sample.
 - **Defaults.** `IMPORT_DEFAULTS` pre-fills the cell, is applied server-side when the column is absent, and keeps the column out of the required set.
 - **Issue codes.** A new one is `importIssueCodeSchema` (`packages/domain/src/sample/import/import-report.ts`), `IMPORT_ISSUE_LABELS` (`packages/admin/src/samples/import-issue-label.ts`, exhaustive) and both admin catalogs. A blocker code is labelled by `publishBlockerLabel`, a zod code falls back to its message.
 - **Excel limits.** A validation formula is capped at 255 characters (spec), a sheet name at 31, a file at `MAX_IMPORT_ROWS` samples. Dropdown errors are warnings by design, and "Vocabularies" is the only protected sheet.
