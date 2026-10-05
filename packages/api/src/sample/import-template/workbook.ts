@@ -42,6 +42,7 @@ import {
   storedCustomizationOf,
   writeCustomization,
 } from "./customization.ts";
+import { GROUP_ROW, styleSections } from "./section-style.ts";
 import {
   BLOCK_PLACEMENTS,
   manualGroupBlock,
@@ -66,8 +67,6 @@ export type ExcelBuffer = Awaited<ReturnType<ExcelJS.Xlsx["writeBuffer"]>>;
 
 export const sheetValidations = (sheet: ExcelJS.Worksheet): RangeValidations =>
   (sheet as unknown as { dataValidations: RangeValidations }).dataValidations;
-
-const GROUP_ROW = 1;
 
 export const FIRST_DATA_ROW = HEADER_ROW + 1;
 
@@ -229,18 +228,6 @@ function addGreyRules(
   }
 }
 
-function mergeGroupRow(sheet: ExcelJS.Worksheet, columns: readonly Column[]) {
-  let start = 0;
-  for (let index = 1; index <= columns.length; index++) {
-    if (columns[index]?.group === columns[start]?.group) continue;
-    if (index - start > 1) {
-      sheet.mergeCells(GROUP_ROW, start + 1, GROUP_ROW, index);
-    }
-    sheet.getCell(GROUP_ROW, start + 1).alignment = { horizontal: "center" };
-    start = index;
-  }
-}
-
 export function addDataSheet(
   book: ExcelJS.Workbook,
   name: string,
@@ -256,7 +243,7 @@ export function addDataSheet(
     outlineLevel: column.path?.includes(".") ? 1 : 0,
   }));
   sheet.views = [{ state: "frozen", xSplit: 1, ySplit: HEADER_ROW }];
-  mergeGroupRow(sheet, columns);
+  styleSections(sheet, columns, lastDataRow(rows));
   for (const [index, column] of columns.entries()) {
     const label = prefill?.(column);
     if (label !== undefined) {

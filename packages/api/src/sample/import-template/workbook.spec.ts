@@ -248,7 +248,7 @@ describe("import template workbook", () => {
         const cell = samples.getCell(address);
         return [
           cell.value,
-          cell.fill,
+          (cell.fill as ExcelJS.FillPattern | undefined)?.fgColor,
           sheetValidations(samples).find(address)?.type,
         ];
       });
@@ -402,6 +402,49 @@ describe("import template workbook", () => {
       placement?.keyRange,
       placement?.keyRange,
     ]);
+  });
+
+  it("should color each section's group and header cells and border it from the section before", () => {
+    const samples = sheet(SHEETS.samples);
+    const lastRow = FIRST_DATA_ROW + MAX_IMPORT_ROWS - 1;
+    const groups = rowTextOf(SHEETS.samples, GROUP_ROW);
+    const firstColumns = groups.flatMap((group, index) =>
+      group === groups[index - 1] ? [] : [index + 1],
+    );
+    const fillOf = (row: number, column: number) =>
+      (samples.getCell(row, column).fill as ExcelJS.FillPattern | undefined)
+        ?.fgColor?.argb;
+    const WHITE = "FFFFFFFF";
+    const STYLES: Partial<Record<string, [string, string | undefined]>> = {
+      Identity: ["FF45A2E2", WHITE],
+      "Sample classification": ["FFDC5472", WHITE],
+      Location: ["FF508C00", WHITE],
+      "Geological context": ["FF7A6FFF", WHITE],
+      Age: ["FFE54B07", WHITE],
+      "Physical description": ["FFA0522D", WHITE],
+      "Scientific context": ["FFF0A309", undefined],
+      "Conservation and security": ["FFF4CECC", undefined],
+      "Curation and repository": ["FFFEF2CC", undefined],
+    };
+
+    expect(
+      firstColumns.map((column) => [
+        samples.getCell(GROUP_ROW, column).value,
+        fillOf(GROUP_ROW, column),
+        fillOf(HEADER_ROW, column),
+        samples.getCell(GROUP_ROW, column).font?.color?.argb,
+        samples.getCell(FIRST_DATA_ROW, column).border?.left,
+        samples.getCell(lastRow, column).border?.left,
+      ]),
+    ).toEqual(
+      COLUMN_GROUPS.filter((group) =>
+        groupRunsOf(SHEETS.samples).includes(group),
+      ).map((group, index) => {
+        const [fill, font] = STYLES[group] ?? [];
+        const border = index === 0 ? undefined : { style: "medium" };
+        return [group, fill, fill, font, border, border];
+      }),
+    );
   });
 });
 
