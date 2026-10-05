@@ -96,14 +96,7 @@ The schema stays the real guard. A value it drops because its condition fails is
 
 ### 5. Optional sections
 
-A column inside an existing group is already covered by that group's checkbox in the download dialog. A new section touches four places:
-
-- a key in `TEMPLATE_SECTION_KEYS` (`packages/domain/src/sample/import/import-validator.ts`),
-- its group in `TEMPLATE_SECTIONS` (`columns.ts`),
-- its label in `SECTION_LABELS` (`packages/admin/src/samples/customize-template-dialog.tsx`),
-- the api validator.
-
-The records are exhaustive, so the build fails until all four are done.
+A column inside a group that has a checkbox in the download dialog is already optional. A column that should be optional on its own, or a group with no checkbox yet, is the next section's job: see "Make a column optional in a customized template".
 
 ### 6. Fixtures, when the field is required
 
@@ -230,6 +223,47 @@ Manual groups come from the requester's attachable groups. `manualGroupBlock` bu
 - Move a column: move its line into another `grouped()` call. Nothing else reads `group`.
 - Rename or add a group: `COLUMN_GROUPS`, plus `TEMPLATE_SECTIONS` when a download checkbox drops it.
 - Order within a sheet is array order. Uploads match headers by name, so reordering costs existing files nothing.
+
+## Make a column optional in a customized template
+
+The download dialog lets a researcher untick what their samples never need. A column unticked there is absent from the file. Upload matches headers by name, so an absent column leaves its field empty on every row. The parser needs nothing.
+
+### The unit is the column group
+
+- A checkbox in the dialog is a section, and a section is one row-1 group.
+- `TEMPLATE_SECTION_KEYS` ([import-validator.ts](../packages/domain/src/sample/import/import-validator.ts)) lists the sections. `TEMPLATE_SECTIONS` (`columns.ts`) maps each to its group.
+- A flag sent `false` drops every column of that group (`droppedGroupsOf` in `workbook.ts`). A child sheet left with only its key columns disappears with it.
+- The flags stay out of Read me `C1`. Upload reads the headers that are there.
+
+### 1. Check the column may be absent
+
+A column in `REQUIRED_SAMPLE_COLUMNS` cannot be optional. Its absence refuses the file with `missing_column`. Take it out of the required set first, with a `CONDITIONAL_FIELDS` condition or an `IMPORT_DEFAULTS` default. Existence and availability status left the set that way.
+
+### 2. Put the column in an optional group
+
+A column inside a group with a checkbox is optional. Move it there when the form tab agrees (see "Change the column grouping").
+
+### 3. Or give its group a checkbox
+
+A group with no checkbox yet needs three edits:
+
+- its key in `TEMPLATE_SECTION_KEYS`,
+- its group in `TEMPLATE_SECTIONS`,
+- its label in `SECTION_LABELS` and its default in `ALL_SECTIONS` ([customize-template-dialog.tsx](../packages/admin/src/samples/customize-template-dialog.tsx)).
+
+The records are exhaustive, so the build names the one you miss. The download hook (`use-download-import-template.ts`), the template query and the reservation body (`packages/api/src/sample/validator.ts`) all iterate `TEMPLATE_SECTION_KEYS` and need nothing.
+
+### 4. A single column
+
+A checkbox cannot drop one column alone. The one precedent is `subSamples`: a boolean on `TemplateCustomization` (`customization.ts`), a filter on `path` in `build()` (`workbook.ts`), its checkbox in the dialog, `z.stringbool()` in the template query and `z.boolean()` in the reservation body. Prefer a checkbox per group. The dialog then stays a list of tabs, as the form is.
+
+### 5. A column the pre-fill makes unreachable needs nothing
+
+A fixed provenance status or material already drops every column whose `CONDITIONAL_FIELDS` condition can never hold (`droppedColumnsOf` and `isSatisfiable` in `customization.ts`). Declaring the condition is the whole change.
+
+### Test
+
+Add the group and the child sheets it empties to the `it.each` over `TemplateSectionKey` in `workbook.spec.ts`.
 
 ## Remove a column
 
