@@ -136,12 +136,15 @@ describe("LazyLocationMap", () => {
     );
   });
 
-  it("should stay in draw mode when both clicks land on the same point", async () => {
+  it.each([
+    ["both clicks land on the same point", 20, 20],
+    ["the area exceeds a quarter of the world", 700, 400],
+  ])("should stay in draw mode when %s", async (_case, x, y) => {
     const onChange = vi.fn();
     const { draw, container } = await enterDrawMode(onChange);
 
     clickAt(container, 20, 20);
-    clickAt(container, 20, 20);
+    clickAt(container, x, y);
 
     expect(onChange).not.toHaveBeenCalled();
     await expect.element(draw).toHaveAttribute("aria-pressed", "true");
