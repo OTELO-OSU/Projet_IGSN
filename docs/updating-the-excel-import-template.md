@@ -1,6 +1,6 @@
 # Updating the Excel import template
 
-One column registry builds the xlsx a researcher downloads to declare samples in bulk, parses the upload, writes the bulk-edit export and parses its re-import, so one change reaches all four. Every field starts in the declaration form, which has its own guide, [updating-the-sample-form.md](updating-the-sample-form.md).
+To change what the Excel import asks for, edit the column registry, [columns.ts](../packages/api/src/sample/import-template/columns.ts), and let the rest derive: that one list builds the xlsx a researcher downloads to declare samples in bulk, parses the upload, writes the bulk-edit export and parses its re-import, so one change reaches all four. A new field starts in the declaration form ([updating-the-sample-form.md](updating-the-sample-form.md)) before it gets a column here.
 
 ## A few terms first
 
