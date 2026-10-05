@@ -1,6 +1,6 @@
 # Updating the Excel import template
 
-This guide is about the Excel bulk import of samples: the xlsx a researcher downloads to declare samples in bulk, the upload that parses it, the bulk-edit export and its re-import. To change what it asks for, edit the column registry, [columns.ts](../packages/api/src/sample/import-template/columns.ts), and let the rest derive, since that one list drives all four. A new field starts in the declaration form ([updating-the-sample-form.md](updating-the-sample-form.md)) before it gets a column here.
+This guide is about the Excel bulk import of samples. A researcher downloads an xlsx, fills one sample per row and uploads it. The same file format serves the bulk-edit export and its re-import. One column registry, [columns.ts](../packages/api/src/sample/import-template/columns.ts), drives all four. To change what the import asks for, edit that registry and let the rest derive. A new field starts in the declaration form ([updating-the-sample-form.md](updating-the-sample-form.md)). It gets a column here afterwards.
 
 ## A few terms first
 
@@ -8,7 +8,7 @@ This guide is about the Excel bulk import of samples: the xlsx a researcher down
 - **Path**: where a column's value lands in the sample, as dotted keys (`description.mass.value`). It is the sample's own shape, the one `createSampleSchema` validates.
 - **Block**: a named list of allowed values, written once on the "Vocabularies" sheet and referenced by the columns whose dropdown it feeds (`nature`, `size_unit`, `material_2`).
 - **Child sheet**: a tab holding one value per row for a field a sample can have several of (relations, storage conditions), each row naming its sample by its `Sample #`.
-- **Pre-fill**: a cell the template already holds when downloaded, grey and fixed, because the researcher chose it in the download dialog (a provenance status, a material, a manual group) or because it is a default (existence and availability status).
+- **Pre-fill**: a cell the template already holds when downloaded, grey and fixed. The researcher chose it in the download dialog (a provenance status, a material, a manual group), or it is a default (existence and availability status).
 - **Blocker**: a reason a sample cannot be published, from `samplePublishBlockers` in `domain`. The template marks the columns answering one with a trailing "\*".
 
 ## Mental model
@@ -30,7 +30,14 @@ The template code lives in `packages/api/src/sample/import-template/` (download 
 | Validating an upload                                     | [validate-samples.ts](../packages/api/src/sample/import-template/validate-samples.ts)                                                                                                                                                                                                                                                      | `publishedSampleSchema`, each issue placed back on its sheet, row and column through `rowsByPath`                                                                       |
 | Export and bulk edit                                     | [export-columns.ts](../packages/api/src/sample/bulk-edit/export-columns.ts), [sample-row.ts](../packages/api/src/sample/bulk-edit/sample-row.ts), [merge-stored-sample.ts](../packages/api/src/sample/bulk-edit/merge-stored-sample.ts)                                                                                                    | the same columns, frozen cells from [published-field-lock.ts](../packages/domain/src/sample/publication/published-field-lock.ts)                                        |
 
-**The upload flow.** `POST /admin/samples/import` opens the file, matches the row-2 headers by name (`templateLayout`), reads the rows and joins each child row to its sample by `Sample #` (`readRows`), turns the cells into one `createSampleSchema` input per sample (`buildSampleInputs`), resolves parents, validates each against `publishedSampleSchema` (`validateSamples`), then either answers 422 with every issue as `{ sheet, row, column, value, code }` or queues every sample as `publishing` (ADR [0052](adr/0052-async-import-publication-via-publishing-status.md)). The admin report translates `code` through [import-issue-label.ts](../packages/admin/src/samples/import-issue-label.ts).
+**The upload flow**, `POST /admin/samples/import`:
+
+- `templateLayout` matches the row-2 headers by name.
+- `readRows` reads the rows and joins each child row to its sample by `Sample #`.
+- `buildSampleInputs` turns the cells into one `createSampleSchema` input per sample.
+- Parents are resolved, then `validateSamples` checks each input against `publishedSampleSchema`.
+- Any issue answers 422, every issue as `{ sheet, row, column, value, code }`. The admin report translates `code` through [import-issue-label.ts](../packages/admin/src/samples/import-issue-label.ts).
+- A clean file queues every sample as `publishing` (ADR [0052](adr/0052-async-import-publication-via-publishing-status.md)).
 
 **The contract to keep** (ADR 0051):
 
@@ -66,7 +73,7 @@ In the `grouped(...)` call of the right group in `SAMPLE_COLUMNS`:
 
 ### 3. Nothing to declare for the type, the marker or the required check
 
-A number column parses `Number(cell)`, a text column takes the text, a `yes_no` block gives a boolean. A path in `PUBLISH_BLOCKER_PATH` gets its "\*" and joins the columns whose absence refuses the file. A date cell is written as `YYYY-MM-DD`, or to the minute when the sibling `precision` column of the same object says "Hour and minute" (`isHourPrecision` in [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts)), so a new date field either follows the collection date's shape (`precision`, `start`, `end`, `timeZone`) or is read as a day.
+A number column parses `Number(cell)`, a text column takes the text, a `yes_no` block gives a boolean. A path in `PUBLISH_BLOCKER_PATH` gets its "\*" and joins the columns whose absence refuses the file. A date cell is written as `YYYY-MM-DD`. It is written to the minute when the sibling `precision` column of the same object says "Hour and minute" (`isHourPrecision` in [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts)). So a new date field either follows the collection date's shape (`precision`, `start`, `end`, `timeZone`) or is read as a day.
 
 ### 4. Mirror the form's display condition
 
@@ -80,7 +87,7 @@ If the form hides the field until a sibling holds a value, add an entry to `COND
 },
 ```
 
-- `condition` greys the cell when the driver column does not match, adds the sentence to the input prompt, keeps the column out of the required set, and drops the column from a customized template whose pre-fill can never satisfy it.
+- `condition` greys the cell when the driver column does not match and adds the sentence to the input prompt. It also keeps the column out of the required set. A customized template whose pre-fill can never satisfy it drops the column.
 - `prompt` alone adds a sentence with no greying, for a rule Excel cannot evaluate.
 - `values` are the labels a cell holds, never codes ([conditional-fields.spec.ts](../packages/api/src/sample/import-template/conditional-fields.spec.ts)).
 - A field exclusive to one provenance status is caught by that spec if you forget it.
@@ -107,7 +114,7 @@ A new field is also a `/service` field: see "Avoid drift" below.
 
 ## Add a one-to-many relation (a child sheet)
 
-A field the sample has several of is a `z.array(...)` in the schema and lives on its own tab, one value per row, never as repeated columns on "Samples".
+A field the sample has several of is a `z.array(...)` in the schema. It lives on its own tab, one value per row, never as repeated columns on "Samples".
 
 **How the join works.** `COLUMN_KINDS` gives every leaf under an array an `arrayPrefix` (`relations` for `relations.identifier`). A child row names its sample in `Sample #`; `withChildRow` (`build-sample-inputs.ts`) folds the row's fields sharing a prefix into one element appended to that array, and records `rowsByPath["relations.0"] = { sheet, row }` so a later issue points at that row. A row naming no sample on "Samples" is an `unknown_sample_key` orphan.
 
@@ -153,7 +160,7 @@ const THIN_SECTION_COLUMNS: readonly Column[] = marked([
 
 ### 3. Register it
 
-Append `{ name: SHEETS.thinSections, columns: THIN_SECTION_COLUMNS }` to `CHILD_SHEETS`. Array order is tab order. `addChildSheet` adds the `Sample #` dropdown over the "Samples" keys and the "Sample name (filled automatically)" lookup, the Read me line listing the tabs updates itself, and a tab left with only its key columns after a customization is dropped.
+Append `{ name: SHEETS.thinSections, columns: THIN_SECTION_COLUMNS }` to `CHILD_SHEETS`. Array order is tab order. `addChildSheet` adds the `Sample #` dropdown over the "Samples" keys and the "Sample name (filled automatically)" lookup. The Read me line listing the tabs updates itself. A tab left with only its key columns after a customization is dropped.
 
 ### 4. Know the semantics you get
 
@@ -195,7 +202,7 @@ Columns and blocks pair by `block` and level:
 ...hierarchy("grain_shape", "Grain shape", GRAIN_SHAPE_PATHS, labels.grainShapeLabel),
 ```
 
-`tree` makes one column per level (`Grain shape (level 1)`...), `hierarchy` one block per level (`grain_shape_1`...) with a parent breadcrumb per row, the level-2 dropdown cascades off level 1 (`OFFSET`/`MATCH` in [workbook.ts](../packages/api/src/sample/import-template/workbook.ts)), and the parser resolves each level under its parent. If the hierarchy can block publication, register its completeness in `HIERARCHIES` ([required-columns.ts](../packages/api/src/sample/import-template/required-columns.ts)) or the build throws `No completeness known`.
+`tree` makes one column per level (`Grain shape (level 1)`...). `hierarchy` makes one block per level (`grain_shape_1`...), with a parent breadcrumb per row. The level-2 dropdown cascades off level 1 (`OFFSET`/`MATCH` in [workbook.ts](../packages/api/src/sample/import-template/workbook.ts)). The parser resolves each level under its parent. If the hierarchy can block publication, register its completeness in `HIERARCHIES` ([required-columns.ts](../packages/api/src/sample/import-template/required-columns.ts)) or the build throws `No completeness known`.
 
 ### Labels with no domain resolver
 
