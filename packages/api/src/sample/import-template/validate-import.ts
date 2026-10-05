@@ -240,6 +240,26 @@ async function internalIdIssues(
   );
 }
 
+type ParsedImport =
+  | { issues: ImportIssue[] }
+  | { book: ExcelJS.Workbook; layout: TemplateLayout; parsed: ParsedRows };
+
+export async function parseImport(bytes: ArrayBuffer): Promise<ParsedImport> {
+  const book = await openWorkbook(bytes);
+  if (book === undefined) return { issues: [{ code: "unreadable_file" }] };
+  const { layout, issues } = templateLayout(book);
+  if (issues.length > 0) return { issues };
+  const parsed = withoutPrefilledRows(
+    readRows(book, layout),
+    prefilledHeaderLabelsOf(readCustomization(book)),
+  );
+  if (parsed.samples.length === 0)
+    return { issues: [{ sheet: SHEETS.samples, code: "no_sample" }] };
+  if (parsed.samples.length > MAX_IMPORT_ROWS)
+    return { issues: [{ sheet: SHEETS.samples, code: "too_many_rows" }] };
+  return { book, layout, parsed };
+}
+
 export function validateImport(
   bytes: ArrayBuffer,
   providedFileNames: ReadonlySet<string>,
@@ -248,18 +268,9 @@ export function validateImport(
   resolveParentsByIgsn: ResolveParentsByIgsn,
 ): Promise<ValidatedImport> {
   return queueBuild(async () => {
-    const book = await openWorkbook(bytes);
-    if (book === undefined) return rejected([{ code: "unreadable_file" }]);
-    const { layout, issues } = templateLayout(book);
-    if (issues.length > 0) return rejected(issues);
-    const parsed = withoutPrefilledRows(
-      readRows(book, layout),
-      prefilledHeaderLabelsOf(readCustomization(book)),
-    );
-    if (parsed.samples.length === 0)
-      return rejected([{ sheet: SHEETS.samples, code: "no_sample" }]);
-    if (parsed.samples.length > MAX_IMPORT_ROWS)
-      return rejected([{ sheet: SHEETS.samples, code: "too_many_rows" }]);
+    const opened = await parseImport(bytes);
+    if ("issues" in opened) return rejected(opened.issues);
+    const { book, layout, parsed } = opened;
     const validated = await validateRows(
       parsed,
       absentDefaultsOf(layout),

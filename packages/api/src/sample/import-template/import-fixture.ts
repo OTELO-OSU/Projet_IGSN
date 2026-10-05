@@ -1,3 +1,5 @@
+import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+
 import {
   HEADER_ROW,
   REQUIRED_MARKER,
@@ -149,6 +151,20 @@ export const CLEAN_INPUT = {
     light: "total_darkness",
   },
 };
+
+export const CLEAN_DUPLICATE = {
+  name: "Basalt 1",
+  nature: "hand_sample",
+  type: null,
+  collectionMethod: null,
+  material: "rock_and_sediment.rock.igneous",
+  scientificContext: {
+    provenanceStatus: "field_sample",
+    additionalRoles: [],
+    collectorFirstname: "Marie",
+    collectorLastname: "Curie",
+  },
+} satisfies CreateSample;
 
 export const CLEAN_ROWS_BY_PATH = {
   "relations.0": { sheet: SHEETS.relations, row: 3 },

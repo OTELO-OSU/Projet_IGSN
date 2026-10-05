@@ -18,7 +18,10 @@ import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { addParentOwnerAsContributor } from "./service/add-parent-owner-as-contributor.ts";
 import { deleteSample } from "./service/delete-sample.ts";
-import { findDuplicateSamples } from "./service/find-duplicate-samples.ts";
+import {
+  findDuplicateSamples,
+  findDuplicateSamplesOfEach,
+} from "./service/find-duplicate-samples.ts";
 import { getEditLock } from "./service/get-edit-lock.ts";
 import { getPublicSampleByIgsn } from "./service/get-public-sample-by-igsn.ts";
 import { getSampleById } from "./service/get-sample-by-id.ts";
@@ -84,6 +87,7 @@ export function createSampleRepository(
     get: tx(getSample),
     getPublicByIgsn: tx(getPublicSampleByIgsn),
     findDuplicates: tx(findDuplicateSamples),
+    findDuplicatesOfEach: tx(findDuplicateSamplesOfEach),
     getPublicLineage: tx(getSampleLineage),
     create: (input, owner) =>
       withTransaction(db, async (trx) =>

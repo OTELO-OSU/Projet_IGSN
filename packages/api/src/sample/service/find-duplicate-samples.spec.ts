@@ -10,7 +10,10 @@ import type { Transactional } from "../../transaction.ts";
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { tokenEmail } from "../../tests/provision-user.ts";
-import { findDuplicateSamples } from "./find-duplicate-samples.ts";
+import {
+  findDuplicateSamples,
+  findDuplicateSamplesOfEach,
+} from "./find-duplicate-samples.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 import { setSampleStatus } from "./set-sample-status.ts";
@@ -276,6 +279,28 @@ describe("findDuplicateSamples", () => {
       const duplicates = await findDuplicateSamples(db, CRITERIA, child.id);
       // Assert
       expect(duplicates).toEqual(found(parent));
+    },
+  );
+});
+
+describe("findDuplicateSamplesOfEach", () => {
+  pgTest(
+    "should report each criteria's own duplicates, aligned with the batch by index",
+    async ({ db }) => {
+      // Arrange
+      const account = await insertUser(db, tokenEmail("inge"), COLLECTOR);
+      const uncollected = await publish(db, {
+        scientificContext: fieldSample({}),
+      });
+      const collected = await publish(db);
+      // Act
+      const duplicates = await findDuplicateSamplesOfEach(db, [
+        NO_COLLECTOR_CRITERIA,
+        { ...CRITERIA, name: "Basalte du Cantal" },
+        linkedCriteria(account.id),
+      ]);
+      // Assert
+      expect(duplicates).toEqual([found(uncollected), [], found(collected)]);
     },
   );
 });
