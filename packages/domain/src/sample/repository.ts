@@ -73,6 +73,9 @@ export type SampleRepository = {
     criteria: DuplicateCriteria,
     exclude?: string,
   ): Promise<SuspectedDuplicate[]>;
+  findDuplicatesOfEach(
+    criteria: readonly DuplicateCriteria[],
+  ): Promise<SuspectedDuplicate[][]>;
   getPublicLineage(igsn: string): Promise<SampleLineage | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
   createPublishing(samples: ImportedSample[], owner: User): Promise<number>;
