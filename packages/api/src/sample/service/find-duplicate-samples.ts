@@ -1,9 +1,12 @@
+import type { BatchSuspectedDuplicate } from "@projet-igsn/domain/sample-batch/model";
 import type {
   DuplicateCriteria,
   SuspectedDuplicate,
 } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { RawBuilder, SqlBool } from "kysely";
 
+import { batchSuspectedDuplicateSchema } from "@projet-igsn/domain/sample-batch/model";
 import { suspectedDuplicateSchema } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import { sql } from "kysely";
 import { z } from "zod";
@@ -61,11 +64,12 @@ const keysOf = (criteria: readonly DuplicateCriteria[]) =>
     sql`k(index int, name text, material ltree, collector_user_id uuid, collector_firstname text, collector_lastname text)`,
   );
 
-export async function findDuplicateSamplesOfEach(
+const duplicateRowsOfEach = async (
   db: Transactional<DB>,
   criteria: readonly DuplicateCriteria[],
+  statuses: SampleStatus[],
   exclude?: string,
-): Promise<SuspectedDuplicate[][]> {
+) => {
   if (criteria.length === 0) return [];
   const rows = await db
     .selectFrom(keysOf(criteria))
@@ -78,7 +82,7 @@ export async function findDuplicateSamplesOfEach(
           .select(["c.id", "c.igsn", "c.name"])
           .where((eb) =>
             eb.and([
-              eb("c.status", "=", "published"),
+              eb("c.status", "in", statuses),
               sameText(sql.ref("c.name"), sql`k.name`),
               sql<SqlBool>`c.material = k.material`,
               SAME_COLLECTOR,
@@ -95,8 +99,17 @@ export async function findDuplicateSamplesOfEach(
     .orderBy("d.igsn")
     .execute();
   const byIndex = Map.groupBy(rows, ({ index }) => index);
-  return criteria.map((_, index) =>
-    z.array(suspectedDuplicateSchema).parse(byIndex.get(index) ?? []),
+  return criteria.map((_, index) => byIndex.get(index) ?? []);
+};
+
+export async function findDuplicateSamplesOfEach(
+  db: Transactional<DB>,
+  criteria: readonly DuplicateCriteria[],
+  exclude?: string,
+): Promise<SuspectedDuplicate[][]> {
+  const rows = await duplicateRowsOfEach(db, criteria, ["published"], exclude);
+  return rows.map((duplicates) =>
+    z.array(suspectedDuplicateSchema).parse(duplicates),
   );
 }
 
@@ -111,4 +124,18 @@ export async function findDuplicateSamples(
     exclude,
   );
   return duplicates;
+}
+
+export async function findBatchDuplicateSamples(
+  db: Transactional<DB>,
+  criteria: DuplicateCriteria,
+  exclude?: string,
+): Promise<BatchSuspectedDuplicate[]> {
+  const [duplicates = []] = await duplicateRowsOfEach(
+    db,
+    [criteria],
+    ["published", "publishing"],
+    exclude,
+  );
+  return z.array(batchSuspectedDuplicateSchema).parse(duplicates);
 }

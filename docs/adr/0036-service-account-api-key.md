@@ -53,6 +53,35 @@ Accepted, then amended.
 - An anonymous `?editable=true` is ignored: every published sample is listed, since there is no account to narrow by.
 - `POST` and `PUT` are unchanged, still needing a valid key and answering 403 for a missing or unknown one.
 
+### 2026-10-01, `POST /service/samples/batch` and `GET /service/batches/:id`
+
+- The batch body is 1 to 500 items `{ partnerId, sample }`, `sample` an IGSN Core record.
+- `partnerId` is required and not unique.
+- With `identification.sampleIdentifier` the item updates that published sample inside the account's `managerScope`, like `PUT /service/samples/:igsn`.
+- Without one the item creates a sample owned by the account owner with the account's trio, like `POST /service/samples`.
+- `sampleIdentifier` is ignored by the single `POST` and `PUT`, and selects the sample to update only in a batch item.
+- `service-sample-checks.ts` carries those checks out of the single routes so both share them.
+- An update item with no changed field is neither written nor queued, stays `published` and is still listed by the batch read.
+- All or nothing: any refusal writes nothing.
+- 422 `{ error: "Invalid sample", issues }` prefixes every path with `<i>.sample` plus `.<core path>`, matching schema-level paths.
+- The batch adds five codes to the single route's vocabulary: `sample_not_found` and `sample_not_editable` (an unknown or out-of-reach IGSN), `duplicate_sample_key` (the same IGSN on two items), `sample_publishing` (the IGSN's sample is still queued) and `sample_locked` (another user holds the edit lock, as bulk edit refuses it).
+- The single `PUT` still answers 404 for a queued sample and still ignores the edit lock.
+- 409 `{ error, reason: "duplicates", items: [{ index, duplicates, batchDuplicates }] }` answers a suspected duplicate.
+- `duplicates` also matches still-`publishing` samples (`igsn: null`).
+- `batchDuplicates` lists the other items of the same batch with the same name, material and collector.
+- `?confirmDuplicates=true` bypasses both.
+- 409 `{ error: "Sample changed, retry" }` answers an update whose sample is no longer `published` or whose `updated_at` moved since the checks read it, rolling the whole batch back.
+- 503 when DataCite does not answer, nothing written.
+- 413 above `IMPORT_MAX_BYTES`.
+- 403 for a missing or unknown key, batching writes like the single routes.
+- The route has its own per-IP rate limit, the import template's budget (5/min), on top of the mount's.
+- A valid batch commits every row as `publishing` in one transaction, a create or an update (`published -> publishing`), the same queue ADR [0052](0052-async-import-publication-via-publishing-status.md) gives the import and bulk edit; no mail.
+- An update keeps its IGSN because `publishSample` keeps an existing one (`coalesce`), a legacy `CNRS…` IGSN included.
+- The answer is 202 `{ id }`, the batch id.
+- `GET /service/batches/{id}` needs a key (403 otherwise) and answers 404 for an unknown batch or another account's.
+- It lists `{ partnerId, id, status, igsn, publishingError }` per item in request order, reading `sample_batch_item` joined to `sample`.
+- `sample_batch_item` is indexed on `sample_id` and `service_account_id`.
+
 ## Context
 
 ADR 0035 declared the `service_account` entity but deferred its credential and any machine API: nothing recorded who a service account is for, and a created account could call nothing. A researcher must be able to ask for one, own it, and hold a credential a script can send.

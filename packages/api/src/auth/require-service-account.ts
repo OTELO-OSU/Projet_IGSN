@@ -1,6 +1,6 @@
 import type { ServiceAccount } from "@projet-igsn/domain/service-account/model";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
-import type { MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 
 import { HTTPException } from "hono/http-exception";
 
@@ -35,3 +35,11 @@ export function requireServiceAccount(
     await next();
   };
 }
+
+export const keyedServiceAccount = (c: Context<ServiceEnv>): ServiceAccount => {
+  const account = c.get("serviceAccount");
+  if (!account) {
+    throw new HTTPException(403, { message: "Forbidden" });
+  }
+  return account;
+};

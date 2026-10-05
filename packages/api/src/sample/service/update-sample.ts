@@ -18,18 +18,18 @@ import { replaceSampleRelations } from "./replace-sample-relations.ts";
 import { sampleColumns } from "./sample-columns.ts";
 import { writeSampleLocation } from "./write-sample-location.ts";
 
-export async function updateSample(
+export async function writeSample(
   db: Transactional<DB>,
   id: string,
   input: CreateSample,
-): Promise<Sample | null> {
+): Promise<boolean> {
   const row = await db
     .updateTable("sample")
     .set({ ...sampleColumns(input), updated_at: sql`now()` })
     .where("id", "=", id)
     .returning("id")
     .executeTakeFirst();
-  if (!row) return null;
+  if (!row) return false;
   await writeSampleLocation(db, id, input.location);
   await inheritParentCollectionDate(db, id);
   await replaceSampleRelations(db, id, input.relations ?? []);
@@ -43,5 +43,13 @@ export async function updateSample(
   if (input.manualGroupIds) {
     await replaceSampleManualGroups(db, id, input.manualGroupIds);
   }
-  return getSampleById(db, id);
+  return true;
+}
+
+export async function updateSample(
+  db: Transactional<DB>,
+  id: string,
+  input: CreateSample,
+): Promise<Sample | null> {
+  return (await writeSample(db, id, input)) ? getSampleById(db, id) : null;
 }

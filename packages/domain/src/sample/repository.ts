@@ -1,4 +1,5 @@
 import type { InstitutionalGroups } from "../institutional-group/model.ts";
+import type { BatchSuspectedDuplicate } from "../sample-batch/model.ts";
 import type { UserSampleRole } from "../user-sample/model.ts";
 import type { User } from "../user/model.ts";
 import type { ModerationScope } from "../user/moderation-scope.ts";
@@ -20,7 +21,7 @@ import type {
   SearchEligibleParentsQuery,
   SetSampleStatusBody,
 } from "./sample-validator.ts";
-import type { CreateSample, Sample } from "./sample.ts";
+import type { CreateSample, Sample, SampleStatus } from "./sample.ts";
 
 export type ListSamplesResult = {
   data: Sample[];
@@ -78,6 +79,11 @@ export type SampleRepository = {
   findDuplicatesOfEach(
     criteria: readonly DuplicateCriteria[],
   ): Promise<SuspectedDuplicate[][]>;
+  findBatchDuplicates(
+    criteria: DuplicateCriteria,
+    exclude?: string,
+  ): Promise<BatchSuspectedDuplicate[]>;
+  findStatusByIgsn(igsn: string): Promise<SampleStatus | null>;
   getPublicLineage(igsn: string): Promise<SampleLineage | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
   createPublishing(samples: ImportedSample[], owner: User): Promise<number>;
@@ -86,7 +92,7 @@ export type SampleRepository = {
     userId: string,
   ): Promise<{ sample: Sample; role: UserSampleRole | null }[]>;
   updatePublishing(
-    samples: { id: string; input: CreateSample }[],
+    samples: { id: string; input: CreateSample; updatedAt: Date }[],
   ): Promise<number>;
   retryFailedPublications(userId: string): Promise<number>;
   createPublished(

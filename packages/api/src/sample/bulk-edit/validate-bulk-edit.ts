@@ -181,6 +181,7 @@ async function validateMatched(
     samples: validated.samples.map(({ input }, index) => ({
       id: matched[index]!.sample.id,
       input,
+      updatedAt: matched[index]!.sample.updatedAt,
     })),
   };
 }
@@ -190,7 +191,7 @@ export function validateBulkEdit(
   targets: Targets,
 ): Promise<{
   issues: ImportIssue[];
-  samples: { id: string; input: CreateSample }[];
+  samples: { id: string; input: CreateSample; updatedAt: Date }[];
 }> {
   return queueBuild(async () => {
     const book = await openWorkbook(bytes);

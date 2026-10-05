@@ -26,6 +26,7 @@ import {
   loadRateLimitConfig,
 } from "./rate-limit/config.ts";
 import { type RateLimitEnv, rateLimit } from "./rate-limit/middleware.ts";
+import { createSampleBatchRepository } from "./sample-batch/repository.ts";
 import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
 import { createSampleParentRoutes } from "./sample/parent-routes.ts";
@@ -134,6 +135,10 @@ export function createApp(
 
   const serviceRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
+    .use(
+      "/samples/batch",
+      rateLimit(rateLimitConfig, "ip", IMPORT_TEMPLATE_USER_BUDGET),
+    )
     .route(
       "/",
       createServiceRoutes(
@@ -142,6 +147,7 @@ export function createApp(
         manualGroupRepository,
         frontendUrl,
         userSampleRepository,
+        createSampleBatchRepository(database),
         mail,
       ),
     );
