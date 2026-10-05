@@ -2,6 +2,7 @@ import L from "leaflet";
 import { MapContainer, useMap } from "react-leaflet";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { page } from "vitest/browser";
 
 import {
   FitSelection,
@@ -88,6 +89,37 @@ describe("RectangleDrawer", () => {
     map.fire("mouseup", { latlng: L.latLng(50, 10) });
 
     expect(onSelect).toHaveBeenCalledWith("-10,40,10,50");
+  });
+
+  it("should refuse an area larger than a quarter of the world", async () => {
+    const { onSelect, map } = await renderDrawer("-10,40,10,50");
+
+    map.fire("mousedown", {
+      latlng: L.latLng(-60, -170),
+      originalEvent: { shiftKey: true },
+    });
+    map.fire("mouseup", { latlng: L.latLng(60, 170) });
+
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("should turn the pending rectangle red and warn once it exceeds a quarter of the world", async () => {
+    const { map } = await renderDrawer(undefined, true);
+
+    map.fire("click", { latlng: L.latLng(-60, -170) });
+    map.fire("mousemove", { latlng: L.latLng(-50, -160) });
+    await vi.waitFor(() => expect(rectanglePaths().length).toBe(1));
+    const inRangeStroke = rectanglePaths()[0]?.getAttribute("stroke");
+
+    map.fire("mousemove", { latlng: L.latLng(60, 170) });
+
+    await vi.waitFor(() =>
+      expect(rectanglePaths()[0]?.getAttribute("stroke")).toBe("#dc2626"),
+    );
+    expect(inRangeStroke).not.toBe("#dc2626");
+    await expect
+      .element(page.getByRole("alert"))
+      .toHaveTextContent("This search area is too large.");
   });
 
   it("should replace the previous selection on a second shift+drag", async () => {

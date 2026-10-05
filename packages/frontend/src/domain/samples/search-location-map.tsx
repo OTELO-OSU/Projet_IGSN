@@ -3,18 +3,30 @@ import type { Location } from "@projet-igsn/domain/sample/location/model";
 import "leaflet/dist/leaflet.css";
 import {
   type Bbox,
-  bboxSchema,
+  searchBboxSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
 import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
-import { type LatLng, type LatLngBoundsExpression, Util } from "leaflet";
+import {
+  type LatLng,
+  type LatLngBoundsExpression,
+  type LatLngTuple,
+  type PathOptions,
+  type Tooltip as LeafletTooltip,
+  Util,
+  latLng,
+} from "leaflet";
+import { TriangleAlertIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   Rectangle,
   TileLayer,
+  Tooltip,
   useMap,
   useMapEvents,
 } from "react-leaflet";
+
+import { m } from "#/paraglide/messages.js";
 
 export const WORLD_BOUNDS: LatLngBoundsExpression = [
   [-90, -180],
@@ -22,6 +34,9 @@ export const WORLD_BOUNDS: LatLngBoundsExpression = [
 ];
 
 const MIN_DRAG_PX = 5;
+
+const DEFAULT_PATH_OPTIONS: PathOptions = { color: "#3388ff" };
+const TOO_LARGE_PATH_OPTIONS: PathOptions = { color: "#dc2626" };
 
 const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
 const clampLatitude = (value: number) =>
@@ -64,8 +79,11 @@ export function singleBoundsOrWorld(
   return half && rest.length === 0 ? half : WORLD_BOUNDS;
 }
 
+const isTooLarge = (a: LatLng, b: LatLng) =>
+  !searchBboxSchema.safeParse(formatBbox(a, b)).success;
+
 function parseBoundsList(bbox: string | undefined): LatLngBoundsExpression[] {
-  const parsed = bboxSchema.safeParse(bbox);
+  const parsed = searchBboxSchema.safeParse(bbox);
   return parsed.success ? toBoundsList(parsed.data) : [];
 }
 
@@ -90,7 +108,7 @@ export function RectangleDrawer({
   onSelect: (bbox: string) => void;
 }) {
   const startRef = useRef<{ latlng: LatLng; drag: boolean } | null>(null);
-  const [draft, setDraft] = useState<LatLngBoundsExpression | null>(null);
+  const [draft, setDraft] = useState<[LatLngTuple, LatLngTuple] | null>(null);
   const map = useMapEvents({
     mousedown(event) {
       if (!event.originalEvent.shiftKey) return;
@@ -130,7 +148,8 @@ export function RectangleDrawer({
     const from = map.latLngToContainerPoint(start.latlng);
     const to = map.latLngToContainerPoint(corner);
     if (from.distanceTo(to) < MIN_DRAG_PX) return;
-    onSelect(formatBbox(start.latlng, corner));
+    if (!isTooLarge(start.latlng, corner))
+      onSelect(formatBbox(start.latlng, corner));
   }
 
   useEffect(() => {
@@ -148,11 +167,46 @@ export function RectangleDrawer({
   }, [drawing]);
 
   const [westHalf, eastHalf] = draft ? [draft] : parseBoundsList(bbox);
+  const tooLargeDraft =
+    draft && isTooLarge(latLng(draft[0]), latLng(draft[1])) ? draft : null;
   return (
     <>
-      {westHalf ? <Rectangle bounds={westHalf} /> : null}
+      {westHalf ? (
+        <Rectangle
+          bounds={westHalf}
+          pathOptions={
+            tooLargeDraft ? TOO_LARGE_PATH_OPTIONS : DEFAULT_PATH_OPTIONS
+          }
+        >
+          {tooLargeDraft ? <TooLargeWarning draft={tooLargeDraft} /> : null}
+        </Rectangle>
+      ) : null}
       {eastHalf ? <Rectangle bounds={eastHalf} /> : null}
     </>
+  );
+}
+
+function TooLargeWarning({ draft }: { draft: [LatLngTuple, LatLngTuple] }) {
+  const map = useMap();
+  const tooltipRef = useRef<LeafletTooltip>(null);
+  const [from, to] = draft;
+  useEffect(() => {
+    const middle = map
+      .latLngToLayerPoint(from)
+      .add(map.latLngToLayerPoint(to))
+      .divideBy(2);
+    tooltipRef.current?.setLatLng(map.layerPointToLatLng(middle));
+  });
+  return (
+    <Tooltip ref={tooltipRef} permanent direction="center">
+      <span
+        role="alert"
+        className="flex items-center gap-1 font-medium text-red-700"
+      >
+        <TriangleAlertIcon aria-hidden="true" className="size-4 shrink-0" />
+        {m.search_map_too_large()}
+      </span>
+    </Tooltip>
   );
 }
 
