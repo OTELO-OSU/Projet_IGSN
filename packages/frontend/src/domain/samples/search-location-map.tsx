@@ -14,7 +14,6 @@ import {
   type Tooltip as LeafletTooltip,
   Util,
   latLng,
-  latLngBounds,
 } from "leaflet";
 import { TriangleAlertIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -188,10 +187,15 @@ export function RectangleDrawer({
 }
 
 function TooLargeWarning({ draft }: { draft: [LatLngTuple, LatLngTuple] }) {
+  const map = useMap();
   const tooltipRef = useRef<LeafletTooltip>(null);
   const [from, to] = draft;
   useEffect(() => {
-    tooltipRef.current?.setLatLng(latLngBounds(from, to).getCenter());
+    const middle = map
+      .latLngToLayerPoint(from)
+      .add(map.latLngToLayerPoint(to))
+      .divideBy(2);
+    tooltipRef.current?.setLatLng(map.layerPointToLatLng(middle));
   });
   return (
     <Tooltip ref={tooltipRef} permanent direction="center">
