@@ -1,3 +1,5 @@
+import type { ImportDuplicate } from "@projet-igsn/domain/sample/import/import-report";
+
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   Dialog,
@@ -18,10 +20,12 @@ import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { CustomizeTemplateDialog } from "#/samples/customize-template-dialog.tsx";
+import { DuplicateSamplesDialog } from "#/samples/duplicate-samples-dialog.tsx";
 import { ImportAttachmentList } from "#/samples/import-attachment-list.tsx";
 import { ImportFileUpload } from "#/samples/import-file-upload.tsx";
 import { ImportUploadDialog } from "#/samples/import-upload-dialog.tsx";
 import { ReserveInternalIdsDialog } from "#/samples/reserve-internal-ids-dialog.tsx";
+import { useCheckImportDuplicates } from "#/samples/use-check-import-duplicates.ts";
 import { useDownloadImportTemplate } from "#/samples/use-download-import-template.ts";
 import { useImportFiles } from "#/samples/use-import-files.ts";
 import { useImportSamples } from "#/samples/use-import-samples.ts";
@@ -33,6 +37,11 @@ export function ImportSamplesDialog() {
   const hasRequiredNames = files.requiredNames.length > 0;
   const downloadTemplate = useDownloadImportTemplate();
   const importSamples = useImportSamples();
+  const checkDuplicates = useCheckImportDuplicates();
+  const [suspects, setSuspects] = useState<{
+    file: File;
+    rows: ImportDuplicate[];
+  } | null>(null);
 
   function close() {
     setIsOpen(false);
@@ -41,10 +50,28 @@ export function ImportSamplesDialog() {
     importSamples.reset();
   }
 
+  function runImport(file: File) {
+    importSamples.mutate(
+      { file, documents: files.documents },
+      {
+        onSuccess: ({ issues }) => {
+          if (issues.length === 0) close();
+        },
+      },
+    );
+  }
+
+  async function checkThenImport(file: File) {
+    const rows = await checkDuplicates.mutateAsync(file).catch(() => null);
+    if (rows === null) return;
+    if (rows.length > 0) setSuspects({ file, rows });
+    else runImport(file);
+  }
+
   return (
     <>
       <Dialog
-        open={isOpen && !isCustomizing && !importSamples.isPending}
+        open={isOpen && !isCustomizing && !importSamples.isPending && !suspects}
         onOpenChange={(open) => (open ? setIsOpen(true) : close())}
       >
         <DialogTrigger asChild>
@@ -104,17 +131,8 @@ export function ImportSamplesDialog() {
               importSamples.clearReport();
             }}
             issues={importSamples.data?.issues}
-            isReady={files.isReady}
-            onImport={(file) =>
-              importSamples.mutate(
-                { file, documents: files.documents },
-                {
-                  onSuccess: ({ issues }) => {
-                    if (issues.length === 0) close();
-                  },
-                },
-              )
-            }
+            isReady={files.isReady && !checkDuplicates.isPending}
+            onImport={(file) => void checkThenImport(file)}
           >
             {hasRequiredNames ? (
               <ImportAttachmentList
@@ -138,6 +156,25 @@ export function ImportSamplesDialog() {
         open={importSamples.isPending}
         progress={importSamples.progress}
       />
+      {suspects ? (
+        <DuplicateSamplesDialog
+          duplicates={[
+            ...new Map(
+              suspects.rows
+                .flatMap(({ duplicates }) => duplicates)
+                .map((duplicate) => [duplicate.id, duplicate]),
+            ).values(),
+          ]}
+          note={m.import_samples_duplicates_note({
+            rows: suspects.rows.map(({ row }) => row).join(", "),
+          })}
+          onConfirm={() => {
+            setSuspects(null);
+            runImport(suspects.file);
+          }}
+          onCancel={() => setSuspects(null)}
+        />
+      ) : null}
       <CustomizeTemplateDialog
         open={isOpen && isCustomizing}
         onBack={() => setIsCustomizing(false)}

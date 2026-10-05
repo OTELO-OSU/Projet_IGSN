@@ -38,6 +38,8 @@
 - `POST /admin/samples/import-template/reservation` locks `sample` and advances that sequence by `count`, pre-filling the template's `Sample #` with those `sample-N`, so every later publish skips the range.
 - A reserved ID never expires and anyone may use it.
 - `POST /admin/samples/import` queues a row whose `Sample #` holds an available `sample-N` under that internal number, `publishSample` keeping it.
+- `POST /admin/samples/import/duplicates` (own 5/min per-user rate limit) checks every row of the workbook against published samples with the form's name, material and collector rule, in one batched query (`findDuplicateSamplesOfEach`, shared by the form's `findDuplicateSamples`), answering `{ data: { row, duplicates }[] }`.
+- The admin calls it before any document upload and opens the form's duplicate dialog with "Continue anyway"; the import route does not enforce it, a client-side warning like the form's.
 
 ## Server-side sorting and filtering
 

@@ -7,6 +7,7 @@ import type {
 } from "@projet-igsn/domain/sample/edit-lock";
 import type {
   ImportAccepted,
+  ImportDuplicate,
   InvalidImport,
 } from "@projet-igsn/domain/sample/import/import-report";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
@@ -59,6 +60,7 @@ import { bulkEditTargets } from "./bulk-edit/bulk-edit-targets.ts";
 import { samplesExportResponse } from "./bulk-edit/export-workbook.ts";
 import { validateBulkEdit } from "./bulk-edit/validate-bulk-edit.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
+import { findImportDuplicates } from "./import-template/find-import-duplicates.ts";
 import { internalIdRequestMail } from "./import-template/internal-id-request-mail.ts";
 import { validateImport } from "./import-template/validate-import.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
@@ -256,6 +258,13 @@ export function createSampleAdminRoutes(
         parentIds: samples.flatMap(({ input }) => input.parentIds ?? []),
       });
       return c.json({ count } satisfies ImportAccepted, 200);
+    })
+    .post("/import/duplicates", validateImportUpload, async (c) => {
+      const data = await findImportDuplicates(
+        await c.req.valid("form").file.arrayBuffer(),
+        (criteria) => repository.findDuplicatesOfEach(criteria),
+      );
+      return c.json({ data } satisfies { data: ImportDuplicate[] });
     })
     .post("/bulk-edit", validateImportUpload, async (c) => {
       const user = c.get("user");

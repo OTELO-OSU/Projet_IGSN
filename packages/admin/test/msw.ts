@@ -5,4 +5,7 @@ export const worker = setupWorker(
   http.post("*/admin/samples/duplicates", () =>
     HttpResponse.json({ data: [] }),
   ),
+  http.post("*/admin/samples/import/duplicates", () =>
+    HttpResponse.json({ data: [] }),
+  ),
 );

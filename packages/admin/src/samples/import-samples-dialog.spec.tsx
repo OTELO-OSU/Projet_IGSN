@@ -124,6 +124,42 @@ function recordImports(answer: () => Response | Promise<Response>) {
   return posted;
 }
 
+function answerDuplicates(answer: () => Response) {
+  const checked: unknown[][][] = [];
+  worker.use(
+    http.post(
+      "*/admin/samples/import/duplicates",
+      async ({ request }) => {
+        checked.push(
+          [...(await request.formData()).entries()].map(([key, value]) => [
+            key,
+            value instanceof File ? value.name : value,
+          ]),
+        );
+        return answer();
+      },
+      { once: true },
+    ),
+  );
+  return checked;
+}
+
+const suspect = (n: number) => ({
+  id: `0198a000-0000-7000-8000-00000000000${n}`,
+  igsn: `01K072TVWVFK5A1RRZ5MY4PPK${n}`,
+  name: `Basalt ${n}`,
+});
+
+const answerSuspects = () =>
+  answerDuplicates(() =>
+    HttpResponse.json({
+      data: [
+        { row: 3, duplicates: [suspect(1)] },
+        { row: 5, duplicates: [suspect(1), suspect(2)] },
+      ],
+    }),
+  );
+
 describe("ImportSamplesDialog", () => {
   it("should save the complete template, fetched without customization, the button disabled meanwhile", async () => {
     const { promise: served, resolve: serve } = Promise.withResolvers<void>();
@@ -291,6 +327,92 @@ describe("ImportSamplesDialog", () => {
     expect(queryClient.getQueryState(SAMPLE_LIST_KEY)?.isInvalidated).toBe(
       true,
     );
+  });
+
+  it("should warn about each suspected duplicate once, naming the rows, importing only on Continue anyway", async () => {
+    answerSuspects();
+    const posted = recordImports(() => HttpResponse.json({ count: 2 }));
+    const { screen, dialog, importButton } = await openDialog();
+    await dialog.getByLabelText("choose one").upload([xlsx()]);
+
+    await importButton.click();
+
+    const warning = screen.getByRole("dialog", {
+      name: "Possible duplicate sample",
+    });
+    await expect
+      .element(
+        warning.getByText("Rows 3, 5 of the workbook match published samples."),
+      )
+      .toBeVisible();
+    expect(
+      warning
+        .getByRole("listitem")
+        .elements()
+        .map((item) => item.textContent),
+    ).toEqual([
+      "Basalt 1 (01K072TVWVFK5A1RRZ5MY4PPK1)",
+      "Basalt 2 (01K072TVWVFK5A1RRZ5MY4PPK2)",
+    ]);
+    expect(posted).toEqual([]);
+
+    await warning.getByRole("button", { name: "Continue anyway" }).click();
+
+    await expect.poll(() => posted).toEqual([[["file", "samples.xlsx"]]]);
+  });
+
+  it("should keep the import dialog with its file when the duplicate warning is cancelled, importing nothing", async () => {
+    answerSuspects();
+    const posted = recordImports(() => HttpResponse.json({ count: 2 }));
+    const { screen, dialog, importButton } = await openDialog();
+    await dialog.getByLabelText("choose one").upload([xlsx()]);
+    await importButton.click();
+    const warning = screen.getByRole("dialog", {
+      name: "Possible duplicate sample",
+    });
+
+    await warning.getByRole("button", { name: "Cancel" }).click();
+
+    await expect.element(warning).not.toBeInTheDocument();
+    await expect.element(dialog.getByText("samples.xlsx")).toBeVisible();
+    expect(posted).toEqual([]);
+  });
+
+  it("should check the workbook alone before uploading its documents, then import directly when nothing matches", async () => {
+    const tus = fakeTus();
+    const uploadsAtCheck: number[] = [];
+    const checked = answerDuplicates(() => {
+      uploadsAtCheck.push(tus.requests.length);
+      return HttpResponse.json({ data: [] });
+    });
+    const posted = recordImports(() => HttpResponse.json({ count: 1 }));
+    const { importButton, addDocuments } = await dropWorkbookNaming([
+      "report.pdf",
+    ]);
+    await addDocuments([attachmentFile("report.pdf")]);
+
+    await importButton.click();
+
+    await expect.poll(() => posted).toHaveLength(1);
+    expect(checked).toEqual([[["file", "samples.xlsx"]]]);
+    expect(uploadsAtCheck).toEqual([0]);
+  });
+
+  it("should import nothing and say so when the duplicate check fails", async () => {
+    answerDuplicates(() => new HttpResponse(null, { status: 500 }));
+    const posted = recordImports(() => HttpResponse.json({ count: 1 }));
+    const { screen, dialog, importButton } = await openDialog();
+    await dialog.getByLabelText("choose one").upload([xlsx()]);
+
+    await importButton.click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent(
+        "Could not check for duplicate samples. Please try again.",
+      );
+    await expect.element(dialog.getByText("samples.xlsx")).toBeVisible();
+    expect(posted).toEqual([]);
   });
 
   it("should report an invalid file in the open dialog without a toast, until another file is picked", async () => {

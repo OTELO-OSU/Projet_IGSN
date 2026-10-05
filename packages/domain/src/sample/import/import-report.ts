@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { suspectedDuplicateSchema } from "../publication/suspected-duplicate.ts";
+
 export const importIssueCodeSchema = z.enum([
   "unreadable_file",
   "missing_sheet",
@@ -46,3 +48,9 @@ export type InvalidImport = z.infer<typeof invalidImportSchema>;
 
 export const importAcceptedSchema = z.object({ count: z.number().int() });
 export type ImportAccepted = z.infer<typeof importAcceptedSchema>;
+
+export const importDuplicateSchema = z.object({
+  row: z.number().int(),
+  duplicates: z.array(suspectedDuplicateSchema),
+});
+export type ImportDuplicate = z.infer<typeof importDuplicateSchema>;

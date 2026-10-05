@@ -91,6 +91,18 @@ async function templateWithAttachments(
   return template;
 }
 
+async function writeCleanImport(testInfo: TestInfo): Promise<string> {
+  const file = testInfo.outputPath("clean-import.xlsx");
+  // ponytail: same hard-coded container as db.ts; the api generates the publishable workbook so the fixture never drifts from the template.
+  const base64 = execFileSync(
+    "docker",
+    ["exec", "igsn-e2e-api-1", "node", "scripts/write-clean-import.ts"],
+    { encoding: "utf8" },
+  ).trim();
+  await writeFile(file, Buffer.from(base64, "base64"));
+  return file;
+}
+
 const attachmentRow = (page: Page, fileName: string) =>
   page
     .getByRole("dialog", { name: "Import samples" })
@@ -138,18 +150,30 @@ test.describe("sample import", () => {
 
     const importSamples = importSamplesPage(page);
     await importSamples.open();
-    const file = testInfo.outputPath("clean-import.xlsx");
-    // ponytail: same hard-coded container as db.ts; the api generates the publishable workbook so the fixture never drifts from the template.
-    const base64 = execFileSync(
-      "docker",
-      ["exec", "igsn-e2e-api-1", "node", "scripts/write-clean-import.ts"],
-      { encoding: "utf8" },
-    ).trim();
-    await writeFile(file, Buffer.from(base64, "base64"));
-    await importSamples.upload(file);
+    await importSamples.upload(await writeCleanImport(testInfo));
     await importSamples.submit();
 
     await importSamples.expectPublishedInBackground("Basalt 1");
+  });
+
+  test("a researcher importing the same file twice is warned of the duplicate, then imports it anyway", async ({
+    page,
+  }, testInfo) => {
+    await signInAsResearcher(page, RESEARCHERS.jean);
+    await sampleListPage(page).expectVisible();
+    const file = await writeCleanImport(testInfo);
+    const importSamples = importSamplesPage(page);
+    await importSamples.open();
+    await importSamples.upload(file);
+    await importSamples.submit();
+    await importSamples.expectPublishedInBackground("Basalt 1");
+
+    await importSamples.open();
+    await importSamples.upload(file);
+    await importSamples.submit();
+    await importSamples.continueDespiteDuplicate("Basalt 1");
+
+    await importSamples.expectQueued();
   });
 
   test("a researcher imports a customized template and publishes the sample under its manual group", async ({

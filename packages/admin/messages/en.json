@@ -936,6 +936,7 @@
   "import_samples_creating_hint": "The file is being checked and its samples created. This can take a few minutes.",
   "import_samples_document_already_added": "{name} is already added.",
   "import_samples_document_too_large": "{name} is larger than {max} MB.",
+  "import_samples_duplicates_note": "Rows {rows} of the workbook match published samples.",
   "import_template_download_error": "The template could not be downloaded.",
   "import_template_reserve_label": "Reserve internal IDs",
   "import_template_reserve_count_label": "Number of internal IDs",
