@@ -183,6 +183,10 @@ export function createApp(
     .use("/samples/import-template", importRateLimit)
     .use("/samples/import-template/reservation", importRateLimit)
     .use("/samples/import", importRateLimit)
+    .use(
+      "/samples/import/duplicates",
+      rateLimit(rateLimitConfig, "user", IMPORT_TEMPLATE_USER_BUDGET),
+    )
     .use("/samples/bulk-edit", importRateLimit)
     .use(
       "/samples/import/internal-id-request",

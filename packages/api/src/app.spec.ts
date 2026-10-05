@@ -373,6 +373,10 @@ describe("app", () => {
         },
         budget: IMPORT_TEMPLATE_USER_BUDGET,
       },
+      {
+        route: { path: "/admin/samples/import/duplicates", body: {} },
+        budget: IMPORT_TEMPLATE_USER_BUDGET,
+      },
     ])(
       "should throttle $route.path far below the authenticated budget, per user",
       async ({ route, budget }, { db }) => {
