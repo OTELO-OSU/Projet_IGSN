@@ -119,9 +119,7 @@ describe("RectangleDrawer", () => {
     expect(inRangeStroke).not.toBe("#dc2626");
     await expect
       .element(page.getByRole("alert"))
-      .toHaveTextContent(
-        "This area is too large. Draw an area covering at most a quarter of the world.",
-      );
+      .toHaveTextContent("This search area is too large.");
   });
 
   it("should replace the previous selection on a second shift+drag", async () => {

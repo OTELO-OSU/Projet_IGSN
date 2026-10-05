@@ -32,7 +32,7 @@
   "search_map_draw_hint": "Or hold Shift and drag on the map.",
   "search_map_enlarge": "Enlarge map",
   "search_map_shrink": "Shrink map",
-  "search_map_too_large": "This area is too large. Draw an area covering at most a quarter of the world.",
+  "search_map_too_large": "This search area is too large.",
   "search_location_empty_hint": "No published samples in the selected area.",
   "results_map_loading_more": "Loading more results…",
   "results_map_map_label": "Map",

@@ -197,7 +197,7 @@ function TooLargeWarning({ draft }: { draft: [LatLngTuple, LatLngTuple] }) {
     <Tooltip ref={tooltipRef} permanent direction="center">
       <span
         role="alert"
-        className="flex w-48 items-center gap-1 font-medium whitespace-normal text-red-700"
+        className="flex items-center gap-1 font-medium text-red-700"
       >
         <TriangleAlertIcon aria-hidden="true" className="size-4 shrink-0" />
         {m.search_map_too_large()}
