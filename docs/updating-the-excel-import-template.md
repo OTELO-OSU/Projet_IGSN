@@ -96,7 +96,7 @@ The schema stays the real guard. A value it drops because its condition fails is
 
 ### 5. Optional sections
 
-A column inside a group that has a checkbox in the download dialog is already optional. A column that should be optional on its own, or a group with no checkbox yet, is the next section's job: see "Make a column optional in a customized template".
+A column inside a group that has a checkbox in the download dialog is already optional. A lone column, or a group with no checkbox yet, is another job. See "Make a column optional in a customized template".
 
 ### 6. Fixtures, when the field is required
 
@@ -255,7 +255,7 @@ The records are exhaustive, so the build names the one you miss. The download ho
 
 ### 4. A single column
 
-A checkbox cannot drop one column alone. The one precedent is `subSamples`: a boolean on `TemplateCustomization` (`customization.ts`), a filter on `path` in `build()` (`workbook.ts`), its checkbox in the dialog, `z.stringbool()` in the template query and `z.boolean()` in the reservation body. Prefer a checkbox per group. The dialog then stays a list of tabs, as the form is.
+A checkbox cannot drop one column alone. The one precedent is `subSamples`. It is a boolean on `TemplateCustomization` (`customization.ts`) and a filter on `path` in `build()` (`workbook.ts`). It has its own checkbox in the dialog. The template query takes it as `z.stringbool()`, the reservation body as `z.boolean()`. Prefer a checkbox per group. The dialog then stays a list of tabs, as the form is.
 
 ### 5. A column the pre-fill makes unreachable needs nothing
 
