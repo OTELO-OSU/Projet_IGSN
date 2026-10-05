@@ -57,6 +57,13 @@ services:
     volumes:
       - ./datacite-mock/Caddyfile:/etc/caddy/Caddyfile:ro
 
+  webhook-sink:
+    image: node:24-alpine
+    container_name: webhook-sink
+    command: ["node", "/app/server.mjs"]
+    volumes:
+      - ./webhook-sink/server.mjs:/app/server.mjs:ro
+
   caddy:
     image: caddy:2-alpine
     container_name: caddy
@@ -210,6 +217,7 @@ services:
       DATACITE_API_HOST: ${DATACITE_API_HOST:-http://datacite:8080}
       DATACITE_API_KEY: ${DATACITE_API_KEY:-dev}
       DATACITE_DOI_PREFIX: ${DATACITE_DOI_PREFIX:-10.70113}
+      WEBHOOK_DEV_HOSTS: webhook-sink
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3002/"]
       interval: 10s

@@ -1,6 +1,6 @@
 import type { InstitutionalGroups } from "../institutional-group/model.ts";
 import type { CreateSample } from "../sample/sample.ts";
-import type { SampleBatch } from "./model.ts";
+import type { SampleBatch, SampleBatchWebhook } from "./model.ts";
 
 export type SampleBatchItemWrite = { partnerId: string } & (
   | { create: CreateSample }
@@ -14,6 +14,7 @@ export type SampleBatchRepository = {
     ownerId: string;
     groups: InstitutionalGroups;
     items: SampleBatchItemWrite[];
-  }): Promise<string>;
+    webhook?: SampleBatchWebhook;
+  }): Promise<SampleBatch>;
   get(id: string, serviceAccountId: string): Promise<SampleBatch | null>;
 };

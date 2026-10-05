@@ -1,6 +1,5 @@
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import type {
-  AcceptedSampleBatch,
   BatchSuspectedDuplicate,
   SampleBatchConflict,
   SampleBatchItem,
@@ -12,10 +11,7 @@ import type {
 import type { DuplicateCriteria } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { ServiceAccount } from "@projet-igsn/domain/service-account/model";
-import type {
-  InvalidServiceSample,
-  ServiceSampleIssue,
-} from "@projet-igsn/domain/service-account/service-sample-validator";
+import type { ServiceSampleIssue } from "@projet-igsn/domain/service-account/service-sample-validator";
 
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
 import {
@@ -29,6 +25,7 @@ import {
 } from "../auth/require-service-account.ts";
 import { checkDataCite } from "../datacite/check-datacite.ts";
 import { dataCiteConfig } from "../datacite/config.ts";
+import { webhookTarget } from "../sample-batch/public-host.ts";
 import {
   createSampleBatchRoute,
   getSampleBatchRoute,
@@ -40,7 +37,7 @@ import {
   checkServiceCreate,
   checkServiceUpdate,
 } from "./service-sample-checks.ts";
-import { serviceSampleIssue } from "./service-sample-issue.ts";
+import { invalidSample, serviceSampleIssue } from "./service-sample-issue.ts";
 
 type Deps = ServiceSampleChecksDeps & {
   samples: Pick<
@@ -70,8 +67,8 @@ const atItem = (index: number, issues: ServiceSampleIssue[]) =>
     ...issue,
     path:
       issue.path === undefined
-        ? `${index}.sample`
-        : `${index}.sample.${issue.path}`,
+        ? `items.${index}.sample`
+        : `items.${index}.sample.${issue.path}`,
   }));
 
 const batchDuplicates = (checked: CheckedItem[], index: number) => {
@@ -173,7 +170,16 @@ export function registerSampleBatchRoutes(
   app
     .openapi(createSampleBatchRoute, async (c) => {
       const account = keyedServiceAccount(c);
-      const items = c.req.valid("json");
+      const { items, webhook } = c.req.valid("json");
+      if (webhook && webhookTarget(webhook.url) === null) {
+        return invalidSample(c, [
+          serviceSampleIssue(
+            "invalid_format",
+            ["webhook", "url"],
+            "The url must use https and a public host.",
+          ),
+        ]);
+      }
       const keys = items.map(
         ({ sample }) => sample.identification.sampleIdentifier,
       );
@@ -199,10 +205,7 @@ export function registerSampleBatchRoutes(
         }
       }
       if (issues.length > 0) {
-        return c.json(
-          { error: "Invalid sample", issues } satisfies InvalidServiceSample,
-          422,
-        );
+        return invalidSample(c, issues);
       }
       const { confirmDuplicates } = c.req.valid("query");
       const conflicts: SampleBatchConflict["items"] = [];
@@ -227,13 +230,14 @@ export function registerSampleBatchRoutes(
       if (!(await checkDataCite(dataCiteConfig()))) {
         return c.json({ error: "DataCite unavailable" }, 503);
       }
-      const id = await deps.sampleBatches.create({
+      const batch = await deps.sampleBatches.create({
         serviceAccountId: account.id,
         ownerId: account.owner.id,
         groups: account,
         items: checked.map(({ write }) => write),
+        webhook,
       });
-      return c.json({ id } satisfies AcceptedSampleBatch, 202);
+      return c.json(batch, 202);
     })
     .openapi(
       getSampleBatchRoute,

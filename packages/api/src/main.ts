@@ -8,6 +8,7 @@ import { createDb } from "./db.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
 import { createSendMail } from "./mail/send-mail.ts";
 import { createManualGroupRepository } from "./manual-group/repository.ts";
+import { startWebhookWorker } from "./sample-batch/webhook-worker.ts";
 import { startPublishingWorker } from "./sample/service/publishing-worker.ts";
 import { scheduleStagedUploadCleanup } from "./staged-upload/cleanup-schedule.ts";
 import { createStagedUploads } from "./staged-upload/staged-uploads.ts";
@@ -17,6 +18,7 @@ import { sendPendingUsersDigest } from "./user/send-pending-users-digest.ts";
 
 const db = createDb();
 startPublishingWorker(db, dataCiteConfig());
+startWebhookWorker(db);
 const sendMail = createSendMail();
 const adminUrl = appUrl("ADMIN_URL");
 const frontendUrl = appUrl("FRONTEND_URL");

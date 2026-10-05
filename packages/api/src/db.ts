@@ -304,6 +304,22 @@ type SampleBatchItemTable = {
   service_account_id: string;
 };
 
+type SampleBatchWebhookTable = {
+  batch_id: string;
+  service_account_id: string;
+  url: string;
+  secret: string;
+};
+
+type WebhookDeliveryTable = {
+  id: string;
+  batch_id: string;
+  sample_id: string;
+  body: string;
+  attempt: Generated<number>;
+  next_attempt_at: Generated<Date>;
+};
+
 type ServiceAccountManagedInstitutionalGroupTable = {
   service_account_id: string;
   kind: InstitutionalGroupKind;
@@ -329,6 +345,7 @@ export type DB = {
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;
   sample_batch_item: SampleBatchItemTable;
+  sample_batch_webhook: SampleBatchWebhookTable;
   service_account: ServiceAccountTable;
   service_account_managed_institutional_group: ServiceAccountManagedInstitutionalGroupTable;
   service_account_managed_manual_group: ServiceAccountManagedManualGroupTable;
@@ -336,6 +353,7 @@ export type DB = {
   user_managed_institutional_group: UserManagedInstitutionalGroupTable;
   user_managed_manual_group: UserManagedManualGroupTable;
   user_sample: UserSampleTable;
+  webhook_delivery: WebhookDeliveryTable;
 };
 
 export function createDb(): Kysely<DB> {

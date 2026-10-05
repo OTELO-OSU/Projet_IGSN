@@ -1,12 +1,16 @@
 import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import type {
+  InvalidServiceSample,
   ServiceSampleIssue,
   ServiceSampleIssueCode,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
+import type { Context } from "hono";
 import type { z } from "zod";
 
 import { toCorePath } from "@projet-igsn/domain/sample/core/core-path";
 import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
+
+import type { ServiceEnv } from "../auth/require-service-account.ts";
 
 export function serviceSampleIssue(
   code: ServiceSampleIssueCode | z.core.$ZodIssueCode,
@@ -49,3 +53,12 @@ export function frozenFieldIssues(
   const issues = paths.map((path) => coreSampleIssue("field_frozen", path));
   return [...new Map(issues.map((issue) => [issue.path, issue])).values()];
 }
+
+export const invalidSample = (
+  c: Context<ServiceEnv>,
+  issues: ServiceSampleIssue[],
+) =>
+  c.json(
+    { error: "Invalid sample", issues } satisfies InvalidServiceSample,
+    422,
+  );

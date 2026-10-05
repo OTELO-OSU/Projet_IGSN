@@ -15,11 +15,11 @@ import { afterEach, describe, expect, vi } from "vitest";
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
-import { createSampleBatchRepository } from "../sample-batch/repository.ts";
 import { acquireEditLock } from "../sample/service/acquire-edit-lock.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
 import { drainPublishingQueue } from "../sample/service/publishing-worker.ts";
+import { insertSampleBatch } from "../tests/insert-sample-batch.ts";
 import { insertServiceAccount } from "../tests/insert-service-account.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
@@ -97,15 +97,25 @@ const serviceRequest = (
     body,
   });
 
-const postBatch = (app: App, items: unknown, query = "") =>
+const postBatch = (
+  app: App,
+  items: unknown,
+  query = "",
+  webhook?: { url: string; secret: string },
+) =>
   serviceRequest(app, "POST", `/samples/batch${query}`, {
-    body: JSON.stringify(items),
+    body: JSON.stringify({ items, webhook }),
   });
 
 const getBatch = (app: App, id: string) =>
   serviceRequest(app, "GET", `/batches/${id}`);
 
 const NEW_BODY = core(COLLECTION_SPECIMEN);
+
+const WEBHOOK = {
+  url: "https://partner.example.org/hooks/igsn",
+  secret: "a-partner-shared-secret",
+};
 
 const withoutIdentifier = (body: CoreSample, name: string) => {
   const { sampleIdentifier: _created, ...identification } = body.identification;
@@ -194,7 +204,16 @@ describe("POST /service/samples/batch", () => {
       ]);
       // Assert
       expect(res.status).toBe(202);
-      expect(await res.json()).toEqual({ id: expect.any(String) });
+      expect(await res.json()).toEqual({
+        id: expect.any(String),
+        items: ["p-1", "p-2"].map((partnerId) => ({
+          partnerId,
+          id: expect.any(String),
+          status: "publishing",
+          igsn: null,
+          publishingError: null,
+        })),
+      });
       expect(
         await db
           .selectFrom("sample")
@@ -225,6 +244,122 @@ describe("POST /service/samples/batch", () => {
   );
 
   pgTest(
+    "should store the webhook url and secret once for the batch, never answering them",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postBatch(
+        app,
+        [
+          { partnerId: "p-1", sample: created("Basalt A") },
+          { partnerId: "p-2", sample: created("Basalt B") },
+        ],
+        "",
+        WEBHOOK,
+      );
+      // Assert
+      const answered = (await res.json()) as { id: string };
+      expect(res.status).toBe(202);
+      expect(answered).toEqual({
+        id: answered.id,
+        items: ["p-1", "p-2"].map((partnerId) => ({
+          partnerId,
+          id: expect.any(String),
+          status: "publishing",
+          igsn: null,
+          publishingError: null,
+        })),
+      });
+      expect(
+        await db
+          .selectFrom("sample_batch_webhook")
+          .select(["batch_id", "url", "secret"])
+          .execute(),
+      ).toEqual([
+        { batch_id: answered.id, url: WEBHOOK.url, secret: WEBHOOK.secret },
+      ]);
+    },
+  );
+
+  pgTest.for([
+    {
+      rule: "a bare array of items",
+      body: () => [{ partnerId: "p-1", sample: created("Basalt A") }],
+      issue: { code: "invalid_type" },
+    },
+    {
+      rule: "an empty batch",
+      body: () => ({ items: [] }),
+      issue: { path: "items", code: "too_small" },
+    },
+    {
+      rule: `more than ${MAX_IMPORT_ROWS} items`,
+      body: () => ({
+        items: Array.from({ length: MAX_IMPORT_ROWS + 1 }, (_, index) => ({
+          partnerId: `p-${index}`,
+          sample: created(`Basalt ${index}`),
+        })),
+      }),
+      issue: { path: "items", code: "too_big" },
+    },
+    {
+      rule: "an item with no partner id",
+      body: () => ({ items: [{ sample: created("Basalt A") }] }),
+      issue: { path: "items.0.partnerId", code: "invalid_type" },
+    },
+    {
+      rule: "an http webhook url",
+      body: () => ({
+        items: [{ partnerId: "p-1", sample: created("Basalt A") }],
+        webhook: {
+          url: "http://partner.example.org/hooks/igsn",
+          secret: WEBHOOK.secret,
+        },
+      }),
+      issue: { path: "webhook.url", code: "invalid_format" },
+    },
+    {
+      rule: "an https webhook url to a private address",
+      body: () => ({
+        items: [{ partnerId: "p-1", sample: created("Basalt A") }],
+        webhook: { url: "https://10.0.0.5/hooks/igsn", secret: WEBHOOK.secret },
+      }),
+      issue: { path: "webhook.url", code: "invalid_format" },
+    },
+    {
+      rule: "a webhook url without secret",
+      body: () => ({
+        items: [{ partnerId: "p-1", sample: created("Basalt A") }],
+        webhook: { url: WEBHOOK.url },
+      }),
+      issue: { path: "webhook.secret", code: "invalid_type" },
+    },
+    {
+      rule: "a too short webhook secret",
+      body: () => ({
+        items: [{ partnerId: "p-1", sample: created("Basalt A") }],
+        webhook: { url: WEBHOOK.url, secret: "short" },
+      }),
+      issue: { path: "webhook.secret", code: "too_small" },
+    },
+  ])("should answer 422 for $rule", async ({ body, issue }, { db }) => {
+    // Arrange
+    const { app } = await arrangeAccount(db);
+    // Act
+    const res = await serviceRequest(app, "POST", "/samples/batch", {
+      body: JSON.stringify(body()),
+    });
+    // Assert
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({
+      error: "Invalid sample",
+      issues: [{ ...issue, message: expect.any(String) }],
+    });
+    expect(await storedNames(db)).toEqual([]);
+  });
+
+  pgTest(
     "should refuse the whole batch with index-prefixed issues when one item is invalid",
     async ({ db }) => {
       // Arrange
@@ -247,7 +382,7 @@ describe("POST /service/samples/batch", () => {
         error: "Invalid sample",
         issues: [
           {
-            path: "1.sample.production.processSteps",
+            path: "items.1.sample.production.processSteps",
             code: "custom",
             message: expect.any(String),
           },
@@ -256,39 +391,6 @@ describe("POST /service/samples/batch", () => {
       expect(await storedNames(db)).toEqual([]);
     },
   );
-
-  pgTest.for([
-    {
-      rule: "an empty batch",
-      items: () => [],
-      issue: { code: "too_small" },
-    },
-    {
-      rule: `more than ${MAX_IMPORT_ROWS} items`,
-      items: () =>
-        Array.from({ length: MAX_IMPORT_ROWS + 1 }, (_, index) => ({
-          partnerId: `p-${index}`,
-          sample: created(`Basalt ${index}`),
-        })),
-      issue: { code: "too_big" },
-    },
-    {
-      rule: "an item with no partner id",
-      items: () => [{ sample: created("Basalt A") }],
-      issue: { path: "0.partnerId", code: "invalid_type" },
-    },
-  ])("should answer 422 for $rule", async ({ items, issue }, { db }) => {
-    // Arrange
-    const { app } = await arrangeAccount(db);
-    // Act
-    const res = await postBatch(app, items());
-    // Assert
-    expect(res.status).toBe(422);
-    expect(await res.json()).toEqual({
-      error: "Invalid sample",
-      issues: [{ ...issue, message: expect.any(String) }],
-    });
-  });
 
   pgTest("should answer 413 for a body over the size limit", async ({ db }) => {
     // Arrange
@@ -306,7 +408,7 @@ describe("POST /service/samples/batch", () => {
     {
       rule: "an IGSN no published sample carries",
       code: "sample_not_found",
-      path: "0.sample.identification.sampleIdentifier",
+      path: "items.0.sample.identification.sampleIdentifier",
       items: async () => [
         {
           partnerId: "p-1",
@@ -323,7 +425,7 @@ describe("POST /service/samples/batch", () => {
     {
       rule: "a sample outside the account's reach",
       code: "sample_not_editable",
-      path: "0.sample.identification.sampleIdentifier",
+      path: "items.0.sample.identification.sampleIdentifier",
       items: async (db: Kysely<DB>) => [
         {
           partnerId: "p-1",
@@ -337,7 +439,7 @@ describe("POST /service/samples/batch", () => {
     {
       rule: "an edit of a frozen field",
       code: "field_frozen",
-      path: "0.sample.responsibility",
+      path: "items.0.sample.responsibility",
       items: async (db: Kysely<DB>) => {
         const body = renamed(
           await publishedIn(db, researchProjectSample),
@@ -364,7 +466,7 @@ describe("POST /service/samples/batch", () => {
     {
       rule: "the same IGSN on two items",
       code: "duplicate_sample_key",
-      path: "1.sample.identification.sampleIdentifier",
+      path: "items.1.sample.identification.sampleIdentifier",
       items: async (db: Kysely<DB>) => {
         const sample = await publishedIn(db);
         return [
@@ -376,7 +478,7 @@ describe("POST /service/samples/batch", () => {
     {
       rule: "a sample another user holds the edit lock of",
       code: "sample_locked",
-      path: "0.sample.identification.sampleIdentifier",
+      path: "items.0.sample.identification.sampleIdentifier",
       items: async (db: Kysely<DB>) => {
         const sample = await publishedIn(db);
         const editor = await insertUser(db, "claire.lock-9d2@univ-lorraine.fr");
@@ -387,7 +489,7 @@ describe("POST /service/samples/batch", () => {
     {
       rule: "a sample still queued for publication",
       code: "sample_publishing",
-      path: "0.sample.identification.sampleIdentifier",
+      path: "items.0.sample.identification.sampleIdentifier",
       items: async (db: Kysely<DB>) => {
         const sample = await publishedIn(db);
         await db
@@ -401,7 +503,7 @@ describe("POST /service/samples/batch", () => {
     {
       rule: "a parent that is not published",
       code: "parent_not_found",
-      path: "0.sample.relations.0.targetIdentifier.value",
+      path: "items.0.sample.relations.0.targetIdentifier.value",
       items: async (db: Kysely<DB>) => [
         {
           partnerId: "p-1",
@@ -595,21 +697,19 @@ describe("POST /service/samples/batch", () => {
   );
 
   pgTest(
-    "should record an unchanged update in the batch without queuing its sample",
+    "should answer and record an unchanged update as published, without queuing its sample",
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
       const existing = await publishedIn(db);
+      // Act
       const posted = await postBatch(app, [
         { partnerId: "same", sample: core(existing) },
       ]);
-      const { id } = (await posted.json()) as { id: string };
-      // Act
-      const res = await getBatch(app, id);
       // Assert
-      expect(posted.status).toBe(202);
-      expect(await res.json()).toEqual({
-        id,
+      const answered = (await posted.json()) as { id: string };
+      const expected = {
+        id: answered.id,
         items: [
           {
             partnerId: "same",
@@ -619,7 +719,10 @@ describe("POST /service/samples/batch", () => {
             publishingError: null,
           },
         ],
-      });
+      };
+      expect(posted.status).toBe(202);
+      expect(answered).toEqual(expected);
+      expect(await (await getBatch(app, answered.id)).json()).toEqual(expected);
       expect(
         await db
           .selectFrom("sample")
@@ -742,16 +845,10 @@ describe("GET /service/batches/:id", () => {
       status: 404,
       idOf: async (db: Kysely<DB>, ownerId: string) => {
         const other = await insertServiceAccount(db, "Other", ownerId);
-        return createSampleBatchRepository(db).create({
-          serviceAccountId: other.id,
-          ownerId,
-          groups: {
-            institutionalOrganization: null,
-            institutionalOsu: null,
-            institutionalLaboratory: IN_REACH,
-          },
-          items: [{ partnerId: "p-1", create: publishableSample }],
-        });
+        const batch = await insertSampleBatch(db, other.id, ownerId, [
+          { partnerId: "p-1", create: publishableSample },
+        ]);
+        return batch.id;
       },
     },
   ])("should answer $status for $rule", async ({ status, idOf }, { db }) => {
@@ -790,7 +887,9 @@ describe("the /service batch routes", () => {
         key,
         body:
           method === "POST"
-            ? JSON.stringify([{ partnerId: "p-1", sample: created("A") }])
+            ? JSON.stringify({
+                items: [{ partnerId: "p-1", sample: created("A") }],
+              })
             : undefined,
       });
       // Assert

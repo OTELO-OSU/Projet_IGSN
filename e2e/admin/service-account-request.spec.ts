@@ -95,7 +95,7 @@ test.describe("service account request", () => {
     });
     const batch = await request.post(`${SAMPLES_URL}/batch`, {
       headers: authorization,
-      data: [copy("first"), copy("second")],
+      data: { items: [copy("first"), copy("second")] },
     });
     expect(batch.status()).toBe(202);
     const { id } = await batch.json();

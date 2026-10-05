@@ -7,6 +7,8 @@ import { z } from "zod";
 
 import type { KeycloakClaims } from "./middleware.ts";
 
+import { envList } from "../env-list.ts";
+
 const tokenEmailSchema = z.email();
 
 export type AuthenticatedEnv = {
@@ -16,10 +18,7 @@ export type AuthenticatedEnv = {
 const DEFAULT_ALLOWED_IDENTITY_PROVIDERS = ["satosa", "orcid"];
 
 function allowedIdentityProviders(): string[] {
-  const configured = (process.env.OIDC_ALLOWED_IDENTITY_PROVIDERS ?? "")
-    .split(",")
-    .map((alias) => alias.trim().toLowerCase())
-    .filter((alias) => alias !== "");
+  const configured = envList("OIDC_ALLOWED_IDENTITY_PROVIDERS");
   return configured.length > 0
     ? configured
     : DEFAULT_ALLOWED_IDENTITY_PROVIDERS;

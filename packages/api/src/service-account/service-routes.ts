@@ -7,7 +7,6 @@ import type { DuplicateConflict } from "@projet-igsn/domain/sample/sample-valida
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
 import type {
   FrozenServiceSample,
-  InvalidServiceSample,
   ServiceSampleIssue,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
@@ -58,6 +57,7 @@ import {
   findPublished,
   updateDuplicates,
 } from "./service-sample-checks.ts";
+import { invalidSample } from "./service-sample-issue.ts";
 import { serviceValidationHook } from "./service-validation-hook.ts";
 import { registerVocabularyRoutes } from "./vocabulary-routes.ts";
 
@@ -102,12 +102,6 @@ const readable = (c: Context<ServiceEnv>, sample: Sample) =>
 
 const notAcceptable = (c: Context<ServiceEnv>) =>
   c.json({ error: "Not acceptable" }, 406);
-
-const invalid = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
-  c.json(
-    { error: "Invalid sample", issues } satisfies InvalidServiceSample,
-    422,
-  );
 
 const conflicting = (
   c: Context<ServiceEnv>,
@@ -250,7 +244,7 @@ export function createServiceRoutes(
         c.req.valid("json"),
       );
       if ("issues" in checked) {
-        return invalid(c, checked.issues);
+        return invalidSample(c, checked.issues);
       }
       const duplicates = await createDuplicates(
         samples,
@@ -291,7 +285,7 @@ export function createServiceRoutes(
           case "frozen":
             return forbidden(c, checked.issues);
           case "invalid":
-            return invalid(c, checked.issues);
+            return invalidSample(c, checked.issues);
         }
       }
       const { current, merged } = checked.value;
