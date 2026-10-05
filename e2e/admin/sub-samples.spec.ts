@@ -48,7 +48,7 @@ test.describe("sub samples", () => {
     await create.continueWithOneParent();
     await create.expectSubSampleVisible(parentName);
     await create.expectName("");
-    await create.expectNatureEmpty();
+    await create.expectNature("Hand sample");
     await create.expectHierarchyLevel("Dredge");
     await create.expectParentTab([parent]);
     await create.expectInheritedLocation(parentName);
@@ -205,7 +205,7 @@ test.describe("sub samples", () => {
     await create.continueWithSecondParent(second.name);
     await create.expectTwoParentSubSampleVisible(first.name, second.name);
     await create.expectName("");
-    await create.expectNatureEmpty();
+    await create.expectNature("Hand sample");
     await create.expectNoLocationTab();
     await create.expectParentTab([first, second]);
 

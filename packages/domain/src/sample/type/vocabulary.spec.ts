@@ -12,12 +12,16 @@ describe("sampleTypeSchema", () => {
     expect(sampleTypeSchema.safeParse("core").success).toBe(true);
   });
 
-  it.each(["", "half_round", "dredge.half_round", "core.unknown", "Core"])(
-    "should reject %s",
-    (input) => {
-      expect(sampleTypeSchema.safeParse(input).success).toBe(false);
-    },
-  );
+  it.each([
+    "",
+    "half_round",
+    "dredge.half_round",
+    "core.unknown",
+    "core.core",
+    "Core",
+  ])("should reject %s", (input) => {
+    expect(sampleTypeSchema.safeParse(input).success).toBe(false);
+  });
 });
 
 describe("SAMPLE_TYPES", () => {
@@ -38,9 +42,9 @@ describe("SAMPLE_TYPES", () => {
     expect(orphans).toEqual([]);
   });
 
-  it("should terminate core.core instead of recursing on the reused core segment", () => {
-    expect(SAMPLE_TYPES).toContain("core.core");
-    expect(SAMPLE_TYPES).not.toContain("core.core.core");
+  it("should offer core as a type without a core.core sub-type", () => {
+    expect(SAMPLE_TYPES).toContain("core");
+    expect(SAMPLE_TYPES).not.toContain("core.core");
   });
 });
 

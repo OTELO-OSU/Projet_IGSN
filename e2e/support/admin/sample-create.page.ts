@@ -69,10 +69,13 @@ export function sampleCreatePage(page: Page) {
     fillName: (name: string) => page.getByLabel(/name/i).fill(name),
     expectName: (name: string) =>
       expect(page.getByLabel(/name/i)).toHaveValue(name),
-    expectNatureEmpty: () =>
-      expect(page.getByRole("combobox", { name: /^Nature/ })).toHaveText(
-        "Select a nature",
-      ),
+    expectNature: (label: string) =>
+      expect(page.getByRole("combobox", { name: /^Nature/ })).toHaveText(label),
+    expectLastNatureOption: async (label: string) => {
+      await page.getByRole("combobox", { name: /^Nature/ }).click();
+      await expect(page.getByRole("option").last()).toHaveText(label);
+      await page.keyboard.press("Escape");
+    },
     selectNature: async (label: string) => {
       await page.getByRole("combobox", { name: /nature/i }).click();
       await page.getByRole("option", { name: label }).click();

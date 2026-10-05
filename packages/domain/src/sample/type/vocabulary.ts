@@ -6,8 +6,8 @@ import { type TreeNode } from "../path/tree-node.ts";
 const typeTree = {
   core: {
     searchable: true,
+    optional: true,
     choices: [
-      "core",
       "half_round",
       "piece",
       "quarter_round",
@@ -27,7 +27,6 @@ const typeTree = {
       "outcrop_preserved_stratigraphy",
     ],
   },
-  "core.core": { label: "core", searchable: true },
   dredge: { searchable: true },
   serie_of_sample: { searchable: true },
   inapplicable: { searchable: true },

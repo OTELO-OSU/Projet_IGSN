@@ -17,7 +17,9 @@ The widget receives the tree itself as one self-describing `hierarchy` prop, `{ 
 - A path is a valid stop when it is a leaf or its node is `optional: true`, mandatory by default, tightening ADR 0011's `optional !== false` reading. This replaces `canStopAt` and is exported as `canStopAtPath`.
 - No `getLabel`: each node's `label` carries its code, rendered through a `translate` prop (`(code) => string`, defaulting to the raw code), so translation stays app-side per the i18n rule.
 
-Domain-side, each vocabulary exports its bundle (`MATERIAL_HIERARCHY`, `SAMPLE_TYPE_HIERARCHY`, `COLLECTION_METHOD_HIERARCHY`), so the stop policy is stated once per source of truth: collection method marks its non-leaves `optional: true`, every node being a valid stop there, while material and type mark nothing, and `isSampleTypeComplete` unifies on the same tree read as `isMaterialComplete`. The widget needs no cycle detection, since domain `expandPaths` runs at import and throws.
+Domain-side, each vocabulary exports its bundle (`MATERIAL_HIERARCHY`, `SAMPLE_TYPE_HIERARCHY`, `COLLECTION_METHOD_HIERARCHY`), so the stop policy is stated once per source of truth: collection method marks its non-leaves `optional: true`, every node being a valid stop there, while material and type mark nothing (see the 2026-10-05 narrowing), and `isSampleTypeComplete` unifies on the same tree read as `isMaterialComplete`. The widget needs no cycle detection, since domain `expandPaths` runs at import and throws.
+
+**2026-10-05 narrowing.** Type now marks `core` `optional: true`, so Core alone is a valid stop and `core.core` is gone, its stored values migrated to `core`.
 
 `admin/src/samples/hierarchy-stop-consistency.spec.ts` asserts that `canStopAtPath` equals the domain completeness verdict for every path of every vocabulary, closing the drift hazard between the UI and the publish gate.
 

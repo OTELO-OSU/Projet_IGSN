@@ -1,5 +1,6 @@
 import type { SampleParent } from "@projet-igsn/domain/sample/parent/model";
 
+import { DEFAULT_NATURE } from "@projet-igsn/domain/sample/nature";
 import { sampleParentSchema } from "@projet-igsn/domain/sample/parent/model";
 import { useQueries } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -127,8 +128,8 @@ function CreateSamplePage() {
                 sourceParents.map(({ id }) => id),
               )
             : parents.length > 0
-              ? toSubSampleDefaults(parents)
-              : undefined
+              ? { nature: DEFAULT_NATURE, ...toSubSampleDefaults(parents) }
+              : { nature: DEFAULT_NATURE }
         }
         parents={(source ? sourceParents : parents).map((parent) =>
           sampleParentSchema.parse(parent),

@@ -123,14 +123,32 @@ export function sampleFormPage(page: Page) {
       await expect(panel.getByLabel("Latitude")).toHaveCount(0);
     },
 
+    pickType: (label: string) => pickHierarchy("Type", label),
+    expectCompleteTypeWithoutRepeatedLevel: async (label: string) => {
+      await expect(
+        page.getByRole("option", { name: "Stop here", exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("option", { name: label, exact: true }),
+      ).toHaveCount(0);
+      await expect(fieldCombobox("Type")).toHaveAccessibleDescription(
+        /Complete, a sub-level may be picked/,
+      );
+      await page
+        .getByRole("option", { name: "Stop here", exact: true })
+        .click();
+    },
+
     fillPublishableFields: async ({
+      type = "Dredge",
       material = SYNTHETIC_MATERIAL,
       collectionDate = true,
     }: {
+      type?: string;
       material?: string | string[] | null;
       collectionDate?: boolean;
     } = {}) => {
-      await pickHierarchy("Type", "Dredge");
+      await pickHierarchy("Type", type);
       await pick("Provenance status", "Collection specimen");
       if (collectionDate) {
         await page

@@ -56,13 +56,13 @@ Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec fir
 |                | material                                                  | `type`                                 | `collectionMethod`                       |
 | -------------- | --------------------------------------------------------- | -------------------------------------- | ---------------------------------------- |
 | Authored in    | `classification.ts` roots + `classification/*-subtree.ts` | inline `vocabulary.ts`                 | inline `vocabulary.ts`                   |
-| Completeness   | per node: mandatory unless `optional: true`               | leaf-only (nothing optional)           | none: every non-leaf is `optional: true` |
+| Completeness   | per node: mandatory unless `optional: true`               | leaf-only, but `core` is optional      | none: every non-leaf is `optional: true` |
 | Gates publish? | yes (`isMaterialComplete`)                                | yes (`isSampleTypeComplete`)           | no                                       |
 | App label map  | `vocabulary-label.ts` (dynamic lookup)                    | `vocabulary-label.ts` (dynamic lookup) | `vocabulary-label.ts` (dynamic lookup)   |
 | i18n key       | bare code (`rock`)                                        | `type_*`                               | `collection_method_*`                    |
 
 A node with children must be refined unless marked `optional: true`; leaves are
-always valid stops. `type` marks nothing; `collectionMethod` marks every
+always valid stops. `type` marks only `core`; `collectionMethod` marks every
 non-leaf.
 
 ## Material source screenshots
@@ -79,7 +79,7 @@ Ambiguous or unlegended color: ask, do not guess.
 A code is one `lower_snake_case` string, no type prefix (the path gives context).
 A code may recur under several parents (full path is the identity). To reuse a
 code as a childless leaf under a parent that also has it as an inner node, add a
-dotted override key (`"core.core": { label: "core" }`) so `expandPaths` stops there.
+dotted override key (`"hydrothermal.carbonate": { label: "carbonate" }`) so `expandPaths` stops there.
 
 **Duplicates across ALL subtrees.** Material spreads fragments
 (`{ ...rockTree, ...sedimentTree }`): a bare key defined twice is not a compile
@@ -91,30 +91,13 @@ entry, so they cannot shadow anything.
 **Conflict = STOP and ask.** Already a key anywhere in the tree (or its i18n
 key)? Do not rename or silently reuse. Ask.
 
-## Self-referencing node (`Core > Core`)
+## Self-referencing node
 
-A node can list itself as a child: `Core > Core`. Put the literal `"core"` in
-`core`'s `choices` like any other child, then add a dotted override key to stop
-recursion:
+A node can list itself as a child (`X > X`) when a childless dotted override key stops the recursion, e.g. `"x.x": { label: "x" }`.
 
-```ts
-core: { choices: ["core", "half_round", /* ... */] },
-"core.core": { label: "core" }, // childless override terminating core.core
-```
+`expandPaths` resolves each node by the longest matching suffix, so `x.x` hits the childless leaf and stops. Without it the walk cycles and throws `Path tree cycle` at import, reddening every spec. Labels still key by the last segment.
 
-`expandPaths` resolves each node by the longest matching suffix, so `core.core`
-hits this childless leaf, not bare `core`, and stops. Without it the walk cycles
-(`core.core.core...`) and throws `Path tree cycle` at import, reddening every
-spec. The label key derives from the last segment (`pathLabelKey` calling `pathSegment`), so labels still key by bare segment, `core.core`'s label being the `core` message.
-
-Picker options come from `SAMPLE_TYPES` (the `expandPaths` output), so prove the
-value is selectable in the spec:
-
-```ts
-expect(SAMPLE_TYPES).toContain("core.core");
-expect(SAMPLE_TYPES).not.toContain("core.core.core");
-expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
-```
+No vocabulary uses this today: Core alone is the valid stop, `core` being `optional: true`.
 
 ## Strunz-Mindat minerals
 

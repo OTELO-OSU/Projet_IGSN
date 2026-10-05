@@ -391,6 +391,14 @@ describe("CreateSamplePage", () => {
       .toHaveTextContent("Sample created");
   });
 
+  it("should pre-select Hand sample as the nature of a new sample", async () => {
+    const screen = await renderCreatePage();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Nature *", exact: true }))
+      .toHaveTextContent("Hand sample");
+  });
+
   it("should reopen the created sample on the tab its first save came from", async () => {
     const screen = await renderCreatePage();
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
@@ -456,7 +464,7 @@ describe("CreateSamplePage", () => {
       .toBeVisible();
     expect(screen.created()).toMatchObject({
       name: "Thin section MC-2026-007",
-      nature: null,
+      nature: "hand_sample",
       parentIds: [PARENT_ID],
       specificName: "MC-2026-007",
       location: { position: { type: "point", longitude: 3, latitude: 45 } },
@@ -477,7 +485,7 @@ describe("CreateSamplePage", () => {
     await expect.element(screen.getByLabelText(/name/i)).toHaveValue("");
     await expect
       .element(screen.getByRole("combobox", { name: "Nature *", exact: true }))
-      .toHaveTextContent("Select a nature");
+      .toHaveTextContent("Hand sample");
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))
       .toBeDisabled();
