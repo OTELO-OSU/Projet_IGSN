@@ -207,6 +207,8 @@ Every internal path the `/service` routes report (blocker paths from `publish-bl
 
 An invalid filter value answers 400 `{ error: "Invalid query parameters" }`, unlike the public route, whose facet fields end in `.catch(undefined)` and silently drop a bad value. A service-account integration gets a loud failure instead of a quietly wider result set.
 
+A `bbox` covering more than a quarter of the Earth's surface (`MAX_SEARCH_BBOX_WORLD_FRACTION`) is invalid too, so it answers the same 400. The public and admin lists drop it instead, like any bad value.
+
 `sampleObjectType`, `materialCategory`, `collectionMethod` and `mineralogy` match a subtree: the SQL is `col <@ $value::ltree`, so a path matches itself and everything under it. `mineralogy` reads `mineral_classification.strunz_id`, a child table, rather than a column on `sample` itself.
 
 Every controlled vocabulary (nature, texture, the four hierarchies, ROR/OSU/laboratory codes, numeric age unit) is published as a full OpenAPI `enum` in the served document.
