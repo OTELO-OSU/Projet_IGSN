@@ -52,7 +52,7 @@ async function enterDrawMode(onChange: (bbox: string) => void) {
   const box = screen.getByRole("group", { name: "Search area map" });
   const draw = screen.getByRole("button", { name: "Draw an area" });
   await draw.click();
-  return { draw, container: await leafletContainer(box) };
+  return { screen, draw, container: await leafletContainer(box) };
 }
 
 describe("LazyLocationMap", () => {
@@ -155,6 +155,38 @@ describe("LazyLocationMap", () => {
 
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
     await expect.element(draw).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("should warn of an area too large and keep draw mode on, until a valid draw", async () => {
+    const onChange = vi.fn();
+    const { screen, draw, container } = await enterDrawMode(onChange);
+
+    shiftDragAt(container, 20, 20, 700, 400);
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(
+        "This area is too large. Draw an area covering at most a quarter of the world.",
+      );
+    expect(onChange).not.toHaveBeenCalled();
+    await expect.element(draw).toHaveAttribute("aria-pressed", "true");
+
+    clickAt(container, 20, 20);
+    clickAt(container, 80, 60);
+
+    await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("alert").query()).toBeNull();
+  });
+
+  it("should clear the too-large warning when the reader toggles draw mode", async () => {
+    const { screen, draw, container } = await enterDrawMode(vi.fn());
+
+    shiftDragAt(container, 20, 20, 700, 400);
+    await expect.element(screen.getByRole("alert")).toBeInTheDocument();
+
+    await draw.click();
+
+    expect(screen.getByRole("alert").query()).toBeNull();
   });
 
   it("should report a shift+drag drawn outside draw mode", async () => {

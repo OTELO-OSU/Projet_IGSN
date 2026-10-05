@@ -57,6 +57,7 @@ describe("formatBbox", () => {
 describe("RectangleDrawer", () => {
   async function renderDrawer(bbox?: string, drawing = false) {
     const onSelect = vi.fn();
+    const onTooLarge = vi.fn();
     let resolveMap: (map: L.Map) => void;
     const mapReady = new Promise<L.Map>((resolve) => {
       resolveMap = resolve;
@@ -65,13 +66,19 @@ describe("RectangleDrawer", () => {
       return (
         <MapContainer center={[20, 0]} zoom={2} style={{ height: 400 }}>
           <CaptureMap onMap={(map) => resolveMap(map)} />
-          <RectangleDrawer bbox={bbox} drawing={drawing} onSelect={onSelect} />
+          <RectangleDrawer
+            bbox={bbox}
+            drawing={drawing}
+            onSelect={onSelect}
+            onTooLarge={onTooLarge}
+          />
         </MapContainer>
       );
     }
     const screen = await render(<Harness drawing={drawing} />);
     return {
       onSelect,
+      onTooLarge,
       map: await mapReady,
       setDrawing: (next: boolean) =>
         screen.rerender(<Harness drawing={next} />),
@@ -88,6 +95,35 @@ describe("RectangleDrawer", () => {
     map.fire("mouseup", { latlng: L.latLng(50, 10) });
 
     expect(onSelect).toHaveBeenCalledWith("-10,40,10,50");
+  });
+
+  it("should refuse an area larger than a quarter of the world", async () => {
+    const { onSelect, onTooLarge, map } = await renderDrawer("-10,40,10,50");
+
+    map.fire("mousedown", {
+      latlng: L.latLng(-60, -170),
+      originalEvent: { shiftKey: true },
+    });
+    map.fire("mouseup", { latlng: L.latLng(60, 170) });
+
+    expect(onTooLarge).toHaveBeenCalledTimes(1);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("should turn the pending rectangle red once it exceeds a quarter of the world", async () => {
+    const { map } = await renderDrawer(undefined, true);
+
+    map.fire("click", { latlng: L.latLng(-60, -170) });
+    map.fire("mousemove", { latlng: L.latLng(-50, -160) });
+    await vi.waitFor(() => expect(rectanglePaths().length).toBe(1));
+    const inRangeStroke = rectanglePaths()[0]?.getAttribute("stroke");
+
+    map.fire("mousemove", { latlng: L.latLng(60, 170) });
+
+    await vi.waitFor(() =>
+      expect(rectanglePaths()[0]?.getAttribute("stroke")).toBe("#dc2626"),
+    );
+    expect(inRangeStroke).not.toBe("#dc2626");
   });
 
   it("should replace the previous selection on a second shift+drag", async () => {
@@ -256,7 +292,11 @@ describe("InvalidateOnResize", () => {
 describe("SearchLocationMap", () => {
   it("should render no standalone Search button (a shared button owns submit)", async () => {
     const screen = await render(
-      <SearchLocationMap drawing={false} onChange={vi.fn()} />,
+      <SearchLocationMap
+        drawing={false}
+        onChange={vi.fn()}
+        onTooLarge={vi.fn()}
+      />,
     );
 
     await vi.waitFor(() =>
@@ -267,7 +307,11 @@ describe("SearchLocationMap", () => {
 
   it("should show the OSM attribution", async () => {
     const screen = await render(
-      <SearchLocationMap drawing={false} onChange={vi.fn()} />,
+      <SearchLocationMap
+        drawing={false}
+        onChange={vi.fn()}
+        onTooLarge={vi.fn()}
+      />,
     );
 
     await expect
@@ -280,6 +324,7 @@ describe("SearchLocationMap", () => {
       <SearchLocationMap
         drawing={false}
         onChange={vi.fn()}
+        onTooLarge={vi.fn()}
         value="-10,40,10,50"
       />,
     );
@@ -288,7 +333,13 @@ describe("SearchLocationMap", () => {
   });
 
   it("should render no rectangle for an absent value and not throw", async () => {
-    await render(<SearchLocationMap drawing={false} onChange={vi.fn()} />);
+    await render(
+      <SearchLocationMap
+        drawing={false}
+        onChange={vi.fn()}
+        onTooLarge={vi.fn()}
+      />,
+    );
 
     expect(rectanglePaths().length).toBe(0);
   });
@@ -299,7 +350,13 @@ describe("SearchLocationMap", () => {
   ])(
     "should show, in draw mode %s, a %s cursor over the map surface",
     async (drawing, cursor) => {
-      await render(<SearchLocationMap drawing={drawing} onChange={vi.fn()} />);
+      await render(
+        <SearchLocationMap
+          drawing={drawing}
+          onChange={vi.fn()}
+          onTooLarge={vi.fn()}
+        />,
+      );
 
       const container = await vi.waitFor(() => {
         const element = document.querySelector(".leaflet-container");
@@ -316,6 +373,7 @@ describe("SearchLocationMap", () => {
       <SearchLocationMap
         drawing={false}
         onChange={vi.fn()}
+        onTooLarge={vi.fn()}
         value="170,0,-170,20"
       />,
     );

@@ -32,6 +32,7 @@ export function LazyLocationMap({
   const [mounted, setMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [drawing, setDrawing] = useState(false);
+  const [isTooLarge, setIsTooLarge] = useState(false);
   useEffect(() => setMounted(true), []);
   const compact = collapsible && !expanded;
 
@@ -40,6 +41,11 @@ export function LazyLocationMap({
       <p id={HINT_ID} className="mb-2 text-sky-100">
         {m.search_map_hint()}
       </p>
+      {isTooLarge ? (
+        <p role="alert" className="mb-2 text-sky-100">
+          {m.search_map_too_large()}
+        </p>
+      ) : null}
       <div
         role="group"
         aria-label={m.search_map_label()}
@@ -54,8 +60,10 @@ export function LazyLocationMap({
               drawing={drawing}
               onChange={(bbox) => {
                 setDrawing(false);
+                setIsTooLarge(false);
                 onChange(bbox);
               }}
+              onTooLarge={() => setIsTooLarge(true)}
             />
           </Suspense>
         ) : null}
@@ -67,7 +75,10 @@ export function LazyLocationMap({
                   type="button"
                   variant={drawing ? "default" : "secondary"}
                   aria-pressed={drawing}
-                  onClick={() => setDrawing(!drawing)}
+                  onClick={() => {
+                    setDrawing(!drawing);
+                    setIsTooLarge(false);
+                  }}
                 >
                   <SquareDashedIcon aria-hidden="true" />
                   {m.search_map_draw()}

@@ -1,6 +1,6 @@
 import {
-  bboxSchema,
   pageSizeSchema,
+  searchBboxSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
 import {
   activeFacetKeys,
@@ -54,7 +54,7 @@ export function clearFacets(): Record<string, undefined> {
 }
 
 function hasValidBbox(bbox: string | undefined): boolean {
-  return !!bbox && bboxSchema.safeParse(bbox).success;
+  return !!bbox && searchBboxSchema.safeParse(bbox).success;
 }
 
 export function toFilters(params: SearchParams): SampleFilters {

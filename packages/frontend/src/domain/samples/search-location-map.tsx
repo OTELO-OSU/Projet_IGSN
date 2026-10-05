@@ -3,10 +3,17 @@ import type { Location } from "@projet-igsn/domain/sample/location/model";
 import "leaflet/dist/leaflet.css";
 import {
   type Bbox,
-  bboxSchema,
+  searchBboxSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
 import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
-import { type LatLng, type LatLngBoundsExpression, Util } from "leaflet";
+import {
+  type LatLng,
+  type LatLngBoundsExpression,
+  type LatLngTuple,
+  type PathOptions,
+  Util,
+  latLng,
+} from "leaflet";
 import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
@@ -22,6 +29,9 @@ export const WORLD_BOUNDS: LatLngBoundsExpression = [
 ];
 
 const MIN_DRAG_PX = 5;
+
+const DEFAULT_PATH_OPTIONS: PathOptions = { color: "#3388ff" };
+const TOO_LARGE_PATH_OPTIONS: PathOptions = { color: "#dc2626" };
 
 const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
 const clampLatitude = (value: number) =>
@@ -64,8 +74,11 @@ export function singleBoundsOrWorld(
   return half && rest.length === 0 ? half : WORLD_BOUNDS;
 }
 
+const isTooLarge = (a: LatLng, b: LatLng) =>
+  !searchBboxSchema.safeParse(formatBbox(a, b)).success;
+
 function parseBoundsList(bbox: string | undefined): LatLngBoundsExpression[] {
-  const parsed = bboxSchema.safeParse(bbox);
+  const parsed = searchBboxSchema.safeParse(bbox);
   return parsed.success ? toBoundsList(parsed.data) : [];
 }
 
@@ -84,13 +97,15 @@ export function RectangleDrawer({
   bbox,
   drawing,
   onSelect,
+  onTooLarge,
 }: {
   bbox: string | undefined;
   drawing: boolean;
   onSelect: (bbox: string) => void;
+  onTooLarge: () => void;
 }) {
   const startRef = useRef<{ latlng: LatLng; drag: boolean } | null>(null);
-  const [draft, setDraft] = useState<LatLngBoundsExpression | null>(null);
+  const [draft, setDraft] = useState<[LatLngTuple, LatLngTuple] | null>(null);
   const map = useMapEvents({
     mousedown(event) {
       if (!event.originalEvent.shiftKey) return;
@@ -130,7 +145,8 @@ export function RectangleDrawer({
     const from = map.latLngToContainerPoint(start.latlng);
     const to = map.latLngToContainerPoint(corner);
     if (from.distanceTo(to) < MIN_DRAG_PX) return;
-    onSelect(formatBbox(start.latlng, corner));
+    if (isTooLarge(start.latlng, corner)) onTooLarge();
+    else onSelect(formatBbox(start.latlng, corner));
   }
 
   useEffect(() => {
@@ -148,9 +164,15 @@ export function RectangleDrawer({
   }, [drawing]);
 
   const [westHalf, eastHalf] = draft ? [draft] : parseBoundsList(bbox);
+  const westPathOptions =
+    draft && isTooLarge(latLng(draft[0]), latLng(draft[1]))
+      ? TOO_LARGE_PATH_OPTIONS
+      : DEFAULT_PATH_OPTIONS;
   return (
     <>
-      {westHalf ? <Rectangle bounds={westHalf} /> : null}
+      {westHalf ? (
+        <Rectangle bounds={westHalf} pathOptions={westPathOptions} />
+      ) : null}
       {eastHalf ? <Rectangle bounds={eastHalf} /> : null}
     </>
   );
@@ -189,11 +211,13 @@ export function SearchLocationMap({
   value,
   drawing,
   onChange,
+  onTooLarge,
   compact = false,
 }: {
   value?: string;
   drawing: boolean;
   onChange: (bbox: string) => void;
+  onTooLarge: () => void;
   compact?: boolean;
 }) {
   return (
@@ -207,7 +231,12 @@ export function SearchLocationMap({
       className="z-0 h-full w-full rounded-md select-none"
     >
       <OsmTileLayer />
-      <RectangleDrawer bbox={value} drawing={drawing} onSelect={onChange} />
+      <RectangleDrawer
+        bbox={value}
+        drawing={drawing}
+        onSelect={onChange}
+        onTooLarge={onTooLarge}
+      />
       <DrawCursor drawing={drawing} />
       <InvalidateOnResize compact={compact} />
       {compact ? <FitSelection bbox={value} /> : null}
