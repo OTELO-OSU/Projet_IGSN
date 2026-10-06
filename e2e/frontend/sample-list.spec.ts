@@ -68,11 +68,11 @@ test.describe("sample list", () => {
     await list.search("basalt");
 
     await list.pickCardField("Collection method");
-    await list.expectCardLine("Collection method: Blasting");
+    await list.expectCardLine("Collection method", "Blasting");
 
     await page.reload();
 
-    await list.expectCardLine("Collection method: Blasting");
+    await list.expectCardLine("Collection method", "Blasting");
   });
 
   test("a reader sees a result's internal id only once they pick it", async ({

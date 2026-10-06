@@ -123,7 +123,7 @@ export function HierarchyInput({
       <PopoverAnchor asChild>
         <div
           className={cn(
-            "flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-2 py-1",
+            "flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-background px-2 py-0.5 shadow-xs dark:bg-input/30",
             disabled && "opacity-50",
           )}
         >
@@ -195,10 +195,12 @@ export function HierarchyInput({
               aria-expanded={open}
               disabled={isLocked(path.length) || isLeaf}
               onBlur={onBlur}
-              className="text-muted-foreground h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent"
+              className="h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent has-[>svg]:px-1"
               {...aria}
             >
-              {path.length === 0 ? placeholder : null}
+              {path.length === 0 ? (
+                <span className="text-muted-foreground">{placeholder}</span>
+              ) : null}
               <ChevronsUpDownIcon className="opacity-50" />
             </Button>
           </PopoverTrigger>

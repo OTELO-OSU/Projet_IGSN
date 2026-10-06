@@ -54,6 +54,9 @@ test.describe("search facets", () => {
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleAbsent("Granite 7");
+    await list.expectActiveFilter(`Nature: ${natureLabel("hand_sample")}`);
+    await list.expectFacetSection("Identity", true);
+    await list.expectFacetSection("Scientific context", false);
   });
 
   test("a reader drills a hierarchy facet deeper", async ({

@@ -15,7 +15,10 @@ import { Route as SearchRoute } from "./search.tsx";
 const json = (body: unknown, status = 200) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
 
-function renderSearch(facetCounts: () => Promise<Response>) {
+function renderSearch(
+  facetCounts: () => Promise<Response>,
+  url = "/search?nature=hand_sample",
+) {
   vi.stubGlobal("fetch", (input: URL) => {
     if (input.pathname.endsWith("/samples/facets")) return facetCounts();
     if (input.pathname.endsWith("/samples"))
@@ -35,7 +38,7 @@ function renderSearch(facetCounts: () => Promise<Response>) {
     routeTree: rootRoute.addChildren([searchRoute]),
     context: { queryClient },
     history: createMemoryHistory({
-      initialEntries: ["/search?nature=hand_sample"],
+      initialEntries: [url],
     }),
   });
   return render(
@@ -47,6 +50,8 @@ function renderSearch(facetCounts: () => Promise<Response>) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  document.body.style.minHeight = "";
+  window.scrollTo(0, 0);
 });
 
 describe("search page", () => {
@@ -63,4 +68,23 @@ describe("search page", () => {
         .toBeVisible();
     },
   );
+
+  it("should scroll back to the top when a facet changes", async () => {
+    const screen = await renderSearch(
+      () => json({}),
+      "/search?q=basalt&nature=hand_sample",
+    );
+    const removeNature = screen.getByRole("button", {
+      name: "Remove Nature: Hand sample",
+    });
+    await expect.element(removeNature).toBeVisible();
+    document.body.style.minHeight = "5000px";
+    window.scrollTo(0, 1000);
+
+    removeNature
+      .element()
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    await expect.poll(() => window.scrollY).toBe(0);
+  });
 });

@@ -127,7 +127,7 @@ describe("SampleList", () => {
       "Core > Core Half round / Powder",
       "Rock and sediment > Rock > Igneous > Fresh basalt",
       "France > Piton de la Fournaise",
-      "Collector name: Marie Curie",
+      "Marie Curie",
     ]);
   });
 
@@ -196,15 +196,19 @@ describe("SampleList", () => {
     expect(screen.getByText(/ocean/i).query()).toBeNull();
   });
 
-  it("should show a picked field as a labelled line", async () => {
+  it("should name a line's field in its icon tooltip, not in the line", async () => {
     const screen = await renderSampleList(
       [sampleItem({ collectionMethod: "blasting" })],
       ["collectionMethod"],
     );
 
     await expect
-      .element(screen.getByText("Collection method: Blasting", { exact: true }))
+      .element(screen.getByText("Blasting", { exact: true }))
       .toBeInTheDocument();
+    await screen.getByRole("img", { name: "Collection method" }).hover();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Collection method");
   });
 
   it("should show no line for a picked field the sample lacks", async () => {
@@ -230,9 +234,7 @@ describe("SampleList", () => {
       }),
     ]);
 
-    await expect
-      .element(screen.getByText("Collector name: Marie Curie"))
-      .toBeInTheDocument();
+    await expect.element(screen.getByText("Marie Curie")).toBeInTheDocument();
   });
 
   it("should show a collector without a firstname as the lastname alone", async () => {
@@ -247,7 +249,7 @@ describe("SampleList", () => {
     ]);
 
     await expect
-      .element(screen.getByText("Collector name: Curie", { exact: true }))
+      .element(screen.getByText("Curie", { exact: true }))
       .toBeInTheDocument();
   });
 
@@ -267,9 +269,7 @@ describe("SampleList", () => {
     );
 
     await expect
-      .element(
-        screen.getByText("Chief scientist: Marie Curie", { exact: true }),
-      )
+      .element(screen.getByText("Marie Curie", { exact: true }))
       .toBeInTheDocument();
   });
 

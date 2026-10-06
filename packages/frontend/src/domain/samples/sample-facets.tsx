@@ -2,7 +2,12 @@ import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { SampleFacetCounts } from "@projet-igsn/domain/sample/sample-validator";
 import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 
-import { Button } from "@projet-igsn/design-system/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@projet-igsn/design-system/components/ui/accordion";
 import {
   Combobox,
   type ComboboxItem,
@@ -16,12 +21,13 @@ import { filterLaboratoriesByOrgAndOsu } from "@projet-igsn/domain/institutional
 import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
 import { allowsMineralClassifications } from "@projet-igsn/domain/sample/mineral/allows-mineral-classifications";
 import {
-  facetParamKeys,
+  activeFacetKeys,
   SAMPLE_FACETS,
 } from "@projet-igsn/domain/sample/search/facets";
 import { fullName } from "@projet-igsn/domain/user/full-name";
 import { type ReactNode, useId, useState } from "react";
 
+import { ActiveFacetChips } from "#/domain/samples/active-facet-chips.tsx";
 import { HierarchyFacet } from "#/domain/samples/facet-hierarchy.tsx";
 import { facetLabel, facetValueLabel } from "#/domain/samples/facet-labels.ts";
 import { numericUnitLabel } from "#/domain/samples/sample-labels.ts";
@@ -34,31 +40,31 @@ export const FACET_SECTIONS: readonly {
   keys: readonly string[];
 }[] = [
   {
-    title: m.facet_section_classification,
-    keys: ["includeSubSamples", "type", "nature"],
+    title: m.sample_section_identity,
+    keys: ["includeSubSamples", "type", "nature", "collectionMethod"],
   },
   {
-    title: m.facet_section_type,
-    keys: ["material", "mineralClassification", "collectionMethod"],
-  },
-  {
-    title: m.facet_section_author,
-    keys: [
-      "contributor",
-      "researchProgramName",
-      "chiefScientist",
-      "hostInstitution",
-      "collectorName",
-    ],
+    title: m.sample_section_classification,
+    keys: ["material", "mineralClassification"],
   },
   { title: m.sample_section_age, keys: ["age"] },
   {
-    title: m.sample_section_institution,
+    title: m.sample_section_scientific_context,
     keys: [
+      "collectorName",
+      "chiefScientist",
+      "hostInstitution",
+      "researchProgramName",
+    ],
+  },
+  {
+    title: m.sample_section_declaration,
+    keys: [
+      "contributor",
+      "manualGroup",
       "institutionalOrganization",
       "institutionalOsu",
       "institutionalLaboratory",
-      "manualGroup",
     ],
   },
 ];
@@ -112,8 +118,11 @@ function withSelected(
 
 type SampleFacetsProps = {
   values: FacetValues;
-  onChange: (key: string, value: string | number | boolean | undefined) => void;
-  onClearAll: () => void;
+  onChange: (
+    key: string,
+    value: string | number | boolean | undefined,
+  ) => void | Promise<void>;
+  onClearAll: () => void | Promise<void>;
   manualGroups?: ManualGroup[];
   contributors?: PublicUser[];
   counts?: SampleFacetCounts;
@@ -128,7 +137,14 @@ export function SampleFacets({
   counts,
 }: SampleFacetsProps) {
   const [resetNonce, setResetNonce] = useState(0);
-  const hasActive = facetParamKeys().some((key) => values[key] !== undefined);
+  const activeKeys = activeFacetKeys(values);
+  const isSectionActive = (keys: readonly string[]) =>
+    keys.some((key) =>
+      [key, `${key}Min`, `${key}Max`].some((param) =>
+        activeKeys.includes(param),
+      ),
+    );
+  const resetUncontrolledFacets = () => setResetNonce((nonce) => nonce + 1);
 
   const countsOf = (key: string) => counts && (counts[key] ?? {});
   const byKey = new Map(SAMPLE_FACETS.map((facet) => [facet.key, facet]));
@@ -226,21 +242,30 @@ export function SampleFacets({
   return (
     <aside
       aria-label={m.facets_title()}
-      className="space-y-6 py-6 md:sticky md:top-24 md:z-0 md:h-[calc(100vh-96px)] md:self-start md:overflow-y-auto md:pr-6"
+      className="space-y-6 border-b py-6 md:sticky md:top-24 md:z-0 md:h-[calc(100vh-96px)] md:self-start md:overflow-y-auto md:border-r md:border-b-0 md:pr-6"
     >
-      <Button
-        type="button"
-        variant="secondary"
-        disabled={!hasActive}
-        onClick={() => {
-          onClearAll();
-          setResetNonce((nonce) => nonce + 1);
+      <ActiveFacetChips
+        facets={FACET_SECTIONS.flatMap((section) => section.keys).flatMap(
+          (key) => byKey.get(key) ?? [],
+        )}
+        values={values}
+        linkedItems={fetchedItems}
+        onRemove={async (param) => {
+          await onChange(param, undefined);
+          resetUncontrolledFacets();
         }}
-      >
-        {m.facets_clear_all()}
-      </Button>
+        onClearAll={async () => {
+          await onClearAll();
+          resetUncontrolledFacets();
+        }}
+      />
 
-      <div className="divide-y">
+      <Accordion
+        type="multiple"
+        defaultValue={FACET_SECTIONS.filter(
+          (section, index) => index === 0 || isSectionActive(section.keys),
+        ).map((section) => section.title())}
+      >
         {FACET_SECTIONS.map((section) => (
           <FacetSection key={section.title()} title={section.title()}>
             {section.keys.map((key) => {
@@ -257,7 +282,7 @@ export function SampleFacets({
             })}
           </FacetSection>
         ))}
-      </div>
+      </Accordion>
     </aside>
   );
 }
@@ -269,17 +294,13 @@ function FacetSection({
   title: string;
   children: ReactNode;
 }) {
-  const id = useId();
   return (
-    <section aria-labelledby={id} className="space-y-4 py-6 first:pt-0">
-      <h2
-        id={id}
-        className="text-muted-foreground text-xs font-semibold tracking-wide uppercase"
-      >
+    <AccordionItem value={title}>
+      <AccordionTrigger className="text-muted-foreground items-center py-6 text-xs font-semibold tracking-wide uppercase">
         {title}
-      </h2>
-      {children}
-    </section>
+      </AccordionTrigger>
+      <AccordionContent className="space-y-4 pb-6">{children}</AccordionContent>
+    </AccordionItem>
   );
 }
 
@@ -378,23 +399,25 @@ function RangeFacet({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="space-y-1">
-        <Label htmlFor={minId}>{m.facet_age_min()}</Label>
-        <Input
-          id={minId}
-          type="number"
-          defaultValue={min ?? ""}
-          onBlur={(event) => onChangeMin(toBound(event.target.value))}
-        />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor={maxId}>{m.facet_age_max()}</Label>
-        <Input
-          id={maxId}
-          type="number"
-          defaultValue={max ?? ""}
-          onBlur={(event) => onChangeMax(toBound(event.target.value))}
-        />
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label htmlFor={minId}>{m.facet_age_min()}</Label>
+          <Input
+            id={minId}
+            type="number"
+            defaultValue={min ?? ""}
+            onBlur={(event) => onChangeMin(toBound(event.target.value))}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor={maxId}>{m.facet_age_max()}</Label>
+          <Input
+            id={maxId}
+            type="number"
+            defaultValue={max ?? ""}
+            onBlur={(event) => onChangeMax(toBound(event.target.value))}
+          />
+        </div>
       </div>
       <div className="space-y-1">
         <Label htmlFor={unitId}>{m.facet_age_unit()}</Label>

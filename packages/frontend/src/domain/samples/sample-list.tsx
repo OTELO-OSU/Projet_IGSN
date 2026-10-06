@@ -57,16 +57,29 @@ function elementRanges(element: Element, query: string): Range[] {
 
 function CardLine({
   field,
+  label,
   children,
 }: {
   field: string;
+  label: string;
   children: React.ReactNode;
 }) {
   const Icon = CARD_LINE_ICONS[field];
   return (
     <p className="mt-1 flex gap-1.5 text-sm">
       {Icon ? (
-        <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Icon
+                role="img"
+                aria-label={label}
+                className="mt-0.5 size-4 shrink-0"
+              />
+            </TooltipTrigger>
+            <TooltipContent side="left">{label}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ) : null}
       {children}
     </p>
@@ -99,22 +112,31 @@ function CardDetails({
           {formatInternalId(sample.internalNumber)}
         </p>
       )}
-      {kind ? <CardLine field="typeNature">{kind}</CardLine> : null}
-      {material ? <CardLine field="material">{material}</CardLine> : null}
-      {place ? <CardLine field="location">{place}</CardLine> : null}
+      {kind ? (
+        <CardLine field="typeNature" label={m.card_field_type_nature()}>
+          {kind}
+        </CardLine>
+      ) : null}
+      {material ? (
+        <CardLine field="material" label={m.sample_field_material()}>
+          {material}
+        </CardLine>
+      ) : null}
+      {place ? (
+        <CardLine field="location" label={m.card_field_location()}>
+          {place}
+        </CardLine>
+      ) : null}
       {collector ? (
-        <CardLine field="collectorName">
-          {m.card_field_line({
-            label: m.sample_field_collector_name(),
-            value: collector,
-          })}
+        <CardLine field="collectorName" label={m.sample_field_collector_name()}>
+          {collector}
         </CardLine>
       ) : null}
       {extraFields.map((field) => {
         const value = field.get(sample);
         return value ? (
-          <CardLine key={field.key} field={field.key}>
-            {m.card_field_line({ label: field.label(), value })}
+          <CardLine key={field.key} field={field.key} label={field.label()}>
+            {value}
           </CardLine>
         ) : null;
       })}
