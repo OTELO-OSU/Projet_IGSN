@@ -62,6 +62,7 @@ import {
   ExistenceStatusField,
 } from "#/samples/curation-fields.tsx";
 import { DuplicateSamplesDialog } from "#/samples/duplicate-samples-dialog.tsx";
+import { hasUnsavedAttachmentChanges } from "#/samples/has-unsaved-attachment-changes.ts";
 import { LocalIdFields } from "#/samples/local-id-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { ProvenanceStatusField } from "#/samples/provenance-status-field.tsx";
@@ -102,6 +103,7 @@ import { SampleScientificContextFields } from "#/samples/sample-scientific-conte
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
+import { UnsavedChangesGuard } from "#/samples/unsaved-changes-guard.tsx";
 import {
   keptAttachmentMetadata,
   type SampleAttachmentChanges,
@@ -173,26 +175,29 @@ export type SampleSubmitMenu = {
 };
 
 export type SampleSubmitMenuItem = Omit<ConfirmMenuAction, "onConfirm"> & {
-  onConfirm: (value: CreateSample) => void;
+  onConfirm: (value: CreateSample) => void | Promise<unknown>;
 };
 
 export type SampleFormAction =
   | {
       kind: "submit";
       label: string;
-      onSubmit: (value: CreateSample) => void;
+      onSubmit: (value: CreateSample) => void | Promise<unknown>;
       menu?: SampleSubmitMenu;
     }
   | {
       kind: "publish";
       label: string;
       disabled?: boolean;
-      onPublish: (value: CreateSample, status: PublishStatus) => void;
+      onPublish: (
+        value: CreateSample,
+        status: PublishStatus,
+      ) => void | Promise<unknown>;
     }
   | { kind: "link"; label: string; href: string };
 
 type SubmitMeta = {
-  onValid: ((value: CreateSample) => void) | undefined;
+  onValid: ((value: CreateSample) => void | Promise<unknown>) | undefined;
   checkDuplicates: boolean;
 };
 
@@ -304,7 +309,10 @@ export function SampleForm({
   };
   const askPublish = async (
     status: PublishStatus,
-    onPublish: (value: CreateSample, status: PublishStatus) => void,
+    onPublish: (
+      value: CreateSample,
+      status: PublishStatus,
+    ) => void | Promise<unknown>,
   ) => {
     const parsed = sampleDraftSchema.safeParse(form.state.values);
     const duplicates = parsed.success ? await findDuplicates(parsed.data) : [];
@@ -408,10 +416,15 @@ export function SampleForm({
       const committed = attachmentChanges
         ? await attachmentChanges.commit(attachments)
         : undefined;
-      meta.onValid?.(
-        committed ? { ...parsed.data, attachments: committed } : parsed.data,
+      const isSaved = await Promise.resolve(
+        meta.onValid?.(
+          committed ? { ...parsed.data, attachments: committed } : parsed.data,
+        ),
+      ).then(
+        () => true,
+        () => false,
       );
-      formApi.reset(toSampleDraft(parsed.data));
+      if (isSaved) formApi.reset(toSampleDraft(parsed.data));
     },
   });
 
@@ -734,6 +747,22 @@ export function SampleForm({
                 </FieldRequiredProvider>
               );
             }}
+          </form.Subscribe>
+
+          <form.Subscribe selector={(state) => state.isDefaultValue}>
+            {(isDefaultValue) => (
+              <UnsavedChangesGuard
+                isDirty={
+                  !isReadOnly &&
+                  (!isDefaultValue ||
+                    (attachmentChanges !== undefined &&
+                      hasUnsavedAttachmentChanges(
+                        attachments,
+                        attachmentChanges,
+                      )))
+                }
+              />
+            )}
           </form.Subscribe>
 
           {attachmentChanges ? (

@@ -151,35 +151,34 @@ function CreateSamplePage() {
           kind: "submit",
           label: m.action_save(),
           onSubmit: (value) =>
-            createSample.mutate(value, {
-              onSuccess: (sample) =>
-                navigate({
-                  to: "/samples/$sampleId",
-                  params: { sampleId: sample.id },
-                  search: { tab },
-                }),
-            }),
+            createSample.mutateAsync(value).then((sample) =>
+              navigate({
+                to: "/samples/$sampleId",
+                params: { sampleId: sample.id },
+                search: { tab },
+                ignoreBlocker: true,
+              }),
+            ),
         }}
         primaryAction={{
           kind: "publish",
           label: m.action_publish(),
           disabled: me.isPending,
           onPublish: (value, status) =>
-            createSample.mutate(value, {
-              onSuccess: (sample) =>
-                publishSample.mutate(
-                  { id: sample.id, status },
-                  {
-                    onSuccess: () => navigate({ to: "/" }),
-                    onError: () =>
-                      navigate({
-                        to: "/samples/$sampleId",
-                        params: { sampleId: sample.id },
-                        search: { tab },
-                      }),
-                  },
-                ),
-            }),
+            createSample.mutateAsync(value).then((sample) =>
+              publishSample.mutate(
+                { id: sample.id, status },
+                {
+                  onSuccess: () => navigate({ to: "/" }),
+                  onError: () =>
+                    navigate({
+                      to: "/samples/$sampleId",
+                      params: { sampleId: sample.id },
+                      search: { tab },
+                    }),
+                },
+              ),
+            ),
         }}
       />
     </>

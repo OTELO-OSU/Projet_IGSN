@@ -1,3 +1,5 @@
+import type * as Router from "@tanstack/react-router";
+
 import { HttpResponse, http } from "msw";
 
 import { fakeCurrentUser } from "../test/fake-current-user.ts";
@@ -5,7 +7,8 @@ import { worker } from "../test/msw.ts";
 import { render } from "../test/render.tsx";
 import { UserMenu } from "./user-menu.tsx";
 
-vi.mock("@tanstack/react-router", () => ({
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof Router>()),
   Link: ({
     to,
     children,

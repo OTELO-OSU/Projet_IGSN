@@ -1009,5 +1009,8 @@
   "import_report_contact_admin": "Notify the administrators",
   "import_report_contact_admin_hint": "The unavailable internal IDs will be sent to the administrators.",
   "import_report_contact_admin_sent": "Your request for these internal IDs was sent to the administrators.",
-  "import_report_contact_admin_error": "The request could not be sent."
+  "import_report_contact_admin_error": "The request could not be sent.",
+  "unsaved_changes_title": "Unsaved changes",
+  "unsaved_changes_description": "Your changes will be lost if you leave this page.",
+  "unsaved_changes_leave": "Leave without saving"
 }

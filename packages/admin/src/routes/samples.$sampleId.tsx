@@ -139,21 +139,18 @@ function EditSamplePage() {
     title: m.withdraw_sample_title(),
     description: m.withdraw_sample_warning(),
     onConfirm: (value) =>
-      updateSample.mutate(value, {
-        onSuccess: () => setStatus.mutate("withdrawn"),
-      }),
+      updateSample.mutateAsync(value).then(() => setStatus.mutate("withdrawn")),
   };
   const tombstoneItem: SampleSubmitMenuItem = {
     label: m.action_tombstone(),
     title: m.tombstone_sample_title(),
     description: m.tombstone_sample_warning(),
     onConfirm: (value) =>
-      updateSample.mutate(value, {
-        onSuccess: () =>
-          setStatus.mutate("tombstone", {
-            onSuccess: () => void navigate({ to: listRoute }),
-          }),
-      }),
+      updateSample.mutateAsync(value).then(() =>
+        setStatus.mutate("tombstone", {
+          onSuccess: () => void navigate({ to: listRoute }),
+        }),
+      ),
   };
   const statusItems = [
     ...(status === "published" && can("withdrawn") ? [withdrawItem] : []),
@@ -176,7 +173,7 @@ function EditSamplePage() {
         secondaryAction: {
           kind: "submit",
           label: m.action_save(),
-          onSubmit: (value) => updateSample.mutate(value),
+          onSubmit: (value) => updateSample.mutateAsync(value),
           menu: statusItems.length
             ? { label: m.action_status_options(), items: statusItems }
             : undefined,
@@ -191,15 +188,14 @@ function EditSamplePage() {
               kind: "publish",
               label: m.action_publish(),
               onPublish: (value, publishStatus) =>
-                updateSample.mutate(value, {
-                  onSuccess: () =>
-                    publishSample.mutate(
-                      { id: sampleId, status: publishStatus },
-                      {
-                        onSuccess: () => navigate({ to: listRoute }),
-                      },
-                    ),
-                }),
+                updateSample.mutateAsync(value).then(() =>
+                  publishSample.mutate(
+                    { id: sampleId, status: publishStatus },
+                    {
+                      onSuccess: () => navigate({ to: listRoute }),
+                    },
+                  ),
+                ),
             },
       };
 
@@ -250,7 +246,8 @@ function EditSamplePage() {
             }
             onDelete={() =>
               deleteSample.mutate(undefined, {
-                onSuccess: () => void navigate({ to: listRoute }),
+                onSuccess: () =>
+                  void navigate({ to: listRoute, ignoreBlocker: true }),
               })
             }
           />
@@ -284,10 +281,7 @@ function EditSamplePage() {
 
       <SampleForm
         currentUser={me.data}
-        defaultValues={
-          (updateSample.isSuccess ? undefined : updateSample.variables) ??
-          query.data
-        }
+        defaultValues={query.data}
         manualGroupOptions={query.data.manualGroupOptions}
         parents={query.data.parents}
         fieldSuggestions={
