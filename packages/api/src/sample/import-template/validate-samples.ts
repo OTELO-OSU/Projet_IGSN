@@ -7,8 +7,11 @@ import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under"
 import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
 import { publishedEditSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
+  type PublishableFields,
+  type PublishBlocker,
   publishBlockerSchema,
   samplePublishBlockers,
+  samplePublishRequirements,
   toPublishableFields,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import {
@@ -93,26 +96,54 @@ export function placeOf(
   };
 }
 
-function issueOf(
+const INDEXED_BLOCKER_FIELD: Partial<Record<PublishBlocker, string>> = {
+  relation_resource_type_missing: "targetResourceType",
+  process_step_date_missing: "date",
+  additional_role_firstname_missing: "personFirstname",
+  additional_role_lastname_missing: "personLastname",
+};
+
+function blockerIssuesOf(
+  sample: SampleCandidate,
+  blocker: PublishBlocker,
+  fields: PublishableFields,
+): ImportIssue[] {
+  const path = PUBLISH_BLOCKER_PATH[blocker];
+  const field = INDEXED_BLOCKER_FIELD[blocker];
+  const rowPaths = samplePublishRequirements(fields).flatMap(
+    ({ blocker: candidate, isMet, index }) =>
+      candidate === blocker && !isMet && index !== undefined
+        ? [[...path, index, ...(field === undefined ? [] : [field])]]
+        : [],
+  );
+  return (rowPaths.length === 0 ? [path] : rowPaths).map((blockerPath) => ({
+    ...placeOf(sample, blockerPath),
+    code: blocker,
+  }));
+}
+
+function issuesOf(
   sample: SampleCandidate,
   { path, code, message, ...issue }: z.core.$ZodIssue,
-): ImportIssue {
+  fields: PublishableFields,
+): ImportIssue[] {
   const domainCode =
     "params" in issue && typeof issue.params?.code === "string"
       ? issue.params.code
       : undefined;
-  return {
-    ...placeOf(sample, path),
-    code: domainCode ?? code,
-    ...(publishBlockerSchema.safeParse(domainCode).success ? {} : { message }),
-  };
+  const blocker = publishBlockerSchema.safeParse(domainCode);
+  return blocker.success
+    ? blockerIssuesOf(sample, blocker.data, fields)
+    : [{ ...placeOf(sample, path), code: domainCode ?? code, message }];
 }
 
 export function leavesOf(
   value: unknown,
-  path: readonly string[] = [],
-): string[][] {
+  path: readonly (string | number)[] = [],
+): (string | number)[][] {
   if (value === undefined) return [];
+  if (Array.isArray(value))
+    return value.flatMap((inner, index) => leavesOf(inner, [...path, index]));
   return value !== null && typeof value === "object"
     ? Object.entries(value).flatMap(([key, inner]) =>
         leavesOf(inner, [...path, key]),
@@ -130,35 +161,40 @@ const droppedIssues = (sample: SampleCandidate, parsed: unknown) =>
       }),
     );
 
-function keptFieldBlockers(
-  sample: SampleCandidate,
-  failed: readonly z.core.$ZodIssue[],
-): ImportIssue[] {
+function keptFieldsOf(sample: SampleCandidate) {
   const fields = Object.entries(createSampleSchema.shape).map(
     ([key, schema]) => [key, schema.safeParse(sample.input[key])] as const,
   );
-  const kept = Object.fromEntries(
-    fields.flatMap(([key, field]) =>
-      field.success ? [[key, field.data]] : [],
+  return {
+    kept: toPublishableFields(
+      Object.fromEntries(
+        fields.flatMap(([key, field]) =>
+          field.success ? [[key, field.data]] : [],
+        ),
+      ),
     ),
-  );
-  const unknowable = new Set(
-    fields.flatMap(([key, field]) => (field.success ? [] : [key])),
-  );
+    unknowable: new Set(
+      fields.flatMap(([key, field]) => (field.success ? [] : [key])),
+    ),
+  };
+}
+
+function keptFieldBlockers(
+  sample: SampleCandidate,
+  failed: readonly z.core.$ZodIssue[],
+  { kept, unknowable }: ReturnType<typeof keptFieldsOf>,
+): ImportIssue[] {
   const reported = new Set(
     failed.map((issue) => ("params" in issue ? issue.params?.code : undefined)),
   );
-  return samplePublishBlockers(toPublishableFields(kept))
+  return samplePublishBlockers(kept)
     .filter(
       (blocker) =>
         !unknowable.has(String(PUBLISH_BLOCKER_PATH[blocker][0])) &&
         !reported.has(blocker) &&
         !sample.existingBlockers?.includes(blocker),
     )
-    .map((blocker) => ({
-      ...placeOf(sample, PUBLISH_BLOCKER_PATH[blocker]),
-      code: blocker,
-    }));
+    .flatMap((blocker) => blockerIssuesOf(sample, blocker, kept));
 }
 
 const attachmentIssueAt = (
@@ -244,6 +280,17 @@ const metadataOf = ({
 }: ParsedAttachment): AttachmentMetadata[] =>
   name === undefined ? [] : [{ name, title, targetResourceType, description }];
 
+function failedIssues(
+  sample: SampleCandidate,
+  failed: readonly z.core.$ZodIssue[],
+): ImportIssue[] {
+  const fields = keptFieldsOf(sample);
+  return [
+    ...failed.flatMap((issue) => issuesOf(sample, issue, fields.kept)),
+    ...keptFieldBlockers(sample, failed, fields),
+  ];
+}
+
 export function validateSamples(
   samples: readonly SampleCandidate[],
   providedFileNames: ReadonlySet<string>,
@@ -261,10 +308,7 @@ export function validateSamples(
     const found = [
       ...(parsed.success
         ? droppedIssues(sample, parsed.data)
-        : [
-            ...parsed.error.issues.map((issue) => issueOf(sample, issue)),
-            ...keptFieldBlockers(sample, parsed.error.issues),
-          ]),
+        : failedIssues(sample, parsed.error.issues)),
       ...attachmentIssues(attachments, providedFileNames),
     ];
     issues.push(...found);

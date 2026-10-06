@@ -114,6 +114,57 @@ describe("validateSamples", () => {
       ],
     ],
     [
+      "each filled cell of a child row the provenance branch drops",
+      (book) => {
+        fill(book, SHEETS.samples, 4, {
+          ...COLLECTION_SPECIMEN,
+          "Collection origin": "scientific_expedition",
+        });
+        fill(book, SHEETS.additionalRoles, 3, {
+          "Sample #": 2,
+          Role: "Researcher",
+          "First name": "Ada",
+          "Last name": "Lovelace",
+        });
+      },
+      ["Role", "First name", "Last name"].map((column) => ({
+        sheet: SHEETS.additionalRoles,
+        row: 3,
+        column,
+        code: "not_applicable",
+      })),
+    ],
+    [
+      "a child-row publish blocker on the row and column that clear it",
+      (book) => {
+        fill(book, SHEETS.relations, 4, {
+          "Sample #": 1,
+          "Identifier type": "URL",
+          Identifier: "https://example.org",
+          "Relation type": "References",
+        });
+        fill(book, SHEETS.additionalRoles, 3, {
+          "Sample #": 1,
+          Role: "Researcher",
+          "First name": "Ada",
+        });
+      },
+      [
+        {
+          sheet: SHEETS.additionalRoles,
+          row: 3,
+          column: "Last name",
+          code: "additional_role_lastname_missing",
+        },
+        {
+          sheet: SHEETS.relations,
+          row: 4,
+          column: "Resource type",
+          code: "relation_resource_type_missing",
+        },
+      ],
+    ],
+    [
       "a schema check with its message",
       (book) => fill(book, SHEETS.samples, 3, { Latitude: 95 }),
       [
