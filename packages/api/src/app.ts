@@ -112,7 +112,7 @@ export function createApp(
         : publicRateLimit(c, next),
     )
     .use(
-      "/:igsn/contact",
+      "/:igsn/contact/*",
       rateLimit(rateLimitConfig, "ip", CONTACT_MAIL_IP_BUDGET),
     )
     .route(

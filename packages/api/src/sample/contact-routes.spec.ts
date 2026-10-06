@@ -1,9 +1,9 @@
+import type { Repository } from "@projet-igsn/domain/sample/repository/model";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { ContactSampleOwnerBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { Kysely } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
-import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
 
 import type { DB } from "../db.ts";
@@ -60,12 +60,19 @@ function arrangeApp(db: Db) {
   const { app } = createApp(db, {
     mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
   });
-  const contact = (igsn: string, body: ContactSampleOwnerBody = visitor) =>
-    testClient(app).samples[":igsn"].contact.$post({
-      param: { igsn },
-      json: body,
+  const post = (path: string, body: ContactSampleOwnerBody) =>
+    app.request(`/samples/${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
     });
-  return { sendMail, contact };
+  const contact = (igsn: string, body: ContactSampleOwnerBody = visitor) =>
+    post(`${igsn}/contact`, body);
+  const contactArchive = (
+    igsn: string,
+    body: ContactSampleOwnerBody = visitor,
+  ) => post(`${igsn}/contact/archive`, body);
+  return { sendMail, post, contact, contactArchive };
 }
 
 async function publish(
@@ -73,11 +80,16 @@ async function publish(
   options: {
     manualGroupIds?: string[];
     institution?: typeof INSTITUTION;
+    repository?: Repository;
   } = {},
 ): Promise<Sample> {
   const created = await insertSample(
     db,
-    { ...draft, manualGroupIds: options.manualGroupIds },
+    {
+      ...draft,
+      manualGroupIds: options.manualGroupIds,
+      repository: options.repository,
+    },
     options.institution ?? NO_INSTITUTION,
   );
   const published = await publishSample(db, created.id);
@@ -283,4 +295,82 @@ describe("POST /samples/:igsn/contact", () => {
       expect(await res.json()).toEqual({ error: "Sample not found" });
     },
   );
+  pgTest("should answer 404 for an unknown recipient", async ({ db }) => {
+    // Arrange
+    const { sendMail, post } = arrangeApp(db);
+    const { sample } = await arrangeGroupOwner(db);
+    // Act
+    const res = await post(`${sample.igsn}/contact/collector`, visitor);
+    // Assert
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Unknown contact recipient" });
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /samples/:igsn/contact/archive", () => {
+  const ARCHIVE_EMAIL = "archive-819@univ-lorraine.fr";
+
+  pgTest(
+    "should mail the current archive contact, answering the visitor",
+    async ({ db }) => {
+      // Arrange
+      const { sendMail, contactArchive } = arrangeApp(db);
+      const sample = await publish(db, {
+        repository: { currentArchiveContactEmail: ARCHIVE_EMAIL },
+      });
+      // Act
+      const res = await contactArchive(sample.igsn!);
+      // Assert
+      expect(res.status).toBe(204);
+      expect(sendMail).toHaveBeenCalledTimes(1);
+      const sent = sendMail.mock.lastCall![0];
+      expect(sent.to).toEqual([ARCHIVE_EMAIL]);
+      expect(sent.replyTo).toBe(visitor.email);
+      expect(sent.subject).toContain(draft.name);
+      expect(sent.text).toContain(visitor.message);
+    },
+  );
+
+  pgTest(
+    "should answer 409 when the sample has no current archive contact email",
+    async ({ db }) => {
+      // Arrange
+      const { sendMail, contactArchive } = arrangeApp(db);
+      const sample = await publish(db, {
+        repository: { currentArchiveContactLastname: "Durand" },
+      });
+      // Act
+      const res = await contactArchive(sample.igsn!);
+      // Assert
+      expect(res.status).toBe(409);
+      expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
+
+  pgTest("should answer 400 for a malformed email", async ({ db }) => {
+    // Arrange
+    const { contactArchive } = arrangeApp(db);
+    const sample = await publish(db, {
+      repository: { currentArchiveContactEmail: ARCHIVE_EMAIL },
+    });
+    // Act
+    const res = await contactArchive(sample.igsn!, {
+      ...visitor,
+      email: "not-an-email",
+    });
+    // Assert
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "Invalid contact request" });
+  });
+
+  pgTest("should answer 404 for an unknown igsn", async ({ db }) => {
+    // Arrange
+    const { contactArchive } = arrangeApp(db);
+    // Act
+    const res = await contactArchive("0123456789ABCDEFGHJKMNPQRS");
+    // Assert
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Sample not found" });
+  });
 });

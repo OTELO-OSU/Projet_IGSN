@@ -203,9 +203,10 @@ export type EligibleParentsResponse = z.infer<
 
 export const publicSampleResponseSchema = z.object({
   data: z.discriminatedUnion("status", [
-    sampleSchema
-      .omit({ publishingError: true })
-      .extend({ status: z.literal("published") }),
+    sampleSchema.omit({ publishingError: true }).extend({
+      status: z.literal("published"),
+      canContactArchive: z.boolean(),
+    }),
     withdrawnSampleSchema,
   ]),
 });

@@ -267,12 +267,12 @@ describe("app", () => {
       },
     );
 
-    pgTest(
-      "should throttle the contact endpoint far below the public budget, per client IP",
-      async ({ db }) => {
+    pgTest.for(["/contact", "/contact/archive"])(
+      "should throttle the %s endpoint far below the public budget, per client IP",
+      async (path, { db }) => {
         const app = createApp(db).app;
         const contactFrom = (ip: string) =>
-          app.request("/samples/0123456789ABCDEFGHJKMNPQRS/contact", {
+          app.request(`/samples/0123456789ABCDEFGHJKMNPQRS${path}`, {
             method: "POST",
             headers: { "X-Real-IP": ip, "content-type": "application/json" },
             body: JSON.stringify({

@@ -121,6 +121,7 @@ type SampleTable = {
   rep_current_archive_laboratory: string | null;
   rep_current_archive_contact_firstname: string | null;
   rep_current_archive_contact_lastname: string | null;
+  rep_current_archive_contact_email: string | null;
   rep_collection_name: string | null;
   rep_rights_holder: string[] | null;
   syn_starting_material: string | null;

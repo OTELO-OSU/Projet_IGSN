@@ -68,6 +68,9 @@ describe("SampleRepositoryFields", () => {
     await currentArchive
       .getByRole("textbox", { name: "Last name" })
       .fill("Lovelace");
+    await currentArchive
+      .getByRole("textbox", { name: "Email" })
+      .fill(" ada@example.org ");
     await screen
       .getByRole("textbox", { name: "Collection name" })
       .fill("Massif Central basalts");
@@ -81,12 +84,44 @@ describe("SampleRepositoryFields", () => {
             currentArchiveLaboratory: "UMR6112",
             currentArchiveContactFirstname: "Ada",
             currentArchiveContactLastname: "Lovelace",
+            currentArchiveContactEmail: "ada@example.org",
             collectionName: "Massif Central basalts",
             rightsHolder: ["02feahw73", "04kdfz702"],
           },
         }),
       ),
     );
+  });
+
+  it.each(["", "   "])(
+    "should compose a %j contact email to no email",
+    async (email) => {
+      const onSubmit = vi.fn();
+      const screen = await renderRepositorySection(onSubmit);
+
+      await screen.getByRole("textbox", { name: "First name" }).fill("Ada");
+      await screen.getByRole("textbox", { name: "Email" }).fill(email);
+      await screen.getByRole("button", { name: "Create" }).click();
+
+      await vi.waitFor(() =>
+        expect(onSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({
+            repository: { currentArchiveContactFirstname: "Ada" },
+          }),
+        ),
+      );
+    },
+  );
+
+  it("should refuse a malformed contact email", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderRepositorySection(onSubmit);
+
+    await screen.getByRole("textbox", { name: "Email" }).fill("not-an-email");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await expect.element(screen.getByText("Invalid value.")).toBeVisible();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("should narrow the laboratories to the picked OSU and clear the laboratory when it changes", async () => {

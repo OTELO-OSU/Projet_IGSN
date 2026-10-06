@@ -35,6 +35,7 @@ const sampleJson = {
   internalNumber: 42,
   doiPrefix: null,
   status: "published",
+  canContactArchive: false,
   createdAt: iso,
   updatedAt: iso,
 };

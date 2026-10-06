@@ -19,6 +19,7 @@ import { attachmentDownload } from "./attachment-download.ts";
 import { contactSampleOwnerMail } from "./contact-sample-owner-mail.ts";
 import {
   validateContactBody,
+  validateContactParams,
   validateIgsnAttachmentParams,
   validateIgsnParam,
   validatePublicListQuery,
@@ -72,23 +73,27 @@ export function createSampleRoutes(
       return c.json(body);
     })
     .post(
-      "/:igsn/contact",
-      validateIgsnParam,
+      "/:igsn/contact/:recipient?",
+      validateContactParams,
       validateContactBody,
       async (c) => {
         if (!mail) {
           throw new HTTPException(500, { message: "Mail is not configured" });
         }
-        const { igsn } = c.req.valid("param");
+        const { igsn, recipient } = c.req.valid("param");
         const sample = await repository.getPublicByIgsn(igsn);
         if (!sample) {
           return c.json({ error: "Sample not found" }, 404);
         }
         const recipients =
-          await userSampleRepository.listContactRecipients(sample);
+          recipient === "owner"
+            ? await userSampleRepository.listContactRecipients(sample)
+            : [sample.repository?.currentArchiveContactEmail].filter(
+                (email) => email != null,
+              );
         if (recipients.length === 0) {
           throw new HTTPException(409, {
-            message: "This sample's owner cannot be contacted",
+            message: `This sample's ${recipient} cannot be contacted`,
           });
         }
         const visitor = c.req.valid("json");

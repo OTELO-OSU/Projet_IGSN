@@ -11,6 +11,11 @@ const body = {
   message: "Could I see this sample?",
 };
 
+const labels = {
+  title: "Contact the record owner",
+  noRecipientMessage: "The owner of this record cannot be contacted.",
+};
+
 async function fillAndSend(email = body.email) {
   await page.getByLabelText("Name", { exact: true }).fill(body.name);
   await page.getByLabelText("First name").fill(body.firstname);
@@ -22,7 +27,9 @@ async function fillAndSend(email = body.email) {
 describe("ContactOwnerForm", () => {
   it("should hand the filled message to onSend, leaving the confirmation to the page", async () => {
     const onSend = vi.fn().mockResolvedValue("sent");
-    const screen = await render(<ContactOwnerForm onSend={onSend} />);
+    const screen = await render(
+      <ContactOwnerForm {...labels} onSend={onSend} />,
+    );
 
     await fillAndSend();
 
@@ -32,7 +39,10 @@ describe("ContactOwnerForm", () => {
 
   it("should tell the visitor when the owner cannot be contacted", async () => {
     const screen = await render(
-      <ContactOwnerForm onSend={vi.fn().mockResolvedValue("no_recipient")} />,
+      <ContactOwnerForm
+        {...labels}
+        onSend={vi.fn().mockResolvedValue("no_recipient")}
+      />,
     );
 
     await fillAndSend();
@@ -44,7 +54,10 @@ describe("ContactOwnerForm", () => {
 
   it("should show a generic error when sending fails", async () => {
     const screen = await render(
-      <ContactOwnerForm onSend={vi.fn().mockRejectedValue(new Error("500"))} />,
+      <ContactOwnerForm
+        {...labels}
+        onSend={vi.fn().mockRejectedValue(new Error("500"))}
+      />,
     );
 
     await fillAndSend();
@@ -56,7 +69,9 @@ describe("ContactOwnerForm", () => {
 
   it("should block the submit and flag the field when the email is invalid", async () => {
     const onSend = vi.fn().mockResolvedValue("sent");
-    const screen = await render(<ContactOwnerForm onSend={onSend} />);
+    const screen = await render(
+      <ContactOwnerForm {...labels} onSend={onSend} />,
+    );
 
     await fillAndSend("not-an-email");
 

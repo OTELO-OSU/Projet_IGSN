@@ -73,7 +73,7 @@ export function withdrawnSampleSections(
         <>
           <p className="mt-4">{m.sample_withdrawn_notice()}</p>
           <div className="mt-4">
-            <ContactOwnerDialog igsn={igsn} />
+            <ContactOwnerDialog igsn={igsn} recipient="owner" />
           </div>
         </>
       ),

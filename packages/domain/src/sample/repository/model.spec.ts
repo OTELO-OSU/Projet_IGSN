@@ -1,4 +1,4 @@
-import { createRepositorySchema } from "./model.ts";
+import { createRepositorySchema, repositorySchema } from "./model.ts";
 
 const ROR = "02feahw73";
 
@@ -38,4 +38,35 @@ describe("createRepositorySchema", () => {
       createRepositorySchema.safeParse({ ...REPOSITORY, ...archive }).success,
     ).toBe(false);
   });
+});
+
+describe("repositorySchema", () => {
+  it.each([
+    { input: "ada@example.org", stored: "ada@example.org" },
+    { input: "  ada@example.org  ", stored: "ada@example.org" },
+    { input: null, stored: null },
+    { input: undefined, stored: undefined },
+  ])(
+    "should store the current archive contact email $input as $stored",
+    ({ input, stored }) => {
+      expect(
+        repositorySchema.parse({
+          ...REPOSITORY,
+          currentArchiveContactEmail: input,
+        }).currentArchiveContactEmail,
+      ).toBe(stored);
+    },
+  );
+
+  it.each(["not-an-email", ""])(
+    "should refuse %j as the current archive contact email",
+    (currentArchiveContactEmail) => {
+      expect(
+        repositorySchema.safeParse({
+          ...REPOSITORY,
+          currentArchiveContactEmail,
+        }).error?.issues[0]?.path,
+      ).toEqual(["currentArchiveContactEmail"]);
+    },
+  );
 });

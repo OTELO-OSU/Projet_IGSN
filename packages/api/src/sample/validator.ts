@@ -56,6 +56,20 @@ export const validateIgsnParam = validator("param", (value, c) => {
   return parsed.data;
 });
 
+const contactRecipientSchema = z.enum(["owner", "archive"]).default("owner");
+
+export const validateContactParams = validator("param", (value, c) => {
+  const igsn = igsnParamSchema.safeParse(value);
+  if (!igsn.success) {
+    return c.json({ error: "Invalid IGSN" }, 400);
+  }
+  const recipient = contactRecipientSchema.safeParse(value.recipient);
+  if (!recipient.success) {
+    return c.json({ error: "Unknown contact recipient" }, 404);
+  }
+  return { ...igsn.data, recipient: recipient.data };
+});
+
 export const validateSearchEligibleParentsQuery = zodValidator(
   "query",
   searchEligibleParentsQuerySchema,

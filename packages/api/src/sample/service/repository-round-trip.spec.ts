@@ -18,6 +18,7 @@ describe("sample repository persistence", () => {
       currentArchiveLaboratory: "UMR5805",
       currentArchiveContactFirstname: "Camille",
       currentArchiveContactLastname: "Durand",
+      currentArchiveContactEmail: "camille.durand@example.org",
       collectionName: "Chaîne des Puys reference collection",
       rightsHolder: ["03fd77x13", "02cte4b68"],
     };

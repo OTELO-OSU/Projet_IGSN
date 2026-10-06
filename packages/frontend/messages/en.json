@@ -144,6 +144,7 @@
   "sample_section_repository": "Repository",
   "sample_field_current_archive_osu": "Current archive OSU",
   "sample_field_current_archive_laboratory": "Current archive laboratory",
+  "sample_field_current_archive_contact": "Current archive contact",
   "sample_field_collection_name": "Collection name",
   "sample_field_rights_holder": "Rights holder",
   "sample_section_condition": "Condition",
@@ -228,5 +229,9 @@
   "contact_submit": "Send",
   "contact_success": "Your message has been sent to the record owner.",
   "contact_no_recipient": "The owner of this record cannot be contacted.",
-  "contact_error": "Something went wrong. Please try again."
+  "contact_error": "Something went wrong. Please try again.",
+  "sample_contact_archive": "Contact the current archive",
+  "contact_archive_title": "Contact the current archive",
+  "contact_archive_success": "Your message has been sent to the current archive.",
+  "contact_archive_no_recipient": "The current archive of this record cannot be contacted."
 }

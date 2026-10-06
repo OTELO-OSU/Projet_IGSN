@@ -11,6 +11,7 @@ const sample = {
     currentArchiveLaboratory: "UMR3589",
     currentArchiveContactFirstname: "Ada",
     currentArchiveContactLastname: "Lovelace",
+    currentArchiveContactEmail: "ada@example.org",
     collectionName: "Historic basalts",
     rightsHolder: ["03fd77x13"],
   },
@@ -19,14 +20,15 @@ const sample = {
 } as Sample;
 
 describe("redactPrivateContacts", () => {
-  it("should drop the current archive contact names and keep the rest of the repository", () => {
+  it("should drop the current archive contact email and keep the rest of the repository", () => {
     expect(redactPrivateContacts(sample)).toEqual({
       name: "Rhyolite 11",
       repository: {
         currentArchiveOsu: "OMP",
         currentArchiveLaboratory: "UMR3589",
-        currentArchiveContactFirstname: null,
-        currentArchiveContactLastname: null,
+        currentArchiveContactFirstname: "Ada",
+        currentArchiveContactLastname: "Lovelace",
+        currentArchiveContactEmail: null,
         collectionName: "Historic basalts",
         rightsHolder: ["03fd77x13"],
       },

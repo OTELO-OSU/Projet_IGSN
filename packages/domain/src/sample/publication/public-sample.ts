@@ -9,7 +9,12 @@ export function toPublicSample(sample: Sample): PublicSample {
     case "published": {
       const { publishingError: _, ...published } =
         redactPrivateContacts(sample);
-      return { ...published, status: "published" };
+      return {
+        ...published,
+        status: "published",
+        canContactArchive:
+          sample.repository?.currentArchiveContactEmail != null,
+      };
     }
     case "withdrawn":
       return toWithdrawnSample(sample);

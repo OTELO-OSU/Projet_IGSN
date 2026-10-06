@@ -14,6 +14,19 @@ export function sampleDetailPage(page: Page) {
     .getByRole("group", { name: "Sample location map" });
   const lineageLink = (name: string, relation: string) =>
     lineage.getByRole("link", { name: `${name} ${relation}` });
+  // ponytail: hydration scrolls back to top ~1s after load and swallows the first tap, so retry until the dialog opens
+  const openDialog = (name: string) =>
+    expect(async () => {
+      await page.getByRole("button", { name }).click();
+      await expect(page.getByRole("dialog", { name })).toBeVisible({
+        timeout: 2_000,
+      });
+    }).toPass({ timeout: 20_000 });
+  // ponytail: the toast is asserted first, since it auto-dismisses a few seconds after the dialog closes
+  const expectSent = async (message: string) => {
+    await expect(page.getByText(message)).toBeVisible();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+  };
 
   return {
     goto: async (igsn: string) => {
@@ -86,23 +99,12 @@ export function sampleDetailPage(page: Page) {
           ),
         )
         .toBeLessThanOrEqual(0),
-    // ponytail: hydration scrolls back to top ~1s after load and swallows the first tap, so retry until the dialog opens
-    openContactForm: () =>
-      expect(async () => {
-        await page
-          .getByRole("button", { name: "Contact the record owner" })
-          .click();
-        await expect(
-          page.getByRole("dialog", { name: "Contact the record owner" }),
-        ).toBeVisible({ timeout: 2_000 });
-      }).toPass({ timeout: 20_000 }),
-    // ponytail: the toast is asserted first, since it auto-dismisses a few seconds after the dialog closes
-    expectContactSent: async () => {
-      await expect(
-        page.getByText("Your message has been sent to the record owner."),
-      ).toBeVisible();
-      await expect(page.getByRole("dialog")).not.toBeVisible();
-    },
+    openContactForm: () => openDialog("Contact the record owner"),
+    openArchiveContactForm: () => openDialog("Contact the current archive"),
+    expectContactSent: () =>
+      expectSent("Your message has been sent to the record owner."),
+    expectArchiveContactSent: () =>
+      expectSent("Your message has been sent to the current archive."),
     expectManualGroup: (name: string) =>
       expect(
         page.getByRole("region", { name: "Declaration" }).getByText(name),

@@ -105,6 +105,11 @@ Accepted, then amended.
 - Only `docker-compose.dev.yml` sets it, to its `webhook-sink` service, which logs each call it receives; preprod, prod and e2e leave it unset.
 - [api-samples-batch.md](../api-samples-batch.md) is the partner-facing guide to the batch API and its webhook.
 
+### 2026-10-05, the current archive contact name is public
+
+- `redactPrivateContacts` keeps the current archive contact's first and last name, now shown on the public site beside its contact button (PO decision), so an anonymous read emits them too.
+- The contact email still reaches no read, Core having no slot for it.
+
 ## Context
 
 ADR 0035 declared the `service_account` entity but deferred its credential and any machine API: nothing recorded who a service account is for, and a created account could call nothing. A researcher must be able to ask for one, own it, and hold a credential a script can send.

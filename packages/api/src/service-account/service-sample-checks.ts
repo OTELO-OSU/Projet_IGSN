@@ -158,9 +158,14 @@ export async function checkServiceUpdate(
   }
   const parsed = updateSampleSchema.safeParse({
     ...keepContactLinks(sample, current),
-    // Core has no slot for the local id description, so a round trip keeps the stored one.
+    // Core has no slot for the local id description nor the archive contact email, so a round trip keeps the stored ones.
     localIdDescription:
       sample.localId == null ? null : current.localIdDescription,
+    repository: {
+      ...sample.repository,
+      currentArchiveContactEmail:
+        current.repository?.currentArchiveContactEmail,
+    },
   });
   if (!parsed.success) {
     return refusedUpdate("invalid", zodIssues(parsed.error));

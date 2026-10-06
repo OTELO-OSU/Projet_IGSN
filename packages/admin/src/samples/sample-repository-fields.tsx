@@ -80,6 +80,10 @@ export function SampleRepositoryFields() {
           <form.AppField name="repository.currentArchiveContactLastname">
             {(field) => <field.TextField label={m.field_lastname()} />}
           </form.AppField>
+
+          <form.AppField name="repository.currentArchiveContactEmail">
+            {(field) => <field.TextField label={m.field_email()} />}
+          </form.AppField>
         </div>
       </fieldset>
     </FormSection>

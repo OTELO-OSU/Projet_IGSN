@@ -36,6 +36,10 @@ const RELATION = {
 const STORED = {
   ...publishableSample,
   localId: "L-1",
+  repository: {
+    ...publishableSample.repository,
+    currentArchiveContactEmail: "archive-bulk-edit@univ-lorraine.fr",
+  },
   relations: [RELATION],
 } satisfies CreateSample;
 

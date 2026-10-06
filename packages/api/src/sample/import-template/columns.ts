@@ -321,6 +321,10 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
       "Current archive contact last name",
       "repository.currentArchiveContactLastname",
     ),
+    field(
+      "Current archive contact email",
+      "repository.currentArchiveContactEmail",
+    ),
   ]),
 ]);
 

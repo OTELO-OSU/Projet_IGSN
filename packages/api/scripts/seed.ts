@@ -359,6 +359,7 @@ const SEED_REPOSITORY = {
   rightsHolder: ["03fd77x13"],
   currentArchiveContactFirstname: "Camille",
   currentArchiveContactLastname: "Durand",
+  currentArchiveContactEmail: "archive@example.org",
   collectionName: "National rock reference collection",
 };
 

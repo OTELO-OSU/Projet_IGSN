@@ -7,6 +7,7 @@ export type RepositoryDraft = {
   currentArchiveLaboratory: Repository["currentArchiveLaboratory"];
   currentArchiveContactFirstname: Repository["currentArchiveContactFirstname"];
   currentArchiveContactLastname: Repository["currentArchiveContactLastname"];
+  currentArchiveContactEmail: Repository["currentArchiveContactEmail"];
   collectionName: Repository["collectionName"];
   rightsHolder: string[];
 };
@@ -19,6 +20,8 @@ export function composeRepository(draft: RepositoryDraft): Repository | null {
       draft.currentArchiveContactFirstname?.trim() || undefined,
     currentArchiveContactLastname:
       draft.currentArchiveContactLastname?.trim() || undefined,
+    currentArchiveContactEmail:
+      draft.currentArchiveContactEmail?.trim() || undefined,
     collectionName: draft.collectionName?.trim() || undefined,
     rightsHolder: nonEmpty(draft.rightsHolder),
   };
@@ -37,6 +40,8 @@ export function toRepositoryDraft(
       repository?.currentArchiveContactFirstname ?? undefined,
     currentArchiveContactLastname:
       repository?.currentArchiveContactLastname ?? undefined,
+    currentArchiveContactEmail:
+      repository?.currentArchiveContactEmail ?? undefined,
     collectionName: repository?.collectionName ?? undefined,
     rightsHolder: repository?.rightsHolder ?? [],
   };

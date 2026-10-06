@@ -392,6 +392,7 @@
   "legend_contact": "Contact",
   "field_firstname": "First name",
   "field_lastname": "Last name",
+  "field_email": "Email",
   "field_archive_osu": "OSU",
   "field_archive_laboratory": "UMR",
   "field_rights_holder": "Rights holder",

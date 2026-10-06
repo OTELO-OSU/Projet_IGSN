@@ -199,6 +199,7 @@ function toRepository(row: Selectable<DB["sample"]>) {
     currentArchiveLaboratory: row.rep_current_archive_laboratory,
     currentArchiveContactFirstname: row.rep_current_archive_contact_firstname,
     currentArchiveContactLastname: row.rep_current_archive_contact_lastname,
+    currentArchiveContactEmail: row.rep_current_archive_contact_email,
     collectionName: row.rep_collection_name,
     rightsHolder: row.rep_rights_holder,
   });

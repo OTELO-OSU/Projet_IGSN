@@ -580,7 +580,7 @@ describe("public sample routes", () => {
   );
 
   pgTest(
-    "should expose the archive institutions and the rights holders but never the archive contacts on a public payload",
+    "should expose the archive institutions, the rights holders and the archive contact name but never its email on a public payload",
     async ({ db }) => {
       // Arrange
       const client = await acceptedClient(db);
@@ -593,6 +593,7 @@ describe("public sample routes", () => {
         .set({
           rep_current_archive_contact_firstname: "Ada",
           rep_current_archive_contact_lastname: "Archiviste",
+          rep_current_archive_contact_email: "archive-public@univ-lorraine.fr",
         })
         .where("id", "=", published.id)
         .execute();
@@ -606,8 +607,9 @@ describe("public sample routes", () => {
       // Assert
       const publicRepository = {
         ...PUBLIC_REPOSITORY,
-        currentArchiveContactFirstname: null,
-        currentArchiveContactLastname: null,
+        currentArchiveContactFirstname: "Ada",
+        currentArchiveContactLastname: "Archiviste",
+        currentArchiveContactEmail: null,
       };
       expect(await detail.json()).toMatchObject({
         data: { repository: publicRepository },
