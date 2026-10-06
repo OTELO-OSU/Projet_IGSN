@@ -32,9 +32,7 @@ function GroupsPage() {
               actionsClassName="bg-background fixed inset-x-0 bottom-0 z-40 flex flex-wrap justify-end gap-2 border-t px-6 py-3 md:left-(--sidebar-width) md:motion-safe:transition-[left] md:duration-500 md:ease-in-out"
             />
           </FormSection>
-          <FormSection title={m.settings_manual_groups_title()}>
-            <MyManualGroups />
-          </FormSection>
+          <MyManualGroups />
         </>
       ) : (
         <p>{m.auth_loading()}</p>

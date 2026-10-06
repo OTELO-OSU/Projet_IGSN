@@ -7,7 +7,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
-import { cn } from "@projet-igsn/design-system/lib/utils";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { UserRoundSearchIcon } from "lucide-react";
 import { type ReactNode } from "react";
@@ -76,13 +75,25 @@ export function ContactNameFields({
     </div>
   );
 
+  const withAction = (title: ReactNode) =>
+    action ? (
+      <div className="flex items-center gap-1">
+        {title}
+        <div className="-my-2">{action}</div>
+      </div>
+    ) : (
+      title
+    );
+
   const picker = (
     <form.AppField name={userIdName}>
       {(field) => (
         <div className="grid w-full gap-2 sm:w-72">
-          <Label htmlFor={userIdName}>
-            {withRequired(label, isRequired(userIdName))}
-          </Label>
+          {withAction(
+            <Label htmlFor={userIdName}>
+              {withRequired(label, isRequired(userIdName))}
+            </Label>,
+          )}
           <ContactNamePicker
             id={userIdName}
             userId={field.state.value}
@@ -103,29 +114,21 @@ export function ContactNameFields({
       selector={(state) => !isFrozen && !isTypedPerson(state.values, person)}
     >
       {(isPicker) => (
-        <div className="relative">
-          <fieldset className="grid gap-4">
-            <legend
-              className={cn(
-                isPicker ? "sr-only" : "mb-2 font-medium",
-                action && "pr-10",
-              )}
-            >
-              {label}
-            </legend>
-            {isPicker ? picker : typedNames}
-          </fieldset>
-          {action ? (
-            <div
-              className={cn(
-                "absolute right-0",
-                isPicker ? "-top-3" : "-top-1.5",
-              )}
-            >
-              {action}
-            </div>
-          ) : null}
-        </div>
+        <fieldset className="grid gap-4">
+          <legend
+            className={isPicker || action ? "sr-only" : "mb-2 font-medium"}
+          >
+            {label}
+          </legend>
+          {!isPicker && action
+            ? withAction(
+                <span aria-hidden="true" className="font-medium">
+                  {label}
+                </span>,
+              )
+            : null}
+          {isPicker ? picker : typedNames}
+        </fieldset>
       )}
     </form.Subscribe>
   );

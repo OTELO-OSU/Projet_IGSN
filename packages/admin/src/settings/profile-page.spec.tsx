@@ -33,6 +33,11 @@ const FOSSIL_TEAM = {
 };
 
 const SERVICE_ID = "3f2504e0-4f89-41d3-9a0c-030500000b01";
+const GAIA_HARVESTER = {
+  id: SERVICE_ID,
+  name: "Gaia harvester",
+  hasApiKey: false,
+};
 
 function fakeApi({
   orcid = null,
@@ -140,7 +145,7 @@ describe("profile page", () => {
   });
 
   it("should offer a single save button", async () => {
-    await renderProfilePage();
+    await renderProfilePage({ services: [GAIA_HARVESTER] });
     await expect.element(orcidForm()).toBeVisible();
     await expect
       .element(page.getByRole("heading", { name: "Services" }))
@@ -164,7 +169,7 @@ describe("profile page", () => {
       "Generate an API key so one of your services can call the API in your name.",
     ],
   ])("should describe the %s section under its title", async (title, hint) => {
-    await renderProfilePage();
+    await renderProfilePage({ services: [GAIA_HARVESTER] });
     await expect
       .element(page.getByRole("region", { name: title, exact: true }))
       .toHaveAccessibleDescription(hint);
@@ -248,10 +253,12 @@ describe("profile page", () => {
     await expect.element(groupSelector()).not.toBeInTheDocument();
   });
 
-  it("should disable the group selector when the user belongs to no group", async () => {
+  it("should hide the group samples link when the user belongs to no group", async () => {
     await renderProfilePage({ manualGroups: [] });
 
-    await expect.element(groupSelector()).toBeDisabled();
+    await expect.element(mySamplesInput()).toBeVisible();
+    await expect.element(groupSelector()).not.toBeInTheDocument();
+    await expect.element(groupSamplesInput()).not.toBeInTheDocument();
   });
 
   it("should hide the my-samples link from a pending user", async () => {
@@ -284,10 +291,17 @@ describe("profile page", () => {
     },
   );
 
+  it("should hide the services section from a user owning no service account and managing no group", async () => {
+    await renderProfilePage();
+
+    await expect.element(mySamplesInput()).toBeVisible();
+    await expect
+      .element(page.getByRole("heading", { name: "Services" }))
+      .not.toBeInTheDocument();
+  });
+
   it("should keep a user managing no group from asking for a service account", async () => {
-    await renderProfilePage({
-      services: [{ id: SERVICE_ID, name: "Gaia harvester", hasApiKey: false }],
-    });
+    await renderProfilePage({ services: [GAIA_HARVESTER] });
 
     await expect.element(page.getByText("Gaia harvester")).toBeVisible();
     await expect
@@ -308,9 +322,7 @@ describe("profile page", () => {
   });
 
   it("should show the generated api key once and offer to regenerate it", async () => {
-    await renderProfilePage({
-      services: [{ id: SERVICE_ID, name: "Gaia harvester", hasApiKey: false }],
-    });
+    await renderProfilePage({ services: [GAIA_HARVESTER] });
 
     await expect
       .element(page.getByRole("heading", { name: "Services" }))

@@ -1,10 +1,7 @@
 import type { IdentifierType } from "@projet-igsn/domain/sample/relation/identifier-type";
 
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
-import {
-  FieldListItem,
-  FieldListRemoveButton,
-} from "@projet-igsn/design-system/components/form/field-list-item";
+import { FieldListRemoveButton } from "@projet-igsn/design-system/components/form/field-list-item";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
@@ -23,7 +20,7 @@ import {
   RELATION_TYPES,
 } from "@projet-igsn/domain/sample/relation/relation-type";
 import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relation/target-resource-type";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { EMPTY_RELATION_DRAFT } from "#/samples/sample-draft-schema.ts";
@@ -54,92 +51,99 @@ export function SampleRelationsFields() {
       <form.Subscribe selector={(state) => state.values.relations}>
         {(relations) =>
           relations.map((relation, index) => (
-            <FieldListItem
+            <div
               key={relation.key}
-              legend={m.legend_relation({
-                index: index + 1,
-                type: identifierTypeLabel[relation.identifierType],
-              })}
-              actions={
+              role="group"
+              aria-labelledby={`relation-${index}-legend`}
+              className="grid gap-2"
+            >
+              <div className="flex items-center gap-1">
+                <span id={`relation-${index}-legend`} className="font-medium">
+                  {m.legend_relation({
+                    index: index + 1,
+                    type: identifierTypeLabel[relation.identifierType],
+                  })}
+                </span>
                 <FieldListRemoveButton
                   label={m.action_remove_relation({ index: index + 1 })}
                   disabled={isDisabled}
                   onClick={() => form.removeFieldValue("relations", index)}
                 />
-              }
-            >
-              <form.AppField name={`relations[${index}].identifier`}>
-                {(field) => (
-                  <field.TextField
-                    label={identifierTypeLabel[relation.identifierType]}
-                    placeholder={IDENTIFIER_PLACEHOLDER[
-                      relation.identifierType
-                    ]?.()}
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name={`relations[${index}].targetTitle`}>
-                {(field) => (
-                  <field.TextField label={m.field_relation_target_title()} />
-                )}
-              </form.AppField>
-              <form.AppField name={`relations[${index}].relationType`}>
-                {(field) => (
-                  <field.ComboboxField
-                    label={m.field_relation_type()}
-                    items={relationTypeItems}
-                    placeholder={m.relation_type_placeholder()}
-                    searchPlaceholder={m.relation_type_search_placeholder()}
-                    emptyText={m.relation_type_empty()}
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name={`relations[${index}].targetResourceType`}>
-                {(field) => (
-                  <field.ComboboxField
-                    label={m.field_relation_target_resource_type()}
-                    items={resourceTypeItems}
-                    placeholder={m.relation_resource_type_placeholder()}
-                    searchPlaceholder={m.relation_resource_type_search_placeholder()}
-                    emptyText={m.relation_resource_type_empty()}
-                  />
-                )}
-              </form.AppField>
-              <form.Subscribe
-                selector={(state) =>
-                  state.values.relations[index]?.relationType ?? ""
-                }
-              >
-                {(relationType) =>
-                  hasMetadataScheme(relationType) ? (
-                    <>
-                      <form.AppField
-                        name={`relations[${index}].relatedMetadataScheme`}
-                      >
-                        {(field) => (
-                          <field.TextField
-                            label={m.field_relation_metadata_scheme()}
-                          />
-                        )}
-                      </form.AppField>
-                      <form.AppField name={`relations[${index}].schemeURI`}>
-                        {(field) => (
-                          <field.TextField
-                            label={m.field_relation_scheme_uri()}
-                          />
-                        )}
-                      </form.AppField>
-                      <form.AppField name={`relations[${index}].schemeType`}>
-                        {(field) => (
-                          <field.TextField
-                            label={m.field_relation_scheme_type()}
-                          />
-                        )}
-                      </form.AppField>
-                    </>
-                  ) : null
-                }
-              </form.Subscribe>
+              </div>
+              <div className="grid gap-4 sm:flex sm:flex-wrap">
+                <form.AppField name={`relations[${index}].identifier`}>
+                  {(field) => (
+                    <field.TextField
+                      label={identifierTypeLabel[relation.identifierType]}
+                      placeholder={IDENTIFIER_PLACEHOLDER[
+                        relation.identifierType
+                      ]?.()}
+                    />
+                  )}
+                </form.AppField>
+                <form.AppField name={`relations[${index}].targetTitle`}>
+                  {(field) => (
+                    <field.TextField label={m.field_relation_target_title()} />
+                  )}
+                </form.AppField>
+                <form.AppField name={`relations[${index}].relationType`}>
+                  {(field) => (
+                    <field.ComboboxField
+                      label={m.field_relation_type()}
+                      items={relationTypeItems}
+                      placeholder={m.relation_type_placeholder()}
+                      searchPlaceholder={m.relation_type_search_placeholder()}
+                      emptyText={m.relation_type_empty()}
+                    />
+                  )}
+                </form.AppField>
+                <form.AppField name={`relations[${index}].targetResourceType`}>
+                  {(field) => (
+                    <field.ComboboxField
+                      label={m.field_relation_target_resource_type()}
+                      items={resourceTypeItems}
+                      placeholder={m.relation_resource_type_placeholder()}
+                      searchPlaceholder={m.relation_resource_type_search_placeholder()}
+                      emptyText={m.relation_resource_type_empty()}
+                    />
+                  )}
+                </form.AppField>
+                <form.Subscribe
+                  selector={(state) =>
+                    state.values.relations[index]?.relationType ?? ""
+                  }
+                >
+                  {(relationType) =>
+                    hasMetadataScheme(relationType) ? (
+                      <>
+                        <form.AppField
+                          name={`relations[${index}].relatedMetadataScheme`}
+                        >
+                          {(field) => (
+                            <field.TextField
+                              label={m.field_relation_metadata_scheme()}
+                            />
+                          )}
+                        </form.AppField>
+                        <form.AppField name={`relations[${index}].schemeURI`}>
+                          {(field) => (
+                            <field.TextField
+                              label={m.field_relation_scheme_uri()}
+                            />
+                          )}
+                        </form.AppField>
+                        <form.AppField name={`relations[${index}].schemeType`}>
+                          {(field) => (
+                            <field.TextField
+                              label={m.field_relation_scheme_type()}
+                            />
+                          )}
+                        </form.AppField>
+                      </>
+                    ) : null
+                  }
+                </form.Subscribe>
+              </div>
               <form.AppField name={`relations[${index}].description`}>
                 {(field) => (
                   <field.TextField
@@ -154,7 +158,8 @@ export function SampleRelationsFields() {
                   />
                 )}
               </form.AppField>
-            </FieldListItem>
+              <hr className="mt-2 sm:max-w-72" />
+            </div>
           ))
         }
       </form.Subscribe>
@@ -162,9 +167,14 @@ export function SampleRelationsFields() {
         <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start sm:max-w-72"
+              >
+                <PlusIcon aria-hidden />
                 {m.action_add_relation()}
-                <ChevronDownIcon aria-hidden />
+                <ChevronDownIcon aria-hidden className="ml-auto" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>

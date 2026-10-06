@@ -17,12 +17,15 @@ export function MyServiceAccounts() {
   const rotate = useRotateApiKey();
   const [keys, setKeys] = useState<Record<string, string>>({});
   const accounts = query.data?.data ?? [];
+  const canRequest = !!me && canAdminManualGroups(me);
 
   const generate = (id: string) =>
     rotate.mutate(id, {
       onSuccess: ({ apiKey }) =>
         setKeys((shown) => ({ ...shown, [id]: apiKey })),
     });
+
+  if (accounts.length === 0 && !canRequest) return null;
 
   return (
     <FormSection
@@ -76,7 +79,7 @@ export function MyServiceAccounts() {
           })}
         </ul>
       )}
-      {me && canAdminManualGroups(me) && (
+      {canRequest && (
         <div>
           <RequestServiceAccountDialog />
         </div>

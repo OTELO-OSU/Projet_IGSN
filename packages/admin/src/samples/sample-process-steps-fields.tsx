@@ -13,7 +13,7 @@ import {
   PROCESS_STEP_KINDS,
   type ProcessStepKind,
 } from "@projet-igsn/domain/sample/process-step/kind";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { DateRangeField } from "#/samples/date-range-field.tsx";
@@ -42,7 +42,7 @@ export function SampleProcessStepsFields() {
               aria-labelledby={`process-step-${index}-legend`}
               className="grid gap-2"
             >
-              <div className="flex items-center justify-between gap-2 sm:max-w-72">
+              <div className="flex items-center gap-1">
                 <span
                   id={`process-step-${index}-legend`}
                   className="font-medium"
@@ -90,10 +90,11 @@ export function SampleProcessStepsFields() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full justify-between sm:max-w-72"
+                className="w-full justify-start sm:max-w-72"
               >
+                <PlusIcon aria-hidden />
                 {m.action_add_process_step()}
-                <ChevronDownIcon aria-hidden />
+                <ChevronDownIcon aria-hidden className="ml-auto" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
