@@ -42,7 +42,7 @@ Beyond its line in the registry, a column gets all of this for free:
 
 - **Its cell type** (text, number, yes/no) and whether it belongs to an array. `COLUMN_KINDS` ([column-kind.ts](../packages/api/src/sample/import-template/column-kind.ts)) reads the JSON schema of `createSampleSchema` at the column's `path`.
 - **Its trailing "\*"**. `marked()` adds it when the `path` is in `PUBLISH_BLOCKER_PATH`, on level 1 of a hierarchy only.
-- **Whether its absence refuses the file**. [required-columns.ts](../packages/api/src/sample/import-template/required-columns.ts) derives that from the schema's required fields and the blockers, minus conditional fields and `IMPORT_DEFAULTS`.
+- **Whether its absence refuses the file**. [required-columns.ts](../packages/api/src/sample/import-template/required-columns.ts) derives that from the schema's required fields and the blockers. Conditional fields and `IMPORT_DEFAULTS` stay out of the set.
 - **Its dropdown and its rows on the "Vocabularies" sheet**. [vocabulary-sheet.ts](../packages/api/src/sample/import-template/vocabulary-sheet.ts) writes the block the column's `block` names, labelled through [labels.ts](../packages/api/src/sample/import-template/labels.ts).
 - **Its grey cells and input prompt**. [conditional-fields.ts](../packages/api/src/sample/import-template/conditional-fields.ts) builds them from the domain predicates (`texturesFor`, `allowsLocation`...).
 
