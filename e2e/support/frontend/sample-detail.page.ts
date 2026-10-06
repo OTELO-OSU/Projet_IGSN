@@ -12,6 +12,10 @@ export function sampleDetailPage(page: Page) {
   const locationMap = page
     .getByRole("region", { name: "Identity", exact: true })
     .getByRole("group", { name: "Sample location map" });
+  const tableOfContents = page.getByRole("navigation", {
+    name: "Sample",
+    exact: true,
+  });
   const lineageLink = (name: string, relation: string) =>
     lineage.getByRole("link", { name: `${name} ${relation}` });
   // ponytail: hydration scrolls back to top ~1s after load and swallows the first tap, so retry until the dialog opens
@@ -141,6 +145,17 @@ export function sampleDetailPage(page: Page) {
       expect(page.getByText(label, { exact: true })).toBeVisible(),
     expectResearchProgram: (name: string) =>
       expect(page.getByText(name, { exact: true })).toBeVisible(),
+    // ponytail: hydration scrolls back to top ~1s after load, so retry until the section stays in view
+    openSection: (title: string) =>
+      expect(async () => {
+        await tableOfContents
+          .getByRole("link", { name: title, exact: true })
+          .click();
+        await expect(
+          page.getByRole("heading", { level: 2, name: title, exact: true }),
+        ).toBeInViewport({ timeout: 2_000 });
+      }).toPass({ timeout: 20_000 }),
+    expectHash: (id: string) => expect(page).toHaveURL(new RegExp(`#${id}$`)),
     attachmentDownloadHref: (name: string) =>
       page.getByRole("link", { name: `Download ${name}` }).getAttribute("href"),
   };

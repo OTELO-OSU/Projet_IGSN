@@ -173,19 +173,23 @@ describe("SampleView", () => {
     );
   });
 
-  it("should mark only the section being read as the current nav link", async () => {
+  it("should link each nav item to its section, marking only the section being read as current", async () => {
     const screen = await render(
       <SampleView
         sample={sample({ description: { mass: { value: 1.4, unit: "kg" } } })}
       />,
     );
 
+    const identity = screen.getByRole("link", { name: "Identity" });
+    const description = screen.getByRole("link", {
+      name: "Physical description",
+    });
+    await expect.element(identity).toHaveAttribute("href", "/#identity");
     await expect
-      .element(screen.getByRole("link", { name: "Identity" }))
-      .toHaveAttribute("aria-current", "location");
-    await expect
-      .element(screen.getByRole("link", { name: "Physical description" }))
-      .not.toHaveAttribute("aria-current");
+      .element(description)
+      .toHaveAttribute("href", "/#physical-description");
+    await expect.element(identity).toHaveAttribute("aria-current", "location");
+    await expect.element(description).not.toHaveAttribute("aria-current");
   });
 
   it("should show the related resources section when the sample has relations", async () => {

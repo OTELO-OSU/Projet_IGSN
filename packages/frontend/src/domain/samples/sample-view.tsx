@@ -1,6 +1,8 @@
 import type { SampleLineage } from "@projet-igsn/domain/sample/lineage/model";
 import type { PublicSample } from "@projet-igsn/domain/sample/sample-validator";
 
+import { useLinkProps } from "@tanstack/react-router";
+
 import { AddSubSampleLink } from "#/domain/samples/add-sub-sample-link.tsx";
 import { AdminSampleLink } from "#/domain/samples/admin-sample-link.tsx";
 import { LineageView } from "#/domain/samples/lineage-view.tsx";
@@ -10,6 +12,39 @@ import { SectionHeading } from "#/domain/samples/section-heading.tsx";
 import { useActiveSection } from "#/domain/samples/use-active-section.ts";
 import { withdrawnSampleSections } from "#/domain/samples/withdrawn-sample-sections.tsx";
 import { m } from "#/paraglide/messages.js";
+import { prefersReducedMotion } from "#/prefers-reduced-motion.ts";
+
+function SectionLink({
+  id,
+  current,
+  children,
+}: {
+  id: string;
+  current: boolean;
+  children: React.ReactNode;
+}) {
+  const linkProps = useLinkProps({
+    to: ".",
+    hash: id,
+    resetScroll: false,
+    hashScrollIntoView: {
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    },
+  });
+  return (
+    <a
+      {...linkProps}
+      aria-current={current ? "location" : undefined}
+      className={`hover:border-primary hover:text-foreground -ml-px block border-l py-1 pl-3 text-sm ${
+        current
+          ? "border-primary text-foreground font-medium"
+          : "text-muted-foreground border-transparent"
+      }`}
+    >
+      {children}
+    </a>
+  );
+}
 
 export function SampleView({
   sample,
@@ -64,20 +99,12 @@ export function SampleView({
             aria-label={m.sample_section_sample()}
             className="sticky top-28 hidden shrink-0 self-start md:block"
           >
-            <ul className="grid gap-2">
+            <ul className="space-y-1 border-l">
               {sections.map(({ id, title }) => (
                 <li key={id}>
-                  <a
-                    href={`#${id}`}
-                    aria-current={id === activeId ? "location" : undefined}
-                    className={`border-l-2 pl-3 ${
-                      id === activeId
-                        ? "border-sky-800 font-medium text-sky-900"
-                        : "border-sky-200 text-sky-900/60"
-                    }`}
-                  >
+                  <SectionLink id={id} current={id === activeId}>
                     {title}
-                  </a>
+                  </SectionLink>
                 </li>
               ))}
             </ul>
