@@ -55,6 +55,14 @@ async function renderFacets(
   return { screen, onChange, onClearAll };
 }
 
+async function expandSection(
+  screen: Awaited<ReturnType<typeof render>>,
+  section: string,
+) {
+  const toggle = screen.getByRole("button", { name: section, expanded: false });
+  if (toggle.elements().length > 0) await toggle.click();
+}
+
 describe("SampleFacets", () => {
   it("should report the picked value of an enum facet", async () => {
     const { screen, onChange } = await renderFacets();
@@ -88,12 +96,13 @@ describe("SampleFacets", () => {
     expect(onChange).toHaveBeenCalledWith("type", undefined);
   });
 
-  it("should disable clear-all until a facet is active", async () => {
+  it("should hide clear-all until a facet is active", async () => {
     const { screen } = await renderFacets();
 
-    await expect
-      .element(screen.getByRole("button", { name: /clear all/i }))
-      .toBeDisabled();
+    await expect.element(screen.getByRole("complementary")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /clear all/i }).query(),
+    ).toBeNull();
   });
 
   it("should clear every facet when clear-all is pressed", async () => {
@@ -108,6 +117,7 @@ describe("SampleFacets", () => {
 
   it("should report a debounced text facet value", async () => {
     const { screen, onChange } = await renderFacets();
+    await expandSection(screen, "Scientific context");
 
     await screen
       .getByRole("searchbox", { name: "Research program", exact: true })
@@ -129,14 +139,114 @@ describe("SampleFacets", () => {
     const { screen } = await renderFacets();
 
     for (const name of [
-      /sample classification/i,
-      /sample type/i,
-      /author/i,
+      /^identity$/i,
+      /^sample classification$/i,
       /^age$/i,
+      /^scientific context$/i,
+      /^declaration$/i,
     ]) {
       await expect.element(screen.getByRole("heading", { name })).toBeVisible();
     }
   });
+
+  it.each([
+    { values: {}, chips: [] },
+    { values: { nature: "powder" }, chips: ["Nature: Powder"] },
+    { values: { type: "core.piece" }, chips: ["Type: Core Piece"] },
+    {
+      values: { researchProgramName: "mohole" },
+      chips: ["Research program: mohole"],
+    },
+    {
+      values: { contributor: CONTRIBUTOR.id },
+      chips: ["Contributor: Marie Dupont"],
+    },
+    {
+      values: { ageMin: 1, ageMax: 10, ageUnit: "ga" },
+      chips: ["Age ≥ 1 Ga", "Age ≤ 10 Ga"],
+    },
+    { values: { ageMax: 10 }, chips: ["Age ≤ 10 Ma"] },
+    { values: { ageUnit: "ga" }, chips: [] },
+    { values: { includeSubSamples: true }, chips: ["Include sub-samples"] },
+  ])(
+    "should list the active facets $chips above the sections for $values",
+    async ({ values, chips }) => {
+      const { screen } = await renderFacets(values, [], [CONTRIBUTOR]);
+
+      await expect
+        .element(screen.getByRole("complementary"))
+        .toBeInTheDocument();
+      expect(
+        screen
+          .getByRole("list", { name: "Active filters" })
+          .getByRole("listitem")
+          .filter({ hasNotText: "Clear all filters" })
+          .elements()
+          .map((chip) => chip.textContent),
+      ).toEqual(chips);
+    },
+  );
+
+  it.each([
+    { values: { nature: "powder" }, chip: "Nature: Powder", param: "nature" },
+    {
+      values: { ageMin: 1, ageMax: 10 },
+      chip: "Age ≤ 10 Ma",
+      param: "ageMax",
+    },
+  ])(
+    "should clear $param when its chip is removed",
+    async ({ values, chip, param }) => {
+      const { screen, onChange } = await renderFacets(values);
+
+      await screen
+        .getByRole("button", { name: `Remove ${chip}`, exact: true })
+        .click();
+
+      expect(onChange).toHaveBeenCalledWith(param, undefined);
+    },
+  );
+
+  it("should empty a text facet once its removed chip clears it", async () => {
+    const onChange = vi.fn();
+    const facets = (values: FacetValues) => (
+      <SampleFacets values={values} onChange={onChange} onClearAll={vi.fn()} />
+    );
+    const screen = await render(facets({ researchProgramName: "mohole" }));
+    onChange.mockImplementation(() => screen.rerender(facets({})));
+
+    await screen
+      .getByRole("button", { name: "Remove Research program: mohole" })
+      .click();
+
+    await expect
+      .element(screen.getByRole("searchbox", { name: "Research program" }))
+      .toHaveValue("");
+  });
+
+  it.each([
+    { values: {}, expanded: ["Identity"] },
+    {
+      values: { contributor: CONTRIBUTOR.id },
+      expanded: ["Identity", "Declaration"],
+    },
+  ])(
+    "should expand at mount the first section and those holding an active facet for $values",
+    async ({ values, expanded }) => {
+      const { screen } = await renderFacets(values, [], [CONTRIBUTOR]);
+
+      await expect
+        .poll(() =>
+          FACET_SECTIONS.map((section) => section.title()).filter(
+            (title) =>
+              screen
+                .getByRole("button", { name: title, expanded: true })
+                .elements().length > 0,
+          ),
+        )
+        .toEqual(expanded);
+    },
+  );
 
   it("should report a picked Strunz category of the mineral classification facet", async () => {
     const { screen, onChange } = await renderFacets({
@@ -155,9 +265,10 @@ describe("SampleFacets", () => {
 
   it("should hide the mineral classification facet until a mineral material is picked", async () => {
     const { screen } = await renderFacets();
+    await expandSection(screen, "Sample classification");
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Nature" }))
+      .element(screen.getByRole("combobox", { name: "Material" }))
       .toBeVisible();
     expect(
       screen
@@ -168,6 +279,7 @@ describe("SampleFacets", () => {
 
   it("should report an age bound on blur", async () => {
     const { screen, onChange } = await renderFacets();
+    await expandSection(screen, "Age");
 
     const min = screen.getByRole("spinbutton", { name: "Min" });
     await min.fill("10");
@@ -220,6 +332,7 @@ describe("SampleFacets", () => {
 
   it("should report the picked manual group", async () => {
     const { screen, onChange } = await renderFacets({}, [GROUP]);
+    await expandSection(screen, "Declaration");
 
     await screen.getByRole("combobox", { name: /other group/i }).click();
     await screen.getByRole("option", { name: GROUP.name }).click();
@@ -227,9 +340,13 @@ describe("SampleFacets", () => {
     expect(onChange).toHaveBeenCalledWith("manualGroup", GROUP.id);
   });
 
-  it("should report the picked contributor", async () => {
+  it("should reach the contributor facet only once its collapsed section is expanded", async () => {
     const { screen, onChange } = await renderFacets({}, [], [CONTRIBUTOR]);
+    expect(
+      screen.getByRole("combobox", { name: /contributor/i }).elements(),
+    ).toEqual([]);
 
+    await screen.getByRole("button", { name: "Declaration" }).click();
     await screen.getByRole("combobox", { name: /contributor/i }).click();
     await screen.getByRole("option", { name: "Marie Dupont" }).click();
 
@@ -237,24 +354,42 @@ describe("SampleFacets", () => {
   });
 
   it.each([
-    { facet: "Nature", values: {}, offered: ["Hand sample (3)"] },
     {
       facet: "Nature",
+      section: "Identity",
+      values: {},
+      offered: ["Hand sample (3)"],
+    },
+    {
+      facet: "Nature",
+      section: "Identity",
       values: { nature: "powder" },
       offered: ["Hand sample (3)", "Powder"],
     },
-    { facet: TYPE_FACET, values: {}, offered: ["Core (2)"] },
-    { facet: /other group/i, values: {}, offered: ["ANR CritMet (1)"] },
+    {
+      facet: TYPE_FACET,
+      section: "Identity",
+      values: {},
+      offered: ["Core (2)"],
+    },
     {
       facet: /other group/i,
+      section: "Declaration",
+      values: {},
+      offered: ["ANR CritMet (1)"],
+    },
+    {
+      facet: /other group/i,
+      section: "Declaration",
       values: { manualGroup: "01980e2d-6f9b-7000-9000-000000000003" },
       offered: ["ANR CritMet (1)", "X"],
     },
   ])(
     "should offer only the $facet options with results or selected",
-    async ({ facet, values, offered }) => {
+    async ({ facet, section, values, offered }) => {
       const other = { id: "01980e2d-6f9b-7000-9000-000000000003", name: "X" };
       const { screen } = await renderFacets(values, [GROUP, other]);
+      await expandSection(screen, section);
 
       await screen.getByRole("combobox", { name: facet, exact: true }).click();
 

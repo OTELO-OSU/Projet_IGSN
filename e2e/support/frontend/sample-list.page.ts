@@ -4,6 +4,14 @@ import { pickHierarchyLevel, withOptionalCount } from "../pick-hierarchy.ts";
 import { frontendUrl } from "../urls";
 
 export function sampleListPage(page: Page) {
+  const filters = page.getByRole("complementary", { name: "Filters" });
+  const expandFilters = async () => {
+    const collapsed = filters
+      .getByRole("heading", { level: 2 })
+      .getByRole("button", { expanded: false });
+    while ((await collapsed.count()) > 0) await collapsed.first().click();
+  };
+
   return {
     goto: () => page.goto(frontendUrl),
     gotoEmptySearch: () => page.goto(`${frontendUrl}/search`),
@@ -26,36 +34,56 @@ export function sampleListPage(page: Page) {
     expectSampleAbsent: (name: string) =>
       expect(page.getByRole("link", { name })).toHaveCount(0),
     pickFacet: async (facet: string, option: string, param: string) => {
+      await expandFilters();
       await page.getByRole("combobox", { name: facet }).click();
       await page.getByRole("option", { name: option }).click();
       await page.waitForURL(new RegExp(`[?&]${param}=`));
     },
     includeSubSamples: async () => {
+      await expandFilters();
       await page.getByRole("switch", { name: "Include sub-samples" }).click();
       await page.waitForURL(/[?&]includeSubSamples=true/);
     },
-    expectFacetValue: (facet: string, value: string) =>
-      expect(page.getByRole("combobox", { name: facet })).toHaveText(
+    expectFacetValue: async (facet: string, value: string) => {
+      await expandFilters();
+      await expect(page.getByRole("combobox", { name: facet })).toHaveText(
         withOptionalCount(value),
-      ),
+      );
+    },
+    expectFacetSection: (section: string, expanded: boolean) =>
+      expect(
+        filters.getByRole("button", { name: section, exact: true, expanded }),
+      ).toBeVisible(),
+    expectActiveFilter: (chip: string) =>
+      expect(
+        filters
+          .getByRole("list", { name: "Active filters" })
+          .getByRole("listitem")
+          .filter({ hasText: chip }),
+      ).toBeVisible(),
     expectFacetOptionAbsent: async (facet: string, option: string) => {
+      await expandFilters();
       await page.getByRole("combobox", { name: facet }).click();
       await expect(page.getByRole("option", { name: option })).toHaveCount(0);
       await page.keyboard.press("Escape");
     },
-    drillFacet: (facet: string, option: string) =>
-      pickHierarchyLevel(
+    drillFacet: async (facet: string, option: string) => {
+      await expandFilters();
+      await pickHierarchyLevel(
         page,
         page.getByRole("combobox", { name: facet }),
         option,
-      ),
+      );
+    },
     fillTextFacet: async (facet: string, value: string, param: string) => {
+      await expandFilters();
       const field = page.getByRole("searchbox", { name: facet });
       await field.fill(value);
       await field.press("Enter");
       await page.waitForURL(new RegExp(`[?&]${param}=`));
     },
     fillAgeMin: async (value: string) => {
+      await expandFilters();
       const field = page.getByRole("spinbutton", { name: "Min" });
       await field.fill(value);
       await field.blur();
@@ -79,8 +107,14 @@ export function sampleListPage(page: Page) {
         hasInternalId ? 1 : 0,
       );
     },
-    expectCardLine: (line: string) =>
-      expect(page.getByText(line, { exact: true }).first()).toBeVisible(),
+    expectCardLine: (field: string, value: string) =>
+      expect(
+        page
+          .getByRole("paragraph")
+          .filter({ has: page.getByRole("img", { name: field, exact: true }) })
+          .filter({ hasText: value })
+          .first(),
+      ).toBeVisible(),
     search: async (query: string) => {
       await page.waitForLoadState("networkidle");
       await expect(async () => {
@@ -93,10 +127,7 @@ export function sampleListPage(page: Page) {
         await page.waitForURL(/[?&]q=/, { timeout: 2_000 });
       }).toPass({ timeout: 20_000 });
     },
-    expectFacetsVisible: () =>
-      expect(
-        page.getByRole("complementary", { name: "Filters" }),
-      ).toBeVisible(),
+    expectFacetsVisible: () => expect(filters).toBeVisible(),
     expectLanding: () =>
       expect(
         page.getByRole("heading", { name: "Search a sample" }),

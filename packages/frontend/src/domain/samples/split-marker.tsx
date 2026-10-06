@@ -4,6 +4,8 @@ import type L from "leaflet";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { Marker } from "react-leaflet";
 
+import { prefersReducedMotion } from "#/prefers-reduced-motion.ts";
+
 const SPLIT_MS = 300;
 const EXTENT_PAD_DEGREES = 1e-6;
 
@@ -21,9 +23,6 @@ export function splitOrigin(
   );
   return parent && [parent.latitude, parent.longitude];
 }
-
-export const prefersReducedMotion = (): boolean =>
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function SplitMarker({
   from,

@@ -27,12 +27,9 @@ import {
   singleBoundsOrWorld,
   toBoundsList,
 } from "#/domain/samples/search-location-map.tsx";
-import {
-  SplitMarker,
-  prefersReducedMotion,
-  splitOrigin,
-} from "#/domain/samples/split-marker.tsx";
+import { SplitMarker, splitOrigin } from "#/domain/samples/split-marker.tsx";
 import { m } from "#/paraglide/messages.js";
+import { prefersReducedMotion } from "#/prefers-reduced-motion.ts";
 
 export type MapViewport = { bbox: string; zoom: number };
 type Position = NonNullable<Location["position"]>;
