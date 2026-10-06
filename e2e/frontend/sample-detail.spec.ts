@@ -42,4 +42,24 @@ test.describe("sample detail", () => {
     await headerPage(page).expectSignedOut();
     await detail.expectNoAddSubSampleAction();
   });
+
+  test.describe("on a desktop screen", () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+
+    test("a reader jumps to a section from the table of contents and back", async ({
+      page,
+      samples,
+    }) => {
+      const sample = sampleNamed(samples, "Basalt 42");
+      const detail = sampleDetailPage(page);
+      await detail.goto(sample.igsn);
+
+      await detail.openSection("Location");
+      await detail.expectHash("location");
+      await detail.openSection("Scientific context");
+      await page.goBack();
+
+      await detail.expectHash("location");
+    });
+  });
 });
