@@ -71,7 +71,7 @@ export function ImportSamplesDialog() {
   return (
     <>
       <Dialog
-        open={isOpen && !isCustomizing && !importSamples.isPending && !suspects}
+        open={isOpen && !isCustomizing && !suspects}
         onOpenChange={(open) => (open ? setIsOpen(true) : close())}
       >
         <DialogTrigger asChild>
