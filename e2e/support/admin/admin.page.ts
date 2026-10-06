@@ -17,7 +17,6 @@ export function adminPage(page: Page) {
       await page.goto(`${adminUrl}/`);
       await page.waitForURL(/\/realms\//);
     },
-    signIn: () => page.getByRole("button", { name: "Sign in" }).click(),
     signOut: async () => {
       if (await banner.isVisible()) {
         await userMenu.click();
