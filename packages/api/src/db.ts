@@ -290,10 +290,8 @@ type ServiceAccountTable = {
   id: string;
   name: string;
   owner_id: string;
+  sample_owner_id: string;
   api_key_hash: string | null;
-  institutional_organization: string;
-  institutional_osu: string | null;
-  institutional_laboratory: string;
   created_at: Generated<Date>;
 };
 

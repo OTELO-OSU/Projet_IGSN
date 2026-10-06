@@ -4,7 +4,7 @@ Date: 2026-09-08
 
 ## Status
 
-Accepted, then amended.
+Accepted, then amended. Superseded in part by ADR [0055](0055-service-account-samples-owner.md): created samples belong to the samples owner and snapshot their trio, not the account's, and only a super admin or a space manager may ask for an account.
 
 ### 2026-09-10, `GET /service/samples`
 

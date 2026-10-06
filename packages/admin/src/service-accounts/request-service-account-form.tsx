@@ -1,6 +1,10 @@
 import type { ComboboxItem } from "@projet-igsn/design-system/components/ui/combobox";
+import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
+import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
+import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
 import {
   MANAGED_LABORATORY_ITEMS,
@@ -14,10 +18,48 @@ import { useAttachableManualGroups } from "#/manual-groups/use-attachable-manual
 import { m } from "#/paraglide/messages.js";
 import { useListRequestableGroups } from "#/service-accounts/use-list-requestable-groups.ts";
 import { useRequestServiceAccount } from "#/service-accounts/use-request-service-account.ts";
+import { UserField } from "#/users/user-field.tsx";
 
-const validate = zodFieldErrors(serviceAccountRequestSchema, () =>
+const SAMPLE_OWNER_FIELD_ID = "service-account-request-sample-owner";
+
+type RequestDraft = {
+  name: string;
+  reason: string;
+  managedGroups: ManagedGroups;
+  sampleOwner: UserIdentity | null;
+};
+
+const validateRequest = zodFieldErrors(serviceAccountRequestSchema, () =>
   m.field_required(),
 );
+
+const toRequest = ({ sampleOwner, ...draft }: RequestDraft) => ({
+  ...draft,
+  sampleOwnerId: sampleOwner?.id,
+});
+
+const validate = ({ value }: { value: RequestDraft }) => {
+  const errors = validateRequest({ value: toRequest(value) });
+  if (!errors) return undefined;
+  const { sampleOwnerId, ...fields } = errors.fields;
+  return {
+    fields: sampleOwnerId
+      ? {
+          ...fields,
+          sampleOwner: {
+            message: m.field_service_account_sample_owner_required(),
+          },
+        }
+      : fields,
+  };
+};
+
+const EMPTY_REQUEST: RequestDraft = {
+  name: "",
+  reason: "",
+  managedGroups: NO_MANAGED_GROUPS,
+  sampleOwner: null,
+};
 
 const requestableItems = (items: ComboboxItem[], codes?: string[]) =>
   codes && items.filter(({ value }) => codes.includes(value));
@@ -27,9 +69,10 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
   const requestableGroups = useListRequestableGroups().data?.data;
   const { mutate } = useRequestServiceAccount(onSent);
   const form = useAppForm({
-    defaultValues: { name: "", reason: "", managedGroups: NO_MANAGED_GROUPS },
+    defaultValues: EMPTY_REQUEST,
     validators: { onSubmit: validate },
-    onSubmit: ({ value }) => mutate(value),
+    onSubmit: ({ value }) =>
+      mutate(serviceAccountRequestSchema.parse(toRequest(value))),
   });
 
   const groupFields = [
@@ -103,6 +146,21 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
           />
         )}
       </form.AppField>
+      <div className="grid gap-2">
+        <Label htmlFor={SAMPLE_OWNER_FIELD_ID}>
+          {withRequired(m.field_service_account_sample_owner(), true)}
+        </Label>
+        <form.AppField name="sampleOwner">
+          {() => (
+            <UserField
+              id={SAMPLE_OWNER_FIELD_ID}
+              status="accepted"
+              inMyGroups
+              includeSelf
+            />
+          )}
+        </form.AppField>
+      </div>
       {groupFields.map(
         ({ name, label, items, placeholder, emptyText, noneText }) =>
           items?.length === 0 ? (

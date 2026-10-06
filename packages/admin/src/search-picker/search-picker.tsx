@@ -31,6 +31,7 @@ export function SearchPicker<T extends { id: string }>({
   clearLabel,
   freeTextLabel,
   onFreeText,
+  disabled,
   ...aria
 }: {
   id: string;
@@ -48,6 +49,7 @@ export function SearchPicker<T extends { id: string }>({
   clearLabel?: string;
   freeTextLabel?: string;
   onFreeText?: () => void;
+  disabled?: boolean;
   "aria-invalid"?: true;
   "aria-describedby"?: string;
 }) {
@@ -67,6 +69,7 @@ export function SearchPicker<T extends { id: string }>({
         id={id}
         open={picker.isOpen}
         placeholder={placeholder}
+        disabled={disabled}
         {...aria}
       >
         {value ? valueLabel(value) : undefined}

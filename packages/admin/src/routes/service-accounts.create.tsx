@@ -30,6 +30,7 @@ function CreateServiceAccountPage() {
       <ServiceAccountForm
         draft={request}
         submitLabel={m.action_create()}
+        requestedByLocked={request !== undefined}
         onSave={async (body) => {
           const account = await create.mutateAsync(body);
           await navigate({

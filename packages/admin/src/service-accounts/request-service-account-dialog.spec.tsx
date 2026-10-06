@@ -24,6 +24,19 @@ describe("RequestServiceAccountDialog", () => {
           data: { organizations: [], osus: [], laboratories: [] },
         }),
       ),
+      http.get("*/admin/users/search", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: "01980e2d-6f9b-7000-9000-0000000000c1",
+              email: "claire.dupont@univ-lorraine.fr",
+              name: "Dupont",
+              firstname: "Claire",
+              orcid: null,
+            },
+          ],
+        }),
+      ),
       http.post(
         "*/admin/currentUser/service-accounts/requests",
         () => new HttpResponse(null, { status: 204 }),
@@ -41,6 +54,9 @@ describe("RequestServiceAccountDialog", () => {
     await dialog
       .getByLabelText("Why do you need a service account?")
       .fill("Automate our basalt uploads");
+    await dialog.getByRole("combobox", { name: /^Samples owner/ }).click();
+    await screen.getByPlaceholder("Search by name or email").fill("dup");
+    await screen.getByRole("option", { name: /Claire Dupont/ }).click();
     await dialog.getByRole("button", { name: "Send request" }).click();
 
     await expect.element(dialog).not.toBeInTheDocument();

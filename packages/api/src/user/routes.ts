@@ -18,6 +18,7 @@ import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
+import { getModerationScope } from "../auth/moderation-scope.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import {
@@ -58,11 +59,16 @@ export function createUserSearchRoutes(userRepository: UserRepository) {
     "/",
     validateSearchUsersQuery,
     async (c) => {
+      const { inMyGroups, ...filters } = c.req.valid("query");
+      const user = c.get("user");
+      const scope = inMyGroups
+        ? await getModerationScope(userRepository, user)
+        : undefined;
+      if (scope === null) {
+        throw new HTTPException(403, { message: "Forbidden" });
+      }
       const body: UserIdentitiesResponse = {
-        data: await userRepository.search(
-          c.get("user").id,
-          c.req.valid("query"),
-        ),
+        data: await userRepository.search(user.id, { ...filters, scope }),
       };
       return c.json(body);
     },

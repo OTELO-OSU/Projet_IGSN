@@ -229,9 +229,6 @@ async function seedManagedGroups(
 const MOCK_SERVICE_ACCOUNT = {
   id: "01980e2d-6f9b-7000-a000-000000000001",
   name: "GeoPortal harvester",
-  institutional_organization: "04vfs2w97",
-  institutional_osu: "OTELo",
-  institutional_laboratory: "UMR7358",
 };
 
 async function seedServiceAccounts(
@@ -240,7 +237,11 @@ async function seedServiceAccounts(
 ): Promise<void> {
   await db
     .insertInto("service_account")
-    .values({ ...MOCK_SERVICE_ACCOUNT, owner_id: ownerIds.jean })
+    .values({
+      ...MOCK_SERVICE_ACCOUNT,
+      owner_id: ownerIds.jean,
+      sample_owner_id: ownerIds.jean,
+    })
     .onConflict((oc) => oc.column("id").doNothing())
     .execute();
   await db

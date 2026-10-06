@@ -23,11 +23,24 @@ const group = {
   name: "ANR CritMet",
 };
 
+const SAMPLES_OWNER = {
+  id: "01980e2d-6f9b-7000-9000-0000000000c1",
+  email: "claire.dupont@univ-lorraine.fr",
+  name: "Dupont",
+  firstname: "Claire",
+  orcid: null,
+};
+
 type SeenPost = { pathname: string; token: string | null; body: unknown };
 
 function fakeApi() {
   const posts: SeenPost[] = [];
+  const searches: URLSearchParams[] = [];
   worker.use(
+    http.get("*/admin/users/search", ({ request }) => {
+      searches.push(new URL(request.url).searchParams);
+      return HttpResponse.json({ data: [SAMPLES_OWNER] });
+    }),
     http.get("*/admin/currentUser/attachable-manual-groups", () =>
       HttpResponse.json({ data: [group] }),
     ),
@@ -48,22 +61,37 @@ function fakeApi() {
       },
     ),
   );
-  return posts;
+  return { posts, searches };
 }
 
 const renderForm = (onSent = vi.fn()) =>
   render(<RequestServiceAccountForm onSent={onSent} />);
 
+async function pickSamplesOwner(
+  screen: Awaited<ReturnType<typeof renderForm>>,
+) {
+  await screen.getByRole("combobox", { name: /^Samples owner/ }).click();
+  await page.getByPlaceholder("Search by name or email").fill("dup");
+  await page.getByRole("option", { name: /Claire Dupont/ }).click();
+}
+
+async function fillNameAndReason(
+  screen: Awaited<ReturnType<typeof renderForm>>,
+) {
+  await screen.getByLabelText("Service name").fill("Basalt pipeline");
+  await screen
+    .getByLabelText("Why do you need a service account?")
+    .fill("Automate our basalt uploads");
+}
+
 describe("RequestServiceAccountForm", () => {
-  it("should post the service name and the picked group with the requester's token", async () => {
-    const posts = fakeApi();
+  it("should post the service name, the samples owner and the picked group with the requester's token", async () => {
+    const { posts } = fakeApi();
     const onSent = vi.fn();
     const screen = await renderForm(onSent);
 
-    await screen.getByLabelText("Service name").fill("Basalt pipeline");
-    await screen
-      .getByLabelText("Why do you need a service account?")
-      .fill("Automate our basalt uploads");
+    await fillNameAndReason(screen);
+    await pickSamplesOwner(screen);
     await screen.getByRole("combobox", { name: "Groups to access" }).click();
     await page.getByRole("option", { name: group.name }).click();
     await screen
@@ -79,6 +107,7 @@ describe("RequestServiceAccountForm", () => {
       body: {
         name: "Basalt pipeline",
         reason: "Automate our basalt uploads",
+        sampleOwnerId: SAMPLES_OWNER.id,
         managedGroups: {
           organizations: [],
           osus: [],
@@ -88,6 +117,30 @@ describe("RequestServiceAccountForm", () => {
       },
     });
     await vi.waitFor(() => expect(onSent).toHaveBeenCalled());
+  });
+
+  it("should search the samples owner among the requester's groups, the requester included", async () => {
+    const { searches } = fakeApi();
+    const screen = await renderForm();
+
+    await pickSamplesOwner(screen);
+
+    expect(searches.at(-1)?.get("inMyGroups")).toBe("true");
+    expect(searches.at(-1)?.get("includeSelf")).toBe("true");
+    expect(searches.at(-1)?.get("status")).toBe("accepted");
+  });
+
+  it("should refuse to send a request without a samples owner", async () => {
+    const { posts } = fakeApi();
+    const screen = await renderForm();
+
+    await fillNameAndReason(screen);
+    await screen.getByRole("button", { name: "Send request" }).click();
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent("Choose the user who will own the created samples");
+    expect(posts).toEqual([]);
   });
 
   it("should offer only the laboratories the requester may request", async () => {
@@ -118,7 +171,7 @@ describe("RequestServiceAccountForm", () => {
     ).toBeNull();
   });
 
-  it("should mark the name and the reason as required, not the group pickers", async () => {
+  it("should mark the name, the reason and the samples owner as required, not the group pickers", async () => {
     fakeApi();
     const screen = await renderForm();
 
@@ -134,13 +187,18 @@ describe("RequestServiceAccountForm", () => {
       .toBeVisible();
     await expect
       .element(
+        screen.getByRole("combobox", { name: "Samples owner *", exact: true }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
         screen.getByRole("combobox", { name: "Groups to access", exact: true }),
       )
       .toBeVisible();
   });
 
   it("should flag the name and the reason and post nothing when both are blank", async () => {
-    const posts = fakeApi();
+    const { posts } = fakeApi();
     const screen = await renderForm();
 
     await screen.getByRole("button", { name: "Send request" }).click();

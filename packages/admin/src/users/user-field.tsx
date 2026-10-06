@@ -12,14 +12,15 @@ import { UserPicker } from "#/users/user-picker.tsx";
 
 export function UserField({
   id,
-  sampleId,
-  status,
-  excludeMembersOf,
+  ...pickerProps
 }: {
   id: string;
   sampleId?: string;
   status?: UserStatus;
   excludeMembersOf?: string;
+  includeSelf?: boolean;
+  inMyGroups?: boolean;
+  disabled?: boolean;
 }) {
   const field = useFieldContext<UserIdentity | null>();
   const { error, errorId, ariaProps } = useFieldError();
@@ -31,9 +32,7 @@ export function UserField({
         value={field.state.value}
         onChange={field.handleChange}
         placeholder={m.share_email_placeholder()}
-        sampleId={sampleId}
-        status={status}
-        excludeMembersOf={excludeMembersOf}
+        {...pickerProps}
         {...ariaProps}
       />
       <FieldError error={error} errorId={errorId} />

@@ -240,7 +240,7 @@ export function createServiceRoutes(
       const account = keyedServiceAccount(c);
       const checked = await checkServiceCreate(
         checks,
-        account.owner.id,
+        account.sampleOwner.id,
         c.req.valid("json"),
       );
       if ("issues" in checked) {
@@ -256,13 +256,13 @@ export function createServiceRoutes(
       }
       const created = await samples.createPublished(
         checked.value.input,
-        account.owner.id,
+        account.sampleOwner.id,
         account,
       );
       notifySubSampleDeclared({
         userSamples,
         mail,
-        declarer: account.owner,
+        declarer: account.sampleOwner,
         subSample: created,
         parents: checked.value.parents,
       });
@@ -309,7 +309,7 @@ export function createServiceRoutes(
           mail,
           sample: updated,
           fields,
-          actorId: account.owner.id,
+          actorId: account.sampleOwner.id,
         });
       }
       return c.json(toCoreSample(updated, frontendUrl), 200);

@@ -37,6 +37,7 @@ const ACCOUNT = {
   managedGroups: NO_MANAGED_GROUPS,
   hasApiKey: false,
   owner: OWNER,
+  sampleOwner: OWNER,
 };
 
 const CRPG =
@@ -73,7 +74,7 @@ function fakeApi({ nameTaken = false }: { nameTaken?: boolean } = {}) {
 }
 
 describe("ServiceAccountDetailPage", () => {
-  it("should save the name, the institution trio and the managed groups in one request", async () => {
+  it("should save the name, the managed groups and both people in one request", async () => {
     const { calls } = fakeApi();
 
     const { screen } = await renderRoute(`/service-accounts/${ACCOUNT_ID}`);
@@ -94,11 +95,9 @@ describe("ServiceAccountDetailPage", () => {
           method: "PUT",
           body: {
             name: "Gaia reader",
-            institutionalOrganization: "04vfs2w97",
-            institutionalOsu: null,
-            institutionalLaboratory: "UMR7358",
             managedGroups: { ...NO_MANAGED_GROUPS, laboratories: ["UMR7358"] },
             ownerId: OWNER_ID,
+            sampleOwnerId: OWNER_ID,
           },
         },
       ]);

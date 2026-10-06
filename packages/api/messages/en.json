@@ -46,6 +46,7 @@
   "mail_service_account_request_subject": "{{requester}} asks for the service account \"{{name}}\"",
   "mail_service_account_request_body": "{{requester}}, from {{laboratory}}, asks for the service account \"{{name}}\", for this reason:",
   "mail_service_account_request_no_laboratory": "no declared laboratory",
+  "mail_service_account_request_sample_owner": "Samples owner",
   "mail_service_account_request_organizations": "Organizations",
   "mail_service_account_request_osus": "OSUs",
   "mail_service_account_request_laboratories": "Laboratories",

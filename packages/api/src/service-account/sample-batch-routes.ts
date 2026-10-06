@@ -100,7 +100,11 @@ async function checkItem(
 ): Promise<Checked<CheckedItem>> {
   const igsn = sample.identification.sampleIdentifier;
   if (igsn === undefined) {
-    const checked = await checkServiceCreate(deps, account.owner.id, sample);
+    const checked = await checkServiceCreate(
+      deps,
+      account.sampleOwner.id,
+      sample,
+    );
     if ("issues" in checked) return checked;
     const { input } = checked.value;
     const criteria = toDuplicateCriteria(input);
@@ -134,7 +138,7 @@ async function checkItem(
   if ("issues" in checked) return checked;
   const { current, merged } = checked.value;
   const lock = await deps.samples.getEditLock(current.id);
-  if (lock && lock.userId !== account.owner.id) {
+  if (lock && lock.userId !== account.sampleOwner.id) {
     return { issues: [serviceSampleIssue("sample_locked", SAMPLE_KEY_PATH)] };
   }
   if (changedSampleFields(current, merged).length === 0) {
@@ -232,7 +236,7 @@ export function registerSampleBatchRoutes(
       }
       const batch = await deps.sampleBatches.create({
         serviceAccountId: account.id,
-        ownerId: account.owner.id,
+        ownerId: account.sampleOwner.id,
         groups: account,
         items: checked.map(({ write }) => write),
         webhook,

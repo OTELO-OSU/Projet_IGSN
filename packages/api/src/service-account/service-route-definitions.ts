@@ -240,7 +240,7 @@ export const createSampleRoute = createRoute({
   tags: TAGS,
   summary: "Create and publish a sample",
   description:
-    "Creates a sample from an IGSN Core record and publishes it at once, owned by the account's owner and snapshotting the account's own institutional codes. The record must satisfy every publication constraint, since a draft is never created.",
+    "Creates a sample from an IGSN Core record and publishes it at once, owned by the account's samples owner and snapshotting their institutional codes. The record must satisfy every publication constraint, since a draft is never created.",
   security: SECURITY,
   request: { query: confirmDuplicatesQuery, body: coreSampleBody },
   responses: {
@@ -295,7 +295,7 @@ export const createSampleBatchRoute = createRoute({
   tags: TAGS,
   summary: "Create or update samples in one batch",
   description:
-    "Checks every item as POST /samples or PUT /samples/{igsn} would, then queues them all for publication, owned by the account's owner and snapshotting the account's own institutional codes, or refuses the whole batch. An update item changing nothing is not queued and stays published. Poll GET /batches/{id} for each item's outcome, or pass a webhook to be called each time an item's publication succeeds or fails.",
+    "Checks every item as POST /samples or PUT /samples/{igsn} would, then queues them all for publication, owned by the account's samples owner and snapshotting their institutional codes, or refuses the whole batch. An update item changing nothing is not queued and stays published. Poll GET /batches/{id} for each item's outcome, or pass a webhook to be called each time an item's publication succeeds or fails.",
   security: SECURITY,
   middleware: [
     bodyLimit({

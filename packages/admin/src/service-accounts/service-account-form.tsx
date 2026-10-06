@@ -5,14 +5,12 @@ import type {
 } from "@projet-igsn/domain/service-account/service-account-validator";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
-import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
+import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
 import { serviceAccountBodySchema } from "@projet-igsn/domain/service-account/service-account-validator";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 
-import { institutionalGroupsFieldErrors } from "#/institutional-groups/institutional-groups-field-errors.ts";
-import { InstitutionalGroupsFields } from "#/institutional-groups/institutional-groups-fields.tsx";
 import { isNameTaken } from "#/is-name-taken.ts";
 import {
   CATALOG_PAGE,
@@ -24,44 +22,58 @@ import { ManagedGroupsFields } from "#/users/managed-groups-fields.tsx";
 import { UserField } from "#/users/user-field.tsx";
 
 const OWNER_FIELD_ID = "service-account-owner";
+const SAMPLE_OWNER_FIELD_ID = "service-account-sample-owner";
 
-const validateBody = institutionalGroupsFieldErrors(serviceAccountBodySchema);
+const validateBody = zodFieldErrors(
+  serviceAccountBodySchema,
+  (issue) => issue.message,
+);
 
 const toDraft = (draft?: ServiceAccountDraft): ServiceAccountDraft => ({
   name: draft?.name ?? "",
-  institutionalOrganization: draft?.institutionalOrganization ?? null,
-  institutionalOsu: draft?.institutionalOsu ?? null,
-  institutionalLaboratory: draft?.institutionalLaboratory ?? null,
   managedGroups: draft?.managedGroups ?? NO_MANAGED_GROUPS,
   owner: draft?.owner ?? null,
+  sampleOwner: draft?.sampleOwner ?? null,
 });
 
-const composeBody = ({ owner, ...draft }: ServiceAccountDraft) => ({
+const composeBody = ({
+  owner,
+  sampleOwner,
+  ...draft
+}: ServiceAccountDraft) => ({
   ...draft,
   ownerId: owner?.id,
+  sampleOwnerId: sampleOwner?.id,
 });
 
 const validateDraft = ({ value }: { value: ServiceAccountDraft }) => {
   const errors = validateBody({ value: composeBody(value) });
   if (!errors) return undefined;
-  const { ownerId, ...fields } = errors.fields;
+  const { ownerId, sampleOwnerId, ...fields } = errors.fields;
   return {
-    fields: ownerId
-      ? {
-          ...fields,
-          owner: { message: m.field_service_account_owner_required() },
-        }
-      : fields,
+    fields: {
+      ...fields,
+      ...(ownerId && {
+        owner: { message: m.field_service_account_owner_required() },
+      }),
+      ...(sampleOwnerId && {
+        sampleOwner: {
+          message: m.field_service_account_sample_owner_required(),
+        },
+      }),
+    },
   };
 };
 
 export function ServiceAccountForm({
   draft,
   submitLabel,
+  requestedByLocked,
   onSave,
 }: {
   draft?: ServiceAccountDraft & Partial<Pick<ServiceAccount, "hasApiKey">>;
   submitLabel: string;
+  requestedByLocked?: boolean;
   onSave: (body: ServiceAccountBody) => Promise<unknown>;
 }) {
   const catalog = useManualGroups(CATALOG_PAGE);
@@ -113,15 +125,24 @@ export function ServiceAccountForm({
           {withRequired(m.field_service_account_owner(), true)}
         </Label>
         <form.AppField name="owner">
-          {() => <UserField id={OWNER_FIELD_ID} status="accepted" />}
+          {() => (
+            <UserField
+              id={OWNER_FIELD_ID}
+              status="accepted"
+              disabled={requestedByLocked}
+            />
+          )}
         </form.AppField>
       </div>
 
-      <FormSection title={m.settings_institution_title()}>
-        <form.AppForm>
-          <InstitutionalGroupsFields />
-        </form.AppForm>
-      </FormSection>
+      <div className="grid gap-2 sm:max-w-72">
+        <Label htmlFor={SAMPLE_OWNER_FIELD_ID}>
+          {withRequired(m.field_service_account_sample_owner(), true)}
+        </Label>
+        <form.AppField name="sampleOwner">
+          {() => <UserField id={SAMPLE_OWNER_FIELD_ID} status="accepted" />}
+        </form.AppField>
+      </div>
 
       <form.AppForm>
         <ManagedGroupsFields

@@ -1,3 +1,5 @@
+import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
+
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { page } from "vitest/browser";
@@ -38,12 +40,14 @@ function fakeApi({
   manualGroups = [BASALT_TEAM, FOSSIL_TEAM],
   status = "accepted",
   services = [],
+  me = {},
 }: {
   orcid?: string | null;
   conflict?: boolean;
   manualGroups?: { id: string; name: string; canLeave: boolean }[];
   status?: "pending" | "accepted";
   services?: { id: string; name: string; hasApiKey: boolean }[];
+  me?: Partial<CurrentUser>;
 } = {}) {
   const puts: unknown[] = [];
   let stored = orcid;
@@ -81,6 +85,7 @@ function fakeApi({
         managedLaboratories: [],
         managedManualGroups: [],
         ...CALLER_GROUPS,
+        ...me,
       }),
     ),
   );
@@ -138,7 +143,7 @@ describe("profile page", () => {
     await renderProfilePage();
     await expect.element(orcidForm()).toBeVisible();
     await expect
-      .element(page.getByRole("button", { name: "Ask for a service account" }))
+      .element(page.getByRole("heading", { name: "Services" }))
       .toBeVisible();
     expect(page.getByRole("button", { name: /save/i }).elements()).toHaveLength(
       1,
@@ -256,15 +261,38 @@ describe("profile page", () => {
     await expect.element(mySamplesInput()).not.toBeInTheDocument();
   });
 
-  it("should offer an accepted user owning no service account to ask for one", async () => {
-    await renderProfilePage();
+  it.each([
+    ["a laboratory manager", { managedLaboratories: ["UMR7358"] }],
+    [
+      "a manual group manager",
+      { managedManualGroups: [{ id: BASALT_TEAM.id, name: BASALT_TEAM.name }] },
+    ],
+    ["a super admin", { superAdmin: true }],
+  ])(
+    "should offer %s owning no service account to ask for one",
+    async (_, me) => {
+      await renderProfilePage({ me });
 
-    await expect
-      .element(page.getByRole("heading", { name: "Services" }))
-      .toBeVisible();
+      await expect
+        .element(page.getByRole("heading", { name: "Services" }))
+        .toBeVisible();
+      await expect
+        .element(
+          page.getByRole("button", { name: "Ask for a service account" }),
+        )
+        .toBeVisible();
+    },
+  );
+
+  it("should keep a user managing no group from asking for a service account", async () => {
+    await renderProfilePage({
+      services: [{ id: SERVICE_ID, name: "Gaia harvester", hasApiKey: false }],
+    });
+
+    await expect.element(page.getByText("Gaia harvester")).toBeVisible();
     await expect
       .element(page.getByRole("button", { name: "Ask for a service account" }))
-      .toBeVisible();
+      .not.toBeInTheDocument();
   });
 
   it("should hide the services section from a pending user", async () => {

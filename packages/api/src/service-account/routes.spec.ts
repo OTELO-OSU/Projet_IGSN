@@ -35,6 +35,37 @@ const OWNER = {
   orcid: null,
 };
 
+const SAMPLE_OWNER = {
+  identity: {
+    id: "01890a5d-ac96-774b-8db1-b302099a9003",
+    email: "marie.curie-db1@univ-lorraine.fr",
+    name: "Curie",
+    firstname: "Marie",
+    orcid: null,
+  },
+  groups: {
+    institutionalOrganization: ORGANIZATION,
+    institutionalOsu: OSU,
+    institutionalLaboratory: LABORATORY,
+  },
+};
+const OTHER_SAMPLE_OWNER = {
+  identity: {
+    id: "01890a5d-ac96-774b-8db1-b302099a9004",
+    email: "pierre.dupont-db1@univ-lorraine.fr",
+    name: "Dupont",
+    firstname: "Pierre",
+    orcid: null,
+  },
+  groups: {
+    institutionalOrganization: OTHER_ORGANIZATION,
+    institutionalOsu: OTHER_OSU,
+    institutionalLaboratory: OTHER_LABORATORY,
+  },
+};
+
+type SampleOwner = typeof SAMPLE_OWNER;
+
 const authHeader = { Authorization: "Bearer moderator" };
 
 type Db = Kysely<DB>;
@@ -44,9 +75,7 @@ const accountBody = (
 ): ServiceAccountBody => ({
   name: "GeoPortal harvester",
   ownerId: OWNER.id,
-  institutionalOrganization: ORGANIZATION,
-  institutionalOsu: OSU,
-  institutionalLaboratory: LABORATORY,
+  sampleOwnerId: SAMPLE_OWNER.identity.id,
   managedGroups: {
     organizations: [],
     osus: [],
@@ -66,14 +95,38 @@ const asSuperAdmin = async (db: Db) => {
     name: OWNER.name,
     firstname: OWNER.firstname,
   });
+  for (const { identity, groups } of [SAMPLE_OWNER, OTHER_SAMPLE_OWNER]) {
+    await insertUser(db, identity.email, {
+      id: identity.id,
+      name: identity.name,
+      firstname: identity.firstname,
+      ...groups,
+    });
+  }
   return testClient(createApp(db).app);
 };
 
 const readBack = (
   id: string,
-  { ownerId: _ownerId, ...body }: ServiceAccountBody,
-  hasApiKey = false,
-) => ({ data: { id, ...body, owner: OWNER, hasApiKey } });
+  {
+    ownerId: _ownerId,
+    sampleOwnerId: _sampleOwnerId,
+    ...body
+  }: ServiceAccountBody,
+  {
+    sampleOwner = SAMPLE_OWNER,
+    hasApiKey = false,
+  }: { sampleOwner?: SampleOwner; hasApiKey?: boolean } = {},
+) => ({
+  data: {
+    id,
+    ...body,
+    ...sampleOwner.groups,
+    owner: OWNER,
+    sampleOwner: sampleOwner.identity,
+    hasApiKey,
+  },
+});
 
 type Client = Awaited<ReturnType<typeof asSuperAdmin>>;
 
@@ -115,7 +168,7 @@ const createdId = async (client: Client, json: ServiceAccountBody) => {
 
 describe("admin service account routes", () => {
   pgTest(
-    "should read back a created service account whole, managed groups included",
+    "should read back a created service account whole, its institutional codes those of its samples owner",
     async ({ db }) => {
       // Arrange
       await db.insertInto("manual_group").values(GROUP).execute();
@@ -152,7 +205,9 @@ describe("admin service account routes", () => {
     const withKey = await getAccount(client, id);
     // Assert
     expect(await without.json()).toEqual(readBack(id, body));
-    expect(await withKey.json()).toEqual(readBack(id, body, true));
+    expect(await withKey.json()).toEqual(
+      readBack(id, body, { hasApiKey: true }),
+    );
   });
 
   pgTest(
@@ -179,7 +234,7 @@ describe("admin service account routes", () => {
   );
 
   pgTest(
-    "should replace the trio and the managed groups on update",
+    "should replace the samples owner, and with it the institutional codes, and the managed groups on update",
     async ({ db }) => {
       // Arrange
       await db.insertInto("manual_group").values(GROUP).execute();
@@ -197,9 +252,7 @@ describe("admin service account routes", () => {
       );
       const replacement = accountBody({
         name: "GeoPortal reader",
-        institutionalOrganization: OTHER_ORGANIZATION,
-        institutionalOsu: OTHER_OSU,
-        institutionalLaboratory: OTHER_LABORATORY,
+        sampleOwnerId: OTHER_SAMPLE_OWNER.identity.id,
         managedGroups: {
           organizations: [OTHER_ORGANIZATION],
           osus: [],
@@ -211,7 +264,9 @@ describe("admin service account routes", () => {
       const res = await updateAccount(client, id, replacement);
       // Assert
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual(readBack(id, replacement));
+      expect(await res.json()).toEqual(
+        readBack(id, replacement, { sampleOwner: OTHER_SAMPLE_OWNER }),
+      );
     },
   );
 
@@ -252,7 +307,7 @@ describe("admin service account routes", () => {
     },
   );
 
-  pgTest.for(["institutionalLaboratory", "ownerId"] as const)(
+  pgTest.for(["sampleOwnerId", "ownerId"] as const)(
     "should answer 400 to a body without %s",
     async (field, { db }) => {
       // Arrange
@@ -269,10 +324,12 @@ describe("admin service account routes", () => {
     },
   );
 
-  pgTest.for([
-    { rule: "an unknown owner", ownerId: UNKNOWN_ID },
-    { rule: "an owner who is not accepted", ownerId: PENDING_ID },
-  ])("should answer 404 to $rule", async ({ ownerId }, { db }) => {
+  pgTest.for(
+    (["ownerId", "sampleOwnerId"] as const).flatMap((field) => [
+      { rule: `an unknown ${field}`, field, id: UNKNOWN_ID },
+      { rule: `a ${field} who is not accepted`, field, id: PENDING_ID },
+    ]),
+  )("should answer 404 to $rule", async ({ field, id }, { db }) => {
     // Arrange
     const client = await asSuperAdmin(db);
     await insertUser(db, "pending-db1@univ-lorraine.fr", {
@@ -280,7 +337,7 @@ describe("admin service account routes", () => {
       status: "pending",
     });
     // Act
-    const res = await createAccount(client, accountBody({ ownerId }));
+    const res = await createAccount(client, accountBody({ [field]: id }));
     // Assert
     expect(res.status).toBe(404);
   });

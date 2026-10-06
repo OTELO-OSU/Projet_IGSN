@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-import { setInstitutionalGroupsSchema } from "../institutional-group/institutional-groups-validator.ts";
-import { institutionalGroupsFields } from "../institutional-group/model.ts";
-import { osuCodeSchema } from "../institutional-group/osu.ts";
 import {
   DEFAULT_PAGE_SIZE,
   pageSchema,
@@ -17,19 +14,18 @@ const MAX_NAME_LENGTH = 100;
 
 const serviceAccountNameSchema = z.string().trim().min(1).max(MAX_NAME_LENGTH);
 
-export const serviceAccountBodySchema = setInstitutionalGroupsSchema.safeExtend(
-  {
-    name: serviceAccountNameSchema,
-    ownerId: z.uuid(),
-    institutionalOsu: osuCodeSchema.nullable().default(null),
-    managedGroups: managedGroupsSchema,
-  },
-);
+export const serviceAccountBodySchema = z.strictObject({
+  name: serviceAccountNameSchema,
+  ownerId: z.uuid(),
+  sampleOwnerId: z.uuid(),
+  managedGroups: managedGroupsSchema,
+});
 
 export type ServiceAccountBody = z.infer<typeof serviceAccountBodySchema>;
 
 export const serviceAccountRequestSchema = z.strictObject({
   name: serviceAccountNameSchema,
+  sampleOwnerId: z.uuid(),
   managedGroups: managedGroupsSchema,
   reason: requestReasonSchema,
 });
@@ -56,9 +52,9 @@ export type RequestableInstitutionalGroupsResponse = z.infer<
 
 export const serviceAccountDraftSchema = z.object({
   name: z.string(),
-  ...institutionalGroupsFields,
   managedGroups: managedGroupsSchema,
   owner: userIdentitySchema.nullable(),
+  sampleOwner: userIdentitySchema.nullable(),
 });
 
 export type ServiceAccountDraft = z.infer<typeof serviceAccountDraftSchema>;

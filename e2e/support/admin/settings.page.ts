@@ -2,6 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 import { chooseOption } from "./choose-option.ts";
 import { pickComboboxOption } from "./pick-combobox-option.ts";
+import { chooseUser } from "./service-accounts.page.ts";
 
 export function settingsPage(page: Page) {
   const item = (name: string) =>
@@ -72,6 +73,7 @@ export function settingsPage(page: Page) {
       name: string,
       reason: string,
       manualGroup: string,
+      samplesOwner: { search: string; name: string },
     ) => {
       await page
         .getByRole("button", { name: "Ask for a service account" })
@@ -82,6 +84,11 @@ export function settingsPage(page: Page) {
       await requestDialog
         .getByRole("textbox", { name: "Why do you need a service account?" })
         .fill(reason);
+      await chooseUser(page)(
+        /^Samples owner/,
+        samplesOwner.search,
+        samplesOwner.name,
+      );
       await pickComboboxOption(page, {
         field: "Groups to access",
         option: manualGroup,

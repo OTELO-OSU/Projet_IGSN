@@ -37,6 +37,7 @@ export type SearchUsersFilters = {
   excludeMembersOf?: string;
   includeSelf?: boolean;
   selfFirst?: boolean;
+  scope?: ModerationScope;
 };
 
 export type UserRepository = {

@@ -4,7 +4,7 @@ Date: 2026-09-04
 
 ## Status
 
-Accepted.
+Accepted. The stored institutional trio is superseded by ADR [0055](0055-service-account-samples-owner.md), which derives it from the samples owner.
 
 ## Context
 

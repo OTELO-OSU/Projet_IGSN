@@ -872,6 +872,8 @@
   "service_account_delete_error": "Could not delete the service account",
   "field_service_account_owner": "Requested by",
   "field_service_account_owner_required": "Choose the user this service account belongs to",
+  "field_service_account_sample_owner": "Samples owner",
+  "field_service_account_sample_owner_required": "Choose the user who will own the created samples",
   "settings_services_title": "Services",
   "settings_services_hint": "Generate an API key so one of your services can call the API in your name.",
   "service_account_api_key_generate": "Generate API key",

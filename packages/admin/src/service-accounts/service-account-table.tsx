@@ -53,9 +53,13 @@ const columns: ColumnDef<ServiceAccount>[] = [
       } = row.original;
       return (
         <ul>
-          <li>{organizationShortLabel(institutionalOrganization)}</li>
+          {institutionalOrganization && (
+            <li>{organizationShortLabel(institutionalOrganization)}</li>
+          )}
           {institutionalOsu && <li>{institutionalOsu}</li>}
-          <li>{laboratoryShortLabel(institutionalLaboratory)}</li>
+          {institutionalLaboratory && (
+            <li>{laboratoryShortLabel(institutionalLaboratory)}</li>
+          )}
         </ul>
       );
     },

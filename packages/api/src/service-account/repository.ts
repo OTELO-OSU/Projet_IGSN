@@ -22,15 +22,22 @@ import { isNameTakenBy, lockName } from "../unique-name.ts";
 const notFound = () =>
   new HTTPException(404, { message: "Service account not found" });
 
+const IDENTITY_COLUMNS = ["id", "email", "name", "firstname", "orcid"] as const;
+
 const selectAccounts = (trx: Transactional<DB>) =>
   trx
     .selectFrom("service_account")
+    .innerJoin(
+      "user as sample_owner",
+      "sample_owner.id",
+      "service_account.sample_owner_id",
+    )
     .select((eb) => [
-      "id",
-      "name",
-      "institutional_organization as institutionalOrganization",
-      "institutional_osu as institutionalOsu",
-      "institutional_laboratory as institutionalLaboratory",
+      "service_account.id",
+      "service_account.name",
+      "sample_owner.institutional_organization as institutionalOrganization",
+      "sample_owner.institutional_osu as institutionalOsu",
+      "sample_owner.institutional_laboratory as institutionalLaboratory",
       managedGroupsOf(
         SERVICE_ACCOUNT_MANAGED_GROUP_TABLES,
         "service_account.id",
@@ -38,9 +45,15 @@ const selectAccounts = (trx: Transactional<DB>) =>
       jsonObjectFrom(
         eb
           .selectFrom("user")
-          .select(["id", "email", "name", "firstname", "orcid"])
+          .select(IDENTITY_COLUMNS)
           .whereRef("user.id", "=", "service_account.owner_id"),
       ).as("owner"),
+      jsonObjectFrom(
+        eb
+          .selectFrom("user")
+          .select(IDENTITY_COLUMNS)
+          .whereRef("user.id", "=", "service_account.sample_owner_id"),
+      ).as("sampleOwner"),
       eb("api_key_hash", "is not", null).$castTo<boolean>().as("hasApiKey"),
     ]);
 
@@ -50,34 +63,32 @@ const toServiceAccount = (row: { managedGroups: ManagedGroups }) =>
     managedGroups: knownManagedCodes(row.managedGroups),
   });
 
-const accountRow = ({
-  name,
-  ownerId,
-  institutionalOrganization,
-  institutionalOsu,
-  institutionalLaboratory,
-}: ServiceAccountBody) => ({
+const accountRow = ({ name, ownerId, sampleOwnerId }: ServiceAccountBody) => ({
   name,
   owner_id: ownerId,
-  institutional_organization: institutionalOrganization,
-  institutional_osu: institutionalOsu,
-  institutional_laboratory: institutionalLaboratory,
+  sample_owner_id: sampleOwnerId,
 });
 
-const assertOwnerAccepted = async (trx: Transactional<DB>, ownerId: string) => {
-  const owner = await trx
+const assertOwnersAccepted = async (
+  trx: Transactional<DB>,
+  { ownerId, sampleOwnerId }: ServiceAccountBody,
+) => {
+  const ownerIds = [...new Set([ownerId, sampleOwnerId])];
+  const accepted = await trx
     .selectFrom("user")
     .select("id")
-    .where("id", "=", ownerId)
+    .where("id", "in", ownerIds)
     .where("status", "=", "accepted")
-    .executeTakeFirst();
-  if (!owner) {
+    .execute();
+  if (accepted.length !== ownerIds.length) {
     throw new HTTPException(404, { message: "Owner not found" });
   }
 };
 
 const readAccount = async (trx: Transactional<DB>, id: string) => {
-  const row = await selectAccounts(trx).where("id", "=", id).executeTakeFirst();
+  const row = await selectAccounts(trx)
+    .where("service_account.id", "=", id)
+    .executeTakeFirst();
   if (!row) {
     throw notFound();
   }
@@ -91,7 +102,7 @@ export function createServiceAccountRepository(
     list: ({ page, perPage }) =>
       withTransaction(db, async (trx) => {
         const rows = await selectAccounts(trx)
-          .orderBy("name", "asc")
+          .orderBy("service_account.name", "asc")
           .limit(perPage)
           .offset((page - 1) * perPage)
           .execute();
@@ -104,7 +115,7 @@ export function createServiceAccountRepository(
     get: (id) => withTransaction(db, (trx) => readAccount(trx, id)),
     create: (body) =>
       withTransaction(db, async (trx) => {
-        await assertOwnerAccepted(trx, body.ownerId);
+        await assertOwnersAccepted(trx, body);
         await lockName(trx, body.name);
         const row = await trx
           .insertInto("service_account")
@@ -125,7 +136,7 @@ export function createServiceAccountRepository(
       }),
     update: (id, body) =>
       withTransaction(db, async (trx) => {
-        await assertOwnerAccepted(trx, body.ownerId);
+        await assertOwnersAccepted(trx, body);
         await lockName(trx, body.name);
         if (await isNameTakenBy(trx, "service_account", body.name, id)) {
           return "name_taken";
@@ -179,6 +190,7 @@ export function createServiceAccountRepository(
       withTransaction(db, async (trx) => {
         const row = await selectAccounts(trx)
           .where("api_key_hash", "=", hash)
+          .where("sample_owner.status", "=", "accepted")
           .where((eb) =>
             eb.exists(
               eb
