@@ -569,6 +569,7 @@ export function SampleForm({
                 >
                   <form.AppForm>
                     <Tabs
+                      className="*:data-[slot=tabs-content]:px-9"
                       value={isTabDisabled(tab) ? DEFAULT_TAB : tab}
                       onValueChange={(value) => setTab(value as SampleFormTab)}
                     >
@@ -739,7 +740,7 @@ export function SampleForm({
             <SampleAttachmentUploadDialog changes={attachmentChanges} />
           ) : null}
 
-          <div className="bg-background fixed inset-x-0 bottom-0 z-40 flex flex-wrap justify-end gap-2 border-t px-6 py-3 md:left-64">
+          <div className="bg-background fixed inset-x-0 bottom-0 z-40 flex flex-wrap justify-end gap-2 border-t px-15 py-3 md:left-(--sidebar-width) md:duration-500 md:ease-in-out md:motion-safe:transition-[left]">
             <Button type="button" variant="ghost" onClick={onCancel}>
               {m.action_cancel()}
             </Button>

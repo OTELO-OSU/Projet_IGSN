@@ -5,6 +5,7 @@ import { SearchInput } from "./search-input.tsx";
 type SearchFieldProps = {
   defaultValue?: string;
   label: string;
+  isLabelVisible?: boolean;
   placeholder: string;
   onSearch: (value: string) => void;
 };
@@ -14,6 +15,7 @@ const DEBOUNCE_MS = 300;
 export function SearchField({
   defaultValue,
   label,
+  isLabelVisible,
   placeholder,
   onSearch,
 }: SearchFieldProps) {
@@ -39,6 +41,7 @@ export function SearchField({
       <SearchInput
         ref={inputRef}
         label={label}
+        isLabelVisible={isLabelVisible}
         defaultValue={defaultValue}
         placeholder={placeholder}
         onChange={(event) => {

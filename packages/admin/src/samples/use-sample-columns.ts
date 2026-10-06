@@ -15,7 +15,7 @@ export function useSampleColumns(
   const [columns, setColumns] = useState(() => {
     const stored = localStorage.getItem(storageKey);
     if (stored === null) {
-      return moderated ? [...DEFAULT_COLUMNS, "owner"] : DEFAULT_COLUMNS;
+      return DEFAULT_COLUMNS;
     }
     return stored.split(",").filter((key) => offered.includes(key));
   });

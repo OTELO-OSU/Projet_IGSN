@@ -1,4 +1,4 @@
-import { PlusIcon } from "lucide-react";
+import { type LucideIcon, PlusIcon } from "lucide-react";
 
 import { withRequired } from "../../lib/with-required.ts";
 import { Button } from "./button.tsx";
@@ -19,6 +19,7 @@ export function FieldPicker({
   onSelectedChange,
   triggerLabel,
   triggerVariant = "secondary",
+  triggerIcon: TriggerIcon = PlusIcon,
   legend,
 }: {
   fields: readonly PickerField[];
@@ -26,6 +27,7 @@ export function FieldPicker({
   onSelectedChange: (keys: string[]) => void;
   triggerLabel: string;
   triggerVariant?: "secondary" | "ghost";
+  triggerIcon?: LucideIcon;
   legend: string;
 }) {
   function toggle(key: string, checked: boolean) {
@@ -38,7 +40,7 @@ export function FieldPicker({
     <Popover>
       <PopoverTrigger asChild>
         <Button type="button" variant={triggerVariant} className="text-primary">
-          <PlusIcon aria-hidden />
+          <TriggerIcon aria-hidden />
           {triggerLabel}
         </Button>
       </PopoverTrigger>

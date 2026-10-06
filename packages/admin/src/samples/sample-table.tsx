@@ -20,6 +20,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { Columns3CogIcon } from "lucide-react";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
@@ -60,7 +61,7 @@ type PickableColumn = {
   id: string;
   label: () => string;
   section: () => string;
-  cell: (sample: AdminSampleListItem, moderated: boolean) => ReactNode;
+  cell: (sample: AdminSampleListItem) => ReactNode;
   className?: string;
 };
 
@@ -76,6 +77,7 @@ const LOCKED_COLUMNS = {
   igsn: { label: m.column_igsn, section: m.sample_section_sample },
   name: { label: m.column_name, section: m.sample_section_sample },
   status: { label: m.column_status, section: m.sample_section_sample },
+  owner: { label: m.column_owner, section: m.column_section_record },
 } satisfies Partial<
   Record<
     keyof AdminSampleListItem,
@@ -124,21 +126,6 @@ const PICKABLE_COLUMNS: readonly PickableColumn[] = [
       cell: (sample) => <TextCell text={field.get(sample)} />,
     }),
   ),
-  {
-    id: "owner",
-    label: m.column_owner,
-    section: m.column_section_record,
-    cell: ({ owner }, moderated) =>
-      owner ? (
-        <span className="flex items-center gap-1">
-          <UserInitials name={owner.name} firstname={owner.firstname} />
-          {moderated && owner.status && (
-            <UserStatusBadge status={owner.status} />
-          )}
-        </span>
-      ) : null,
-    className: "w-32",
-  },
   {
     id: "updatedAt",
     label: m.column_last_modified,
@@ -233,11 +220,27 @@ function sampleColumns(
       cell: ({ row }) => <SampleStatusBadge status={row.original.status} />,
       meta: { className: "w-28" },
     },
+    {
+      accessorKey: "owner",
+      header: () => LOCKED_COLUMNS.owner.label(),
+      cell: ({ row }) => {
+        const { owner } = row.original;
+        return owner ? (
+          <span className="flex items-center gap-1">
+            <UserInitials name={owner.name} firstname={owner.firstname} />
+            {moderated && owner.status && (
+              <UserStatusBadge status={owner.status} />
+            )}
+          </span>
+        ) : null;
+      },
+      meta: { className: "w-32" },
+    },
     ...PICKABLE_COLUMNS.map(
       (column): ColumnDef<AdminSampleListItem> => ({
         id: column.id,
         header: () => column.label(),
-        cell: ({ row }) => column.cell(row.original, moderated),
+        cell: ({ row }) => column.cell(row.original),
         meta: { className: column.className ?? "w-40" },
       }),
     ),
@@ -319,6 +322,8 @@ export function SampleTable({
           selected={columns}
           onSelectedChange={saveColumns}
           triggerLabel={m.sample_columns_trigger()}
+          triggerVariant="ghost"
+          triggerIcon={Columns3CogIcon}
           legend={m.sample_columns_legend()}
         />
       </div>

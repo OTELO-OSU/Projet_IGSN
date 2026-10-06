@@ -134,7 +134,7 @@ describe("ListHeader", () => {
       .toBeVisible();
   });
 
-  it("should sit the add-filter and the action buttons on the heading row", async () => {
+  it("should end the filter bar with the add-filter button, the action staying on the heading row", async () => {
     const screen = await render(
       <ListHeader
         title={TITLE}
@@ -146,12 +146,15 @@ describe("ListHeader", () => {
     const heading = screen.getByRole("heading", { level: 1, name: TITLE });
     await expect.element(heading).toBeVisible();
 
-    const row = heading.element().parentElement;
-
-    expect(
-      [...(row?.querySelectorAll("button") ?? [])].map(
+    const headingRow = heading.element().parentElement;
+    const buttonTexts = (element: Element | null | undefined) =>
+      [...(element?.querySelectorAll("button") ?? [])].map(
         (button) => button.textContent,
-      ),
-    ).toEqual([ADD, "Create"]);
+      );
+
+    expect(buttonTexts(headingRow)).toEqual(["Create"]);
+    expect(
+      buttonTexts(headingRow?.nextElementSibling?.lastElementChild),
+    ).toEqual([ADD]);
   });
 });

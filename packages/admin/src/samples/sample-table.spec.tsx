@@ -161,7 +161,7 @@ describe("SampleTable", () => {
       .toHaveTextContent(/^IGSN/);
   });
 
-  it("should show IGSN, Name, Status, the four default card fields and Actions by default", async () => {
+  it("should show IGSN, Name, Status, Owner, the four default card fields and Actions by default", async () => {
     const screen = await renderTable(samples);
     await expect
       .element(screen.getByRole("columnheader", { name: "Actions" }))
@@ -176,6 +176,7 @@ describe("SampleTable", () => {
       "IGSN",
       "Name",
       "Status",
+      "Owner",
       "Type",
       "Material",
       "Location",
@@ -281,7 +282,7 @@ describe("SampleTable", () => {
     expect(localStorage.getItem(COLUMNS_KEY)).toBe("publishedAt");
   });
 
-  it.each([/^IGSN/, /^Name/, /^Status/])(
+  it.each([/^IGSN/, /^Name/, /^Status/, /^Owner/])(
     "should lock the %s checkbox, a column always shown",
     async (name) => {
       const screen = await renderTable(samples);
@@ -298,7 +299,7 @@ describe("SampleTable", () => {
     const screen = await renderTable([]);
     await expect
       .element(screen.getByRole("cell", { name: "No results" }))
-      .toHaveAttribute("colspan", "9");
+      .toHaveAttribute("colspan", "10");
   });
 
   it("should render the internal identifier of a published sample", async () => {
@@ -392,7 +393,6 @@ describe("SampleTable", () => {
   });
 
   it("should render the owner as initials, announced as the full name", async () => {
-    showColumns("owner");
     const screen = await renderTable(samples);
     await expect
       .element(screen.getByTitle("Marie Curie"))
@@ -410,7 +410,6 @@ describe("SampleTable", () => {
   });
 
   it("should render no owner account status by default", async () => {
-    showColumns("owner");
     const screen = await renderTable(samples);
     await expect
       .element(screen.getByRole("cell", { name: "Marie Curie", exact: true }))
@@ -422,7 +421,6 @@ describe("SampleTable", () => {
     ["a nameless owner", { name: null, firstname: null, status: "accepted" }],
     ["no owner", null],
   ])("should render an empty owner cell for %s", async (_, owner) => {
-    showColumns("owner");
     const screen = await renderTable([{ ...sample, owner }]);
     await expect
       .element(screen.getByText("Basalte du Massif Central"))
