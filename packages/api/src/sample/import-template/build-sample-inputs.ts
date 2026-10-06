@@ -57,7 +57,10 @@ const HOUR_PRECISION = "hour";
 const isDataColumn = (column: Column): column is DataColumn =>
   column.path !== undefined;
 
-export const valueAt = (value: unknown, keys: readonly string[]): unknown =>
+export const valueAt = (
+  value: unknown,
+  keys: readonly (string | number)[],
+): unknown =>
   keys.reduce<unknown>(
     (inner, key) =>
       inner !== null && typeof inner === "object"

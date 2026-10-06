@@ -265,7 +265,7 @@ describe("a Core record mapped to DataCite", () => {
       ],
       fundingReferences: [
         {
-          funderName: "GEOLOR",
+          funderName: "Centre National de la Recherche Scientifique (CNRS)",
           funderIdentifier: "https://ror.org/02feahw73",
           funderIdentifierType: "ROR",
           awardNumber: "ANR grant 2023",
