@@ -108,7 +108,7 @@ The tab gets its `Sample #` dropdown and name lookup, the Read me lists it, expo
 
 Bulk edit keeps the stored list when the tab is absent and replaces the template paths when it is present. A list with its own persistence, like process steps (`replace-sample-process-steps.ts`), needs its own service call. Say in the PR which you want.
 
-**Gotcha**: the name lookup is `VLOOKUP($A, Samples!$A:$B, 2)`. `Name` stays column B of "Samples".
+**Gotcha**: column B of every child tab, "Sample name (filled automatically)", is an Excel formula. It looks up the row's `Sample #` in column A of "Samples" and shows the cell next to it, column B, which is the sample's name. The formula is hard-wired to column B, so keep "Name" as the second column of `SAMPLE_COLUMNS`. Moving it shows the wrong text on every child tab, with no test failing.
 
 ## How do I add a dropdown?
 
