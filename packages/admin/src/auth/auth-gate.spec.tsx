@@ -97,7 +97,7 @@ describe("AuthGate", () => {
     expect(auth.signinRedirect).toHaveBeenCalledTimes(1);
   });
 
-  it("should mark the tab signed out when the user signs out", async () => {
+  it("should send the user to the SSO login once the sign-out returns", async () => {
     auth.isAuthenticated = true;
     auth.user = { profile: {} };
     const screen = await render(<AuthGate />);
@@ -105,8 +105,16 @@ describe("AuthGate", () => {
     await screen.getByRole("button", { name: "Sign out" }).click();
 
     expect(auth.signoutRedirect).toHaveBeenCalledTimes(1);
-    expect(readSignedOut()).toBe(true);
     expect(localStorage.getItem(SIGN_OUT_BROADCAST_KEY)).not.toBeNull();
+
+    await screen.unmount();
+    auth.isAuthenticated = false;
+    auth.user = undefined;
+    await render(<AuthGate />);
+
+    await vi.waitFor(() =>
+      expect(auth.signinRedirect).toHaveBeenCalledTimes(1),
+    );
   });
 
   it("should not sign back in when the sign-out clears the session", async () => {
@@ -125,7 +133,7 @@ describe("AuthGate", () => {
     expect(auth.signinRedirect).not.toHaveBeenCalled();
   });
 
-  it("should wait for an explicit sign-in after the user signed out", async () => {
+  it("should wait for an explicit sign-in when another app or tab signed this one out", async () => {
     markSignedOut();
     const screen = await render(<AuthGate />);
 

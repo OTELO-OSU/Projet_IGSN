@@ -37,7 +37,6 @@ test.describe("authentication", () => {
     await admin.expectSignedIn();
 
     await admin.signOut();
-    await admin.signIn();
     await keycloakLoginPage(page).chooseInstitution();
 
     await shibbolethLoginPage(page).expectCredentialsPrompt();
@@ -55,7 +54,6 @@ test.describe("authentication", () => {
     await admin.expectNoAccess();
 
     await admin.signOut();
-    await admin.signIn();
     await keycloakLoginPage(page).chooseOrcid();
     await orcidLoginPage(page).expectCredentialsPrompt();
   });
@@ -81,7 +79,6 @@ test.describe("authentication", () => {
     await admin.expectUnsupportedProvider();
 
     await admin.signOut();
-    await admin.signIn();
 
     await keycloakLoginPage(page).expectCredentialsPrompt();
   });
@@ -103,7 +100,6 @@ test.describe("authentication", () => {
     await settings.setOrcid("0000-0001-5109-370X");
 
     await admin.signOut();
-    await admin.signIn();
     await keycloakLoginPage(page).chooseOrcid();
     await orcidLoginPage(page).login("0000-0001-5109-370X", "password");
 
