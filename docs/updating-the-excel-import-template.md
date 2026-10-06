@@ -92,7 +92,7 @@ The header is English, unique on its sheet, never a schema path, never with a do
 
 ### 3. Nothing to declare for type, marker or required check
 
-A number column parses `Number(cell)`. A text column takes the text. A `yes_no` block gives a boolean. A path in `PUBLISH_BLOCKER_PATH` gets its "\*" and joins the required columns. A date cell is written as `YYYY-MM-DD`, or to the minute when a sibling `precision` column says "Hour and minute" (`isHourPrecision` in [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts)).
+A number column parses `Number(cell)`. A text column takes the text. A `yes_no` block gives a boolean. A path in `PUBLISH_BLOCKER_PATH` gets its "\*" and joins the required columns. A date cell is written as `YYYY-MM-DD`. It keeps the minute when a sibling `precision` column says "Hour and minute" (`isHourPrecision` in [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts)).
 
 ### 4. Mirror the form's display condition
 
@@ -110,7 +110,7 @@ Hidden behind a sibling in the form? Add the same rule here, calling the same do
 },
 ```
 
-A `condition` greys the cell, adds the sentence to the prompt, keeps the column out of the required set, and drops it from a template whose pre-fill can never satisfy it. A `prompt` alone adds the sentence. `values` are labels, never codes. The schema stays the real guard: a value it drops is reported as `not_applicable`.
+A `condition` greys the cell and adds the sentence to the prompt. It keeps the column out of the required set. A template whose pre-fill can never satisfy it drops the column. A `prompt` alone adds the sentence. `values` are labels, never codes. The schema stays the real guard: a value it drops is reported as `not_applicable`.
 
 ### 5. Fixtures, when the field is required
 
@@ -161,7 +161,7 @@ Steps:
 3. Append `{ name, columns }` to `CHILD_SHEETS`. Array order is tab order.
 4. Add the path to the "one per row on its own tab" case in `columns.spec.ts`, and a join case in [build-sample-inputs.spec.ts](../packages/api/src/sample/import-template/build-sample-inputs.spec.ts).
 
-You get for free: the `Sample #` dropdown and the name lookup on the tab, the Read me line listing the tabs, the export rows, and a tab dropped when a customization empties it. A scalar beside the array is set once per sample. A second row with another value is a `duplicate_value`.
+The rest is free. The tab gets its `Sample #` dropdown and name lookup. The Read me line lists it. Export writes its rows. A customization that empties it drops it. A scalar beside the array is set once per sample. A second row with another value is a `duplicate_value`.
 
 Bulk edit keeps the stored values of an absent tab, and `mergeStoredSample` replaces only template paths. A whole-list replacement, like process steps (`replace-sample-process-steps.ts`), is a service call of its own. Say in the PR which you want.
 
@@ -310,7 +310,7 @@ New-field checklist:
 - **Customization** is one JSON cell, Read me `C1`: `{ provenanceStatus, materialPath, manualGroupLabel }`. A new pre-fill kind touches `prefillOf`, `possibleLabelsOf` and `withoutPrefilledRows`. A row equal to its pre-fills is not a sample.
 - **Defaults.** `IMPORT_DEFAULTS` pre-fills the cell and is applied when the column is absent.
 - **Issue codes.** A new one is `importIssueCodeSchema` in `domain`, `IMPORT_ISSUE_LABELS` in `admin` (exhaustive) and both catalogs.
-- **Excel limits.** A validation formula is capped at 255 characters (a spec checks), a sheet name at 31, a file at `MAX_IMPORT_ROWS` samples.
+- **Excel limits.** A validation formula is capped at 255 characters (a spec checks) and a sheet name at 31. A file holds `MAX_IMPORT_ROWS` samples at most.
 - **Build and parse are serialized** through `queueBuild`. Keep per-cell work cheap.
 - **Sub-samples.** "Parent IGSN" and "Process steps" exist only when asked for. Location and collection date are inherited (ADR [0053](adr/0053-ancestor-location-inheritance.md)).
 - **Attachments** match staged uploads by exact file name (ADR [0054](adr/0054-tus-staged-uploads-for-import-documents.md)).
