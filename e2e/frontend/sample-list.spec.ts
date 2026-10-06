@@ -75,6 +75,26 @@ test.describe("sample list", () => {
     await list.expectCardLine("Collection method: Blasting");
   });
 
+  test("a reader sees a result's internal id only once they pick it", async ({
+    page,
+    samples,
+  }) => {
+    const target = samples.find((sample) => sample.name === "Basalt 42");
+    if (!target?.igsn) {
+      throw new Error("seed must include the published Basalt 42 sample");
+    }
+
+    const list = sampleListPage(page);
+    await list.goto();
+    await list.search(target.name);
+    await list.expectCardIds(target.name, target.igsn, false);
+
+    await list.pickCardField("Internal ID");
+    await page.reload();
+
+    await list.expectCardIds(target.name, target.igsn, true);
+  });
+
   test("a reader can search with a wildcard", async ({ page, samples }) => {
     const target = samples.find((sample) => sample.name === "Basalt 42");
     if (!target?.igsn) {

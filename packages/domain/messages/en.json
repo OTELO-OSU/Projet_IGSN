@@ -1409,6 +1409,7 @@
   "mineral_abundance_unknown": "Unknown",
   "card_field_name": "Sample name",
   "card_field_igsn": "IGSN",
+  "card_field_internal_id": "Internal ID",
   "card_field_type_nature": "Type and nature",
   "card_field_location": "Country and locality",
   "sample_field_material": "Material",

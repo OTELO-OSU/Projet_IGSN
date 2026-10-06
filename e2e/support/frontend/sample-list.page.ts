@@ -68,6 +68,17 @@ export function sampleListPage(page: Page) {
       await page.getByRole("checkbox", { name: field }).click();
       await page.keyboard.press("Escape");
     },
+    expectCardIds: async (
+      name: string,
+      igsn: string,
+      hasInternalId: boolean,
+    ) => {
+      const card = page.getByRole("link", { name });
+      await expect(card.getByText(igsn)).toBeVisible();
+      await expect(card.getByText(/^sample-\d+$/)).toHaveCount(
+        hasInternalId ? 1 : 0,
+      );
+    },
     expectCardLine: (line: string) =>
       expect(page.getByText(line, { exact: true }).first()).toBeVisible(),
     search: async (query: string) => {

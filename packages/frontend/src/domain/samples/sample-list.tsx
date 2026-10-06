@@ -19,6 +19,7 @@ import {
   typeNatureText,
   collectorText,
 } from "#/domain/samples/card-fields.ts";
+import { CARD_LINE_ICONS } from "#/domain/samples/card-line-icons.ts";
 import { exactRanges, matchRanges } from "#/domain/samples/highlight-match.ts";
 import { m } from "#/paraglide/messages.js";
 
@@ -54,15 +55,31 @@ function elementRanges(element: Element, query: string): Range[] {
   return ranges.map((match) => toRange(node, match));
 }
 
-function CardLine({ children }: { children: React.ReactNode }) {
-  return <p className="text-muted-foreground mt-1 text-sm">{children}</p>;
+function CardLine({
+  field,
+  children,
+}: {
+  field: string;
+  children: React.ReactNode;
+}) {
+  const Icon = CARD_LINE_ICONS[field];
+  return (
+    <p className="mt-1 flex gap-1.5 text-sm">
+      {Icon ? (
+        <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      ) : null}
+      {children}
+    </p>
+  );
 }
 
 function CardDetails({
   sample,
+  hasInternalId,
   extraFields,
 }: {
   sample: CardSample;
+  hasInternalId: boolean;
   extraFields: ReturnType<typeof selectedCardFields>;
 }) {
   const kind = typeNatureText(sample);
@@ -72,21 +89,21 @@ function CardDetails({
   return (
     <>
       <p
-        className="text-muted-foreground mt-1 font-mono text-sm break-all"
+        className="text-muted-foreground mt-1 font-mono text-xs break-all"
         data-highlight="exact"
       >
         {sample.igsn}
-        {sample.internalNumber === null ? null : (
-          <span className="ml-3">
-            {formatInternalId(sample.internalNumber)}
-          </span>
-        )}
       </p>
-      {kind ? <CardLine>{kind}</CardLine> : null}
-      {material ? <CardLine>{material}</CardLine> : null}
-      {place ? <CardLine>{place}</CardLine> : null}
+      {!hasInternalId || sample.internalNumber === null ? null : (
+        <p className="text-muted-foreground font-mono text-xs">
+          {formatInternalId(sample.internalNumber)}
+        </p>
+      )}
+      {kind ? <CardLine field="typeNature">{kind}</CardLine> : null}
+      {material ? <CardLine field="material">{material}</CardLine> : null}
+      {place ? <CardLine field="location">{place}</CardLine> : null}
       {collector ? (
-        <CardLine>
+        <CardLine field="collectorName">
           {m.card_field_line({
             label: m.sample_field_collector_name(),
             value: collector,
@@ -96,7 +113,7 @@ function CardDetails({
       {extraFields.map((field) => {
         const value = field.get(sample);
         return value ? (
-          <CardLine key={field.key}>
+          <CardLine key={field.key} field={field.key}>
             {m.card_field_line({ label: field.label(), value })}
           </CardLine>
         ) : null;
@@ -151,6 +168,7 @@ export function SampleList({
 }) {
   const listRef = useRef<HTMLUListElement>(null);
   const extraFields = selectedCardFields(fields);
+  const hasInternalId = fields?.includes("internalNumber") ?? false;
 
   useEffect(() => {
     const container = listRef.current;
@@ -195,12 +213,16 @@ export function SampleList({
               <Link
                 to="/samples/$igsn"
                 params={{ igsn }}
-                className="block rounded-lg border p-4 hover:border-sky-800 hover:bg-sky-50"
+                className="block h-full rounded-lg border p-4 hover:border-sky-800 hover:bg-sky-50"
               >
                 <h2 className="font-semibold text-sky-900" data-highlight>
                   {name}
                 </h2>
-                <CardDetails sample={sample} extraFields={extraFields} />
+                <CardDetails
+                  sample={sample}
+                  hasInternalId={hasInternalId}
+                  extraFields={extraFields}
+                />
               </Link>
             </li>
           );
@@ -224,7 +246,11 @@ export function SampleList({
                 {name}
               </button>
             </h2>
-            <CardDetails sample={sample} extraFields={extraFields} />
+            <CardDetails
+              sample={sample}
+              hasInternalId={hasInternalId}
+              extraFields={extraFields}
+            />
             <ViewSampleLink igsn={igsn} />
           </li>
         );

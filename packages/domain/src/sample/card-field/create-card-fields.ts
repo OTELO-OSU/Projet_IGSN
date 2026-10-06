@@ -37,6 +37,7 @@ type CardFields = {
   PICKABLE_FIELDS: readonly (PickableField & { locked: boolean })[];
   OPTIONAL_CARD_FIELDS: readonly CardField[];
   selectedCardFields: (keys: readonly string[] | undefined) => CardField[];
+  pickedCardFieldKeys: (keys: readonly string[] | undefined) => string[];
   typeText: (sample: CardSample) => string | null;
   typeNatureText: (sample: CardSample) => string | null;
   collectorText: (sample: CardSample) => string | null;
@@ -153,7 +154,7 @@ export function createCardFields(
     get: (sample) => contextText(sample, key),
   });
 
-  const LOCKED_FIELDS: readonly PickableField[] = [
+  const LEADING_LOCKED_FIELDS: readonly PickableField[] = [
     {
       key: "name",
       label: text("card_field_name"),
@@ -164,6 +165,15 @@ export function createCardFields(
       label: text("card_field_igsn"),
       section: text("sample_section_sample"),
     },
+  ];
+
+  const INTERNAL_NUMBER_FIELD: PickableField = {
+    key: "internalNumber",
+    label: text("card_field_internal_id"),
+    section: text("sample_section_sample"),
+  };
+
+  const LOCKED_FIELDS: readonly PickableField[] = [
     {
       key: "typeNature",
       label: text("card_field_type_nature"),
@@ -219,15 +229,25 @@ export function createCardFields(
     },
   ];
 
+  const PICKABLE_FIELDS = [
+    ...LEADING_LOCKED_FIELDS.map((field) => ({ ...field, locked: true })),
+    { ...INTERNAL_NUMBER_FIELD, locked: false },
+    ...LOCKED_FIELDS.map((field) => ({ ...field, locked: true })),
+    ...OPTIONAL_CARD_FIELDS.map((field) => ({ ...field, locked: false })),
+  ];
+
   return {
-    PICKABLE_FIELDS: [
-      ...LOCKED_FIELDS.map((field) => ({ ...field, locked: true })),
-      ...OPTIONAL_CARD_FIELDS.map((field) => ({ ...field, locked: false })),
-    ],
+    PICKABLE_FIELDS,
     OPTIONAL_CARD_FIELDS,
     selectedCardFields: (keys) => {
       const picked = new Set(keys ?? []);
       return OPTIONAL_CARD_FIELDS.filter((field) => picked.has(field.key));
+    },
+    pickedCardFieldKeys: (keys) => {
+      const picked = new Set(keys ?? []);
+      return PICKABLE_FIELDS.filter(
+        (field) => !field.locked && picked.has(field.key),
+      ).map((field) => field.key);
     },
     typeText,
     typeNatureText,

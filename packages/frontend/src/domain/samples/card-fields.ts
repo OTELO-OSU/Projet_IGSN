@@ -10,6 +10,7 @@ export type { CardSample } from "@projet-igsn/domain/sample/card-field/create-ca
 export const {
   PICKABLE_FIELDS,
   selectedCardFields,
+  pickedCardFieldKeys,
   typeNatureText,
   collectorText,
   materialText,

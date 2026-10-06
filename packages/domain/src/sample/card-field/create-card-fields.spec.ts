@@ -12,8 +12,13 @@ const m = Object.fromEntries(
     .map(([key, text]) => [key, () => text]),
 ) as unknown as Messages;
 
-const { typeText, materialText, formatNumericAge, selectedCardFields } =
-  createCardFields(m, () => "en");
+const {
+  typeText,
+  materialText,
+  formatNumericAge,
+  selectedCardFields,
+  pickedCardFieldKeys,
+} = createCardFields(m, () => "en");
 
 const sample: CardSample = {
   igsn: null,
@@ -73,5 +78,24 @@ describe("selectedCardFields", () => {
         "collectionMethod",
       ]).map((field) => field.key),
     ).toEqual(["collectionMethod", "numericAge"]);
+  });
+});
+
+describe("pickedCardFieldKeys", () => {
+  it("should keep the internal id and the optional keys once, in registry order, dropping unknown and locked keys", () => {
+    expect(
+      pickedCardFieldKeys([
+        "numericAge",
+        "unknown",
+        "igsn",
+        "internalNumber",
+        "collectionMethod",
+        "numericAge",
+      ]),
+    ).toEqual(["internalNumber", "collectionMethod", "numericAge"]);
+  });
+
+  it("should give no key for no keys", () => {
+    expect(pickedCardFieldKeys(undefined)).toEqual([]);
   });
 });

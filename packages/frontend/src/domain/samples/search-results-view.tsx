@@ -10,7 +10,7 @@ import { PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
 
 import {
   PICKABLE_FIELDS,
-  selectedCardFields,
+  pickedCardFieldKeys,
 } from "#/domain/samples/card-fields.ts";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
 import { m } from "#/paraglide/messages.js";
@@ -41,9 +41,7 @@ export function CardFieldPicker({
         locked: field.locked,
       }))}
       selected={fields ?? []}
-      onSelectedChange={(next) =>
-        onFieldsChange(selectedCardFields(next).map((field) => field.key))
-      }
+      onSelectedChange={(next) => onFieldsChange(pickedCardFieldKeys(next))}
       triggerLabel={m.card_fields_add()}
       triggerVariant="ghost"
       legend={m.card_fields_legend()}

@@ -54,14 +54,52 @@ describe("SampleList", () => {
       .toBeInTheDocument();
   });
 
-  it("should show the internal id beside the igsn when the sample has one", async () => {
-    const screen = await renderSampleList([sampleItem({ internalNumber: 42 })]);
+  describe.each([
+    {
+      variant: "grid",
+      render: (sample: CardSample, fields?: string[]) =>
+        renderSampleList([sample], fields),
+      card: (screen: Awaited<ReturnType<typeof renderSampleList>>) =>
+        screen.getByRole("link", { name: /Basalt 42/ }),
+    },
+    {
+      variant: "map list",
+      render: (sample: CardSample, fields?: string[]) =>
+        renderWithRouter(
+          <SampleList
+            samples={[sample]}
+            fields={fields}
+            onLocateSample={vi.fn()}
+          />,
+          ["/samples/$igsn"],
+        ),
+      card: (screen: Awaited<ReturnType<typeof renderSampleList>>) =>
+        screen.getByRole("listitem"),
+    },
+  ])("in the $variant", ({ render, card }) => {
+    it.each([
+      ["hide the internal id by default", 42, undefined, "Powder"],
+      [
+        "show the picked internal id on its own line under the igsn",
+        42,
+        ["internalNumber"],
+        "sample-42",
+      ],
+      [
+        "show no internal id when the sample has none",
+        null,
+        ["internalNumber"],
+        "Powder",
+      ],
+    ])("should %s", async (_case, internalNumber, fields, lineAfterIgsn) => {
+      const screen = await render(sampleItem({ internalNumber }), fields);
 
-    await expect
-      .element(
-        screen.getByRole("link", { name: /Basalt 42/ }).getByText("sample-42"),
-      )
-      .toBeInTheDocument();
+      await expect.element(card(screen)).toBeInTheDocument();
+      expect(cardLines(card(screen).element()).slice(1, 3)).toEqual([
+        "0123456789ABCDEFGHJKMNPQRS",
+        lineAfterIgsn,
+      ]);
+    });
   });
 
   it("should show the fixed card fields in the designed order", async () => {
