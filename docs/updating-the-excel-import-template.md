@@ -110,7 +110,7 @@ Hidden behind a sibling in the form? Add the same rule here, calling the same do
 },
 ```
 
-A `condition` greys the cell and adds the sentence to the prompt. It keeps the column out of the required set. A pre-fill that rules it out drops the column. A `prompt` alone adds the sentence. `values` are labels, never codes. The schema stays the real guard: a value it drops is reported as `not_applicable`.
+A `condition` greys the cell and adds the sentence to the prompt. It keeps the column out of the required set. A pre-fill that rules it out drops the column. A `prompt` alone adds the sentence. `values` are labels. The schema stays the real guard: a value it drops is reported as `not_applicable`.
 
 ### 5. Fixtures, when the field is required
 
@@ -205,11 +205,11 @@ export const COLUMN_GROUPS = [
 ] as const;
 ```
 
-`group` is the row-1 header, merged over contiguous runs. Keep a group's columns adjacent or Excel shows it twice. Groups mirror the form tabs on purpose. Move a column by moving its line into another `grouped()` call. Rename or add a group in `COLUMN_GROUPS`, and in `TEMPLATE_SECTIONS` when a download checkbox drops it. Order is array order. Uploads match by name, so reordering costs nothing.
+`group` is the row-1 header, merged over contiguous runs. Keep a group's columns adjacent or Excel shows it twice. Groups mirror the form tabs on purpose. Move a column by moving its line into another `grouped()` call. Rename or add a group in `COLUMN_GROUPS`, and in `TEMPLATE_SECTIONS` when a download checkbox drops it. Order is array order. Uploads match by name, so reordering is free.
 
 ## Make a column optional in a customized template
 
-The download dialog lets a researcher untick what their samples never need. The unit is the group:
+The download dialog lets a researcher untick what their samples do without. The unit is the group:
 
 ```ts
 // packages/domain/src/sample/import/import-validator.ts
