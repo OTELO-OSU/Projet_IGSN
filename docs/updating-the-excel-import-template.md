@@ -12,7 +12,7 @@ This guide is about the Excel bulk import of samples. A researcher downloads an 
 
 ## Mental model
 
-Everything lives in `packages/api/src/sample/import-template/` (download, upload) and `packages/api/src/sample/bulk-edit/` (export, re-import). `packages/domain/src/sample/import/` holds only what `admin` shares: header row, required marker, sheet names, issue codes, section keys. `admin` uploads the file and shows the issues. It never parses the workbook (ADR [0051](adr/0051-excel-import-label-contract.md)).
+Everything lives in `packages/api/src/sample/import-template/` (download, upload) and `packages/api/src/sample/bulk-edit/` (export, re-import). `packages/domain/src/sample/import/` holds only what `admin` shares: header row, required marker, sheet names, issue codes, section keys. `admin` uploads the file and shows the issues (ADR [0051](adr/0051-excel-import-label-contract.md)).
 
 The registry reads like the sheet it builds:
 
@@ -55,7 +55,7 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
 2. `readRows` reads the rows and joins each child row to its sample by `Sample #`.
 3. `buildSampleInputs` turns the cells into one `createSampleSchema` input per sample.
 4. `validateSamples` checks each input against `publishedSampleSchema`.
-5. Any issue answers 422, and nothing is imported. A clean file queues every sample as `publishing` (ADR [0052](adr/0052-async-import-publication-via-publishing-status.md)).
+5. Any issue answers 422 for the whole file. A clean file queues every sample as `publishing` (ADR [0052](adr/0052-async-import-publication-via-publishing-status.md)).
 
 ```json
 {
@@ -69,7 +69,7 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
 
 The admin report translates `code` through [import-issue-label.ts](../packages/admin/src/samples/import-issue-label.ts).
 
-**The contract** (ADR 0051): headers match by name, never by position. No version check, so every downloaded template stays uploadable. A label or its raw code is accepted. The server alone validates.
+**The contract** (ADR 0051): headers match by name. Every downloaded template stays uploadable, whatever its age. A label or its raw code is accepted. The server alone validates.
 
 ## Add a column
 
@@ -88,9 +88,9 @@ Follow the form guide. Once the field is in `createSampleSchema`, the coverage t
 ]),
 ```
 
-The header is English, unique on its sheet, never a schema path, never with a dot. The spec checks all three. Its place in the array is its place in Excel. `block` is only for a dropdown. A yes/no field uses `"yes_no"`.
+The header is English, human and unique on its sheet. The spec checks it. Its place in the array is its place in Excel. `block` is only for a dropdown. A yes/no field uses `"yes_no"`.
 
-### 3. Nothing to declare for type, marker or required check
+### 3. Type, marker and required check derive
 
 A number column parses `Number(cell)`. A text column takes the text. A `yes_no` block gives a boolean. A path in `PUBLISH_BLOCKER_PATH` gets its "\*" and joins the required columns. A date cell is written as `YYYY-MM-DD`. It keeps the minute when a sibling `precision` column says "Hour and minute" (`isHourPrecision` in [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts)).
 
@@ -110,7 +110,7 @@ Hidden behind a sibling in the form? Add the same rule here, calling the same do
 },
 ```
 
-A `condition` greys the cell and adds the sentence to the prompt. It keeps the column out of the required set. A template whose pre-fill can never satisfy it drops the column. A `prompt` alone adds the sentence. `values` are labels, never codes. The schema stays the real guard: a value it drops is reported as `not_applicable`.
+A `condition` greys the cell and adds the sentence to the prompt. It keeps the column out of the required set. A pre-fill that rules it out drops the column. A `prompt` alone adds the sentence. `values` are labels, never codes. The schema stays the real guard: a value it drops is reported as `not_applicable`.
 
 ### 5. Fixtures, when the field is required
 
@@ -124,7 +124,7 @@ Export derives from `SAMPLE_COLUMNS`. A cell frozen by publication is greyed and
 
 ## Add a one-to-many relation (a child sheet)
 
-An array field lives on its own tab, never as repeated columns. `COLUMN_KINDS` gives its leaves an `arrayPrefix`. `withChildRow` folds one row's fields into one element of the array and remembers the row, so an issue points back at it.
+An array field lives on its own tab. `COLUMN_KINDS` gives its leaves an `arrayPrefix`. `withChildRow` folds one row's fields into one element of the array and remembers the row, so an issue points back at it.
 
 A single-value array is one call:
 
@@ -169,7 +169,7 @@ Bulk edit keeps the stored values of an absent tab, and `mergeStoredSample` repl
 
 ## Add a controlled vocabulary
 
-A new value in an existing vocabulary needs nothing here. The blocks read the domain constants.
+The blocks read the domain constants, so a new value in an existing vocabulary arrives on its own.
 
 A new flat vocabulary is one block, named by the column's `block`:
 
@@ -178,7 +178,7 @@ A new flat vocabulary is one block, named by the column's `block`:
 flat("nature", "Nature", NATURES, labels.natureLabel),
 ```
 
-`labels` is `createSampleLabels` bound to the English catalog. Add the label function in `domain`, never a map in `api` ([i18n.md](../.claude/rules/i18n.md)). Labels must be unique within a block, since the parser turns them back into codes ([resolve-label.ts](../packages/api/src/sample/import-template/resolve-label.ts)).
+`labels` is `createSampleLabels` bound to the English catalog. Add the label function in `domain` ([i18n.md](../.claude/rules/i18n.md)). Labels must be unique within a block, since the parser turns them back into codes ([resolve-label.ts](../packages/api/src/sample/import-template/resolve-label.ts)).
 
 A hierarchy pairs a `tree` of columns with a `hierarchy` of blocks:
 
@@ -234,11 +234,11 @@ const SECTION_LABELS: Record<TemplateSectionKey, () => string> = {
 
 A flag sent `false` drops the group's columns and any tab left with only key columns. Upload reads the headers that are there.
 
-1. A column in `REQUIRED_SAMPLE_COLUMNS` cannot be optional: its absence refuses the file. Take it out first, with a condition or an `IMPORT_DEFAULTS` default.
+1. A column in `REQUIRED_SAMPLE_COLUMNS` refuses the file by its absence. Take it out of that set first, with a condition or an `IMPORT_DEFAULTS` default.
 2. Move the column into a group that has a checkbox.
-3. Or add a checkbox to its group: the key, the `TEMPLATE_SECTIONS` entry, the dialog label and its `ALL_SECTIONS` default. The records are exhaustive, so the build names what you miss. The hook and the api validator iterate the keys and need nothing.
+3. Or add a checkbox to its group: the key, the `TEMPLATE_SECTIONS` entry, the dialog label and its `ALL_SECTIONS` default. The records are exhaustive, so the build names what you miss.
 4. One column alone has one precedent, `subSamples`: a flag on `TemplateCustomization` and a `path` filter in `build()` ([workbook.ts](../packages/api/src/sample/import-template/workbook.ts)). Prefer a group.
-5. A column whose condition the pre-fill can never satisfy is already dropped (`droppedColumnsOf` in [customization.ts](../packages/api/src/sample/import-template/customization.ts)).
+5. A column the pre-fill rules out is already dropped (`droppedColumnsOf` in [customization.ts](../packages/api/src/sample/import-template/customization.ts)).
 
 Test: one more case in the `it.each` over `TemplateSectionKey` in [workbook.spec.ts](../packages/api/src/sample/import-template/workbook.spec.ts).
 
@@ -257,7 +257,7 @@ const EXCLUDED = [
 
 Then remove its `CONDITIONAL_FIELDS` entries, its unused block, its `IMPORT_DEFAULTS` entry, its `CLEAN_SAMPLE` cell and any e2e header (`e2e/support/admin/template-workbook.ts`).
 
-Old files are safe. An unknown header is ignored, so a removed column never refuses a stale template. Bulk edit keeps the stored value of an absent column.
+Old files stay valid, since an unknown header is ignored. Bulk edit keeps the stored value of an absent column.
 
 **Renaming a header is a removal plus an addition** for every file already downloaded. On a required column that is `missing_column` everywhere. Avoid it, or announce it.
 
@@ -291,7 +291,7 @@ expect(unmapped).toEqual([]);
 Three rules keep the faces aligned:
 
 - **One condition, one helper.** The form, `CONDITIONAL_FIELDS` and the schema's `checkSample` call the same `domain` predicate.
-- **Never hand-list a requirement.** Template and form both read `samplePublishRequirements`.
+- **Requirements come from one place.** Template and form both read `samplePublishRequirements`.
 - **Labels come from `domain` once.** Only the column headers are English strings owned by `columns.ts`.
 
 New-field checklist:
@@ -306,7 +306,7 @@ New-field checklist:
 
 ## Other maintenance points
 
-- **Templates live long.** `TEMPLATE_VERSION` goes to Read me B1 and is never checked. A new required column breaks every file downloaded before it.
+- **Templates live long.** `TEMPLATE_VERSION` goes to Read me B1 as information. A new required column breaks every file downloaded before it.
 - **Customization** is one JSON cell, Read me `C1`: `{ provenanceStatus, materialPath, manualGroupLabel }`. A new pre-fill kind touches `prefillOf`, `possibleLabelsOf` and `withoutPrefilledRows`. A row equal to its pre-fills is not a sample.
 - **Defaults.** `IMPORT_DEFAULTS` pre-fills the cell and is applied when the column is absent.
 - **Issue codes.** A new one is `importIssueCodeSchema` in `domain`, `IMPORT_ISSUE_LABELS` in `admin` (exhaustive) and both catalogs.
