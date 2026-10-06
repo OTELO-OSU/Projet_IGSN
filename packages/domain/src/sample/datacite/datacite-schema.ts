@@ -140,8 +140,7 @@ export type DataCiteGeoLocation = z.infer<typeof geoLocationSchema>;
 const fundingReferenceSchema = z.object({
   funderName: z
     .string()
-    .meta({ description: "Name of the research programme funded." })
-    .optional(),
+    .meta({ description: "Name of the funding organization." }),
   funderIdentifier: z.string().meta({ description: "ROR URI of the funder." }),
   funderIdentifierType: z
     .literal("ROR")
