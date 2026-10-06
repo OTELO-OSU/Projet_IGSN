@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Formalizes the 2026-07-03 audit of the auth stack against the GT-SSO client recommendations, implemented in the same change set. Amended 2026-07-30 (audience validation), 2026-09-07 (frontend sign-in) and 2026-09-08 (cross-app sign-out).
+Accepted. Formalizes the 2026-07-03 audit of the auth stack against the GT-SSO client recommendations, implemented in the same change set. Amended 2026-07-30 (audience validation), 2026-09-07 (frontend sign-in), 2026-09-08 (cross-app sign-out) and 2026-10-06 (admin sign-out to the SSO login form).
 
 ## Context
 
@@ -28,7 +28,7 @@ Gaps found: no dedicated audience and no `aud` check, a local realm laxer than p
 
 **`AuthGate` starts `signinRedirect` itself on load** (2026-08-13), instead of waiting for a click. An invitation mail opens a tab whose user store is empty even beside a live session in another tab, so the visitor saw the welcome screen and then landed on the sample list instead of the invited sample. A live session now round-trips silently and an expired one still reaches the login page. Every `signinRedirect` sends `url_state` set to the visited path; `/auth/callback` reads it off `useAuth().user.url_state` and navigates there instead of always to `/`, `safeReturnPath` keeping it app-local and rejecting the callback route itself and anything off-origin.
 
-Exception, right after an explicit sign-out: redirecting unconditionally would bounce a user `IdentityGate` rejects for an unsupported identity provider straight back into the same rejected login with no way out. A per-tab `sessionStorage` flag, set on sign-out and cleared on the next mount, skips the auto-redirect for that one render so the welcome screen shows instead.
+Exception, a per-tab `sessionStorage` flag, cleared on the next mount, skips the auto-redirect for that one render so the welcome screen shows instead. Only the frontend sign-out and the cross-tab broadcast set it. An admin sign-out (amended 2026-10-06) only holds the leaving tab in component state, so it does not start `signinRedirect` during `signoutRedirect`, and the tab returning from `end_session` auto-starts `signinRedirect` and lands on the SSO login form, `safeReturnPath` then sending the user to `/`. The earlier worry, a user `IdentityGate` rejected for an unsupported identity provider bounced back into the same login, no longer holds: after `end_session` Keycloak shows its login form with every provider (local credentials, eduGAIN, ORCID), so that user can pick another one.
 
 **Guards built here, attached per route as endpoints land.** `requireRole(role)` reads `realm_access.roles` from the verified token and 403s otherwise ([REQ-TOKEN-04](#gt-sso-requirements)); ADR 0023 records why it stays unused. `requireActiveSession` forwards the presented bearer token to `/userinfo` for critical actions ([REQ-CRIT-01](#gt-sso-requirements)), introspection needing a confidential client we deliberately do not have; its URL derives from `OIDC_ISSUER` with an `OIDC_USERINFO_URI` override, following the JWKS pattern. Both attachment obligations are recorded in [security-backend.md](../../.claude/rules/security-backend.md).
 
