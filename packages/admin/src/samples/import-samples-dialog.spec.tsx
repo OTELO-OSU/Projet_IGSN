@@ -637,8 +637,10 @@ describe("ImportSamplesDialog", () => {
       await importHeld;
       return HttpResponse.json({ count: 1 });
     });
-    const { screen, dialog, importButton, addDocuments } =
-      await dropWorkbookNaming(["report.pdf", "photo.jpg"]);
+    const { screen, importButton, addDocuments } = await dropWorkbookNaming([
+      "report.pdf",
+      "photo.jpg",
+    ]);
     await addDocuments([
       attachmentFile("report.pdf"),
       new File(["photo content"], "photo.jpg", { type: "image/jpeg" }),
@@ -650,7 +652,6 @@ describe("ImportSamplesDialog", () => {
     const bar = upload.getByRole("progressbar", {
       name: "Uploading the documents",
     });
-    await expect.element(dialog).not.toBeInTheDocument();
     await expect.element(bar).toHaveAttribute("max", "7");
     await expect
       .element(
@@ -674,7 +675,7 @@ describe("ImportSamplesDialog", () => {
     await expect.element(upload).not.toBeInTheDocument();
   });
 
-  it("should reopen the import dialog with its report after a 422, a resubmit posting the same staged ids without uploading again", async () => {
+  it("should show the report in the import dialog after a 422, a resubmit posting the same staged ids without uploading again", async () => {
     const tus = fakeTus();
     const posted = recordImports(invalidImport);
     const { dialog, importButton, addDocuments, statuses } =
