@@ -1,5 +1,7 @@
 import {
   listSamplesResponseSchema,
+  MAP_LIST_SIZE,
+  PAGE_SIZES,
   sampleFacetCountsResponseSchema,
   sampleResponseSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
@@ -13,6 +15,8 @@ import { provisionUser } from "../tests/provision-user.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
 
 const LONGEST_TOKEN = "⑽.😀".repeat(8);
+
+const MAX_PAGE_SIZE = Math.max(...PAGE_SIZES);
 
 const authHeader = { Authorization: "Bearer test-token" };
 
@@ -114,6 +118,30 @@ describe("public sample routes", () => {
       data: [{ name: "Grès de Fontainebleau", status: "published" }],
       meta: { total: 1 },
     });
+  });
+
+  pgTest("should serve a page of the map list size", async ({ db }) => {
+    // Arrange
+    await db
+      .insertInto("sample")
+      .values(
+        Array.from({ length: MAX_PAGE_SIZE + 1 }, (_, index) => ({
+          id: crypto.randomUUID(),
+          name: `Sample ${index}`,
+          igsn: `CNRS${String(index).padStart(10, "0")}`,
+          material: "rock_and_sediment.sediment.exogenous_detritic.clay",
+          status: "published" as const,
+        })),
+      )
+      .execute();
+    const client = testClient(createApp(db).app);
+    // Act
+    const res = await client.samples.$get({
+      query: { page: "1", perPage: String(MAP_LIST_SIZE) },
+    });
+    // Assert
+    const { data } = listSamplesResponseSchema.parse(await res.json());
+    expect(data).toHaveLength(MAX_PAGE_SIZE + 1);
   });
 
   pgTest(

@@ -1,84 +1,80 @@
-import { Loader2Icon } from "lucide-react";
-import { type ReactNode, useEffect, useRef } from "react";
+import { MAP_LIST_SIZE } from "@projet-igsn/domain/sample/sample-validator";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import type { SearchFilters } from "#/domain/samples/client/list-samples.ts";
 import type { HoveredSample } from "#/domain/samples/results-map.tsx";
 
-import { useListSamplesInfinite } from "#/domain/samples/hook/list-samples-infinite.ts";
+import { type CardSample } from "#/domain/samples/card-fields.ts";
+import { listSamplesQueryOptions } from "#/domain/samples/hook/list-samples.ts";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
 import { searchEmptyMessage } from "#/domain/samples/search-empty-message.ts";
-import { ResultsCount } from "#/domain/samples/search-results-view.tsx";
+import {
+  CardFieldPicker,
+  ResultsCount,
+} from "#/domain/samples/search-results-view.tsx";
 import { useCardFields } from "#/domain/samples/use-card-fields.ts";
 import { m } from "#/paraglide/messages.js";
 
+function toMapSample(
+  sample: CardSample | undefined,
+): HoveredSample | undefined {
+  const position = sample?.location?.position;
+  return sample?.igsn && position ? { igsn: sample.igsn, position } : undefined;
+}
+
 export function ResultsMapList({
   filters,
+  selectedIgsn,
   onHoverSample,
-  actions,
+  onLocateSample,
 }: {
   filters: SearchFilters;
-  actions: ReactNode;
+  selectedIgsn?: string;
   onHoverSample: (sample: HoveredSample | undefined) => void;
+  onLocateSample: (sample: HoveredSample) => void;
 }) {
-  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useListSamplesInfinite(filters);
-  const { fields } = useCardFields();
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const total = data?.pages[0]?.total ?? 0;
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || !hasNextPage) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry?.isIntersecting && !isFetchingNextPage) void fetchNextPage();
-    });
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const { data } = useQuery({
+    ...listSamplesQueryOptions({
+      ...filters,
+      page: 1,
+      perPage: MAP_LIST_SIZE,
+    }),
+    placeholderData: keepPreviousData,
+  });
+  const { fields, saveFields } = useCardFields();
 
   if (!data) return null;
-  const samples = data.pages.flatMap((page) => page.data);
-  if (total === 0) {
+  if (data.total === 0) {
     return (
-      <div className="flex flex-col items-center gap-4">
-        {actions}
-        <p role="status" className="text-muted-foreground text-center">
-          {searchEmptyMessage(filters)}
-        </p>
-      </div>
+      <p role="status" className="text-muted-foreground text-center">
+        {searchEmptyMessage(filters)}
+      </p>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <ResultsCount total={total} />
-        {actions}
+        <ResultsCount total={data.total} />
+        <CardFieldPicker fields={fields} onFieldsChange={saveFields} />
       </div>
+      {data.total > MAP_LIST_SIZE ? (
+        <p role="status" className="text-muted-foreground">
+          {m.results_map_capped({ count: MAP_LIST_SIZE })}
+        </p>
+      ) : null}
       <SampleList
-        samples={samples}
+        samples={data.data}
         fields={fields}
         query={filters.search}
-        onHoverSample={(sample) => {
-          const position = sample?.location?.position;
-          onHoverSample(
-            sample?.igsn && position
-              ? { igsn: sample.igsn, position }
-              : undefined,
-          );
+        selectedIgsn={selectedIgsn}
+        onHoverSample={(sample) => onHoverSample(toMapSample(sample))}
+        onLocateSample={(sample) => {
+          const located = toMapSample(sample);
+          if (located) onLocateSample(located);
         }}
         singleColumn
       />
-      <div ref={sentinelRef} aria-hidden="true" className="h-px" />
-      {isFetchingNextPage ? (
-        <p
-          role="status"
-          className="text-muted-foreground flex items-center justify-center gap-2 pb-4"
-        >
-          <Loader2Icon aria-hidden="true" className="size-4 animate-spin" />
-          {m.results_map_loading_more()}
-        </p>
-      ) : null}
     </div>
   );
 }

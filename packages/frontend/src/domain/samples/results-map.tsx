@@ -11,6 +11,7 @@ import {
   Polyline,
   Popup,
   Rectangle,
+  Tooltip,
   useMap,
   useMapEvents,
 } from "react-leaflet";
@@ -18,7 +19,6 @@ import {
 import type { SearchFilters } from "#/domain/samples/client/list-samples.ts";
 
 import { useListSamples } from "#/domain/samples/hook/list-samples.ts";
-import { materialPathLabel } from "#/domain/samples/sample-labels.ts";
 import {
   OsmTileLayer,
   WORLD_BOUNDS,
@@ -27,7 +27,11 @@ import {
   singleBoundsOrWorld,
   toBoundsList,
 } from "#/domain/samples/search-location-map.tsx";
-import { SplitMarker, splitOrigin } from "#/domain/samples/split-marker.tsx";
+import {
+  SplitMarker,
+  prefersReducedMotion,
+  splitOrigin,
+} from "#/domain/samples/split-marker.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export type MapViewport = { bbox: string; zoom: number };
@@ -202,23 +206,6 @@ const clusterBbox = ({ west, south, east, north }: Bbox) =>
     L.latLng(north + CLUSTER_PAD_DEGREES, east + CLUSTER_PAD_DEGREES),
   );
 
-function SamplePopup({
-  sample,
-}: {
-  sample: NonNullable<SampleMapCluster["sample"]>;
-}) {
-  return (
-    <Popup>
-      <p className="font-mono text-xs break-all">{sample.igsn}</p>
-      <p className="font-semibold">{sample.name}</p>
-      {sample.material ? <p>{materialPathLabel(sample.material)}</p> : null}
-      <Link to="/samples/$igsn" params={{ igsn: sample.igsn }}>
-        {m.results_map_view_sample()}
-      </Link>
-    </Popup>
-  );
-}
-
 function ClusterSamples({
   filters,
   extent,
@@ -256,13 +243,13 @@ function Clusters({
   highlighted,
   filters,
   onViewportChange,
-  onUserMove,
+  onSelectSample,
 }: {
   clusters: SampleMapCluster[];
   highlighted?: HoveredSample;
   filters: SearchFilters;
   onViewportChange: (viewport: MapViewport) => void;
-  onUserMove: (bbox: string) => void;
+  onSelectSample: (sample?: HoveredSample) => void;
 }) {
   const map = useMap();
   const [zoom, setZoom] = useState(() => map.getZoom());
@@ -278,14 +265,16 @@ function Clusters({
   const moveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(moveTimer.current), []);
   useMapEvents({
+    click() {
+      onSelectSample();
+    },
     moveend() {
       setZoom(map.getZoom());
       clearTimeout(moveTimer.current);
-      moveTimer.current = setTimeout(() => {
-        const viewport = viewportOf(map);
-        onViewportChange(viewport);
-        onUserMove(viewport.bbox);
-      }, MOVE_DEBOUNCE_MS);
+      moveTimer.current = setTimeout(
+        () => onViewportChange(viewportOf(map)),
+        MOVE_DEBOUNCE_MS,
+      );
     },
   });
   useEffect(() => onViewportChange(viewportOf(map)), [map]);
@@ -301,6 +290,14 @@ function Clusters({
         const splitFrom = () => splitOrigin(previous, cluster);
         if (sample) {
           const isHighlighted = sample.igsn === highlighted?.igsn;
+          const selection = {
+            igsn: sample.igsn,
+            position: sample.position ?? {
+              type: "point" as const,
+              latitude,
+              longitude,
+            },
+          };
           return (
             <Fragment key={sample.igsn}>
               {sample.position ? (
@@ -312,11 +309,26 @@ function Clusters({
               <SplitMarker
                 from={splitFrom}
                 position={[latitude, longitude]}
-                title={sample.name}
                 icon={isHighlighted ? HIGHLIGHTED_ICON : SAMPLE_ICON}
                 zIndexOffset={isHighlighted ? 1000 : 0}
+                eventHandlers={{
+                  add: ({ target }) =>
+                    target
+                      .getElement()
+                      ?.setAttribute("aria-label", sample.name),
+                  click: () => onSelectSample(selection),
+                  keypress: ({ originalEvent }) => {
+                    if (originalEvent.key === "Enter")
+                      onSelectSample(selection);
+                  },
+                }}
               >
-                <SamplePopup sample={sample} />
+                <Tooltip>
+                  <p className="text-base font-semibold">{sample.name}</p>
+                  <p className="text-muted-foreground font-mono text-xs">
+                    {sample.igsn}
+                  </p>
+                </Tooltip>
               </SplitMarker>
             </Fragment>
           );
@@ -333,7 +345,12 @@ function Clusters({
             eventHandlers={
               atMaxZoom
                 ? undefined
-                : { click: () => map.fitBounds(extentBounds(extent)) }
+                : {
+                    click: () =>
+                      map.flyToBounds(extentBounds(extent), {
+                        animate: !prefersReducedMotion(),
+                      }),
+                  }
             }
           >
             {atMaxZoom ? (
@@ -350,16 +367,52 @@ function Clusters({
   );
 }
 
+function FocusSample({
+  sample,
+  clusters,
+}: {
+  sample?: HoveredSample;
+  clusters: SampleMapCluster[];
+}) {
+  const map = useMap();
+  const pending = useRef<HoveredSample>(undefined);
+  useEffect(() => {
+    pending.current = sample;
+  }, [sample]);
+  useEffect(() => {
+    const target = pending.current;
+    if (!target) return;
+    const point = highlightPoint(target.position, L.latLngBounds(WORLD_BOUNDS));
+    const animate = !prefersReducedMotion();
+    const cluster =
+      clusters[highlightedClusterIndex(clusters, target, map.getBounds())];
+    const zoom = map.getZoom();
+    if (cluster && zoom < map.getMaxZoom()) {
+      map.flyTo(
+        point,
+        Math.max(map.getBoundsZoom(extentBounds(cluster.extent)), zoom + 1),
+        { animate },
+      );
+      return;
+    }
+    pending.current = undefined;
+    map.panTo(point, { animate });
+  }, [map, sample, clusters]);
+  return null;
+}
+
 export function ResultsMap({
   fitTo,
+  centered,
   ...layers
 }: {
   clusters: SampleMapCluster[];
   fitTo: Bbox | null;
   highlighted?: HoveredSample;
+  centered?: HoveredSample;
   filters: SearchFilters;
   onViewportChange: (viewport: MapViewport) => void;
-  onUserMove: (bbox: string) => void;
+  onSelectSample: (sample?: HoveredSample) => void;
 }) {
   return (
     <MapContainer
@@ -372,6 +425,7 @@ export function ResultsMap({
     >
       <OsmTileLayer />
       <Clusters {...layers} />
+      <FocusSample sample={centered} clusters={layers.clusters} />
     </MapContainer>
   );
 }

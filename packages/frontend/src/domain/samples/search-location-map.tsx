@@ -9,6 +9,7 @@ import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
 import {
   type LatLng,
   type LatLngBoundsExpression,
+  type LatLngBoundsLiteral,
   type LatLngTuple,
   type PathOptions,
   type Tooltip as LeafletTooltip,
@@ -28,7 +29,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 
-export const WORLD_BOUNDS: LatLngBoundsExpression = [
+export const WORLD_BOUNDS: LatLngBoundsLiteral = [
   [-90, -180],
   [90, 180],
 ];

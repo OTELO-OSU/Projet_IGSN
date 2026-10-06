@@ -40,6 +40,13 @@ describe("pageSizeSchema", () => {
       expect(pageSizeSchema(50).parse(size)).toBe(50);
     },
   );
+
+  it.each([
+    [500, 500],
+    [25, 100],
+  ])("should keep %s only when the given sizes allow it", (size, expected) => {
+    expect(pageSizeSchema(100, [100, 500]).parse(size)).toBe(expected);
+  });
 });
 
 describe("listSamplesQuerySchema", () => {

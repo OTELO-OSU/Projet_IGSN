@@ -15,6 +15,9 @@ export function resultsMapPage(page: Page) {
       response.url().includes("/api/samples/map"),
     );
 
+  const card = (name: string) =>
+    dialog.getByRole("listitem").filter({ hasText: name });
+
   async function markerNames(): Promise<string[]> {
     const names = await map
       .getByRole("button")
@@ -70,20 +73,36 @@ export function resultsMapPage(page: Page) {
           exact: true,
         }),
       ).toBeVisible(),
-    expectListed: (name: string) =>
-      expect(dialog.getByRole("link", { name })).toBeVisible(),
     expectMarkedSampleCount: (count: number) =>
       expect.poll(markedSampleCount).toBe(count),
     expectMarker: (name: string) =>
       expect(map.getByRole("button", { name, exact: true })).toBeVisible(),
     clickFirstCluster: () =>
       map.getByRole("button", { name: CLUSTER_NAME }).first().click(),
-    openSample: async (name: string) => {
-      await map.getByRole("button", { name, exact: true }).click();
-      await map.getByRole("link", { name: "View sample" }).click();
+    expectNothingListed: () =>
+      expect(dialog.getByText("No samples match your search.")).toBeVisible(),
+    expectMarkerTooltip: async (name: string, igsn: string) => {
+      await map.getByRole("button", { name, exact: true }).hover();
+      await expect(map.getByRole("tooltip")).toHaveText(
+        new RegExp(`^${name}\\s*${igsn}$`),
+      );
     },
-    stopSearchingWhileMoving: () =>
-      dialog.getByRole("switch", { name: "Search while moving map" }).click(),
+    selectMarker: (name: string) =>
+      map.getByRole("button", { name, exact: true }).click(),
+    expectSelected: (name: string) =>
+      expect(card(name).getByRole("button", { name })).toHaveAttribute(
+        "aria-current",
+        "true",
+      ),
+    openListedInNewTab: async (name: string): Promise<Page> => {
+      const [popup] = await Promise.all([
+        page.waitForEvent("popup"),
+        card(name)
+          .getByRole("link", { name: "View sample (opens in a new tab)" })
+          .click(),
+      ]);
+      return popup;
+    },
     panRight: () => drag(150),
     expectLocationSearchUntouched: () =>
       expect(page).not.toHaveURL(/[?&]bbox=/),

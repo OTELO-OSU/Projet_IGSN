@@ -15,7 +15,11 @@ import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   checkDuplicatesBodySchema,
   contactSampleOwnerBodySchema,
+  DEFAULT_PAGE_SIZE,
   listSamplesQuerySchema,
+  MAP_LIST_SIZE,
+  PAGE_SIZES,
+  pageSizeSchema,
   publishStatusSchema,
   requestSampleDeletionBodySchema,
   searchEligibleParentsQuerySchema,
@@ -146,12 +150,16 @@ export const validateListQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
-const publicListSamplesQuerySchema = listSamplesQuerySchema.omit({
-  sort: true,
-  order: true,
-  existenceStatus: true,
-  availabilityStatus: true,
-});
+const publicListSamplesQuerySchema = listSamplesQuerySchema
+  .omit({
+    sort: true,
+    order: true,
+    existenceStatus: true,
+    availabilityStatus: true,
+  })
+  .extend({
+    perPage: pageSizeSchema(DEFAULT_PAGE_SIZE, [...PAGE_SIZES, MAP_LIST_SIZE]),
+  });
 
 export const validatePublicListQuery = validator("query", (value, c) => {
   const parsed = publicListSamplesQuerySchema.safeParse(value);

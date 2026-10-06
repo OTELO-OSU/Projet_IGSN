@@ -4,7 +4,6 @@ import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 
 const ASH = "material=rock_and_sediment.sediment";
-const ALL_ASH = 4;
 const LOCATED_ASH = 3;
 const EUROPEAN_ASH = 2;
 
@@ -18,7 +17,7 @@ test.describe("search results map", () => {
 
     await map.open();
 
-    await map.expectResultCount(ALL_ASH);
+    await map.expectResultCount(LOCATED_ASH);
     await map.expectMarker("Fuji Ash");
     await map.expectMarkedSampleCount(LOCATED_ASH);
   });
@@ -33,13 +32,13 @@ test.describe("search results map", () => {
     await map.expectMarkedSampleCount(2);
   });
 
-  test("a reader finds a sample without a location in the list only", async ({
+  test("a reader finds a sample without a location neither marked nor listed", async ({
     page,
   }) => {
     const map = resultsMapPage(page);
     await map.gotoOpen("q=nowhere");
 
-    await map.expectListed("Nowhere Ash");
+    await map.expectNothingListed();
     await map.expectMarkedSampleCount(0);
   });
 
@@ -50,19 +49,6 @@ test.describe("search results map", () => {
     await map.panRight();
 
     await map.expectResultCount(EUROPEAN_ASH);
-    await map.expectLocationSearchUntouched();
-  });
-
-  test("a reader moves the map without searching once they untick it", async ({
-    page,
-  }) => {
-    const map = resultsMapPage(page);
-    await map.gotoOpen(ASH);
-
-    await map.stopSearchingWhileMoving();
-    await map.panRight();
-
-    await map.expectResultCount(ALL_ASH);
     await map.expectLocationSearchUntouched();
   });
 
@@ -77,15 +63,19 @@ test.describe("search results map", () => {
     await map.expectMarker("Etna Ash");
   });
 
-  test("a reader opens a sample from its marker", async ({ page, samples }) => {
+  test("a reader selects a sample from its marker and opens it in a new tab", async ({
+    page,
+    samples,
+  }) => {
     const map = resultsMapPage(page);
+    const fuji = sampleNamed(samples, "Fuji Ash");
     await map.gotoOpen(ASH);
 
-    await map.openSample("Fuji Ash");
+    await map.expectMarkerTooltip("Fuji Ash", fuji.igsn);
+    await map.selectMarker("Fuji Ash");
+    await map.expectSelected("Fuji Ash");
+    const samplePage = await map.openListedInNewTab("Fuji Ash");
 
-    await sampleDetailPage(page).expectSample(
-      "Fuji Ash",
-      sampleNamed(samples, "Fuji Ash").igsn,
-    );
+    await sampleDetailPage(samplePage).expectSample("Fuji Ash", fuji.igsn);
   });
 });
