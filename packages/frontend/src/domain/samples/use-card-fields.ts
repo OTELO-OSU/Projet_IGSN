@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { selectedCardFields } from "#/domain/samples/card-fields.ts";
+import { pickedCardFieldKeys } from "#/domain/samples/card-fields.ts";
 
 const STORAGE_KEY = "sample-card-fields";
 
@@ -8,9 +8,7 @@ const NO_FIELDS: string[] = [];
 
 function readStoredFields(): string[] {
   const stored = localStorage.getItem(STORAGE_KEY);
-  return stored
-    ? selectedCardFields(stored.split(",")).map((field) => field.key)
-    : NO_FIELDS;
+  return stored ? pickedCardFieldKeys(stored.split(",")) : NO_FIELDS;
 }
 
 export function useCardFields(): {
