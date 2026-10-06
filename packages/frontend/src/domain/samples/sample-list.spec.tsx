@@ -235,6 +235,51 @@ describe("SampleList", () => {
       .toBeInTheDocument();
   });
 
+  it("should mark the selected sample's card as current", async () => {
+    const screen = await renderWithRouter(
+      <SampleList
+        samples={samples}
+        selectedIgsn="TVWXYZ0123456789ABCDEFGHJK"
+        onLocateSample={vi.fn()}
+      />,
+      ["/samples/$igsn"],
+    );
+
+    await expect
+      .element(screen.getByRole("button", { name: "Granite 7" }))
+      .toHaveAttribute("aria-current", "true");
+    await expect
+      .element(screen.getByRole("button", { name: "Basalt 42" }))
+      .not.toHaveAttribute("aria-current");
+  });
+
+  it("should locate a sample when its card is clicked", async () => {
+    const onLocateSample = vi.fn();
+    const screen = await renderWithRouter(
+      <SampleList samples={samples} onLocateSample={onLocateSample} />,
+      ["/samples/$igsn"],
+    );
+
+    await screen.getByRole("button", { name: "Granite 7" }).click();
+
+    expect(onLocateSample).toHaveBeenCalledWith(samples[1]);
+  });
+
+  it("should open a located card's sample in a new tab from its View sample link", async () => {
+    const screen = await renderWithRouter(
+      <SampleList samples={[sampleItem()]} onLocateSample={vi.fn()} />,
+      ["/samples/$igsn"],
+    );
+    const link = screen.getByRole("link", {
+      name: "View sample (opens in a new tab)",
+    });
+
+    await expect.element(link).toHaveAttribute("target", "_blank");
+    await expect
+      .element(link)
+      .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRS");
+  });
+
   it("should report the hovered sample, then none once the pointer leaves", async () => {
     const onHoverSample = vi.fn();
     const screen = await renderWithRouter(

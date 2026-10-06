@@ -22,7 +22,7 @@ export function splitOrigin(
   return parent && [parent.latitude, parent.longitude];
 }
 
-const prefersReducedMotion = () =>
+export const prefersReducedMotion = (): boolean =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function SplitMarker({

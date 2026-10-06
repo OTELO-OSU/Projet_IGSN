@@ -75,6 +75,7 @@ export type DuplicateConflict = z.infer<typeof duplicateConflictSchema>;
 
 export const PAGE_SIZES = [10, 25, 50] as const;
 export const DEFAULT_PAGE_SIZE = 25;
+export const MAP_LIST_SIZE = 500;
 
 export const bboxSchema = z.string().transform((value, ctx) => {
   const parts = value.split(",").map(Number);
@@ -121,14 +122,15 @@ export const searchBboxSchema = bboxSchema.refine(
 
 export const pageSchema = z.coerce.number().int().min(1).default(1).catch(1);
 
-export const pageSizeSchema = (fallback: (typeof PAGE_SIZES)[number]) =>
+export const pageSizeSchema = (
+  fallback: number,
+  sizes: readonly number[] = PAGE_SIZES,
+) =>
   z.coerce
     .number()
     .default(fallback)
     .catch(fallback)
-    .transform((size): number =>
-      PAGE_SIZES.some((allowed) => allowed === size) ? size : fallback,
-    );
+    .transform((size): number => (sizes.includes(size) ? size : fallback));
 
 export const listSamplesQuerySchema = z.object({
   page: pageSchema,

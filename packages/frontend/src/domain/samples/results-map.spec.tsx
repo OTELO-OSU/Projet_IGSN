@@ -39,7 +39,7 @@ type MapProps = Parameters<typeof ResultsMap>[0];
 
 async function renderMap(props: Partial<MapProps> = {}) {
   const onViewportChange = vi.fn();
-  const onUserMove = vi.fn();
+  const onSelectSample = vi.fn();
   const screen = await renderWithRouter(
     <>
       <style>{".leaflet-container { width: 400px; height: 400px; }"}</style>
@@ -48,47 +48,61 @@ async function renderMap(props: Partial<MapProps> = {}) {
         fitTo={FRANCE}
         filters={{}}
         onViewportChange={onViewportChange}
-        onUserMove={onUserMove}
+        onSelectSample={onSelectSample}
         {...props}
       />
     </>,
     ["/samples/$igsn"],
   );
   await vi.waitFor(() => expect(onViewportChange).toHaveBeenCalled());
-  return { screen, onViewportChange, onUserMove };
+  return { screen, onViewportChange, onSelectSample };
 }
 
 const lastViewport = (spy: ReturnType<typeof vi.fn>) => spy.mock.lastCall?.[0];
 
 describe("ResultsMap", () => {
-  it("should report a user move, never the opening fit", async () => {
-    const { onViewportChange, onUserMove } = await renderMap();
-    expect(onUserMove).not.toHaveBeenCalled();
-
-    document.querySelector<HTMLElement>(".leaflet-container")?.focus();
-    await userEvent.keyboard("{ArrowRight}");
-
-    await vi.waitFor(() => expect(onUserMove).toHaveBeenCalledTimes(1));
-    expect(onUserMove).toHaveBeenCalledWith(
-      lastViewport(onViewportChange).bbox,
-    );
-  });
-
-  it("should open a sample's popup with its IGSN, name, deepest material and a link to its page", async () => {
+  it("should show a sample marker's name then IGSN in a tooltip on hover", async () => {
     const { screen } = await renderMap({ clusters: [BASALT] });
 
-    await screen.getByRole("button", { name: "Basalt 42" }).click();
+    await screen.getByRole("button", { name: "Basalt 42" }).hover();
 
     await expect
-      .element(screen.getByText("0123456789ABCDEFGHJKMNPQRS"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Basalt", { exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("link", { name: "View sample" }))
-      .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRS");
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/^Basalt 420123456789ABCDEFGHJKMNPQRS$/);
   });
+
+  it.each([
+    {
+      input: "a click",
+      act: async (marker: HTMLElement) => marker.click(),
+    },
+    {
+      input: "Enter",
+      act: async (marker: HTMLElement) => {
+        marker.focus();
+        await userEvent.keyboard("{Enter}");
+      },
+    },
+  ])(
+    "should select a sample from its marker on $input, opening no popup",
+    async ({ act }) => {
+      const { screen, onSelectSample } = await renderMap({
+        clusters: [BASALT],
+      });
+      const marker = screen.getByRole("button", { name: "Basalt 42" });
+      await expect.element(marker).toBeInTheDocument();
+
+      await act(marker.element() as HTMLElement);
+
+      await vi.waitFor(() =>
+        expect(onSelectSample).toHaveBeenCalledWith({
+          igsn: "0123456789ABCDEFGHJKMNPQRS",
+          position: { type: "point", latitude: 46, longitude: 2 },
+        }),
+      );
+      expect(document.querySelector(".leaflet-popup")).toBeNull();
+    },
+  );
 
   it("should set the hovered sample's marker apart from the others", async () => {
     const { screen } = await renderMap({
@@ -141,8 +155,51 @@ describe("ResultsMap", () => {
 
     await screen.getByRole("button", { name: "12 samples" }).click();
 
-    await vi.waitFor(() =>
-      expect(lastViewport(onViewportChange).zoom).toBeGreaterThan(openingZoom),
+    await vi.waitFor(
+      () =>
+        expect(lastViewport(onViewportChange).zoom).toBeGreaterThan(
+          openingZoom,
+        ),
+      { timeout: 3000 },
+    );
+  });
+
+  it("should center the map on a located sample", async () => {
+    const { onViewportChange } = await renderMap({
+      centered: {
+        igsn: "TVWXYZ0123456789ABCDEFGHJK",
+        position: { type: "point", latitude: 49, longitude: 6 },
+      },
+    });
+
+    await vi.waitFor(
+      () => {
+        const [west, south, east, north] = lastViewport(onViewportChange)
+          .bbox.split(",")
+          .map(Number);
+        expect(Math.abs((west + east) / 2 - 6)).toBeLessThan(0.5);
+        expect(Math.abs((south + north) / 2 - 49)).toBeLessThan(1);
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it("should zoom into the cluster holding a located sample", async () => {
+    const { onViewportChange } = await renderMap({
+      clusters: [CLUSTER],
+      centered: {
+        igsn: "TVWXYZ0123456789ABCDEFGHJK",
+        position: { type: "point", latitude: 46, longitude: 3 },
+      },
+    });
+    const openingZoom = onViewportChange.mock.calls[0]?.[0].zoom;
+
+    await vi.waitFor(
+      () =>
+        expect(lastViewport(onViewportChange).zoom).toBeGreaterThan(
+          openingZoom,
+        ),
+      { timeout: 3000 },
     );
   });
 

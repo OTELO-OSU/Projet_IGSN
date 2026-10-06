@@ -5,11 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@projet-igsn/design-system/components/ui/dialog";
-import { Label } from "@projet-igsn/design-system/components/ui/label";
-import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { MapIcon } from "lucide-react";
-import { Suspense, lazy, useId, useState } from "react";
+import { Suspense, lazy, useState } from "react";
 
 import type {
   ListSamplesParams,
@@ -22,6 +20,7 @@ import type {
 
 import { useMapSamples } from "#/domain/samples/hook/map-samples.ts";
 import { ResultsMapList } from "#/domain/samples/results-map-list.tsx";
+import { focusSampleCard } from "#/domain/samples/sample-list.tsx";
 import { m } from "#/paraglide/messages.js";
 
 const ResultsMap = lazy(() =>
@@ -35,17 +34,19 @@ const OPENING_ZOOM = 2;
 
 function MapPane({
   filters,
+  viewport,
   highlighted,
-  onUserMove,
+  centered,
+  onViewportChange,
+  onSelectSample,
 }: {
   filters: SearchFilters;
+  viewport: MapViewport;
   highlighted?: HoveredSample;
-  onUserMove: (viewport: string) => void;
+  centered?: HoveredSample;
+  onViewportChange: (viewport: MapViewport) => void;
+  onSelectSample: (sample?: HoveredSample) => void;
 }) {
-  const [viewport, setViewport] = useState<MapViewport>({
-    bbox: filters.bbox ?? WHOLE_WORLD,
-    zoom: OPENING_ZOOM,
-  });
   const { data, isError } = useMapSamples({
     ...filters,
     viewport: viewport.bbox,
@@ -62,9 +63,10 @@ function MapPane({
         clusters={data.data}
         fitTo={filters.bbox ? bboxSchema.parse(filters.bbox) : data.meta.extent}
         highlighted={highlighted}
+        centered={centered}
         filters={filters}
-        onViewportChange={setViewport}
-        onUserMove={onUserMove}
+        onViewportChange={onViewportChange}
+        onSelectSample={onSelectSample}
       />
     </Suspense>
   );
@@ -75,10 +77,17 @@ function ResultsMapContent({
 }: {
   params: ListSamplesParams;
 }) {
-  const switchId = useId();
-  const [isSearchingWhileMoving, setIsSearchingWhileMoving] = useState(true);
+  const [viewport, setViewport] = useState<MapViewport>({
+    bbox: filters.bbox ?? WHOLE_WORLD,
+    zoom: OPENING_ZOOM,
+  });
   const [highlighted, setHighlighted] = useState<HoveredSample>();
-  const [movedTo, setMovedTo] = useState<string>();
+  const [selected, setSelected] = useState<HoveredSample>();
+  const [centered, setCentered] = useState<HoveredSample>();
+
+  function selectSample(sample?: HoveredSample) {
+    setSelected(sample && focusSampleCard(sample.igsn) ? sample : undefined);
+  }
 
   return (
     <>
@@ -86,25 +95,15 @@ function ResultsMapContent({
         <DialogTitle>{m.results_map_title()}</DialogTitle>
       </DialogHeader>
       <div className="grid min-h-0 flex-1 grid-rows-2 gap-4 md:grid-cols-[1fr_3fr] md:grid-rows-1">
-        <div className="row-start-2 min-h-0 overflow-y-auto px-2 md:row-start-1">
+        <div className="row-start-2 min-h-0 overflow-y-auto px-2 motion-safe:scroll-smooth md:row-start-1">
           <ResultsMapList
-            filters={{
-              ...filters,
-              viewport: isSearchingWhileMoving ? movedTo : undefined,
-            }}
+            filters={{ ...filters, viewport: viewport.bbox }}
+            selectedIgsn={selected?.igsn}
             onHoverSample={setHighlighted}
-            actions={
-              <div className="flex items-center gap-2">
-                <Switch
-                  id={switchId}
-                  checked={isSearchingWhileMoving}
-                  onCheckedChange={setIsSearchingWhileMoving}
-                />
-                <Label htmlFor={switchId}>
-                  {m.results_map_search_while_moving()}
-                </Label>
-              </div>
-            }
+            onLocateSample={(sample) => {
+              setSelected(sample);
+              setCentered(sample);
+            }}
           />
         </div>
         <section
@@ -113,8 +112,11 @@ function ResultsMapContent({
         >
           <MapPane
             filters={filters}
-            highlighted={highlighted}
-            onUserMove={setMovedTo}
+            viewport={viewport}
+            highlighted={highlighted ?? selected}
+            centered={centered}
+            onViewportChange={setViewport}
+            onSelectSample={selectSample}
           />
         </section>
       </div>

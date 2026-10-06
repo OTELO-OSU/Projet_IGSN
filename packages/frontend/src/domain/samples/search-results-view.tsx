@@ -25,6 +25,32 @@ export function ResultsCount({ total }: { total: number }) {
   );
 }
 
+export function CardFieldPicker({
+  fields,
+  onFieldsChange,
+}: {
+  fields?: string[];
+  onFieldsChange: (fields: string[]) => void;
+}) {
+  return (
+    <FieldPicker
+      fields={PICKABLE_FIELDS.map((field) => ({
+        key: field.key,
+        label: field.label(),
+        section: field.section(),
+        locked: field.locked,
+      }))}
+      selected={fields ?? []}
+      onSelectedChange={(next) =>
+        onFieldsChange(selectedCardFields(next).map((field) => field.key))
+      }
+      triggerLabel={m.card_fields_add()}
+      triggerVariant="ghost"
+      legend={m.card_fields_legend()}
+    />
+  );
+}
+
 export function SearchResultsView({
   samples,
   total,
@@ -74,21 +100,7 @@ export function SearchResultsView({
             label={m.search_per_page()}
             onPerPageChange={onPerPageChange}
           />
-          <FieldPicker
-            fields={PICKABLE_FIELDS.map((field) => ({
-              key: field.key,
-              label: field.label(),
-              section: field.section(),
-              locked: field.locked,
-            }))}
-            selected={fields ?? []}
-            onSelectedChange={(next) =>
-              onFieldsChange(selectedCardFields(next).map((field) => field.key))
-            }
-            triggerLabel={m.card_fields_add()}
-            triggerVariant="ghost"
-            legend={m.card_fields_legend()}
-          />
+          <CardFieldPicker fields={fields} onFieldsChange={onFieldsChange} />
           {actions}
         </div>
       </div>
