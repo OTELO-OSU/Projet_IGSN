@@ -1,12 +1,10 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
-import {
-  FieldListItem,
-  FieldListRemoveButton,
-} from "@projet-igsn/design-system/components/form/field-list-item";
+import { FieldListRemoveButton } from "@projet-igsn/design-system/components/form/field-list-item";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { MINERAL_HIERARCHY } from "@projet-igsn/domain/sample/mineral/mineral-hierarchy";
 import { MINERAL_ABUNDANCES } from "@projet-igsn/domain/sample/mineral/model";
+import { PlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { HIERARCHY_FIELD_LABELS } from "#/samples/hierarchy-field-labels.ts";
@@ -32,10 +30,19 @@ export function SampleMineralClassificationsFields() {
       <form.Subscribe selector={(state) => state.values.mineralClassifications}>
         {(rows) =>
           rows.map((row, index) => (
-            <FieldListItem
+            <div
               key={row.key}
-              legend={m.legend_mineral_classification({ index: index + 1 })}
-              actions={
+              role="group"
+              aria-labelledby={`mineral-classification-${index}-legend`}
+              className="grid gap-2"
+            >
+              <div className="flex items-center gap-1">
+                <span
+                  id={`mineral-classification-${index}-legend`}
+                  className="font-medium"
+                >
+                  {m.legend_mineral_classification({ index: index + 1 })}
+                </span>
                 <FieldListRemoveButton
                   label={m.action_remove_mineral_classification({
                     index: index + 1,
@@ -45,35 +52,37 @@ export function SampleMineralClassificationsFields() {
                     form.removeFieldValue("mineralClassifications", index)
                   }
                 />
-              }
-            >
-              <form.AppField name={`mineralClassifications[${index}].path`}>
-                {(field) => (
-                  <field.HierarchyField
-                    label={m.field_mineral_classification()}
-                    hierarchy={MINERAL_HIERARCHY}
-                    translate={mineralClassificationLabel}
-                    placeholder={m.mineral_classification_placeholder()}
-                    searchPlaceholder={m.mineral_classification_search_placeholder()}
-                    emptyText={m.mineral_classification_empty()}
-                    {...HIERARCHY_FIELD_LABELS}
-                  />
-                )}
-              </form.AppField>
-              <form.AppField
-                name={`mineralClassifications[${index}].abundance`}
-              >
-                {(field) => (
-                  <field.ComboboxField
-                    label={m.field_mineral_abundance()}
-                    items={abundanceItems}
-                    placeholder={m.abundance_placeholder()}
-                    searchPlaceholder={m.abundance_search_placeholder()}
-                    emptyText={m.abundance_empty()}
-                  />
-                )}
-              </form.AppField>
-            </FieldListItem>
+              </div>
+              <div className="grid gap-4 sm:flex sm:flex-wrap">
+                <form.AppField name={`mineralClassifications[${index}].path`}>
+                  {(field) => (
+                    <field.HierarchyField
+                      label={m.field_mineral_classification()}
+                      hierarchy={MINERAL_HIERARCHY}
+                      translate={mineralClassificationLabel}
+                      placeholder={m.mineral_classification_placeholder()}
+                      searchPlaceholder={m.mineral_classification_search_placeholder()}
+                      emptyText={m.mineral_classification_empty()}
+                      {...HIERARCHY_FIELD_LABELS}
+                    />
+                  )}
+                </form.AppField>
+                <form.AppField
+                  name={`mineralClassifications[${index}].abundance`}
+                >
+                  {(field) => (
+                    <field.ComboboxField
+                      label={m.field_mineral_abundance()}
+                      items={abundanceItems}
+                      placeholder={m.abundance_placeholder()}
+                      searchPlaceholder={m.abundance_search_placeholder()}
+                      emptyText={m.abundance_empty()}
+                    />
+                  )}
+                </form.AppField>
+              </div>
+              <hr className="mt-2 sm:max-w-72" />
+            </div>
           ))
         }
       </form.Subscribe>
@@ -82,6 +91,7 @@ export function SampleMineralClassificationsFields() {
           <Button
             type="button"
             variant="outline"
+            className="w-full justify-start sm:max-w-72"
             onClick={() =>
               form.pushFieldValue("mineralClassifications", {
                 key: crypto.randomUUID(),
@@ -90,6 +100,7 @@ export function SampleMineralClassificationsFields() {
               })
             }
           >
+            <PlusIcon aria-hidden />
             {m.action_add_mineral_classification()}
           </Button>
         </div>

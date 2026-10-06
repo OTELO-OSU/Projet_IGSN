@@ -15,6 +15,8 @@ export function GroupSamplesLink() {
   const onlyGroup = groups.length === 1 ? groups[0] : undefined;
   const groupId = onlyGroup?.id ?? pickedId;
 
+  if (groups.length === 0) return null;
+
   return (
     <>
       {!onlyGroup && (
@@ -29,7 +31,6 @@ export function GroupSamplesLink() {
               }))}
               value={pickedId}
               onChange={setPickedId}
-              disabled={groups.length === 0}
               placeholder={m.settings_group_samples_placeholder()}
               searchPlaceholder={m.settings_group_samples_search_placeholder()}
               emptyText={m.settings_group_samples_empty()}

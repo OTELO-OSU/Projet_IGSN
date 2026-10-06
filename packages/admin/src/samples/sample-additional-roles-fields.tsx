@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@projet-igsn/design-system/components/ui/dropdown-menu";
 import { ADDITIONAL_ROLES } from "@projet-igsn/domain/sample/additional-role/role";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { ContactNameFields } from "#/samples/contact-name-fields.tsx";
@@ -62,10 +62,11 @@ export function SampleAdditionalRolesFields() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full justify-between sm:max-w-72"
+                className="w-full justify-start sm:max-w-72"
               >
+                <PlusIcon aria-hidden />
                 {m.action_add_additional_role()}
-                <ChevronDownIcon aria-hidden />
+                <ChevronDownIcon aria-hidden className="ml-auto" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>

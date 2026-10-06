@@ -222,12 +222,14 @@ export function SampleAttachments({
   return (
     <FormSection title={m.section_attachments()}>
       {isDisabled ? null : (
-        <FileDropZone
-          hint={m.attachment_drop_hint()}
-          browseLabel={m.action_browse_files()}
-          multiple
-          onFiles={addFiles}
-        />
+        <div className="max-w-2xl">
+          <FileDropZone
+            hint={m.attachment_drop_hint()}
+            browseLabel={m.action_browse_files()}
+            multiple
+            onFiles={addFiles}
+          />
+        </div>
       )}
       <p
         className={cn(

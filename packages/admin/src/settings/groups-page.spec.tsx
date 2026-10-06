@@ -144,6 +144,14 @@ describe("groups page", () => {
       .toBeEnabled();
   });
 
+  it("should hide the manual groups section when the user belongs to none", async () => {
+    await renderGroupsPage({ manualGroups: [] });
+    await expect.element(institutionForm()).toBeVisible();
+    await expect
+      .element(page.getByRole("heading", { name: "Manual groups" }))
+      .not.toBeInTheDocument();
+  });
+
   it("should refuse to leave only the group holding a published sample", async () => {
     await renderGroupsPage({
       manualGroups: [{ ...BASALT_TEAM, canLeave: false }, FOSSIL_TEAM],
