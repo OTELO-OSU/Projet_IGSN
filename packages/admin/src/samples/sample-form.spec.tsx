@@ -2348,6 +2348,80 @@ describe("SampleForm", () => {
     );
   });
 
+  function renderPublishedWithoutCollector(
+    onSubmit = noop,
+    currentUser?: ComponentProps<typeof SampleForm>["currentUser"],
+  ) {
+    return render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          status="published"
+          currentUser={currentUser}
+          defaultValues={{
+            ...publishedResearchProjectSampleFixture,
+            scientificContext: {
+              provenanceStatus: "research_project_sample",
+              additionalRoles: [],
+              funderOrganizations: ["03fd77x13"],
+              researchProgramName: "GEOSAMPLE",
+              chiefScientistFirstname: "Marie",
+              chiefScientistLastname: "Tharp",
+              hostInstitution: ["02cte4b68"],
+            },
+          }}
+          primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
+        />
+      </TooltipProvider>,
+    );
+  }
+
+  it("should save a published sample past a blocker it already had", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderPublishedWithoutCollector(onSubmit);
+
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Basalte du Massif Central" }),
+      ),
+    );
+  });
+
+  it("should keep a published sample's save gated for a user who cannot publish", async () => {
+    const screen = await renderPublishedWithoutCollector(noop, {
+      status: "pending",
+      superAdmin: false,
+    });
+
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeDisabled();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/account is not yet activated/i);
+  });
+
+  it("should still gate a published sample's save on a blocker the edit introduces", async () => {
+    const screen = await renderPublishedWithoutCollector();
+
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
+    await screen.getByRole("combobox", { name: /existence status/i }).click();
+    await screen.getByRole("option", { name: "Exists", exact: true }).click();
+
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeDisabled();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(
+        /^You cannot publish yet:Curation and repository > Existence status$/,
+      );
+  });
+
   it("should show navigation type only after a geometry is chosen", async () => {
     const screen = await render(
       <SampleForm
@@ -2862,12 +2936,11 @@ describe("SampleForm post-publication field lock", () => {
       .toBeEnabled();
   });
 
-  it("blocks saving a published sample whose relation has no resource type", async () => {
+  it("blocks publishing a draft whose relation has no resource type", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          status="published"
           defaultValues={{
             ...publishedFixture,
             relations: [
@@ -2881,14 +2954,17 @@ describe("SampleForm post-publication field lock", () => {
               },
             ],
           }}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+          primaryAction={{ kind: "publish", label: "Publish", onPublish: noop }}
         />
       </TooltipProvider>,
     );
 
-    const save = screen.getByRole("button", { name: "Save" });
-    await expect.element(save).toBeDisabled();
-    save.element().closest<HTMLElement>("[tabindex]")?.focus();
+    const publish = screen.getByRole("button", {
+      name: "Publish",
+      exact: true,
+    });
+    await expect.element(publish).toBeDisabled();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent("Related URL or document > Relation resource type");

@@ -1682,6 +1682,10 @@ const FAILED_IMPORTS = [
   },
 ];
 
+const BAIKAL_MARBLE_ID = demoId(
+  PUBLISHED_ROWS.length + DRAFTS.length + FAILED_IMPORTS.length,
+);
+
 export const DEMO_SAMPLES: SampleRow[] = [
   ...[...PUBLISHED_ROWS, ...DRAFTS].map((row, index) => {
     const id = demoId(index);
@@ -1725,6 +1729,34 @@ export const DEMO_SAMPLES: SampleRow[] = [
       publishingError: failed.publishingError,
     }),
   ),
+  {
+    id: BAIKAL_MARBLE_ID,
+    name: "Baikal Marble",
+    nature: "sample_fragment",
+    type: "individual_sample",
+    material:
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.marble",
+    collectionMethod: "manual",
+    location: { position: point(108.0, 53.5) },
+    description: on("2025-02-18"),
+    existenceStatus: "exists",
+    availabilityStatus: "available",
+    scientificContext: {
+      provenanceStatus: "research_project_sample",
+      funderOrganizations: ["02feahw73"],
+      researchProgramName: "Baikal Marble Survey",
+      chiefScientistFirstname: "Marie",
+      chiefScientistLastname: "Dupont",
+      hostInstitution: ["02rx3b187"],
+    },
+    repository: DEMO_REPOSITORY,
+    igsn: generateIgsnSuffix(BAIKAL_MARBLE_ID),
+    status: "published",
+    existingBlockers: [
+      "collector_firstname_missing",
+      "collector_lastname_missing",
+    ],
+  },
 ];
 
 const DEMO_ROLES: SampleAdditionalRole[] = [

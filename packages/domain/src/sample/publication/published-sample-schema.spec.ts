@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { publishedSampleSchema } from "./published-sample-schema.ts";
+import {
+  publishedEditSchema,
+  publishedSampleSchema,
+} from "./published-sample-schema.ts";
 
 const publishable = {
   name: "Basalt 42",
@@ -24,6 +27,21 @@ const publishable = {
   },
 };
 
+const missingCollectorFirstname = {
+  provenanceStatus: "research_project_sample" as const,
+  collectorLastname: "Curie",
+};
+
+function blockerIssuesOf(
+  result: ReturnType<typeof publishedSampleSchema.safeParse>,
+) {
+  if (result.success) throw new Error("expected the parse to fail");
+  return result.error.issues.map((issue) => ({
+    path: issue.path.join("."),
+    code: (issue as { params?: { code?: string } }).params?.code,
+  }));
+}
+
 describe("publishedSampleSchema", () => {
   it("should accept an update that keeps the sample publishable", () => {
     expect(publishedSampleSchema.safeParse(publishable).success).toBe(true);
@@ -44,24 +62,42 @@ describe("publishedSampleSchema", () => {
       "collector_firstname_missing",
       {
         ...publishable,
-        scientificContext: {
-          provenanceStatus: "research_project_sample" as const,
-          collectorLastname: "Curie",
-        },
+        scientificContext: missingCollectorFirstname,
       },
       "scientificContext.collectorFirstname",
     ],
   ])(
     "should reject an update that raises %s, pinned on its field",
     (blocker, payload, path) => {
-      const result = publishedSampleSchema.safeParse(payload);
-      if (result.success) throw new Error("expected the parse to fail");
-      expect(
-        result.error.issues.map((issue) => ({
-          path: issue.path.join("."),
-          code: (issue as { params?: { code?: string } }).params?.code,
-        })),
-      ).toEqual([{ path, code: blocker }]);
+      expect(blockerIssuesOf(publishedSampleSchema.safeParse(payload))).toEqual(
+        [{ path, code: blocker }],
+      );
     },
   );
+});
+
+describe("publishedEditSchema", () => {
+  it("should tolerate a blocker the stored sample already had", () => {
+    const payload = {
+      ...publishable,
+      scientificContext: missingCollectorFirstname,
+    };
+    expect(
+      publishedEditSchema(["collector_firstname_missing"]).safeParse(payload)
+        .success,
+    ).toBe(true);
+  });
+
+  it("should still reject a blocker the edit introduces, pinned on its field", () => {
+    const payload = {
+      ...publishable,
+      material: "rock_and_sediment.rock",
+      scientificContext: missingCollectorFirstname,
+    };
+    expect(
+      blockerIssuesOf(
+        publishedEditSchema(["collector_firstname_missing"]).safeParse(payload),
+      ),
+    ).toEqual([{ path: "material", code: "material_incomplete" }]);
+  });
 });

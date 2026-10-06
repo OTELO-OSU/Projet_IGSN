@@ -74,7 +74,7 @@ import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
-  publishedSampleSchema,
+  publishedEditDraftSchema,
   type SampleDraft,
   sampleDraftSchema,
   toSampleDraft,
@@ -244,8 +244,16 @@ export function SampleForm({
   };
   const roleOnSample = useUserRoleOnSample(sampleId);
   const wasPublished = hasPermanentIgsn({ status });
+  const existingBlockers = wasPublished
+    ? samplePublishBlockers(
+        samplePublishInput(toSampleDraft(defaultValues), attachments),
+        UPLOAD_LIMIT,
+      )
+    : [];
   const validate = validateDraft(
-    wasPublished ? publishedSampleSchema : sampleDraftSchema,
+    wasPublished
+      ? publishedEditDraftSchema(existingBlockers)
+      : sampleDraftSchema,
   );
   const isReadOnly = readOnlyReason !== undefined;
   const bypassesLocks =
@@ -422,7 +430,7 @@ export function SampleForm({
             samplePublishInput(values, keptAttachments),
             UPLOAD_LIMIT,
             currentUser,
-          ),
+          ).filter((blocker) => !existingBlockers.includes(blocker)),
           saveRequiredFields(values).filter(({ isMet }) => !isMet),
         );
         const button = renderButton(

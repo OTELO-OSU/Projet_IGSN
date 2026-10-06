@@ -2,6 +2,7 @@ import type { AdditionalRole } from "@projet-igsn/domain/sample/additional-role/
 import type { DatePrecision } from "@projet-igsn/domain/sample/date-range";
 import type { MineralAbundance } from "@projet-igsn/domain/sample/mineral/model";
 import type { ProcessStepKind } from "@projet-igsn/domain/sample/process-step/kind";
+import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import type { IdentifierType } from "@projet-igsn/domain/sample/relation/identifier-type";
 import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/relation/target-resource-type";
 
@@ -19,7 +20,7 @@ import {
   fromMineralPath,
   toMineralPath,
 } from "@projet-igsn/domain/sample/mineral/mineral-hierarchy";
-import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import { publishedEditSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
   hasMetadataScheme,
   type RelationType,
@@ -369,7 +370,10 @@ export const sampleDraftSchema = z.preprocess(
   createSampleSchema,
 );
 
-export const publishedSampleSchema = z.preprocess(
-  (draft) => composeCreateSample(draft as SampleDraft),
-  domainPublishedSampleSchema,
-);
+export const publishedEditDraftSchema = (
+  existing: readonly PublishBlocker[],
+): typeof sampleDraftSchema =>
+  z.preprocess(
+    (draft) => composeCreateSample(draft as SampleDraft),
+    publishedEditSchema(existing),
+  );

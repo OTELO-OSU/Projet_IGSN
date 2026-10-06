@@ -82,6 +82,18 @@ async function numberedDraft(db: Kysely<DB>, ownerId: string, name?: string) {
   return { ...sample, internalNumber: UNPUBLISHED_INTERNAL_NUMBER };
 }
 
+async function withoutCollector(db: Kysely<DB>, sample: Sample) {
+  await db
+    .updateTable("sample")
+    .set({
+      sc_provenance_status: "research_project_sample",
+      sc_collection_origin: null,
+    })
+    .where("id", "=", sample.id)
+    .execute();
+  return (await readSample(db, sample.id))!;
+}
+
 const ROW_ISSUES: [
   string,
   (db: Kysely<DB>, callerId: string) => Promise<Arranged>,
@@ -179,6 +191,55 @@ describe("POST /admin/samples/bulk-edit", () => {
         localId: "EDITED",
         igsn: sample.igsn,
         publishedAt: sample.publishedAt,
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should save a sample past a blocker it already had when published",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const sample = await withoutCollector(
+        db,
+        await insertParent(db, caller.id),
+      );
+
+      const res = await upload(db, [sample], setLocalId("EDITED"));
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 200,
+        body: { count: 1 },
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should refuse a blocker the edit introduces next to one the sample already had",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const sample = await withoutCollector(
+        db,
+        await insertParent(db, caller.id),
+      );
+
+      const res = await upload(db, [sample], (book) =>
+        fill(book, SHEETS.samples, ROW, { "Existence status": null }),
+      );
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [
+            expect.objectContaining({
+              row: ROW,
+              column: "Existence status",
+              code: "existence_status_missing",
+            }),
+          ],
+        },
       });
     },
     30_000,

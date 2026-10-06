@@ -4,7 +4,8 @@ import type { Kysely, Selectable } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
-import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import { publishedEditSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import { publishBlockerSchema } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import {
   createSampleSchema,
   sampleSchema,
@@ -392,6 +393,7 @@ export async function insertSamples(
           igsn,
           status,
           publishingError,
+          existingBlockers: _existingBlockers,
           ...create
         }) => {
           const permanent = hasPermanentIgsn({ status });
@@ -528,6 +530,7 @@ const sampleRowSchema = sampleSchema
   })
   .extend({
     status: sampleStatusSchema.default("draft"),
+    existingBlockers: z.array(publishBlockerSchema).optional(),
   });
 
 export type SampleRow = z.input<typeof sampleRowSchema>;
@@ -573,11 +576,14 @@ function parseSampleRow(row: SampleRow): z.output<typeof sampleRowSchema> {
     igsn: _igsn,
     status,
     publishingError: _publishingError,
+    existingBlockers,
     ...create
   } = parsed;
   const wasPublished = hasPermanentIgsn({ status });
   const result = (
-    wasPublished ? publishedSampleSchema : createSampleSchema
+    wasPublished
+      ? publishedEditSchema(existingBlockers ?? [])
+      : createSampleSchema
   ).safeParse(create);
   if (!result.success) {
     throw new Error(
@@ -846,6 +852,43 @@ export const SEED_SAMPLES: SeedSample[] = [
     repository: SEED_REPOSITORY,
     status: "publish_failed",
     publishingError: "DataCite registration failed (HTTP 500)",
+  },
+  {
+    id: "00000000-0000-7000-8000-000000000009",
+    name: "Baikal Marble",
+    owner: "marie",
+    nature: "sample_fragment",
+    type: "individual_sample",
+    material:
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.marble",
+    collectionMethod: "manual",
+    location: {
+      position: { type: "point", longitude: 108.0, latitude: 53.5 },
+    },
+    description: {
+      collectionDate: {
+        precision: "day",
+        start: "2025-02-18",
+        end: "2025-02-18",
+      },
+    },
+    existenceStatus: "exists",
+    availabilityStatus: "available",
+    scientificContext: {
+      provenanceStatus: "research_project_sample",
+      funderOrganizations: ["02feahw73"],
+      researchProgramName: "Baikal Marble Survey",
+      chiefScientistFirstname: "Marie",
+      chiefScientistLastname: "Dupont",
+      hostInstitution: ["02rx3b187"],
+    },
+    repository: SEED_REPOSITORY,
+    igsn: generateIgsnSuffix("00000000-0000-7000-8000-000000000009"),
+    status: "published",
+    existingBlockers: [
+      "collector_firstname_missing",
+      "collector_lastname_missing",
+    ],
   },
   {
     id: "00000000-0000-7000-8000-000000000006",

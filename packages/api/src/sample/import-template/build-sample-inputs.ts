@@ -3,6 +3,7 @@ import type {
   ImportIssue,
   ImportIssueCode,
 } from "@projet-igsn/domain/sample/import/import-report";
+import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { parentPath } from "@projet-igsn/domain/sample/path/parent";
@@ -46,6 +47,7 @@ export type SampleCandidate = {
   input: Json;
   rowsByPath: Readonly<Record<string, Source>>;
   attachments: readonly AttachmentCandidate[];
+  existingBlockers?: readonly PublishBlocker[];
 };
 
 const REGION_BLOCK = "region";

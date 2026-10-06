@@ -81,6 +81,8 @@ Why a sample cannot be published lives in ONE place, `domain/sample/publication/
 
 - The api publish guard, the admin publish tooltip and the admin sample form's live per-tab `(filled/total)` counter (`sample-form-tabs.ts`'s `tabCompleteness`) all derive from `samplePublishRequirements`, the counter and every "\*" through `sampleRequiredFields` (`admin/src/samples/sample-required-fields.ts`).
 - Add a constraint by adding a code to `publishBlockerSchema` and pushing a requirement in `samplePublishRequirements` under the field's applicability condition.
+- An edit of a published sample is refused only for a blocker it introduces, one the stored sample already had being tolerated: `newPublishBlockers` in the admin and `/service` PUTs, `publishedEditSchema(existing)` in the admin form and `POST /admin/samples/bulk-edit`.
+- Creating, importing, or publishing a draft or `publish_failed` sample still clears every blocker.
 - The function has no I/O, so a caller resolves the parent and passes it in `parents`, a `null` entry firing `parent_not_found`; `publish-blocker-path.ts` is the single blocker-to-path map, read by `publishedSampleSchema` and the `/service` 422 body.
 - Two admin `Record<PublishBlocker, ...>`s stay exhaustive so a new code fails the build until translated: the admin label map (`publish-blocker-label.ts`, the full sentence) and `publish-blocker-field-label.ts` (the short field label in the "Tab > Field" tooltip line).
 - A blocker's form field derives from `publish-blocker-path.ts` through `publishBlockerField` (`sample-draft-field-errors.ts`), and its tab from that field through `sampleFieldTab`.
