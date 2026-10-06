@@ -95,7 +95,7 @@ function ResultsMapContent({
         <DialogTitle>{m.results_map_title()}</DialogTitle>
       </DialogHeader>
       <div className="grid min-h-0 flex-1 grid-rows-2 gap-4 md:grid-cols-[1fr_3fr] md:grid-rows-1">
-        <div className="row-start-2 min-h-0 overflow-y-auto px-2 motion-safe:scroll-smooth md:row-start-1">
+        <div className="row-start-2 min-h-0 overflow-y-auto px-2 pb-3 motion-safe:scroll-smooth md:row-start-1">
           <ResultsMapList
             filters={{ ...filters, viewport: viewport.bbox }}
             selectedIgsn={selected?.igsn}

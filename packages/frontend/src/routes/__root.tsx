@@ -82,13 +82,8 @@ function RootLayout() {
         <footer className="bg-muted/30 mt-16 border-t">
           <div className="flex items-center gap-8 px-6 py-10">
             <img
-              src={`${import.meta.env.BASE_URL}logo_cnrs-insu.png`}
-              alt={m.footer_logo_cnrs_insu()}
-              className="h-20 w-auto"
-            />
-            <img
-              src={`${import.meta.env.BASE_URL}gaia-data.svg`}
-              alt={m.footer_logo_gaia_data()}
+              src={`${import.meta.env.BASE_URL}logo-cnrs.svg`}
+              alt={m.footer_logo_cnrs()}
               className="h-20 w-auto"
             />
           </div>

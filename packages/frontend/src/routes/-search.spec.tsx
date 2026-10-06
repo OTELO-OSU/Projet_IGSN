@@ -69,7 +69,7 @@ describe("search page", () => {
     },
   );
 
-  it("should scroll back to the top when a facet changes", async () => {
+  it("should keep the scroll position when a facet changes", async () => {
     const screen = await renderSearch(
       () => json({}),
       "/search?q=basalt&nature=hand_sample",
@@ -85,6 +85,10 @@ describe("search page", () => {
       .element()
       .dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
-    await expect.poll(() => window.scrollY).toBe(0);
+    await expect.element(removeNature).not.toBeInTheDocument();
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+    expect(window.scrollY).toBe(1000);
   });
 });

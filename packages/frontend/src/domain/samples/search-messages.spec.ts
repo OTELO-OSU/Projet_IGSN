@@ -13,6 +13,7 @@ describe("location search messages", () => {
     [m.search_map_draw_hint, "Or hold Shift and drag on the map."],
     [m.search_add_engine_text, "Add terms"],
     [m.search_add_engine_location, "Add location"],
+    [m.search_placeholder, "Search by sample name, IGSN…"],
     [() => m.search_remove_engine({ engine: "Location" }), "Remove Location"],
     [
       m.search_location_empty_hint,

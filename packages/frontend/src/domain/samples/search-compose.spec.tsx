@@ -2,7 +2,7 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
-import type { SearchEngine } from "./search-engine-tabs.tsx";
+import type { SearchEngine } from "./search-engine.ts";
 
 import { SearchCompose } from "./search-compose.tsx";
 
@@ -24,6 +24,7 @@ describe("SearchCompose", () => {
     await expect
       .element(screen.getByRole("button", { name: "Add location" }))
       .toBeInTheDocument();
+    expect(screen.getByRole("tablist").query()).toBeNull();
   });
 
   it("should offer adding the text engine when location is primary", async () => {
@@ -339,30 +340,5 @@ describe("SearchCompose", () => {
     expect(
       screen.getByRole("button", { name: "Shrink map" }).query(),
     ).toBeNull();
-  });
-
-  it("should collapse to the picked primary and discard the other draft on tab switch", async () => {
-    const onSearch = vi.fn();
-    const screen = await render(
-      <SearchCompose
-        initialActive={["text", "location"]}
-        initialDrafts={{ q: "granite", bbox: "-10,40,10,50" }}
-        onSearch={onSearch}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Location" }).click();
-
-    expect(
-      screen.getByRole("searchbox", { name: "Search samples" }).query(),
-    ).toBeNull();
-
-    await screen.getByRole("button", { name: "Search", exact: true }).click();
-
-    expect(onSearch).toHaveBeenCalledWith({
-      bbox: "-10,40,10,50",
-      engine: "location",
-      page: 1,
-    });
   });
 });

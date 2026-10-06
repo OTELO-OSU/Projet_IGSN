@@ -19,7 +19,7 @@ import type {
 import {
   type SearchEngine,
   searchEngineSchema,
-} from "#/domain/samples/search-engine-tabs.tsx";
+} from "#/domain/samples/search-engine.ts";
 
 export const PER_PAGE = 10;
 
