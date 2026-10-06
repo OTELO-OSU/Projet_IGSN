@@ -15,10 +15,9 @@ import { LazyLocationMap } from "#/domain/samples/lazy-location-map.tsx";
 import {
   ENGINES,
   type SearchEngine,
-  SearchEngineTabs,
   addEngineLabel,
   engineLabel,
-} from "#/domain/samples/search-engine-tabs.tsx";
+} from "#/domain/samples/search-engine.ts";
 import { m } from "#/paraglide/messages.js";
 
 type Drafts = { q?: string; bbox?: string };
@@ -86,11 +85,6 @@ export function SearchCompose({
     seedQueries(initialActive, initialDrafts),
   );
 
-  function selectPrimary(engine: SearchEngine) {
-    const kept = queries.find((query) => query.engine === engine);
-    setQueries([kept ?? { engine, value: "" }]);
-  }
-
   function setValue(engine: SearchEngine, value: string) {
     setQueries(
       queries.map((query) =>
@@ -133,15 +127,6 @@ export function SearchCompose({
 
   return (
     <form role="search" onSubmit={submit}>
-      {shrunk ? null : (
-        <div className="flex justify-center">
-          <SearchEngineTabs
-            engine={queries[0]!.engine}
-            onEngineChange={selectPrimary}
-          />
-        </div>
-      )}
-
       <div className="mt-4 flex flex-col gap-4">
         {queries.map(({ engine, value }, index) => (
           <div

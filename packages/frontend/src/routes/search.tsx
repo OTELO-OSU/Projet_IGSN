@@ -37,7 +37,6 @@ import {
   listPublicUsersQueryOptions,
   useListPublicUsers,
 } from "#/domain/users/hook/list-public-users.ts";
-import { prefersReducedMotion } from "#/prefers-reduced-motion.ts";
 
 export const Route = createFileRoute("/search")({
   validateSearch: searchParamsSchema,
@@ -57,12 +56,6 @@ export const Route = createFileRoute("/search")({
   },
   component: SearchPage,
 });
-
-const scrollToTop = () =>
-  window.scrollTo({
-    top: 0,
-    behavior: prefersReducedMotion() ? "auto" : "smooth",
-  });
 
 function SearchPage() {
   const search = Route.useSearch();
@@ -108,9 +101,8 @@ function SearchPage() {
             manualGroups={manualGroups}
             contributors={contributors}
             counts={counts}
-            onChange={(key, value) => {
-              scrollToTop();
-              return navigate({
+            onChange={(key, value) =>
+              navigate({
                 resetScroll: false,
                 search: (prev) => ({
                   ...prev,
@@ -118,15 +110,14 @@ function SearchPage() {
                   ...clearDependents(key),
                   page: 1,
                 }),
-              });
-            }}
-            onClearAll={() => {
-              scrollToTop();
-              return navigate({
+              })
+            }
+            onClearAll={() =>
+              navigate({
                 resetScroll: false,
                 search: (prev) => ({ ...prev, ...clearFacets(), page: 1 }),
-              });
-            }}
+              })
+            }
           />
           {params && !search.map ? (
             <Results
