@@ -49,7 +49,6 @@ export function AuthGate({ children }: { children?: ReactNode }) {
   const signOut = () => {
     broadcastSignOut();
     setHasSignedOut(true);
-    markSignedOut();
     void auth.signoutRedirect();
   };
 
