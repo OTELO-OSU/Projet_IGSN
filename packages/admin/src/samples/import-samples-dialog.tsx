@@ -75,7 +75,7 @@ export function ImportSamplesDialog() {
         onOpenChange={(open) => (open ? setIsOpen(true) : close())}
       >
         <DialogTrigger asChild>
-          <Button variant="outline">{m.action_import()}</Button>
+          <Button variant="outline">{m.action_bulk_import()}</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-3xl" closeLabel={m.action_close()}>
           <DialogHeader>

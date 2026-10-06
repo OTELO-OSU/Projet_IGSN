@@ -125,6 +125,7 @@ export function sampleFilterEntries({
     searchFilterEntry({
       name: "collectorName",
       label: m.field_collector_name(),
+      isLabelVisible: true,
       placeholder: m.filter_collector_name_placeholder(),
       defaultValue: values.collectorName,
       onRemove: () => onChange({ collectorName: undefined }),

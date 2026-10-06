@@ -37,7 +37,7 @@ export function OrcidSettingsForm({ orcid }: { orcid: string | null }) {
       <form.AppField name="orcid">
         {(field) => <field.TextField label={m.field_orcid()} />}
       </form.AppField>
-      <div className="bg-background fixed inset-x-0 bottom-0 z-40 flex flex-wrap justify-end gap-2 border-t px-6 py-3 md:left-64">
+      <div className="bg-background fixed inset-x-0 bottom-0 z-40 flex flex-wrap justify-end gap-2 border-t px-6 py-3 md:left-(--sidebar-width) md:duration-500 md:ease-in-out md:motion-safe:transition-[left]">
         <form.AppForm>
           <form.SubmitButton
             label={m.action_save()}

@@ -32,7 +32,7 @@ async function openDialog() {
       </TooltipProvider>
     </QueryClientProvider>,
   );
-  await screen.getByRole("button", { name: "Import" }).click();
+  await screen.getByRole("button", { name: "Bulk import" }).click();
   const dialog = screen.getByRole("dialog", { name: "Import samples" });
   return {
     queryClient,
@@ -443,7 +443,7 @@ describe("ImportSamplesDialog", () => {
     await expect.element(dialog.getByRole("table")).toBeVisible();
 
     await dialog.getByRole("button", { name: "Cancel" }).click();
-    await screen.getByRole("button", { name: "Import" }).click();
+    await screen.getByRole("button", { name: "Bulk import" }).click();
 
     await expect
       .element(screen.getByRole("dialog", { name: "Import samples" }))
@@ -794,7 +794,7 @@ describe("ImportSamplesDialog", () => {
       await importButton.click();
       await settle(dialog);
 
-      await screen.getByRole("button", { name: "Import" }).click();
+      await screen.getByRole("button", { name: "Bulk import" }).click();
       await dialog
         .getByLabelText("choose one")
         .upload([await buildAttachmentWorkbook(["report.pdf"])]);

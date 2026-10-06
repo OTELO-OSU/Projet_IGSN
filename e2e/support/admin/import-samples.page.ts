@@ -26,7 +26,7 @@ export function importSamplesPage(page: Page) {
     ).toBeVisible();
   return {
     open: () =>
-      page.getByRole("button", { name: "Import", exact: true }).click(),
+      page.getByRole("button", { name: "Bulk import", exact: true }).click(),
     downloadTemplate: async (testInfo: TestInfo) => {
       await dialog.getByRole("button", { name: "Download template" }).click();
       return saveDownload(page, testInfo, () =>

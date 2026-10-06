@@ -45,6 +45,7 @@ export function sampleListPage(page: Page) {
         "IGSN",
         "Name",
         "Status",
+        "Owner",
         "Type",
         "Material",
         "Location",

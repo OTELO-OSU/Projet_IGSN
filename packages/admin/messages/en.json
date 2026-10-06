@@ -912,6 +912,7 @@
   "service_account_search_placeholder": "Search by name or identifier",
   "service_account_remove": "Remove {name}",
   "action_import": "Import",
+  "action_bulk_import": "Bulk import",
   "action_download_template": "Download template",
   "import_samples_title": "Import samples",
   "import_samples_description": "To import samples in bulk, download the template, fill it in and upload it.",

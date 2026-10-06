@@ -93,35 +93,37 @@ export function ListHeader({
     <div className="grid gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{title}</h1>
-        <div className="flex items-center gap-2">
-          {hidden.length > 0 ? (
+        {action}
+      </div>
+
+      <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {filters.filter(isShown).map((filter) => (
+          <div key={filter.name} className="flex min-w-0 items-end gap-1">
+            <div className="grid min-w-0 flex-1 gap-1.5">{filter.cell}</div>
+            {isCollapsible(filter) ? (
+              <div className="flex h-9 shrink-0 items-center">
+                <button
+                  type="button"
+                  aria-label={m.filter_remove({ name: filter.label })}
+                  onClick={() => remove(filter)}
+                  className="hover:bg-accent rounded p-0.5"
+                >
+                  <XIcon className="size-3.5" />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ))}
+        {hidden.length > 0 ? (
+          <div className="col-end-[-1] row-start-1 flex justify-end">
             <AddFilter
               filters={hidden}
               onAdd={(name) =>
                 setAdded((previous) => new Set(previous).add(name))
               }
             />
-          ) : null}
-          {action}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {filters.filter(isShown).map((filter) => (
-          <div key={filter.name} className="flex min-w-0 items-center gap-1">
-            <div className="grid min-w-0 flex-1 gap-1.5">{filter.cell}</div>
-            {isCollapsible(filter) ? (
-              <button
-                type="button"
-                aria-label={m.filter_remove({ name: filter.label })}
-                onClick={() => remove(filter)}
-                className="hover:bg-accent shrink-0 rounded p-0.5"
-              >
-                <XIcon className="size-3.5" />
-              </button>
-            ) : null}
           </div>
-        ))}
+        ) : null}
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import type { FilterEntry } from "#/filters/list-header.tsx";
 export function searchFilterEntry({
   name = "search",
   label,
+  isLabelVisible,
   placeholder,
   defaultValue,
   onRemove,
@@ -12,6 +13,7 @@ export function searchFilterEntry({
 }: {
   name?: string;
   label: string;
+  isLabelVisible?: boolean;
   placeholder: string;
   defaultValue: string | undefined;
   onRemove?: () => void;
@@ -26,6 +28,7 @@ export function searchFilterEntry({
       <SearchField
         defaultValue={defaultValue}
         label={label}
+        isLabelVisible={isLabelVisible}
         placeholder={placeholder}
         onSearch={onSearch}
       />

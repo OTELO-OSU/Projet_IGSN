@@ -8,12 +8,19 @@ import { Input } from "./input.tsx";
 
 export function SearchInput({
   label,
+  isLabelVisible = false,
   className,
   ...props
-}: ComponentProps<typeof Input> & { label: string }) {
+}: ComponentProps<typeof Input> & { label: string; isLabelVisible?: boolean }) {
   return (
-    <label className="flex-1">
-      <span className="sr-only">{label}</span>
+    <label className={cn("flex-1", isLabelVisible && "grid gap-1.5")}>
+      <span
+        className={
+          isLabelVisible ? "text-sm leading-none font-medium" : "sr-only"
+        }
+      >
+        {label}
+      </span>
       <div className="relative">
         <Input
           type="search"

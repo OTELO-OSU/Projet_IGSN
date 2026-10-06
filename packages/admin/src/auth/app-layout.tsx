@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { cn } from "@projet-igsn/design-system/lib/utils";
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canAdminManualGroups } from "@projet-igsn/domain/user/can-admin-manual-groups";
 import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-samples";
@@ -125,11 +126,17 @@ export function AppLayout({
           <UserMenu onSignOut={onSignOut} />
         </div>
       </header>
-      <div className="flex w-full flex-1 flex-col md:flex-row">
+      <div
+        className={cn(
+          "flex w-full flex-1 flex-col [--sidebar-width:0rem] md:flex-row",
+          hasSidebar &&
+            (isCollapsed
+              ? "md:[--sidebar-width:3.5rem]"
+              : "md:[--sidebar-width:16rem]"),
+        )}
+      >
         {hasSidebar && (
-          <aside
-            className={`flex flex-col gap-2 border-b p-2 motion-reduce:transition-none md:shrink-0 md:overflow-hidden md:border-r md:border-b-0 md:transition-[width] md:duration-500 md:ease-in-out ${isCollapsed ? "md:w-14" : "md:w-64"}`}
-          >
+          <aside className="flex flex-col gap-2 border-b p-2 motion-reduce:transition-none md:w-(--sidebar-width) md:shrink-0 md:overflow-hidden md:border-r md:border-b-0 md:transition-[width] md:duration-500 md:ease-in-out">
             <Button
               variant="ghost"
               size="icon"
