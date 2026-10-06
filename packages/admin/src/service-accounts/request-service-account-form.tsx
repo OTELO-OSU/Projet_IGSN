@@ -1,5 +1,4 @@
 import type { ComboboxItem } from "@projet-igsn/design-system/components/ui/combobox";
-import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
@@ -11,7 +10,10 @@ import {
   MANAGED_ORGANIZATION_ITEMS,
   MANAGED_OSU_ITEMS,
 } from "@projet-igsn/domain/institutional-group/managed-group-items";
-import { serviceAccountRequestSchema } from "@projet-igsn/domain/service-account/service-account-validator";
+import {
+  type ServiceAccountRequest,
+  serviceAccountRequestSchema,
+} from "@projet-igsn/domain/service-account/service-account-validator";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 
 import { useAttachableManualGroups } from "#/manual-groups/use-attachable-manual-groups.ts";
@@ -22,10 +24,7 @@ import { UserField } from "#/users/user-field.tsx";
 
 const SAMPLE_OWNER_FIELD_ID = "service-account-request-sample-owner";
 
-type RequestDraft = {
-  name: string;
-  reason: string;
-  managedGroups: ManagedGroups;
+type RequestDraft = Omit<ServiceAccountRequest, "sampleOwnerId"> & {
   sampleOwner: UserIdentity | null;
 };
 
@@ -43,14 +42,14 @@ const validate = ({ value }: { value: RequestDraft }) => {
   if (!errors) return undefined;
   const { sampleOwnerId, ...fields } = errors.fields;
   return {
-    fields: sampleOwnerId
-      ? {
-          ...fields,
-          sampleOwner: {
-            message: m.field_service_account_sample_owner_required(),
-          },
-        }
-      : fields,
+    fields: {
+      ...fields,
+      ...(sampleOwnerId && {
+        sampleOwner: {
+          message: m.field_service_account_sample_owner_required(),
+        },
+      }),
+    },
   };
 };
 

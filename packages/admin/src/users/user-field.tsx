@@ -1,5 +1,5 @@
-import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
+import type { ComponentProps } from "react";
 
 import {
   FieldError,
@@ -13,15 +13,10 @@ import { UserPicker } from "#/users/user-picker.tsx";
 export function UserField({
   id,
   ...pickerProps
-}: {
-  id: string;
-  sampleId?: string;
-  status?: UserStatus;
-  excludeMembersOf?: string;
-  includeSelf?: boolean;
-  inMyGroups?: boolean;
-  disabled?: boolean;
-}) {
+}: Omit<
+  ComponentProps<typeof UserPicker>,
+  "value" | "onChange" | "placeholder"
+>) {
   const field = useFieldContext<UserIdentity | null>();
   const { error, errorId, ariaProps } = useFieldError();
 
