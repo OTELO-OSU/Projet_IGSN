@@ -38,19 +38,18 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
 
 `field(header, path, block?)` is one column. `tree(...)` is one column per level of a hierarchy. `grouped(group, columns)` sets the row-1 header. `marked(...)` appends "\*" to the blockers' columns.
 
-Beyond its line in the registry, a column gets all of this for free:
+A column's line in the registry is the only thing you write. When something about that column looks wrong in a generated file or an upload report, this is where to look:
 
-- **Its cell type** (text, number, yes/no) and whether it belongs to an array. `COLUMN_KINDS` ([column-kind.ts](../packages/api/src/sample/import-template/column-kind.ts)) reads the JSON schema of `createSampleSchema` at the column's `path`.
-- **Its trailing "\*"**. `marked()` adds it when the `path` is in `PUBLISH_BLOCKER_PATH`, on level 1 of a hierarchy only.
-- **Whether its absence refuses the file**. [required-columns.ts](../packages/api/src/sample/import-template/required-columns.ts) derives that from the schema's required fields and the blockers. Conditional fields and `IMPORT_DEFAULTS` stay out of the set.
-- **Its dropdown and its rows on the "Vocabularies" sheet**. [vocabulary-sheet.ts](../packages/api/src/sample/import-template/vocabulary-sheet.ts) writes the block the column's `block` names, labelled through [labels.ts](../packages/api/src/sample/import-template/labels.ts).
-- **Its grey cells and input prompt**. [conditional-fields.ts](../packages/api/src/sample/import-template/conditional-fields.ts) builds them from the domain predicates (`texturesFor`, `allowsLocation`...).
-
-Three more places read the same registry, so they follow it too:
-
-- **Upload**. [template-layout.ts](../packages/api/src/sample/import-template/template-layout.ts) finds each column by header, [read-rows.ts](../packages/api/src/sample/import-template/read-rows.ts) reads its cells, [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts) writes the value at its `path`.
-- **Validation**. [validate-samples.ts](../packages/api/src/sample/import-template/validate-samples.ts) checks the built sample against `publishedSampleSchema` and places each issue back on its sheet, row and column.
-- **Export and bulk edit**. [export-columns.ts](../packages/api/src/sample/bulk-edit/export-columns.ts) and [sample-row.ts](../packages/api/src/sample/bulk-edit/sample-row.ts) reuse the columns, greying frozen cells from `published-field-lock.ts`.
+| Symptom                                                    | Where                                                                                                                                                                                                             |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A number reads as text, a yes/no as a string               | `COLUMN_KINDS` ([column-kind.ts](../packages/api/src/sample/import-template/column-kind.ts)), the type at the column's `path` in the JSON schema of `createSampleSchema`                                          |
+| The "\*" is missing or on the wrong column                 | `marked()` in `columns.ts`, driven by `PUBLISH_BLOCKER_PATH`                                                                                                                                                      |
+| An old template is refused with `missing_column`           | [required-columns.ts](../packages/api/src/sample/import-template/required-columns.ts), the required set and what `IMPORT_DEFAULTS` and conditions take out of it                                                  |
+| A dropdown is empty or offers the wrong values             | the block named by the column's `block` in [vocabulary-sheet.ts](../packages/api/src/sample/import-template/vocabulary-sheet.ts), labels from [labels.ts](../packages/api/src/sample/import-template/labels.ts)   |
+| A cell is grey when it should not be, or a prompt is wrong | its entry in [conditional-fields.ts](../packages/api/src/sample/import-template/conditional-fields.ts)                                                                                                            |
+| An uploaded value lands in the wrong field                 | [template-layout.ts](../packages/api/src/sample/import-template/template-layout.ts) (header match), [build-sample-inputs.ts](../packages/api/src/sample/import-template/build-sample-inputs.ts) (value at `path`) |
+| An issue points at the wrong row or column                 | `placeOf` in [validate-samples.ts](../packages/api/src/sample/import-template/validate-samples.ts)                                                                                                                |
+| An export cell is wrong or greyed                          | [sample-row.ts](../packages/api/src/sample/bulk-edit/sample-row.ts) for the value, `isFrozen` in `export-workbook.ts` for the grey                                                                                |
 
 **The upload**, `POST /admin/samples/import`:
 
