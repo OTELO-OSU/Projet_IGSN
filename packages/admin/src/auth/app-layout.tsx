@@ -108,7 +108,12 @@ export function AppLayout({
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="flex h-16 items-center justify-between gap-4 border-b pr-6">
+      <header
+        className={cn(
+          "flex h-16 items-center justify-between gap-4 border-b pr-6",
+          !hasSidebar && "pl-4.5",
+        )}
+      >
         <Link to="/" search={listSearch} className="flex h-full items-center">
           <img
             src={`${import.meta.env.BASE_URL}logo-igsn.png`}

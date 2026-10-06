@@ -51,7 +51,37 @@ describe("validateSamples", () => {
     ]);
   });
 
+  it("should import a research programme name with its kind", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.samples, 3, {
+      "Research program kind": "Cruise",
+      "Name of the research programme": "MD-245",
+    });
+
+    expect(validated(book).samples[0]?.input.scientificContext).toMatchObject({
+      researchProgramKind: "cruise",
+      researchProgramName: "MD-245",
+    });
+  });
+
   it.each<[string, (book: ExcelJS.Workbook) => void, object[]]>([
+    [
+      "an unknown research programme kind",
+      (book) =>
+        fill(book, SHEETS.samples, 3, {
+          "Research program kind": "Expedition",
+          "Name of the research programme": "MD-245",
+        }),
+      [
+        {
+          sheet: SHEETS.samples,
+          row: 3,
+          column: "Research program kind",
+          code: "invalid_value",
+          message: expect.any(String),
+        },
+      ],
+    ],
     [
       "a publish blocker on the column that clears it",
       (book) => fill(book, SHEETS.samples, 3, { "Existence status": null }),

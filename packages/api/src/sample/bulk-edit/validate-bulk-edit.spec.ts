@@ -182,6 +182,35 @@ describe("validateBulkEdit", () => {
   );
 
   pgTest(
+    "should change the research programme kind of a published sample",
+    async ({ db }) => {
+      const sample = await published(db, {
+        ...STORED,
+        scientificContext: {
+          provenanceStatus: "research_project_sample",
+          researchProgramName: "MD-245",
+          researchProgramKind: "program",
+          collectorFirstname: "Marie",
+          collectorLastname: "Curie",
+          additionalRoles: [],
+        },
+      });
+      const book = await exported([sample]);
+      fill(book, SHEETS.samples, ROW, { "Research program kind": "Cruise" });
+
+      const { issues, samples } = await validated(book, [sample]);
+      await updateSample(db, sample.id, samples[0]!.input);
+
+      expect(issues).toEqual([]);
+      expect((await readSample(db, sample.id))?.scientificContext).toEqual({
+        ...sample.scientificContext,
+        researchProgramKind: "cruise",
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
     "should keep the list of a child sheet absent from the file",
     async ({ db }) => {
       const sample = await published(db);

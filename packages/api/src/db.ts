@@ -104,6 +104,7 @@ type SampleTable = {
   sc_provenance_status: string | null;
   sc_funder_organizations: string[] | null;
   sc_research_program_name: string | null;
+  sc_research_program_kind: string | null;
   sc_chief_scientist_user_id: string | null;
   sc_chief_scientist_firstname: string | null;
   sc_chief_scientist_lastname: string | null;

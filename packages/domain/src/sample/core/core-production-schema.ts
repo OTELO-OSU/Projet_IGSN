@@ -196,7 +196,7 @@ const coreProjectSchema = z.strictObject({
   name: freeTextSchema
     .meta({
       description:
-        "Name of the research programme the sample was collected for.",
+        "Name of the research programme the sample was collected for, refused beside campaign, samplingSite_name or samplingPurpose.",
     })
     .optional(),
   fundingReferences: z
@@ -221,7 +221,8 @@ const coreProjectSchema = z.strictObject({
     .optional(),
   campaign: freeTextSchema
     .meta({
-      description: "Field campaign the sample was collected during.",
+      description:
+        "Name of the campaign or cruise the sample was collected during, refused beside name, samplingSite_name or samplingPurpose.",
     })
     .optional(),
 });
@@ -341,13 +342,13 @@ export const coreProductionSchema = z
     samplingPurpose: freeTextSchema
       .meta({
         description:
-          "Mission the sample was collected for, on a research project sample alone.",
+          "Name of the mission the sample was collected for, on a research project sample alone, refused beside projects[0].name, projects[0].campaign or samplingSite_name.",
       })
       .optional(),
     samplingSite_name: freeTextSchema
       .meta({
         description:
-          "Name of the field the sample was collected on, on a research project sample alone.",
+          "Name of the field the sample was collected on, on a research project sample alone, refused beside projects[0].name, projects[0].campaign or samplingPurpose.",
       })
       .optional(),
     projects: z
@@ -380,6 +381,20 @@ export const coreProductionSchema = z
       production.collectionDateTimeZone,
       "collectionDateTimeZone",
     );
+    const project = production.projects?.[0];
+    const slots = [
+      { path: ["projects", 0, "name"], name: project?.name },
+      { path: ["projects", 0, "campaign"], name: project?.campaign },
+      { path: ["samplingSite_name"], name: production.samplingSite_name },
+      { path: ["samplingPurpose"], name: production.samplingPurpose },
+    ];
+    for (const { path } of slots.filter(({ name }) => name != null).slice(1)) {
+      ctx.addIssue({
+        code: "custom",
+        path,
+        message: "a research programme name fills one slot alone",
+      });
+    }
   });
 
 export type CoreProduction = z.infer<typeof coreProductionSchema>;

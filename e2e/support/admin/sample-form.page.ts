@@ -181,6 +181,10 @@ export function sampleFormPage(page: Page) {
       await openTab("Scientific context");
       await expect(fieldCombobox("Platform type")).toHaveText(label);
     },
+    setResearchProgramKind: async (kind: string) => {
+      await openTab("Scientific context");
+      await pick("Kind", kind);
+    },
     expectNoCollectionDate: () =>
       expect(page.getByRole("group", { name: /collection date/i })).toHaveCount(
         0,

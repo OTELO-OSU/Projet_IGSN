@@ -2520,6 +2520,7 @@ const publishedResearchProjectSampleFixture: CreateSample = {
     additionalRoles: [],
     funderOrganizations: ["03fd77x13"],
     researchProgramName: "GEOSAMPLE",
+    researchProgramKind: "cruise",
     chiefScientistFirstname: "Marie",
     chiefScientistLastname: "Tharp",
     hostInstitution: ["02cte4b68"],
@@ -2857,11 +2858,10 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("combobox", { name: "Funder organizations" }))
       .toBeEnabled();
     await expect
-      .element(
-        screen.getByLabelText(
-          "Name of the Research Programm/Campaign/Mission/Field/Cruise",
-        ),
-      )
+      .element(screen.getByRole("combobox", { name: "Kind" }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByLabelText("Name of the cruise", { exact: true }))
       .toBeEnabled();
     await expect
       .element(

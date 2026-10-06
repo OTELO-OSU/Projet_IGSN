@@ -121,6 +121,7 @@ describe("samples export workbook", () => {
       "Collection date precision": "Hour and minute",
       "Collection date start": "2024-06-01T08:30",
       "Metamorphic facies": null,
+      "Research program kind": "Research program",
     });
   });
 

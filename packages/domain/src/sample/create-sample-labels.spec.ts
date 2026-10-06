@@ -23,6 +23,8 @@ const {
   resourceTypeLabel,
   physiographicEnvironmentLabel,
   mineralClassificationLabel,
+  researchProgramNameLabel,
+  researchProgramDescriptionLabel,
 } = createSampleLabels(m);
 
 describe("materialPathLabel", () => {
@@ -50,6 +52,22 @@ describe("materialPathLabel", () => {
 describe("typeLabel", () => {
   it("should translate the last segment under the type prefix", () => {
     expect(typeLabel("core.half_round")).toBe("Core Half round");
+  });
+});
+
+describe("research program labels follow its kind", () => {
+  it.each([
+    ["cruise", "Name of the cruise"],
+    [null, "Research program"],
+  ] as const)("should label the name of a %s as %s", (kind, label) => {
+    expect(researchProgramNameLabel(kind)).toBe(label);
+  });
+
+  it.each([
+    ["cruise", "Description of the cruise"],
+    [null, "Research program description"],
+  ] as const)("should label the description of a %s as %s", (kind, label) => {
+    expect(researchProgramDescriptionLabel(kind)).toBe(label);
   });
 });
 

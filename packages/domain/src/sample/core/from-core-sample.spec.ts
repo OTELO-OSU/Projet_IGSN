@@ -127,6 +127,32 @@ describe("fromCoreSample", () => {
     },
   );
 
+  it.each([
+    ["projects.0.name", "program", { name: "MD-218" }, {}],
+    ["projects.0.campaign", "campaign", { campaign: "MD-218" }, {}],
+    ["samplingSite_name", "field", {}, { samplingSite_name: "MD-218" }],
+    ["samplingPurpose", "mission", {}, { samplingPurpose: "MD-218" }],
+  ] as const)(
+    "should read a name in %s as a %s program",
+    (_slot, researchProgramKind, projectSlot, productionSlot) => {
+      const { production } = RESEARCH_PROJECT_SAMPLE_RECORD;
+      const { name: _name, ...project } = production.projects?.[0] ?? {};
+      const body: CoreSampleBody = {
+        ...RESEARCH_PROJECT_SAMPLE_RECORD,
+        production: {
+          ...production,
+          ...productionSlot,
+          projects: [{ ...project, ...projectSlot }],
+        },
+      };
+
+      expect(fromCoreSample(body).sample.scientificContext).toMatchObject({
+        researchProgramName: "MD-218",
+        researchProgramKind,
+      });
+    },
+  );
+
   it("should read the archive contact first and last names as sent", () => {
     const body: CoreSampleBody = {
       ...RESEARCH_PROJECT_SAMPLE_RECORD,
