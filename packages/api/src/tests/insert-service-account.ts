@@ -7,6 +7,7 @@ export function insertServiceAccount(
   name: string,
   ownerId: string,
   apiKeyHash: string | null = null,
+  sampleOwnerId: string = ownerId,
 ): Promise<{ id: string }> {
   return db
     .insertInto("service_account")
@@ -14,10 +15,8 @@ export function insertServiceAccount(
       id: crypto.randomUUID(),
       name,
       owner_id: ownerId,
+      sample_owner_id: sampleOwnerId,
       api_key_hash: apiKeyHash,
-      institutional_organization: "04vfs2w97",
-      institutional_osu: "OTELo",
-      institutional_laboratory: "UMR7358",
     })
     .returning("id")
     .executeTakeFirstOrThrow();

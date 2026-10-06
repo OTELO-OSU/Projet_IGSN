@@ -1,26 +1,21 @@
 import { NO_MANAGED_GROUPS } from "../user/managed-groups.ts";
 import { serviceAccountBodySchema } from "./service-account-validator.ts";
 
-const ORLEANS = "014zrew76";
-const LORRAINE = "04vfs2w97";
-
 const body = (overrides: object) => ({
   name: "Gaia Data",
   ownerId: "b0f3f6a4-1f4c-4f3a-9a2e-6c1d5e9b7a01",
-  institutionalOrganization: ORLEANS,
-  institutionalOsu: null,
-  institutionalLaboratory: "UMR7327",
+  sampleOwnerId: "c1a4e7b5-2a5d-4b4b-8b3f-7d2e6f0c8b02",
   managedGroups: NO_MANAGED_GROUPS,
   ...overrides,
 });
 
 const parse = (account: object) => serviceAccountBodySchema.safeParse(account);
 
-describe("serviceAccountBodySchema", () => {
-  it("should accept an organization and its laboratory without an OSU nor managed groups", () => {
-    expect(parse(body({})).success).toBe(true);
-  });
+const issuePaths = (result: {
+  error?: { issues: { path: PropertyKey[] }[] };
+}) => result.error?.issues.map((issue) => issue.path.join("."));
 
+describe("serviceAccountBodySchema", () => {
   it.each([
     { rule: "a blank name", account: body({ name: "   " }), path: "name" },
     {
@@ -29,16 +24,14 @@ describe("serviceAccountBodySchema", () => {
       path: "name",
     },
     {
-      rule: "a laboratory outside the submitted organization",
-      account: body({ institutionalOrganization: LORRAINE }),
-      path: "institutionalLaboratory",
+      rule: "an unknown field",
+      account: body({ institutionalOrganization: "014zrew76" }),
+      path: "",
     },
   ])("should reject $rule", ({ account, path }) => {
     const result = parse(account);
 
     expect(result.success).toBe(false);
-    expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain(
-      path,
-    );
+    expect(issuePaths(result)).toContain(path);
   });
 });

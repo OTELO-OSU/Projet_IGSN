@@ -1,7 +1,8 @@
+import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 import type { SearchUsersFilters } from "@projet-igsn/domain/user/repository";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
-import { sql, type SqlBool } from "kysely";
+import { type ExpressionBuilder, sql, type SqlBool } from "kysely";
 
 import type { DB } from "../db.ts";
 
@@ -14,6 +15,25 @@ const SEARCHED_COLUMNS = ["name", "firstname", "email"] as const;
 const SEARCH_LIMIT = 10;
 const BROWSE_LIMIT = 20;
 
+const inManagedGroups = (
+  eb: ExpressionBuilder<DB, "user">,
+  { managedLaboratories, managedManualGroupIds }: ModerationScope,
+) =>
+  eb.or([
+    managedLaboratories.length > 0
+      ? eb("user.institutional_laboratory", "in", managedLaboratories)
+      : eb.lit(false),
+    managedManualGroupIds.length > 0
+      ? eb.exists(
+          eb
+            .selectFrom("manual_group_member")
+            .select("manual_group_member.user_id")
+            .whereRef("manual_group_member.user_id", "=", "user.id")
+            .where("manual_group_member.group_id", "in", managedManualGroupIds),
+        )
+      : eb.lit(false),
+  ]);
+
 export function searchUsers(
   db: Transactional<DB>,
   callerId: string,
@@ -25,6 +45,7 @@ export function searchUsers(
     excludeMembersOf,
     includeSelf,
     selfFirst,
+    scope,
   }: SearchUsersFilters,
 ): Promise<UserIdentity[]> {
   const others = db
@@ -70,6 +91,9 @@ export function searchUsers(
           ),
         ),
       ),
+    )
+    .$if(scope !== undefined && !scope.superAdmin, (qb) =>
+      qb.where((eb) => inManagedGroups(eb, scope!)),
     )
     .$if(selfFirst === true, (qb) => qb.orderBy(sql`id = ${callerId}`, "desc"));
   if (search === undefined) {

@@ -25,6 +25,7 @@ const searchUsersQuerySchema = z.strictObject({
   excludeMembersOf: z.uuid().optional(),
   includeSelf: z.stringbool().optional(),
   selfFirst: z.stringbool().optional(),
+  inMyGroups: z.stringbool().optional(),
 });
 
 export const validateSearchUsersQuery = validator("query", (value, c) => {

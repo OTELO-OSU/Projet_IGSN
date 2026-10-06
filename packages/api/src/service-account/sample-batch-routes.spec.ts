@@ -47,12 +47,17 @@ async function arrangeAccount(db: Kysely<DB>) {
   const owner = await insertUser(db, "jean.martin-5b7@univ-lorraine.fr", {
     firstname: "Jean",
     name: "Martin",
+    institutionalOrganization: "04vfs2w97",
+    institutionalOsu: "OTELo",
+    institutionalLaboratory: IN_REACH,
   });
+  const keyHolder = await insertUser(db, "key.holder-5b7@univ-lorraine.fr");
   const account = await insertServiceAccount(
     db,
     "Harvester",
-    owner.id,
+    keyHolder.id,
     hashApiKey(KEY),
+    owner.id,
   );
   await db
     .insertInto("service_account_managed_institutional_group")
@@ -193,7 +198,7 @@ describe("POST /service/samples/batch", () => {
   });
 
   pgTest(
-    "should queue every created item for publication, owned by the account's owner and snapshotting the account's trio",
+    "should queue every created item for publication, owned by the account's samples owner and snapshotting their institutional codes",
     async ({ db }) => {
       // Arrange
       const { app, owner } = await arrangeAccount(db);

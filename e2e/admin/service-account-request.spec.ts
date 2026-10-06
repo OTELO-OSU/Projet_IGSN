@@ -12,12 +12,12 @@ import { adminUrl, frontendUrl } from "../support/urls";
 
 const MANUAL_GROUP = "ANR CritMet";
 const REASON = "We harvest our laboratory samples every night.";
-const JEAN_LABORATORY = "GéoRessources";
+const MARIE_LABORATORY = "Centre de recherches pétrographiques et géochimiques";
 const SAMPLES_URL = `${frontendUrl}/api/service/samples`;
 const BATCHES_URL = `${frontendUrl}/api/service/batches`;
 
 test.describe("service account request", () => {
-  test("a researcher asks for a service account, then calls the api with its key", async ({
+  test("a group manager asks for a service account owning samples for a member, then calls the api with its key", async ({
     page,
     browser,
     request,
@@ -27,14 +27,17 @@ test.describe("service account request", () => {
     const name = `Basalt harvester ${Date.now()}`;
     const settings = settingsPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.jean);
+    await signInAsResearcher(page, RESEARCHERS.marie);
     await settings.openProfile();
-    await settings.requestServiceAccount(name, REASON, MANUAL_GROUP);
+    await settings.requestServiceAccount(name, REASON, MANUAL_GROUP, {
+      search: "Martin",
+      name: "Jean Martin",
+    });
 
     const mail = await maildev(request).expectMail(
       RESEARCHERS.nadia.email,
-      `Jean Martin asks for the service account "${name}"`,
-      [JEAN_LABORATORY, MANUAL_GROUP, REASON],
+      `Marie Dupont asks for the service account "${name}"`,
+      [MARIE_LABORATORY, "Samples owner: Jean Martin", MANUAL_GROUP, REASON],
     );
     const link = /http\S+service-accounts\/create\?request=\S+/.exec(mail)?.[0];
     expect(link).toBeDefined();
@@ -47,8 +50,8 @@ test.describe("service account request", () => {
     await superAdminPage.goto(link!);
     await account.expectPrefilled({
       name,
-      laboratory: JEAN_LABORATORY,
-      owner: "Jean Martin",
+      owner: "Marie Dupont",
+      samplesOwner: "Jean Martin",
     });
     await account.create();
     await account.expectVisible(name);

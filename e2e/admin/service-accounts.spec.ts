@@ -8,7 +8,6 @@ import { test } from "../support/db";
 
 const uniqueName = (name: string) => `${name} ${Date.now()}`;
 
-const LORRAINE = "Université de Lorraine";
 const CRPG = "Centre de recherches pétrographiques et géochimiques";
 const MANAGED_CRPG = `${CRPG} (CRPG) (UMR7358)`;
 const MANUAL_GROUP = "ANR CritMet";
@@ -27,11 +26,9 @@ test.describe("service accounts", () => {
 
     await accounts.goToCreate();
     await account.fillName(name);
+    await account.expectNoInstitution();
     await account.chooseOwner("Martin", "Jean Martin");
-    await account.chooseInstitution({
-      organization: LORRAINE,
-      laboratory: CRPG,
-    });
+    await account.chooseSamplesOwner("Dupont", "Marie Dupont");
     await account.grant("Managed manual groups", MANUAL_GROUP, MANUAL_GROUP);
     await account.create();
     await account.expectVisible(name);

@@ -1,19 +1,16 @@
 import { z } from "zod";
 
-import { laboratoryCodeSchema } from "../institutional-group/laboratory.ts";
-import { organizationRorSchema } from "../institutional-group/organization.ts";
-import { osuCodeSchema } from "../institutional-group/osu.ts";
+import { institutionalGroupsFields } from "../institutional-group/model.ts";
 import { managedGroupsSchema } from "../user/managed-groups.ts";
 import { userIdentitySchema } from "../user/user-validator.ts";
 
 export const serviceAccountSchema = z.object({
   id: z.uuid(),
   name: z.string(),
-  institutionalOrganization: organizationRorSchema,
-  institutionalOsu: osuCodeSchema.nullable(),
-  institutionalLaboratory: laboratoryCodeSchema,
+  ...institutionalGroupsFields,
   managedGroups: managedGroupsSchema,
   owner: userIdentitySchema,
+  sampleOwner: userIdentitySchema,
   hasApiKey: z.boolean(),
 });
 

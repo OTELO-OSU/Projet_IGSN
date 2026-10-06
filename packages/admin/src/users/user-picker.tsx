@@ -13,6 +13,8 @@ export function UserPicker({
   sampleId,
   status,
   excludeMembersOf,
+  includeSelf,
+  inMyGroups,
   ...props
 }: {
   id: string;
@@ -23,6 +25,9 @@ export function UserPicker({
   sampleId?: string;
   status?: UserStatus;
   excludeMembersOf?: string;
+  includeSelf?: boolean;
+  inMyGroups?: boolean;
+  disabled?: boolean;
   "aria-invalid"?: true;
   "aria-describedby"?: string;
 }) {
@@ -31,6 +36,8 @@ export function UserPicker({
     enabled: picker.isOpen,
     status,
     excludeMembersOf,
+    includeSelf,
+    inMyGroups,
   });
   return (
     <SearchPicker

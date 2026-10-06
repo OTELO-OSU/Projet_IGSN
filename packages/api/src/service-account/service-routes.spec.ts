@@ -75,7 +75,13 @@ const FOREIGN_GROUP_ID = "01890a5d-ac96-774b-8fb4-b302099a9003";
 const FOREIGN_GROUP_NAME = "Alpine Campaign 2026";
 const ACCOUNT_ID = "01890a5d-ac96-774b-8fb4-b302099a9004";
 
-const OWNER = { firstname: "Jean", name: "Martin" };
+const OWNER = {
+  firstname: "Jean",
+  name: "Martin",
+  institutionalOrganization: "04vfs2w97",
+  institutionalOsu: "OTELo",
+  institutionalLaboratory: IN_REACH,
+};
 
 const core = (sample: Sample) => toCoreSample(sample, FRONTEND_URL);
 
@@ -93,11 +99,13 @@ const archivedSample = {
 
 async function arrangeAccount(db: Kysely<DB>) {
   const owner = await insertUser(db, "jean.martin-fb4@univ-lorraine.fr", OWNER);
+  const keyHolder = await insertUser(db, "key.holder-fb4@univ-lorraine.fr");
   const account = await insertServiceAccount(
     db,
     "Harvester",
-    owner.id,
+    keyHolder.id,
     hashApiKey(KEY),
+    owner.id,
   );
   await db
     .insertInto("service_account_managed_institutional_group")
@@ -927,7 +935,7 @@ describe("POST /service/samples", () => {
   );
 
   pgTest(
-    "should publish the sample at once, owned by the account's owner and snapshotting the account's institutional trio",
+    "should publish the sample at once, owned by the account's samples owner and snapshotting their institutional codes",
     async ({ db }) => {
       // Arrange
       const { app, owner } = await arrangeAccount(db);
@@ -1557,39 +1565,60 @@ describe("the /service mount", () => {
     rule: "an unknown api key",
     headers: { Authorization: "Bearer nope" },
     status: "accepted",
+    sampleOwnerStatus: "accepted",
   } as const;
   const REJECTED_OWNER = {
     rule: "a valid api key whose owner is no longer accepted",
     headers: { Authorization: `Bearer ${KEY}` },
     status: "rejected",
+    sampleOwnerStatus: "accepted",
+  } as const;
+  const REJECTED_SAMPLE_OWNER = {
+    rule: "a valid api key whose samples owner is no longer accepted",
+    headers: { Authorization: `Bearer ${KEY}` },
+    status: "accepted",
+    sampleOwnerStatus: "rejected",
   } as const;
   const NO_HEADER = {
     rule: "no Authorization header",
     headers: {},
     status: "accepted",
+    sampleOwnerStatus: "accepted",
   } as const;
 
   pgTest.for([
-    ...[UNKNOWN_KEY, REJECTED_OWNER].flatMap((forbidden) =>
-      (
-        [
-          ["GET", ""],
-          ["GET", ONE],
-          ["POST", ""],
-          ["PUT", ONE],
-        ] as const
-      ).map(([method, path]) => ({ ...forbidden, method, path })),
+    ...[UNKNOWN_KEY, REJECTED_OWNER, REJECTED_SAMPLE_OWNER].flatMap(
+      (forbidden) =>
+        (
+          [
+            ["GET", ""],
+            ["GET", ONE],
+            ["POST", ""],
+            ["PUT", ONE],
+          ] as const
+        ).map(([method, path]) => ({ ...forbidden, method, path })),
     ),
     { ...NO_HEADER, method: "POST", path: "" },
     { ...NO_HEADER, method: "PUT", path: ONE },
   ])(
     "should answer 403 to $method /service/samples$path with $rule",
-    async ({ headers, status, method, path }, { db }) => {
+    async ({ headers, status, sampleOwnerStatus, method, path }, { db }) => {
       // Arrange
-      const owner = await insertUser(db, "jean.martin-fb4@univ-lorraine.fr", {
+      const owner = await insertUser(db, "key.holder-fb4@univ-lorraine.fr", {
         status,
       });
-      await insertServiceAccount(db, "Harvester", owner.id, hashApiKey(KEY));
+      const sampleOwner = await insertUser(
+        db,
+        "jean.martin-fb4@univ-lorraine.fr",
+        { status: sampleOwnerStatus },
+      );
+      await insertServiceAccount(
+        db,
+        "Harvester",
+        owner.id,
+        hashApiKey(KEY),
+        sampleOwner.id,
+      );
       const { app } = createApp(db);
       // Act
       const res = await app.request(`/service/samples${path}`, {

@@ -14,7 +14,10 @@ import { ctaMailFor } from "../mail/cta-mail.ts";
 import { type Translator, translator } from "../mail/i18n.ts";
 
 type ServiceAccountRequestMail = {
-  requester: Pick<User, "email" | "name" | "firstname">;
+  requester: Pick<
+    User,
+    "email" | "name" | "firstname" | "institutionalLaboratory"
+  >;
   draft: ServiceAccountDraft;
   reason: string;
   manualGroupNames: string[];
@@ -27,12 +30,16 @@ function requestUrl(adminUrl: string, draft: ServiceAccountDraft): string {
   return url.toString();
 }
 
-function requestedGroups(
+function requestDetails(
   t: Translator,
-  { managedGroups }: ServiceAccountDraft,
+  { managedGroups, sampleOwner }: ServiceAccountDraft,
   manualGroupNames: string[],
 ): string {
   const lines: [string, string[]][] = [
+    [
+      t("mail_service_account_request_sample_owner"),
+      sampleOwner ? [fullName(sampleOwner) || sampleOwner.email] : [],
+    ],
     [
       t("mail_service_account_request_organizations"),
       managedGroups.organizations.map(organizationLabel),
@@ -60,12 +67,12 @@ export async function serviceAccountRequestMail({
   const t = translator();
   const params = {
     requester: fullName(requester) || requester.email,
-    laboratory: draft.institutionalLaboratory
-      ? laboratoryLabel(draft.institutionalLaboratory)
+    laboratory: requester.institutionalLaboratory
+      ? laboratoryLabel(requester.institutionalLaboratory)
       : t("mail_service_account_request_no_laboratory"),
     name: draft.name,
   };
-  const quote = [reason, requestedGroups(t, draft, manualGroupNames)]
+  const quote = [reason, requestDetails(t, draft, manualGroupNames)]
     .filter((part) => part.length > 0)
     .join("\n\n");
   return ctaMailFor("service_account_request", {

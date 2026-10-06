@@ -1,7 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
 import { adminUrl } from "../urls";
-import { chooseOption } from "./choose-option.ts";
 import { managedGroupsSection } from "./managed-groups.page.ts";
 
 export function serviceAccountsPage(page: Page) {
@@ -30,41 +29,42 @@ export function serviceAccountsPage(page: Page) {
   };
 }
 
+export const chooseUser =
+  (page: Page) => async (field: RegExp, search: string, name: string) => {
+    await page.getByRole("combobox", { name: field }).click();
+    await page.getByPlaceholder("Search by name or email").fill(search);
+    await page.getByRole("option").filter({ hasText: name }).click();
+  };
+
 export function serviceAccountPage(page: Page) {
-  const choose = chooseOption(page);
+  const choose = chooseUser(page);
 
   return {
     expectVisible: (name: string) =>
       expect(page.getByRole("heading", { name, level: 1 })).toBeVisible(),
     fillName: (name: string) =>
       page.getByRole("textbox", { name: "Service name" }).fill(name),
-    chooseInstitution: async (institution: {
-      organization: string;
-      laboratory: string;
-    }) => {
-      await choose(/^Organization/, institution.organization);
-      await choose(/^Laboratory/, institution.laboratory);
-    },
     grant: managedGroupsSection(page).grant,
-    chooseOwner: async (search: string, name: string) => {
-      await page.getByRole("combobox", { name: /^Requested by/ }).click();
-      await page.getByPlaceholder("Search by name or email").fill(search);
-      await page.getByRole("option").filter({ hasText: name }).click();
-    },
+    chooseOwner: (search: string, name: string) =>
+      choose(/^Requested by/, search, name),
+    chooseSamplesOwner: (search: string, name: string) =>
+      choose(/^Samples owner/, search, name),
+    expectNoInstitution: () =>
+      expect(page.getByRole("heading", { name: "Institution" })).toBeHidden(),
     expectPrefilled: async (prefill: {
       name: string;
-      laboratory: string;
       owner: string;
+      samplesOwner: string;
     }) => {
       await expect(
         page.getByRole("textbox", { name: "Service name" }),
       ).toHaveValue(prefill.name);
+      const requestedBy = page.getByRole("combobox", { name: /^Requested by/ });
+      await expect(requestedBy).toContainText(prefill.owner);
+      await expect(requestedBy).toBeDisabled();
       await expect(
-        page.getByRole("combobox", { name: /^Laboratory/ }),
-      ).toContainText(prefill.laboratory);
-      await expect(
-        page.getByRole("combobox", { name: /^Requested by/ }),
-      ).toContainText(prefill.owner);
+        page.getByRole("combobox", { name: /^Samples owner/ }),
+      ).toContainText(prefill.samplesOwner);
     },
     create: () =>
       page.getByRole("button", { name: "Create", exact: true }).click(),

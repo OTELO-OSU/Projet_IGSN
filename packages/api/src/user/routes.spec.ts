@@ -219,6 +219,62 @@ describe("admin user search routes", () => {
   );
 
   pgTest(
+    "should narrow inMyGroups to the members of the caller's managed laboratories and manual groups",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const groupId = "0198f3a0-0000-7000-8000-000000000002";
+      await db
+        .insertInto("manual_group")
+        .values({ id: groupId, name: "Alpes eb4 managed" })
+        .execute();
+      await moderateInstitution(db, caller.id, {
+        kind: "laboratory",
+        code: "UMR7358",
+      });
+      await moderateManualGroup(db, caller.id, [groupId]);
+      await insertUser(db, "in.lab-eb4@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const member = await insertUser(db, "in.group-eb4@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7154",
+      });
+      await db
+        .insertInto("manual_group_member")
+        .values({ group_id: groupId, user_id: member.id })
+        .execute();
+      await insertUser(db, "outsider-eb4@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7154",
+      });
+
+      const res = await createApp(db).app.request(
+        "/admin/users/search?inMyGroups=true",
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(200);
+      const body = userIdentitiesResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.email)).toEqual([
+        "in.group-eb4@univ-lorraine.fr",
+        "in.lab-eb4@univ-lorraine.fr",
+      ]);
+    },
+  );
+
+  pgTest(
+    "should answer 403 to inMyGroups from a caller who manages no group",
+    async ({ db }) => {
+      await provisionUser(db, "test-token");
+
+      const res = await createApp(db).app.request(
+        "/admin/users/search?inMyGroups=true",
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(403);
+    },
+  );
+
+  pgTest(
     "should list the users by email, caller excluded, with no search term",
     async ({ db }) => {
       await insertUser(db, "zeller@univ-lorraine.fr", { name: "Zeller" });

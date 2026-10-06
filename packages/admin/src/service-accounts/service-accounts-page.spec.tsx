@@ -34,14 +34,16 @@ const ACCOUNT = {
   },
 };
 
-function fakeApi() {
+const WITH_SAMPLES_OWNER = { ...ACCOUNT, sampleOwner: ACCOUNT.owner };
+
+function fakeApi(accounts: unknown[] = [WITH_SAMPLES_OWNER]) {
   fakeCurrentUser({ superAdmin: true });
   worker.use(
     http.get("*/admin/samples", () =>
       HttpResponse.json({ data: [], meta: { total: 0 } }),
     ),
     http.get("*/admin/service-accounts", () =>
-      HttpResponse.json({ data: [ACCOUNT], meta: { total: 1 } }),
+      HttpResponse.json({ data: accounts, meta: { total: accounts.length } }),
     ),
   );
 }
@@ -66,5 +68,21 @@ describe("ServiceAccountsPage", () => {
     await expect
       .element(screen.getByRole("img", { name: "Active" }))
       .toBeVisible();
+  });
+
+  it("should leave the institution blank when the samples owner has none", async () => {
+    fakeApi([
+      {
+        ...WITH_SAMPLES_OWNER,
+        institutionalOrganization: null,
+        institutionalLaboratory: null,
+      },
+    ]);
+
+    const { screen } = await renderRoute("/service-accounts");
+
+    const row = screen.getByRole("row", { name: /Gaia harvester/ });
+    await expect.element(row).toBeVisible();
+    await expect.element(row.getByRole("listitem")).not.toBeInTheDocument();
   });
 });

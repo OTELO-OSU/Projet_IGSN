@@ -18,6 +18,7 @@ import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireAcceptedUser } from "../auth/require-accepted-user.ts";
+import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
 import { hasUnattachable } from "../manual-group/has-unattachable.ts";
 import { generateApiKey, hashApiKey } from "./api-key.ts";
@@ -41,7 +42,7 @@ export function createServiceAccountOwnerRoutes(
       };
       return c.json(body);
     })
-    .get("/requestable-groups", async (c) => {
+    .get("/requestable-groups", requireUserModeration(users), async (c) => {
       const requester = c.get("user");
       const body: RequestableInstitutionalGroupsResponse = {
         data: requestableInstitutionalGroups(
@@ -54,9 +55,11 @@ export function createServiceAccountOwnerRoutes(
     .post(
       "/requests",
       requireActiveSession,
+      requireUserModeration(users),
       validateServiceAccountRequestBody,
       async (c) => {
-        const { name, managedGroups, reason } = c.req.valid("json");
+        const { name, sampleOwnerId, managedGroups, reason } =
+          c.req.valid("json");
         const requester = c.get("user");
         const wanted = managedGroups.manualGroupIds;
         const groups =
@@ -79,13 +82,19 @@ export function createServiceAccountOwnerRoutes(
         ) {
           return c.json({ error: "Institutional group out of reach" }, 422);
         }
+        const [sampleOwner] = await users.search(requester.id, {
+          ids: [sampleOwnerId],
+          status: "accepted",
+          scope: c.get("scope"),
+        });
+        if (!sampleOwner) {
+          return c.json({ error: "Samples owner out of reach" }, 422);
+        }
         const draft: ServiceAccountDraft = {
           name,
           managedGroups,
-          institutionalOrganization: requester.institutionalOrganization,
-          institutionalOsu: requester.institutionalOsu,
-          institutionalLaboratory: requester.institutionalLaboratory,
           owner: userIdentitySchema.parse(requester),
+          sampleOwner,
         };
         if (mail) {
           // ponytail: fire and forget; a retry queue if a lost request ever matters.

@@ -1,7 +1,9 @@
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { canAdminManualGroups } from "@projet-igsn/domain/user/can-admin-manual-groups";
 import { useState } from "react";
 
+import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
 import { RequestServiceAccountDialog } from "#/service-accounts/request-service-account-dialog.tsx";
@@ -10,6 +12,7 @@ import { useRotateApiKey } from "#/service-accounts/use-rotate-api-key.ts";
 import { ShareLink } from "#/settings/share-link.tsx";
 
 export function MyServiceAccounts() {
+  const me = useCurrentUser().data;
   const query = useListMyServiceAccounts();
   const rotate = useRotateApiKey();
   const [keys, setKeys] = useState<Record<string, string>>({});
@@ -73,9 +76,11 @@ export function MyServiceAccounts() {
           })}
         </ul>
       )}
-      <div>
-        <RequestServiceAccountDialog />
-      </div>
+      {me && canAdminManualGroups(me) && (
+        <div>
+          <RequestServiceAccountDialog />
+        </div>
+      )}
     </FormSection>
   );
 }

@@ -2,6 +2,7 @@ import type { ServiceAccountRequest } from "@projet-igsn/domain/service-account/
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { Kysely } from "kysely";
 
+import { laboratoryLabel } from "@projet-igsn/domain/institutional-group/label";
 import {
   apiKeyResponseSchema,
   myServiceAccountsResponseSchema,
@@ -20,7 +21,7 @@ import { insertUser } from "../tests/insert-user.ts";
 import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
-import { tokenEmail } from "../tests/provision-user.ts";
+import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 
 type Db = Kysely<DB>;
 
@@ -29,6 +30,7 @@ const FRONTEND_URL = "http://localhost:3000";
 const ORGANIZATION = "04vfs2w97";
 const OSU = "OTELo";
 const LABORATORY = "UMR7358";
+const OUT_OF_REACH_LABORATORY = "UMR7154";
 const OSU_LABORATORIES = ["UAR3562", "UMR7358", "UMR7359", "UMR7360"];
 const GROUP = {
   id: "01890a5d-ac96-774b-81b9-b302099a9001",
@@ -37,6 +39,13 @@ const GROUP = {
 const NAME = "GeoPortal harvester";
 const REASON = "To harvest our OZCAR samples nightly";
 const CREATE_LINK = `${ADMIN_URL}service-accounts/create?request=`;
+const SAMPLE_OWNER = {
+  id: "01890a5d-ac96-774b-81b9-b302099a9002",
+  email: "marie.curie-1b9@univ-lorraine.fr",
+  name: "Curie",
+  firstname: "Marie",
+  orcid: null,
+};
 
 const authHeader = { Authorization: "Bearer test-token" };
 
@@ -44,6 +53,7 @@ const requestBody = (
   overrides: Partial<ServiceAccountRequest> = {},
 ): ServiceAccountRequest => ({
   name: NAME,
+  sampleOwnerId: SAMPLE_OWNER.id,
   managedGroups: { ...NO_MANAGED_GROUPS, manualGroupIds: [GROUP.id] },
   reason: REASON,
   ...overrides,
@@ -56,6 +66,28 @@ const insertRequester = (db: Db, status: UserStatus = "accepted") =>
     institutionalOsu: OSU,
     institutionalLaboratory: LABORATORY,
   });
+
+const insertSampleOwner = (
+  db: Db,
+  {
+    laboratory = LABORATORY,
+    status = "accepted",
+  }: { laboratory?: string; status?: UserStatus } = {},
+) =>
+  insertUser(db, SAMPLE_OWNER.email, {
+    id: SAMPLE_OWNER.id,
+    name: SAMPLE_OWNER.name,
+    firstname: SAMPLE_OWNER.firstname,
+    status,
+    institutionalOrganization: ORGANIZATION,
+    institutionalLaboratory: laboratory,
+  });
+
+const insertOsuManager = async (db: Db) => {
+  const requester = await insertRequester(db);
+  await moderateInstitution(db, requester.id, { kind: "osu", code: OSU });
+  return requester;
+};
 
 function arrangeApp(db: Db) {
   const sendMail = vi.fn<SendMail>().mockResolvedValue(undefined);
@@ -100,15 +132,15 @@ const listServiceSamples = (
 
 describe("service account owner routes", () => {
   pgTest(
-    "should mail every super admin the requester, the service name, the reason and a create link prefilled with the reason-free request",
+    "should mail every super admin the requester and their laboratory, the service name, the reason, the samples owner and a create link prefilled with the reason-free request",
     async ({ db }) => {
       // Arrange
       await db.insertInto("manual_group").values(GROUP).execute();
       await insertUser(db, "root-1b9@univ-lorraine.fr", { superAdmin: true });
       await insertUser(db, "boss-1b9@univ-lorraine.fr", { superAdmin: true });
-      const requester = await insertRequester(db);
+      const requester = await insertOsuManager(db);
       await moderateManualGroup(db, requester.id, [GROUP.id]);
-      await moderateInstitution(db, requester.id, { kind: "osu", code: OSU });
+      await insertSampleOwner(db);
       const { sendMail, client } = arrangeApp(db);
       const managedGroups = {
         ...NO_MANAGED_GROUPS,
@@ -126,6 +158,8 @@ describe("service account owner routes", () => {
         audience: "admin",
       });
       expect(sent.text).toContain("Test User");
+      expect(sent.text).toContain(laboratoryLabel(LABORATORY));
+      expect(sent.text).toContain("Samples owner: Marie Curie");
       expect(sent.text).toContain(NAME);
       expect(sent.text).toContain(REASON);
       expect(sent.text).toContain(CREATE_LINK);
@@ -134,10 +168,8 @@ describe("service account owner routes", () => {
         .find((word) => word.startsWith(CREATE_LINK))!;
       expect(JSON.parse(new URL(link).searchParams.get("request")!)).toEqual({
         name: NAME,
-        institutionalOrganization: ORGANIZATION,
-        institutionalOsu: OSU,
-        institutionalLaboratory: LABORATORY,
         managedGroups,
+        sampleOwner: SAMPLE_OWNER,
         owner: {
           id: requester.id,
           email: tokenEmail("test-token"),
@@ -182,7 +214,8 @@ describe("service account owner routes", () => {
   ])("should answer $status to $rule", async ({ json, status }, { db }) => {
     // Arrange
     await db.insertInto("manual_group").values(GROUP).execute();
-    await insertRequester(db);
+    await insertOsuManager(db);
+    await insertSampleOwner(db);
     const { sendMail, client } = arrangeApp(db);
     // Act
     const res = await askForAccount(client, json);
@@ -190,6 +223,75 @@ describe("service account owner routes", () => {
     expect(res.status).toBe(status);
     expect(sendMail).not.toHaveBeenCalled();
   });
+
+  pgTest.for([
+    {
+      rule: "outside every group the requester manages",
+      sampleOwner: { laboratory: OUT_OF_REACH_LABORATORY },
+    },
+    {
+      rule: "not accepted",
+      sampleOwner: { status: "pending" as const },
+    },
+  ])(
+    "should answer 422 to a samples owner $rule",
+    async ({ sampleOwner }, { db }) => {
+      // Arrange
+      await insertOsuManager(db);
+      await insertSampleOwner(db, sampleOwner);
+      const { sendMail, client } = arrangeApp(db);
+      // Act
+      const res = await askForAccount(
+        client,
+        requestBody({ managedGroups: NO_MANAGED_GROUPS }),
+      );
+      // Assert
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: { error: "Samples owner out of reach" },
+      });
+      expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
+
+  pgTest(
+    "should let a super admin name any accepted samples owner",
+    async ({ db }) => {
+      // Arrange
+      await provisionUser(db, "test-token", { superAdmin: true });
+      await insertSampleOwner(db, { laboratory: OUT_OF_REACH_LABORATORY });
+      const { client } = arrangeApp(db);
+      // Act
+      const res = await askForAccount(
+        client,
+        requestBody({ managedGroups: NO_MANAGED_GROUPS }),
+      );
+      // Assert
+      expect(res.status).toBe(204);
+    },
+  );
+
+  pgTest.for([
+    {
+      route: "POST /requests",
+      call: (client: Client) => askForAccount(client, requestBody()),
+    },
+    { route: "GET /requestable-groups", call: listRequestable },
+  ])(
+    "should answer 403 to $route from an accepted user who manages no group",
+    async ({ call }, { db }) => {
+      // Arrange
+      await db.insertInto("manual_group").values(GROUP).execute();
+      await insertRequester(db);
+      await insertSampleOwner(db);
+      const { sendMail, client } = arrangeApp(db);
+      // Act
+      const res = await call(client);
+      // Assert
+      expect(res.status).toBe(403);
+      expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
 
   pgTest(
     "should answer 403 to a requester whose account is not accepted",
@@ -228,8 +330,7 @@ describe("service account owner routes", () => {
     "should list the requester's own laboratory and every group their managed OSU reaches",
     async ({ db }) => {
       // Arrange
-      const requester = await insertRequester(db);
-      await moderateInstitution(db, requester.id, { kind: "osu", code: OSU });
+      await insertOsuManager(db);
       const { client } = arrangeApp(db);
       // Act
       const res = await listRequestable(client);
