@@ -1,5 +1,5 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
-import type { SampleCollaborator } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 import type { User } from "@projet-igsn/domain/user/model";
 
 import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
@@ -14,13 +14,13 @@ const FAILURE = "Could not mail the sample embargo";
 
 export async function notifyEmbargo({
   event,
-  collaborators,
+  userSamples,
   sample,
   actor,
   mail,
 }: {
   event: EmbargoEvent;
-  collaborators: SampleCollaborator[];
+  userSamples: Pick<UserSampleRepository, "listCollaborators">;
   sample: Pick<Sample, "id" | "name" | "publishedAt">;
   actor?: Pick<User, "id" | "email" | "name" | "firstname">;
   mail: { sendMail: SendMail; adminUrl: string };
@@ -28,6 +28,7 @@ export async function notifyEmbargo({
   try {
     const publishedAt = z.date().parse(sample.publishedAt);
     const url = new URL(`samples/${sample.id}`, mail.adminUrl).toString();
+    const collaborators = await userSamples.listCollaborators(sample.id);
     await Promise.all(
       collaborators
         .filter(

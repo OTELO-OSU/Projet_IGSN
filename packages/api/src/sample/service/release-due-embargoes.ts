@@ -20,7 +20,7 @@ export async function releaseDueEmbargoes(
       if (!released) continue;
       await notifyEmbargo({
         event: "ended",
-        collaborators: await userSamples.listCollaborators(id),
+        userSamples,
         sample: released,
         mail,
       });

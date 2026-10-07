@@ -673,7 +673,7 @@ export function createSampleAdminRoutes(
       if (mail && status === "embargo") {
         void notifyEmbargo({
           event: "started",
-          collaborators: await userSampleRepository.listCollaborators(id),
+          userSamples: userSampleRepository,
           sample: published,
           actor: c.get("user"),
           mail,
@@ -726,7 +726,7 @@ export function createSampleAdminRoutes(
         ) {
           void notifyEmbargo({
             event: "ended",
-            collaborators: await userSampleRepository.listCollaborators(id),
+            userSamples: userSampleRepository,
             sample: updated,
             actor: c.get("user"),
             mail,
