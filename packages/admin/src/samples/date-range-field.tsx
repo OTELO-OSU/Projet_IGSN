@@ -131,7 +131,7 @@ export function DateRangeField({
           <div className="flex flex-wrap items-start gap-4">
             {isRange ? (
               <>
-                <div className="w-full sm:w-72">
+                <div className="w-full sm:w-auto">
                   <form.AppField
                     name={startName}
                     validators={{
@@ -144,7 +144,7 @@ export function DateRangeField({
                     )}
                   </form.AppField>
                 </div>
-                <div className="w-full sm:w-72">
+                <div className="w-full sm:w-auto">
                   <form.AppField
                     name={endName}
                     validators={{
@@ -159,7 +159,7 @@ export function DateRangeField({
                 </div>
               </>
             ) : (
-              <div className="w-full sm:w-72">
+              <div className="w-full sm:w-auto">
                 <form.AppField
                   name={startName}
                   listeners={{
@@ -173,7 +173,7 @@ export function DateRangeField({
               </div>
             )}
             {isHour ? (
-              <div className="w-full sm:w-72">
+              <div className="w-full sm:w-auto">
                 <form.AppField name={timeZoneName}>
                   {(field) => (
                     <field.ComboboxField
