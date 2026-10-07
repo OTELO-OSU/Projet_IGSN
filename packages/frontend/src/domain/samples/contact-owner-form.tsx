@@ -40,7 +40,7 @@ export function ContactOwnerForm({
   });
 
   return (
-    <div className="grid w-full max-w-md gap-4">
+    <div className="grid gap-4">
       <p role="status">{statusMessage}</p>
       <form
         noValidate
@@ -52,17 +52,27 @@ export function ContactOwnerForm({
         className="grid gap-4"
       >
         <form.AppField name="name">
-          {(field) => <field.TextField label={m.contact_field_name()} />}
+          {(field) => (
+            <field.TextField label={m.contact_field_name()} isFullWidth />
+          )}
         </form.AppField>
         <form.AppField name="firstname">
-          {(field) => <field.TextField label={m.contact_field_firstname()} />}
+          {(field) => (
+            <field.TextField label={m.contact_field_firstname()} isFullWidth />
+          )}
         </form.AppField>
         <form.AppField name="email">
-          {(field) => <field.TextField label={m.contact_field_email()} />}
+          {(field) => (
+            <field.TextField label={m.contact_field_email()} isFullWidth />
+          )}
         </form.AppField>
         <form.AppField name="message">
           {(field) => (
-            <field.TextField label={m.contact_field_message()} multiline />
+            <field.TextField
+              label={m.contact_field_message()}
+              multiline
+              isFullWidth
+            />
           )}
         </form.AppField>
         <div>
