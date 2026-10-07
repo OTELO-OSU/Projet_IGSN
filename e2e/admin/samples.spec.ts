@@ -171,6 +171,32 @@ test.describe("samples", () => {
     await list.expectSampleRow(name);
   });
 
+  test("an editor turns a published sample's cruise into a mission, keeping its IGSN", async ({
+    page,
+    samples,
+  }) => {
+    const sample = sampleNamed(samples, "Basalt 42");
+    await signInAsResearcher(page, RESEARCHERS.jean);
+    const list = sampleListPage(page);
+    const edit = sampleEditPage(page);
+    await list.openSample(sample.name);
+    await edit.expectVisible();
+    await edit.setResearchProgramKind("Cruise");
+    await edit.save();
+
+    await page.reload();
+    await edit.setResearchProgramKind("Mission");
+    await edit.save();
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(sample.igsn);
+    await detail.expectSample(sample.name, sample.igsn);
+    await detail.expectResearchProgram(
+      "Name of the mission",
+      "Chaîne des Puys Survey",
+    );
+  });
+
   test("a researcher publishes a new sample straight as withdrawn", async ({
     page,
   }) => {

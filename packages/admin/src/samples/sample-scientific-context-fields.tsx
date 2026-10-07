@@ -3,6 +3,7 @@ import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combob
 import { ALL_ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/managed-group-items";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 import { PLATFORM_TYPES } from "@projet-igsn/domain/sample/scientific-context/platform-type";
+import { RESEARCH_PROGRAM_KINDS } from "@projet-igsn/domain/sample/scientific-context/research-program-kind";
 
 import { m } from "#/paraglide/messages.js";
 import { ContactNameFields } from "#/samples/contact-name-fields.tsx";
@@ -10,6 +11,9 @@ import { SampleAdditionalRolesFields } from "#/samples/sample-additional-roles-f
 import {
   collectionOriginLabel,
   platformTypeLabel,
+  researchProgramDescriptionLabel,
+  researchProgramKindLabel,
+  researchProgramNameLabel,
 } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
@@ -19,6 +23,11 @@ const collectionOriginItems = toComboboxItems(
 );
 
 const platformTypeItems = toComboboxItems(PLATFORM_TYPES, platformTypeLabel);
+
+const researchProgramKindItems = toComboboxItems(
+  RESEARCH_PROGRAM_KINDS,
+  researchProgramKindLabel,
+);
 
 export function SampleScientificContextFields() {
   const form = useSampleForm();
@@ -80,32 +89,48 @@ export function SampleScientificContextFields() {
                     {(field) => <field.TextField label={m.field_funding()} />}
                   </form.AppField>
 
-                  <form.AppField name="scientificContext.researchProgramName">
+                  <form.AppField name="scientificContext.researchProgramKind">
                     {(field) => (
-                      <field.TextField
-                        label={m.field_research_program_name()}
+                      <field.ComboboxField
+                        label={m.field_research_program_kind()}
+                        items={researchProgramKindItems}
+                        placeholder={m.research_program_kind_placeholder()}
+                        searchPlaceholder={m.research_program_kind_search_placeholder()}
+                        emptyText={m.research_program_kind_empty()}
                       />
                     )}
                   </form.AppField>
 
                   <form.Subscribe
-                    selector={(state) =>
-                      !!state.values.scientificContext.researchProgramName
-                    }
+                    selector={(state) => ({
+                      kind: state.values.scientificContext.researchProgramKind,
+                      hasProgram:
+                        !!state.values.scientificContext.researchProgramName,
+                    })}
                   >
-                    {(hasProgram) => (
-                      <form.AppField name="scientificContext.researchProgramDescription">
-                        {(field) => (
-                          <field.TextField
-                            label={m.field_research_program_description()}
-                            multiline
-                            reveal={{
-                              label: m.reveal_research_program_description(),
-                              canReveal: hasProgram,
-                            }}
-                          />
-                        )}
-                      </form.AppField>
+                    {({ kind, hasProgram }) => (
+                      <>
+                        <form.AppField name="scientificContext.researchProgramName">
+                          {(field) => (
+                            <field.TextField
+                              label={researchProgramNameLabel(kind)}
+                            />
+                          )}
+                        </form.AppField>
+
+                        <form.AppField name="scientificContext.researchProgramDescription">
+                          {(field) => (
+                            <field.TextField
+                              label={researchProgramDescriptionLabel(kind)}
+                              multiline
+                              reveal={{
+                                label: m.reveal_research_program_description(),
+                                canReveal: hasProgram,
+                              }}
+                            />
+                          )}
+                        </form.AppField>
+                      </>
                     )}
                   </form.Subscribe>
                 </FormSection>

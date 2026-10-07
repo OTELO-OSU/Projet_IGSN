@@ -60,6 +60,7 @@ import { RESOURCE_TYPE_PATHS } from "@projet-igsn/domain/sample/resource-type/vo
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 import { PLATFORM_TYPES } from "@projet-igsn/domain/sample/scientific-context/platform-type";
 import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
+import { RESEARCH_PROGRAM_KINDS } from "@projet-igsn/domain/sample/scientific-context/research-program-kind";
 import { TEXTURES } from "@projet-igsn/domain/sample/texture/vocabulary";
 import { SAMPLE_TYPES } from "@projet-igsn/domain/sample/type/vocabulary";
 
@@ -283,6 +284,12 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
     "Collection origin",
     COLLECTION_ORIGINS,
     labels.collectionOriginLabel,
+  ),
+  flat(
+    "research_program_kind",
+    "Research program kind",
+    RESEARCH_PROGRAM_KINDS,
+    labels.researchProgramKindLabel,
   ),
   flat(
     "platform_type",

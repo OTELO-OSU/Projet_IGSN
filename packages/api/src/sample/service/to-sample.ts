@@ -162,6 +162,7 @@ function toScientificContext(row: SampleRow) {
       ...omitNull({
         funderOrganizations: row.sc_funder_organizations,
         researchProgramName: row.sc_research_program_name,
+        researchProgramKind: row.sc_research_program_kind,
         chiefScientistUserId: row.sc_chief_scientist_user_id,
         chiefScientistFirstname: chiefScientist.firstname,
         chiefScientistLastname: chiefScientist.lastname,

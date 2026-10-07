@@ -79,6 +79,11 @@ const pickOrganization = async (
   await screen.getByRole("option", { name: label }).click();
 };
 
+const pickKind = async (screen: Screen, kind: string) => {
+  await screen.getByRole("combobox", { name: "Kind" }).click();
+  await screen.getByRole("option", { name: kind, exact: true }).click();
+};
+
 const closePopover = () => userEvent.keyboard("{Escape}");
 
 const addRole = async (screen: Screen, role: string) => {
@@ -127,9 +132,7 @@ describe("SampleScientificContextFields", () => {
     await goToScientificContext(screen);
     await addRole(screen, "Researcher");
     await screen
-      .getByLabelText(
-        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
-      )
+      .getByLabelText("Research program", { exact: true })
       .fill("Deep Biosphere Survey");
     await screen
       .getByRole("button", { name: "Describe the research program in detail" })
@@ -144,8 +147,9 @@ describe("SampleScientificContextFields", () => {
         "1. Researcher",
         "Funder organizations",
         "Funding",
-        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
-        "Open description Research Programm/Campaign/Mission/Field/Cruise",
+        "Kind",
+        "Research program",
+        "Research program description",
         "Platform type",
         "Launch platform name",
       ]);
@@ -179,10 +183,9 @@ describe("SampleScientificContextFields", () => {
     await pickOrganization(screen, "02feahw73");
     await pickOrganization(screen, "04kdfz702");
     await screen
-      .getByLabelText(
-        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
-      )
+      .getByLabelText("Research program", { exact: true })
       .fill("Deep Biosphere Survey");
+    await pickKind(screen, "Cruise");
     await screen
       .getByRole("combobox", {
         name: "Host institution (project leader)",
@@ -211,6 +214,7 @@ describe("SampleScientificContextFields", () => {
             additionalRoles: [],
             funderOrganizations: ["02feahw73", "04kdfz702"],
             researchProgramName: "Deep Biosphere Survey",
+            researchProgramKind: "cruise",
             hostInstitution: ["04kdfz702", "05hnb7x64"],
             chiefScientistFirstname: "Marie",
             chiefScientistLastname: "Tharp",
@@ -222,6 +226,48 @@ describe("SampleScientificContextFields", () => {
         }),
       ),
     );
+  });
+
+  it("should label the name and description after the picked kind", async () => {
+    const screen = await renderScientificContextSection();
+
+    await goToScientificContext(screen);
+    await screen
+      .getByLabelText("Research program", { exact: true })
+      .fill("Deep Biosphere Survey");
+    await screen
+      .getByRole("button", {
+        name: "Describe the research program in detail",
+      })
+      .click();
+    await pickKind(screen, "Cruise");
+
+    await expect
+      .element(screen.getByLabelText("Name of the cruise", { exact: true }))
+      .toHaveValue("Deep Biosphere Survey");
+    await expect
+      .element(
+        screen.getByLabelText("Description of the cruise", { exact: true }),
+      )
+      .toBeVisible();
+  });
+
+  it("should drop the kind when the name is emptied", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderScientificContextSection(onSubmit);
+
+    await goToScientificContext(screen);
+    await screen
+      .getByLabelText("Research program", { exact: true })
+      .fill("Deep Biosphere Survey");
+    await pickKind(screen, "Cruise");
+    await screen.getByLabelText("Name of the cruise", { exact: true }).clear();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(
+      onSubmit.mock.calls[0]![0].scientificContext.researchProgramKind,
+    ).toBeUndefined();
   });
 
   it("should submit a collection specimen with its origin", async () => {
@@ -271,18 +317,12 @@ describe("SampleScientificContextFields", () => {
 
     await goToScientificContext(screen);
     await screen
-      .getByLabelText(
-        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
-      )
+      .getByLabelText("Research program", { exact: true })
       .fill("Deep Biosphere Survey");
     await fillPersonName(screen, "Collector name", "Pierre", "Curie");
     await pickProvenance(screen, "Collection specimen");
     await expect
-      .element(
-        screen.getByLabelText(
-          "Name of the Research Programm/Campaign/Mission/Field/Cruise",
-        ),
-      )
+      .element(screen.getByLabelText("Research program", { exact: true }))
       .not.toBeInTheDocument();
     await expect
       .element(
@@ -294,11 +334,7 @@ describe("SampleScientificContextFields", () => {
 
     await pickProvenance(screen, "Research project sample");
     await expect
-      .element(
-        screen.getByLabelText(
-          "Name of the Research Programm/Campaign/Mission/Field/Cruise",
-        ),
-      )
+      .element(screen.getByLabelText("Research program", { exact: true }))
       .toHaveValue("Deep Biosphere Survey");
 
     await pickProvenance(screen, "Collection specimen");

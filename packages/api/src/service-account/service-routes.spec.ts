@@ -15,6 +15,7 @@ import {
 } from "@projet-igsn/domain/sample/core/core-relation-schema";
 import {
   COLLECTION_SPECIMEN,
+  RESEARCH_PROJECT_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { coreSampleSchema } from "@projet-igsn/domain/sample/core/core-sample-schema";
@@ -1089,6 +1090,23 @@ describe("POST /service/samples", () => {
         {
           path: "classification.natureOfSample.id",
           code: "invalid_value",
+          message: expect.any(String),
+        },
+      ],
+    },
+    {
+      rule: "a research programme name in two slots",
+      body: {
+        ...core(RESEARCH_PROJECT_SAMPLE),
+        production: {
+          ...core(RESEARCH_PROJECT_SAMPLE).production,
+          samplingPurpose: "Second slot",
+        },
+      },
+      issues: [
+        {
+          path: "production.samplingPurpose",
+          code: "custom",
           message: expect.any(String),
         },
       ],

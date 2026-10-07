@@ -10,6 +10,7 @@ import { checkContactLinks } from "../contact-link.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { collectionOriginSchema } from "./collection-origin.ts";
 import { platformTypeSchema } from "./platform-type.ts";
+import { researchProgramKindSchema } from "./research-program-kind.ts";
 
 export const uniqueRorArraySchema = (code: string) =>
   z
@@ -22,6 +23,7 @@ const researchProjectSampleSchema = z.object({
   provenanceStatus: z.literal("research_project_sample"),
   funderOrganizations: uniqueRorArraySchema("funder_organizations_duplicate"),
   researchProgramName: freeTextSchema.nullish(),
+  researchProgramKind: researchProgramKindSchema.nullish(),
   chiefScientistUserId: z.uuid().nullish(),
   chiefScientistFirstname: freeTextSchema.nullish(),
   chiefScientistLastname: freeTextSchema.nullish(),
@@ -65,4 +67,14 @@ export const createScientificContextSchema = z
     createResearchProjectSampleSchema,
     collectionSpecimenSchema,
   ])
-  .superRefine(checkContactLinks);
+  .superRefine(checkContactLinks)
+  .refine(
+    (context) =>
+      context.provenanceStatus !== "research_project_sample" ||
+      context.researchProgramKind == null ||
+      context.researchProgramName != null,
+    {
+      path: ["researchProgramKind"],
+      message: "a research program kind needs the name it qualifies",
+    },
+  );

@@ -20,6 +20,14 @@ export function fromCoreScientificContext(
   const collector = personOf("Collector");
   const project = body.production.projects?.[0];
   const fieldwork = body.extensions?.fieldwork;
+  const [researchProgramKind, researchProgramName] = (
+    [
+      ["program", project?.name],
+      ["campaign", project?.campaign],
+      ["field", body.production.samplingSite_name],
+      ["mission", body.production.samplingPurpose],
+    ] as const
+  ).find(([, name]) => name != null) ?? [null, null];
 
   if (provenanceStatus === "research_project_sample") {
     return {
@@ -28,7 +36,8 @@ export function fromCoreScientificContext(
         project?.fundingReferences?.map((reference) =>
           fromRorUri(reference.value),
         ) ?? null,
-      researchProgramName: project?.name ?? null,
+      researchProgramName,
+      researchProgramKind,
       chiefScientistFirstname: chiefScientist?.firstname ?? null,
       chiefScientistLastname: chiefScientist?.lastname ?? null,
       hostInstitution: rorsOf("HostingInstitution"),

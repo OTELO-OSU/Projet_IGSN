@@ -1,5 +1,6 @@
 import type { DateRange } from "../date-range.ts";
 import type { Sample } from "../sample.ts";
+import type { ResearchProgramKind } from "../scientific-context/research-program-kind.ts";
 import type {
   CoreProcessStep,
   CoreProduction,
@@ -14,11 +15,40 @@ import {
 } from "./core-production-schema.ts";
 import { toCoreLocation } from "./to-core-location.ts";
 
-function toCoreProjects(sample: Sample): CoreProduction["projects"] {
+const SLOT_BY_KIND = {
+  program: "name",
+  campaign: "campaign",
+  cruise: "campaign",
+  field: "samplingSite_name",
+  mission: "samplingPurpose",
+} as const satisfies Record<ResearchProgramKind, string>;
+
+type ResearchProgramSlots = Partial<
+  Record<(typeof SLOT_BY_KIND)[ResearchProgramKind], string>
+>;
+
+function toResearchProgramSlots(sample: Sample): ResearchProgramSlots {
+  const context = sample.scientificContext;
+  if (
+    context?.provenanceStatus !== "research_project_sample" ||
+    context.researchProgramName == null
+  )
+    return {};
+  return {
+    [SLOT_BY_KIND[context.researchProgramKind ?? "program"]]:
+      context.researchProgramName,
+  };
+}
+
+function toCoreProjects(
+  sample: Sample,
+  slots: ResearchProgramSlots,
+): CoreProduction["projects"] {
   const context = sample.scientificContext;
   if (context?.provenanceStatus !== "research_project_sample") return undefined;
   const project = {
-    name: context.researchProgramName ?? undefined,
+    name: slots.name,
+    campaign: slots.campaign,
     fundingReferences: context.funderOrganizations?.map((ror) => ({
       value: toRorUri(ror),
       identifierType: "ROR" as const,
@@ -68,6 +98,7 @@ function toCoreProcessSteps(sample: Sample): CoreProduction["processSteps"] {
 }
 
 export function toCoreProduction(sample: Sample): CoreProduction {
+  const slots = toResearchProgramSlots(sample);
   const collectionDate = collectionDateSchema.parse(
     sample.description?.collectionDate,
   );
@@ -83,7 +114,9 @@ export function toCoreProduction(sample: Sample): CoreProduction {
     ),
     collectionMethodDescription:
       sample.collectionMethodDescription ?? undefined,
-    projects: toCoreProjects(sample),
+    samplingPurpose: slots.samplingPurpose,
+    samplingSite_name: slots.samplingSite_name,
+    projects: toCoreProjects(sample, slots),
     processSteps: toCoreProcessSteps(sample),
     location:
       sample.location == null ? undefined : toCoreLocation(sample.location),

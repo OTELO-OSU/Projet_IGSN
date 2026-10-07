@@ -274,6 +274,11 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
     ),
     field("Funding", "scientificContext.funding"),
     field(
+      "Research program kind",
+      "scientificContext.researchProgramKind",
+      "research_program_kind",
+    ),
+    field(
       "Name of the research programme",
       "scientificContext.researchProgramName",
     ),

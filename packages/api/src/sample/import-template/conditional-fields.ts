@@ -115,6 +115,7 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
   {
     paths: [
       "scientificContext.funderOrganizations",
+      "scientificContext.researchProgramKind",
       "scientificContext.researchProgramName",
       "scientificContext.chiefScientistFirstname",
       "scientificContext.chiefScientistLastname",

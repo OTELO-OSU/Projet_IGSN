@@ -221,7 +221,7 @@ test.describe("sample import", () => {
     ]);
   });
 
-  test("a researcher imports a sample with two documents, following each upload, and the public page serves them", async ({
+  test("a researcher imports a cruise sample with two documents, following each upload, and the public page serves them", async ({
     page,
   }, testInfo) => {
     const name = `Basalt ${Date.now()}`;
@@ -234,7 +234,11 @@ test.describe("sample import", () => {
     const template = await templateWithAttachments(
       page,
       testInfo,
-      { Name: name },
+      {
+        Name: name,
+        "Research program kind": "Cruise",
+        "Name of the research programme": "MAR-12",
+      },
       [NOTES, PHOTO],
     );
     await importSamples.upload(template);
@@ -271,6 +275,7 @@ test.describe("sample import", () => {
     const igsn = await sampleEditPage(page).publicPageIgsn();
     const detail = sampleDetailPage(page);
     await detail.goto(igsn);
+    await detail.expectResearchProgram("Name of the cruise", "MAR-12");
     for (const attachment of [NOTES, PHOTO]) {
       await detail.expectAttachment(attachment.Title);
     }
