@@ -28,17 +28,17 @@ status: stable
 
 **Client IP travels a four-hop chain**, each hop adding trust ([[preprod-infrastructure]]):
 
-1. Cloudflare sets `Cf-Connecting-IP`.
-2. Caddy reads it via `client_ip_headers` and re-emits `X-Real-IP` through the `(realip)` snippet, imported by every site.
+1. The infra team's TLS proxy sets `X-Forwarded-For`.
+2. Caddy (`infra/stack/Caddyfile`) trusts private-range peers only, with `trusted_proxies_strict`, resolves the client IP from that header and re-emits `X-Real-IP` through the `(realip)` snippet, imported by every site.
 3. Frontend SSR (`src/server.ts`) stores the inbound `X-Real-IP` in an `AsyncLocalStorage` and `apiFetch` relays it outbound, billing the visitor rather than the container.
 4. The api reads `X-Real-IP` only when `TRUST_PROXY_HEADERS=true`, else falls back to the socket peer (`getConnInfo`).
 
-Drop step 2 and the api never sees a real IP; drop 3 and SSR views bill the frontend container; drop 4 and every visitor shares one bucket. `TRUST_PROXY_HEADERS=true` is mandatory in preprod.
+Drop step 2 and the api never sees a real IP; drop 3 and SSR views bill the frontend container; drop 4 and every visitor shares one bucket. `TRUST_PROXY_HEADERS=true` is mandatory in the deployed stack.
 
 **Trust dependencies and known limits**, each its own ticket:
 
-- `trusted_proxies static 0.0.0.0/0 ::/0` is sound only while `ec2.tf` restricts 80/443 to Cloudflare's fetched ranges; loosen that and `Cf-Connecting-IP` becomes spoofable, being leftmost-wins. `trusted_proxies_strict` must NOT be set alongside it, or `{client_ip}` degrades to Caddy's own address.
-- `ec2.tf` fetches only `ips-v4`, so `::/0` is trusted but unreachable; adding an IPv6 rule later opens the spoof silently.
+- `HTTP_PORT` must be reachable from the infra proxy alone: a direct hit forwarded by Docker's userland proxy looks like a private peer, and its forged `X-Forwarded-For` would be trusted.
+- `trusted_proxies_strict` must NOT be set alongside `trusted_proxies static 0.0.0.0/0`, or `{client_ip}` degrades to Caddy's own address; with private ranges only it is safe.
 - The admin budget also covers uploads, so it prices disk exhaustion rather than preventing it, though the 429 fires before the body is parsed.
 - A 429 during SSR renders a bare error boundary and a 500, with no `Retry-After`.
 - Unauthenticated `/admin/*`, 404 floods and CORS preflights are uncapped; all are DB-free, but `requireAuth` runs JWKS verification, so a 401 costs CPU.

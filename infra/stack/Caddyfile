@@ -1,5 +1,8 @@
-(edgetls) {
-	tls /certs/origin.pem /certs/origin.key
+{
+	servers {
+		trusted_proxies static private_ranges
+		trusted_proxies_strict
+	}
 }
 
 (realip) {
@@ -18,8 +21,7 @@
 	# ponytail: no CSP, its nonces have to come from the apps.
 }
 
-igsn.{$DOMAIN} {
-	import edgetls
+:80 {
 	import sechdrs
 	redir /admin /admin/
 	redir /api /api/

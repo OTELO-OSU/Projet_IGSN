@@ -16,10 +16,6 @@ packages/api/attachments
 
 **/*.local
 **/.env
-infra/*/docker-compose.env
-
-infra/*/certs/
-infra/*/ca/
 
 **/.DS_Store
 

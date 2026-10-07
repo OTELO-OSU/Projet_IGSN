@@ -1,10 +1,10 @@
 ---
 type: infrastructure
-title: Single origin, path-routed apps
+title: "Single origin, path-routed apps"
 description: >-
-  Frontend, admin and api share one origin behind Caddy, the admin at /admin
-  and the api at /api, in dev, e2e and preprod alike; only Caddy knows the
-  topology.
+  Frontend, admin and api share one origin behind Caddy, the admin at /admin and
+  the api at /api, in dev, e2e and the deployed stacks alike; only Caddy knows
+  the topology.
 resource: infra/Caddyfile
 tags:
   - infra
@@ -28,9 +28,9 @@ admin_mount_path: /admin
 api_mount_path: /api
 ---
 
-The three apps answer on one origin: the frontend at the root, the admin at `/admin`, the api at `/api`. Dev (http://localhost:3000), e2e (http://localhost:4000) and preprod (`https://igsn.$DOMAIN`) share that shape, so a path-prefix bug surfaces locally instead of at deploy.
+The three apps answer on one origin: the frontend at the root, the admin at `/admin`, the api at `/api`. Dev (http://localhost:3000), e2e (http://localhost:4000) and the deployed preprod and prod (`https://igsn.$DOMAIN`) share that shape, so a path-prefix bug surfaces locally instead of at deploy.
 
-- **Caddy is the only thing that knows the topology.** `infra/Caddyfile` serves dev and e2e as a `caddy` compose service in front of the three apps, none of which publishes a host port any more; `infra/preprod/Caddyfile` does the same behind Cloudflare with TLS and security headers ([[preprod-infrastructure]]). Both import the `(realip)` snippet on every proxy, so the rate limiter still sees the visitor's IP ([[rate-limiting]]).
+- **Caddy is the only thing that knows the topology.** `infra/Caddyfile` serves dev and e2e as a `caddy` compose service in front of the three apps, none of which publishes a host port any more; `infra/stack/Caddyfile` does the same on plain HTTP behind the infra team's TLS proxy, adding the security headers ([[preprod-infrastructure]]). Both import the `(realip)` snippet on every proxy, so the rate limiter still sees the visitor's IP ([[rate-limiting]]).
 - **The api is prefix-stripped** (`handle_path /api/*`), so it keeps no route prefix and its tests keep their bare paths.
 - **The admin is not stripped** (`handle /admin/*`), because its Vite bundle is built with `base: "/admin/"`, so dev and prod serve identical paths. The prod image copies `dist` to `/srv/admin`, and its Caddyfile falls back to `/admin/index.html`; every admin healthcheck probes `/admin/`.
 - Bare `/admin` and `/api` redirect to their trailing-slash form.

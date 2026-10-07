@@ -1,5 +1,13 @@
 # Directory Update Log
 
+## 2026-10-07
+
+- **Update**: Single origin, path-routed apps (single-origin-routing)
+- **Update**: API rate limiting (rate-limiting)
+- **Update**: Commands and dev services (commands-and-services)
+- **Update**: Compose parity across dev, e2e and the deploy stack (infra-parity-rule)
+- **Update**: Preprod and prod on Portainer from GitLab CI (preprod-infrastructure)
+
 ## 2026-09-24
 
 - **Update**: Sample model (sample-model)
