@@ -1,4 +1,3 @@
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
@@ -10,7 +9,7 @@ import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 
 const SUCCESS_MESSAGE: Record<SetSampleStatusBody["status"], () => string> = {
-  published: m.republish_sample_success,
+  published: m.publish_sample_success,
   withdrawn: m.withdraw_sample_success,
   tombstone: m.tombstone_sample_success,
   embargo: m.publication_date_updated,
@@ -20,10 +19,7 @@ export function useSetSampleStatus(id: string) {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      from: _from,
-      ...body
-    }: SetSampleStatusBody & { from?: SampleStatus }) => {
+    mutationFn: async (body: SetSampleStatusBody) => {
       const res = await apiFetch(
         new URL(`admin/samples/${id}/status`, API_URL),
         {
@@ -37,12 +33,8 @@ export function useSetSampleStatus(id: string) {
       }
       return sampleResponseSchema.parse(await res.json()).data;
     },
-    onSuccess: (_sample, { status, from }) => {
-      toast.success(
-        from === "embargo" && status === "published"
-          ? m.publish_sample_success()
-          : SUCCESS_MESSAGE[status](),
-      );
+    onSuccess: (_sample, { status }) => {
+      toast.success(SUCCESS_MESSAGE[status]());
       return queryClient.invalidateQueries({ queryKey: ["samples"] });
     },
     onError: () => toast.error(m.set_sample_status_error()),

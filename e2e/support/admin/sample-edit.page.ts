@@ -208,7 +208,7 @@ export function sampleEditPage(page: Page) {
     expectEmbargoHint: (date: string) =>
       expect(
         page.getByText(
-          `This sample is under embargo until ${new Date(date).toLocaleDateString("en-US", { timeZone: "UTC" })}, when it is published automatically.`,
+          `This sample is under embargo until ${date}, when it is published automatically.`,
         ),
       ).toBeVisible(),
 

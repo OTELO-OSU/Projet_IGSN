@@ -1,3 +1,4 @@
+import { earliestEmbargoPublicationDate } from "./publication/embargo-publication-date";
 import {
   DEFAULT_PAGE_SIZE,
   listSamplesQuerySchema,
@@ -7,7 +8,7 @@ import {
   updateSampleBodySchema,
 } from "./sample-validator";
 
-const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+const tomorrow = earliestEmbargoPublicationDate();
 
 describe.each([
   ["setSampleStatusBodySchema", setSampleStatusBodySchema],

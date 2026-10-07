@@ -1,6 +1,6 @@
+import { dateFromToday } from "@projet-igsn/domain/date/date-from-today";
 import { render } from "vitest-browser-react";
 
-import { dateFromToday } from "../../test/date-from-today.ts";
 import { PublicationDateField } from "./publication-date-field.tsx";
 
 describe("PublicationDateField", () => {

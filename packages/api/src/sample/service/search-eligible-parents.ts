@@ -4,6 +4,7 @@ import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope"
 import type { Expression, SqlBool } from "kysely";
 
 import { sampleParentSchema } from "@projet-igsn/domain/sample/parent/model";
+import { REDACTED_SAMPLE_STATUSES } from "@projet-igsn/domain/sample/publication/public-sample-statuses";
 import { expressionBuilder } from "kysely";
 import { z } from "zod";
 
@@ -24,7 +25,7 @@ function declarableWhere(
   return eb.or([
     eb("sample.status", "=", "published"),
     eb.and([
-      eb("sample.status", "in", ["withdrawn", "embargo"]),
+      eb("sample.status", "in", REDACTED_SAMPLE_STATUSES),
       eb.or([
         eb.exists(
           eb

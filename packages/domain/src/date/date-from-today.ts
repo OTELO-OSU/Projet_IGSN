@@ -1,4 +1,4 @@
-import { formatDate } from "@projet-igsn/domain/date/format-date";
+import { formatDate } from "./format-date.ts";
 
 export function dateFromToday(years: number, days: number): string {
   const date = new Date();

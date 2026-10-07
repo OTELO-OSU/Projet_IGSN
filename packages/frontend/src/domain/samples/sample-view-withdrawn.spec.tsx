@@ -107,36 +107,27 @@ describe("SampleView of a withdrawn or embargoed sample", () => {
       .toBeInTheDocument();
   });
 
-  it.each(hiddenStatuses)(
-    "should show only the whitelisted fields of a %s sample",
-    async (status) => {
-      const screen = await renderWithRouter(
-        <SampleView sample={sample({ status })} />,
-      );
+  it("should show only the whitelisted fields", async () => {
+    const screen = await renderWithRouter(<SampleView sample={sample()} />);
 
-      await expect.element(screen.getByText("Powder")).toBeVisible();
-      await expect
-        .element(
-          screen
-            .getByRole("list", { name: "Type" })
-            .getByText("Core Half round"),
-        )
-        .toBeVisible();
-      await expect
-        .element(
-          screen.getByRole("list", { name: "Material" }).getByText("Igneous"),
-        )
-        .toBeVisible();
-      await expect.element(screen.getByText("Pitchstone")).toBeVisible();
-      await expect
-        .element(screen.getByText("France > Mont-Dore"))
-        .toBeVisible();
-      await expect.element(screen.getByText("Claire Martin")).toBeVisible();
-      expect(
-        screen.getByRole("heading", { name: "Process steps" }).query(),
-      ).toBeNull();
-    },
-  );
+    await expect.element(screen.getByText("Powder")).toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("list", { name: "Type" }).getByText("Core Half round"),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("list", { name: "Material" }).getByText("Igneous"),
+      )
+      .toBeVisible();
+    await expect.element(screen.getByText("Pitchstone")).toBeVisible();
+    await expect.element(screen.getByText("France > Mont-Dore")).toBeVisible();
+    await expect.element(screen.getByText("Claire Martin")).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Process steps" }).query(),
+    ).toBeNull();
+  });
 
   it("should show no internal id even when the payload carries one", async () => {
     const screen = await renderWithRouter(

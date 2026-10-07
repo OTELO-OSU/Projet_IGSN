@@ -181,7 +181,6 @@
   "republish_sample_title": "Republish sample",
   "republish_sample_warning": "The sample returns to search results and its public page shows all its information again.",
   "withdraw_sample_success": "Sample withdrawn",
-  "republish_sample_success": "Sample republished",
   "set_sample_status_error": "Could not change the sample status. Please try again.",
   "sample_withdrawn_hint": "This sample is withdrawn from public view.",
   "status_tombstone": "Tombstone",

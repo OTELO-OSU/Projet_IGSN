@@ -1,11 +1,11 @@
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
+import type { Sample, SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
-import type { ReactNode } from "react";
 
 import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
+import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { embargoPublicationDateSchema } from "@projet-igsn/domain/sample/publication/embargo-publication-date";
 import { canCreateImportTemplate } from "@projet-igsn/domain/user-sample/can-create-import-template";
@@ -49,9 +49,13 @@ import {
 } from "#/samples/use-update-sample.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-const PUBLIC_HINT: Partial<Record<SampleStatus, () => string>> = {
+const PUBLIC_HINT: Partial<
+  Record<SampleStatus, (sample: Pick<Sample, "publishedAt">) => string>
+> = {
   withdrawn: m.sample_withdrawn_hint,
   tombstone: m.sample_tombstone_hint,
+  embargo: ({ publishedAt }) =>
+    m.sample_embargo_hint({ date: publishedAt ? formatDate(publishedAt) : "" }),
 };
 
 export const Route = createFileRoute("/samples/$sampleId")({
@@ -124,46 +128,26 @@ function EditSamplePage() {
       : conflict === "stale"
         ? m.edit_sample_stale()
         : undefined;
-  const publicHint =
-    status === "embargo"
-      ? m.sample_embargo_hint({
-          date:
-            query.data.publishedAt?.toLocaleDateString(undefined, {
-              timeZone: "UTC",
-            }) ?? "",
-        })
-      : PUBLIC_HINT[status]?.();
+  const publicHint = PUBLIC_HINT[status]?.(query.data);
   const parents = parentQueries
     .map((parentQuery) => parentQuery.data)
     .filter((parent) => parent != null);
   const restoreButton = (
-    to: "published" | "withdrawn",
-    menuStatus?: "withdrawn",
+    text: "published" | "publish_now",
+    menu?: "withdrawn",
   ) => (
     <SetStatusButton
-      text={to}
-      onConfirm={() => setStatus.mutate({ status: to })}
+      text={text}
+      onConfirm={() => setStatus.mutate({ status: "published" })}
       menu={
-        menuStatus && {
-          text: menuStatus,
-          onConfirm: () => setStatus.mutate({ status: menuStatus }),
+        menu && {
+          text: menu,
+          onConfirm: () => setStatus.mutate({ status: menu }),
         }
       }
       disabled={isPending}
     />
   );
-  const publishButton: Partial<Record<SampleStatus, ReactNode>> = {
-    withdrawn: restoreButton("published"),
-    embargo: (
-      <SetStatusButton
-        text="publish_now"
-        onConfirm={() =>
-          setStatus.mutate({ status: "published", from: "embargo" })
-        }
-        disabled={isPending}
-      />
-    ),
-  };
   const withdrawItem: SampleSubmitMenuItem = {
     label: m.action_withdraw(),
     title: m.withdraw_sample_title(),
@@ -223,7 +207,13 @@ function EditSamplePage() {
       }
     : {
         readOnlyReason: lockedMessage ?? rejection,
-        statusAction: can("published") ? publishButton[status] : undefined,
+        statusAction: !can("published")
+          ? undefined
+          : status === "withdrawn"
+            ? restoreButton("published")
+            : status === "embargo"
+              ? restoreButton("publish_now")
+              : undefined,
         secondaryAction: {
           kind: "submit",
           label: m.action_save(),

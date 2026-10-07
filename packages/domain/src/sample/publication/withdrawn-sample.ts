@@ -4,6 +4,7 @@ import { igsnSchema } from "../../igsn/model.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { locationSchema } from "../location/model.ts";
 import { sampleSchema, type Sample } from "../sample.ts";
+import { REDACTED_SAMPLE_STATUSES } from "./public-sample-statuses.ts";
 
 export const withdrawnSampleSchema = sampleSchema
   .pick({
@@ -14,7 +15,7 @@ export const withdrawnSampleSchema = sampleSchema
     specificName: true,
   })
   .extend({
-    status: z.enum(["withdrawn", "embargo"]),
+    status: z.enum(REDACTED_SAMPLE_STATUSES),
     igsn: igsnSchema,
     location: z
       .object({

@@ -5,6 +5,7 @@ import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
+import { dateFromToday } from "@projet-igsn/domain/date/date-from-today";
 import { allowedAvailabilityStatuses } from "@projet-igsn/domain/sample/curation/allowed-availability-statuses";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -19,7 +20,6 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { CALLER_GROUPS } from "../../test/caller-groups.ts";
-import { dateFromToday } from "../../test/date-from-today.ts";
 import { FakeXhr } from "../../test/fake-xhr.ts";
 import { worker } from "../../test/msw.ts";
 import { pickPath } from "../../test/pick-hierarchy.ts";
@@ -860,7 +860,7 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("status"))
       .toHaveTextContent(
-        "This sample is under embargo until 3/1/2027, when it is published automatically.",
+        "This sample is under embargo until 2027-03-01, when it is published automatically.",
       );
     await expect
       .element(screen.getByRole("link", { name: "View public page" }))

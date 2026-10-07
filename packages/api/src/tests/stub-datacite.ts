@@ -16,3 +16,8 @@ export function stubDataCite(response: Response) {
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
+
+export const dataCiteEventsOf = (fetchMock: ReturnType<typeof vi.fn>) =>
+  fetchMock.mock.calls.map(
+    ([, init]) => JSON.parse(init.body).data.attributes.event,
+  );

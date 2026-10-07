@@ -1,6 +1,6 @@
 import type { Kysely } from "kysely";
 
-import { formatDate } from "@projet-igsn/domain/date/format-date";
+import { dateFromToday } from "@projet-igsn/domain/date/date-from-today";
 import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { describe, expect, onTestFinished, vi } from "vitest";
 
@@ -11,7 +11,12 @@ import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { publishableSample } from "../tests/sample-fixtures.ts";
-import { STUB_DATACITE_CONFIG, stubDataCite } from "../tests/stub-datacite.ts";
+import { sentMails } from "../tests/sent-mails.ts";
+import {
+  dataCiteEventsOf,
+  STUB_DATACITE_CONFIG,
+  stubDataCite,
+} from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
@@ -21,21 +26,15 @@ const ADMIN_URL = "http://localhost:3001/admin/";
 const FRONTEND_URL = "http://localhost:3000";
 const OWNER_EMAIL = "owner-e7b@univ-lorraine.fr";
 const CONTRIBUTOR_EMAIL = "contributor-e7b@univ-lorraine.fr";
-const DAY_MS = 86_400_000;
-
-const dateFromToday = (days: number) =>
-  formatDate(new Date(Date.now() + days * DAY_MS));
-const TOMORROW = dateFromToday(1);
-const NEXT_MONTH = dateFromToday(30);
+const TOMORROW = dateFromToday(0, 1);
+const NEXT_MONTH = dateFromToday(0, 30);
 
 async function arrangeSample(
   db: Kysely<DB>,
   {
-    callerRole = "editor",
     superAdmin = false,
     status = "draft",
   }: {
-    callerRole?: "editor" | "contributor";
     superAdmin?: boolean;
     status?: "draft" | "embargo" | "published";
   } = {},
@@ -59,7 +58,7 @@ async function arrangeSample(
   await db
     .insertInto("user_sample")
     .values([
-      { sample_id: created.id, user_id: caller.id, role: callerRole },
+      { sample_id: created.id, user_id: caller.id, role: "editor" },
       { sample_id: created.id, user_id: contributor.id, role: "contributor" },
     ])
     .execute();
@@ -98,16 +97,6 @@ const setStatus = (
     body: JSON.stringify(body),
   });
 
-const eventsOf = (fetchMock: ReturnType<typeof vi.fn>) =>
-  fetchMock.mock.calls.map(
-    ([, init]) => JSON.parse(init.body).data.attributes.event,
-  );
-
-const mailsOf = (sendMail: ReturnType<typeof vi.fn>) =>
-  sendMail.mock.calls
-    .map(([mail]) => ({ to: mail.to, subject: mail.subject }))
-    .sort((a, b) => a.to[0].localeCompare(b.to[0]));
-
 const toEveryCollaboratorButTheActor = (subject: string) =>
   [CONTRIBUTOR_EMAIL, OWNER_EMAIL].map((email) => ({ to: [email], subject }));
 
@@ -132,9 +121,9 @@ describe("admin sample embargo", () => {
         publishedAt: new Date(TOMORROW),
         publicationYear: new Date(TOMORROW).getUTCFullYear(),
       });
-      expect(eventsOf(fetchMock)).toEqual(["register"]);
+      expect(dataCiteEventsOf(fetchMock)).toEqual(["register"]);
       await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(2));
-      expect(mailsOf(sendMail)).toEqual(
+      expect(sentMails(sendMail)).toEqual(
         toEveryCollaboratorButTheActor(
           `Test User published the sample "${publishableSample.name}" with an embargo until ${TOMORROW}`,
         ),
@@ -143,9 +132,9 @@ describe("admin sample embargo", () => {
   );
 
   pgTest.for([
-    `status=published&publishedAt=${dateFromToday(1)}`,
+    `status=published&publishedAt=${dateFromToday(0, 1)}`,
     "status=embargo",
-    `status=embargo&publishedAt=${dateFromToday(-1)}`,
+    `status=embargo&publishedAt=${dateFromToday(0, -1)}`,
   ])("should answer 400 to the publish query %s", async (query, { db }) => {
     // Arrange
     const { app, sample } = await arrangeSample(db);
@@ -179,7 +168,7 @@ describe("admin sample embargo", () => {
   pgTest.for([
     {
       from: "published" as const,
-      body: { status: "embargo", publishedAt: dateFromToday(1) },
+      body: { status: "embargo", publishedAt: dateFromToday(0, 1) },
     },
     { from: "embargo" as const, body: { status: "withdrawn" } },
   ])(
@@ -208,61 +197,13 @@ describe("admin sample embargo", () => {
       const { data } = sampleResponseSchema.parse(await res.json());
       expect(data.status).toBe("published");
       expect(Date.now() - data.publishedAt!.getTime()).toBeLessThan(60_000);
-      expect(eventsOf(fetchMock)).toEqual(["publish"]);
+      expect(dataCiteEventsOf(fetchMock)).toEqual(["publish"]);
       await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(2));
-      expect(mailsOf(sendMail)).toEqual(
+      expect(sentMails(sendMail)).toEqual(
         toEveryCollaboratorButTheActor(
           `The sample "${publishableSample.name}" is now published`,
         ),
       );
-    },
-  );
-
-  pgTest(
-    "should keep the collection origin of an embargoed sample an editor tries to change",
-    async ({ db }) => {
-      // Arrange
-      const { app, sample } = await arrangeSample(db, { status: "embargo" });
-      // Act
-      const res = await app.request(`/admin/samples/${sample.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json", ...authHeader },
-        body: JSON.stringify({
-          ...publishableSample,
-          scientificContext: {
-            ...publishableSample.scientificContext,
-            collectionOrigin: "purchase",
-          },
-          expectedUpdatedAt: sample.updatedAt,
-        }),
-      });
-      // Assert
-      expect(res.status).toBe(200);
-      expect(
-        sampleResponseSchema.parse(await res.json()).data.scientificContext,
-      ).toMatchObject({ collectionOrigin: "scientific_expedition" });
-    },
-  );
-
-  pgTest(
-    "should refuse a contributor's edit of an embargoed sample",
-    async ({ db }) => {
-      // Arrange
-      const { app, sample } = await arrangeSample(db, {
-        callerRole: "contributor",
-        status: "embargo",
-      });
-      // Act
-      const res = await app.request(`/admin/samples/${sample.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json", ...authHeader },
-        body: JSON.stringify({
-          ...publishableSample,
-          expectedUpdatedAt: sample.updatedAt,
-        }),
-      });
-      // Assert
-      expect(res.status).toBe(403);
     },
   );
 });

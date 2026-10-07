@@ -1,12 +1,5 @@
-import { formatDate } from "../../date/format-date.ts";
+import { dateFromToday } from "../../date/date-from-today.ts";
 import { embargoPublicationDateSchema } from "./embargo-publication-date.ts";
-
-function dateFromToday(years: number, days: number): string {
-  const date = new Date();
-  date.setUTCFullYear(date.getUTCFullYear() + years);
-  date.setUTCDate(date.getUTCDate() + days);
-  return formatDate(date);
-}
 
 describe("embargoPublicationDateSchema", () => {
   it.each([

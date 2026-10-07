@@ -7,6 +7,7 @@ import { pgTest } from "../../tests/pg-test.ts";
 import { readSample } from "../../tests/read-sample.ts";
 import { draft, publishableSample } from "../../tests/sample-fixtures.ts";
 import {
+  dataCiteEventsOf,
   STUB_DATACITE_CONFIG,
   stubDataCite,
 } from "../../tests/stub-datacite.ts";
@@ -284,8 +285,7 @@ describe("publishSample with DataCite configured", () => {
         .where("id", "=", created.id)
         .executeTakeFirstOrThrow();
       expect(row.doi_prefix).toBe("10.5072");
-      const [, init] = fetchMock.mock.calls[0]!;
-      expect(JSON.parse(init.body).data.attributes.event).toBe(event);
+      expect(dataCiteEventsOf(fetchMock)).toEqual([event]);
     },
   );
 

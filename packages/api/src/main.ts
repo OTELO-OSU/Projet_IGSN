@@ -42,14 +42,14 @@ schedulePendingUsersDigest(() => {
   );
 });
 
+const embargoRepositories = {
+  samples: createSampleRepository(db, attachmentsDir, dataCiteConfig()),
+  userSamples: createUserSampleRepository(db),
+};
 scheduleEmbargoRelease(() => {
-  releaseDueEmbargoes(
-    {
-      samples: createSampleRepository(db, attachmentsDir, dataCiteConfig()),
-      userSamples: createUserSampleRepository(db),
-    },
-    { sendMail, adminUrl },
-  ).catch(console.error);
+  releaseDueEmbargoes(embargoRepositories, { sendMail, adminUrl }).catch(
+    console.error,
+  );
 });
 
 const stagedUploads = createStagedUploads(attachmentsDir);

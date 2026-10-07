@@ -7,7 +7,9 @@ import type { DB } from "../../db.ts";
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { publishableSample } from "../../tests/sample-fixtures.ts";
+import { sentMails } from "../../tests/sent-mails.ts";
 import {
+  dataCiteEventsOf,
   STUB_DATACITE_CONFIG,
   stubDataCite,
 } from "../../tests/stub-datacite.ts";
@@ -62,16 +64,6 @@ const statusesOf = (db: Kysely<DB>, ids: string[]) =>
     .orderBy("id")
     .execute();
 
-const mailsOf = (sendMail: ReturnType<typeof vi.fn>) =>
-  sendMail.mock.calls
-    .map(([mail]) => ({ to: mail.to, subject: mail.subject }))
-    .sort((a, b) => a.to[0].localeCompare(b.to[0]));
-
-const eventsOf = (fetchMock: ReturnType<typeof vi.fn>) =>
-  fetchMock.mock.calls.map(
-    ([, init]) => JSON.parse(init.body).data.attributes.event,
-  );
-
 describe("releaseDueEmbargoes", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -92,8 +84,8 @@ describe("releaseDueEmbargoes", () => {
         { id: due, status: "published" },
         { id: future, status: "embargo" },
       ]);
-      expect(eventsOf(fetchMock)).toEqual(["publish"]);
-      expect(mailsOf(sendMail)).toEqual([
+      expect(dataCiteEventsOf(fetchMock)).toEqual(["publish"]);
+      expect(sentMails(sendMail)).toEqual([
         {
           to: ["contributor-due@univ-lorraine.fr"],
           subject: 'The sample "due" is now published',
@@ -119,7 +111,7 @@ describe("releaseDueEmbargoes", () => {
       const sendMail = await release(db);
       // Assert
       expect((await statusesOf(db, [next]))[0]?.status).toBe("published");
-      expect(mailsOf(sendMail).map(({ to }) => to)).toEqual([
+      expect(sentMails(sendMail).map(({ to }) => to)).toEqual([
         ["contributor-next@univ-lorraine.fr"],
         ["owner-next@univ-lorraine.fr"],
       ]);
