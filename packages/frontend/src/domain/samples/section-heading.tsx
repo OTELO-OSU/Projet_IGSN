@@ -10,7 +10,7 @@ export function SectionHeading({
   return (
     <h2
       id={id}
-      className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
+      className="bg-primary/5 text-primary rounded-md px-4 py-3 text-lg font-semibold"
     >
       {children}
     </h2>

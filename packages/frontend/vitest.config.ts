@@ -21,6 +21,7 @@ export default defineConfig({
       "@inlang/paraglide-js/urlpattern-polyfill",
       "@tanstack/react-query",
       "@xyflow/react",
+      "@projet-igsn/design-system > embla-carousel-react",
       "qrcode.react",
     ],
   },

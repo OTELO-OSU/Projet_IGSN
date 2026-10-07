@@ -130,7 +130,7 @@ describe("ResultsMap", () => {
 
     await expect
       .element(screen.getByRole("button", { name: "12 samples" }))
-      .toHaveClass("bg-amber-500");
+      .toHaveClass("bg-tertiary");
   });
 
   it("should highlight no cluster for a hovered sample outside every cluster", async () => {
@@ -144,7 +144,7 @@ describe("ResultsMap", () => {
 
     await expect
       .element(screen.getByRole("button", { name: "12 samples" }))
-      .not.toHaveClass("bg-amber-500");
+      .not.toHaveClass("bg-tertiary");
   });
 
   it("should zoom to a cluster's extent on click", async () => {

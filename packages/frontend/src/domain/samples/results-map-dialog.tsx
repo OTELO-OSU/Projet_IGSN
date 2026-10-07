@@ -126,7 +126,12 @@ function ResultsMapContent({
 
 export function ResultsMapButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button type="button" variant="secondary" onClick={onClick}>
+    <Button
+      type="button"
+      variant="outline"
+      className="border-primary text-primary hover:bg-primary/5 hover:text-primary"
+      onClick={onClick}
+    >
       <MapIcon aria-hidden="true" />
       {m.results_map_open()}
     </Button>

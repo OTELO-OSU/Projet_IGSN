@@ -5,6 +5,7 @@ import {
   onSignOutBroadcast,
 } from "@projet-igsn/domain/auth/sign-out-broadcast";
 import { markSignedOut } from "@projet-igsn/domain/auth/signed-out";
+import { UserIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 
@@ -49,6 +50,7 @@ export function AuthControls() {
       disabled={Boolean(auth.activeNavigator)}
       onClick={() => signIn(auth)}
     >
+      <UserIcon aria-hidden />
       {m.auth_sign_in()}
     </Button>
   );

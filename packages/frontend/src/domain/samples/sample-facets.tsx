@@ -242,7 +242,7 @@ export function SampleFacets({
   return (
     <aside
       aria-label={m.facets_title()}
-      className="space-y-6 border-b py-6 md:sticky md:top-24 md:z-0 md:h-[calc(100vh-96px)] md:self-start md:overflow-y-auto md:border-r md:border-b-0 md:pr-6"
+      className="space-y-6 border-b py-6 md:sticky md:top-36 md:z-0 md:h-[calc(100vh-144px)] md:self-start md:overflow-y-auto md:border-r md:border-b-0 md:pr-6"
     >
       <ActiveFacetChips
         facets={FACET_SECTIONS.flatMap((section) => section.keys).flatMap(

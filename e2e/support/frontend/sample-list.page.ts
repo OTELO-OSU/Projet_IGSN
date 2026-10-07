@@ -130,7 +130,7 @@ export function sampleListPage(page: Page) {
     expectFacetsVisible: () => expect(filters).toBeVisible(),
     expectLanding: () =>
       expect(
-        page.getByRole("heading", { name: "Search a sample" }),
+        page.getByRole("heading", { name: "Search for a sample" }),
       ).toBeVisible(),
     expectSampleLink: (name: string, igsn: string) =>
       expect(page.getByRole("link", { name })).toHaveAttribute(
