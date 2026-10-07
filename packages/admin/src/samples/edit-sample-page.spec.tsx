@@ -23,6 +23,7 @@ import { FakeXhr } from "../../test/fake-xhr.ts";
 import { worker } from "../../test/msw.ts";
 import { pickPath } from "../../test/pick-hierarchy.ts";
 import { routeTree } from "../routeTree.gen.ts";
+import { SAMPLE_FORM_TABS } from "./sample-form-tabs.ts";
 
 vi.mock("react-oidc-context", () => ({
   useAuth: () => ({
@@ -1521,6 +1522,123 @@ describe("EditSamplePage", () => {
       await expect
         .element(screen.getByRole("switch", { name: "Record a numeric age" }))
         .toBeEnabled();
+    });
+  });
+
+  describe("unsaved changes", () => {
+    const leave = (screen: EditPageScreen) =>
+      screen.getByRole("button", { name: "Cancel" }).click();
+    const unsavedDialog = (screen: EditPageScreen) =>
+      screen.getByRole("dialog", { name: "Unsaved changes" });
+
+    it("should ask before leaving with unsaved changes", async () => {
+      const { screen, lockCalls } = await renderEditPage();
+      await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+
+      await leave(screen);
+      await unsavedDialog(screen)
+        .getByRole("button", { name: "Leave without saving" })
+        .click();
+
+      await expect
+        .element(screen.getByRole("heading", { name: "My samples" }))
+        .toBeVisible();
+      await vi.waitFor(() => expect(lockCalls).toContain("DELETE"));
+    });
+
+    it("should stay on the form when the leave is cancelled", async () => {
+      const { screen } = await renderEditPage();
+      const name = screen.getByLabelText(/name/i);
+      await name.fill("Grès de Fontainebleau");
+
+      await leave(screen);
+      await unsavedDialog(screen)
+        .getByRole("button", { name: "Cancel" })
+        .click();
+
+      await expect.element(unsavedDialog(screen)).not.toBeInTheDocument();
+      await expect.element(name).toHaveValue("Grès de Fontainebleau");
+      await expect
+        .element(screen.getByRole("heading", { name: "Edit sample" }))
+        .toBeVisible();
+    });
+
+    it("should not ask when switching tabs with unsaved changes", async () => {
+      const { screen } = await renderEditPage();
+      await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+
+      await screen.getByRole("tab", { name: /^Age/ }).click();
+
+      await expect
+        .element(screen.getByRole("tab", { name: /^Age/ }))
+        .toHaveAttribute("aria-selected", "true");
+      await expect.element(unsavedDialog(screen)).not.toBeInTheDocument();
+    });
+
+    it("should not ask when leaving an untouched sample after visiting every tab", async () => {
+      const { screen } = await renderEditPage();
+      for (const { value, label } of SAMPLE_FORM_TABS) {
+        if (value === "parent") continue;
+        await screen
+          .getByRole("tab", { name: new RegExp(`^${label()}`) })
+          .click();
+      }
+
+      await leave(screen);
+
+      await expect
+        .element(screen.getByRole("heading", { name: "My samples" }))
+        .toBeVisible();
+    });
+
+    it("should not ask after a successful save", async () => {
+      const { screen, calls } = await renderEditPage();
+      await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+      await screen.getByRole("button", { name: "Save", exact: true }).click();
+      await vi.waitFor(() =>
+        expect(calls).toEqual(["PUT Grès de Fontainebleau"]),
+      );
+      await expect
+        .element(screen.getByRole("region", { name: /notifications/i }))
+        .toHaveTextContent("Sample saved");
+
+      await leave(screen);
+
+      await expect
+        .element(screen.getByRole("heading", { name: "My samples" }))
+        .toBeVisible();
+    });
+
+    it("should ask after a failed save", async () => {
+      const { screen } = await renderEditPage(
+        "draft",
+        "rock_and_sediment.mineral",
+        "save",
+      );
+      await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+      await screen.getByRole("button", { name: "Save", exact: true }).click();
+      await expect
+        .element(screen.getByRole("region", { name: /notifications/i }))
+        .toHaveTextContent("Could not update the sample. Please try again.");
+
+      await leave(screen);
+
+      await expect.element(unsavedDialog(screen)).toBeVisible();
+    });
+
+    it("should ask before leaving with a staged attachment", async () => {
+      const { screen } = await renderEditPage();
+      await screen
+        .getByRole("tab", { name: "Related URL or document" })
+        .click();
+      await screen
+        .getByLabelText("Browse files")
+        .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
+      await expect.element(screen.getByText("data.csv")).toBeVisible();
+
+      await leave(screen);
+
+      await expect.element(unsavedDialog(screen)).toBeVisible();
     });
   });
 

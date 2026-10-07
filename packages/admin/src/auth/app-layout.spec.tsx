@@ -1,3 +1,5 @@
+import type * as Router from "@tanstack/react-router";
+
 import { page } from "vitest/browser";
 
 import { FRONTEND_URL } from "#/frontend-url.ts";
@@ -7,7 +9,8 @@ import { render } from "../../test/render.tsx";
 import { AppLayout } from "./app-layout.tsx";
 
 let pathname = "/";
-vi.mock("@tanstack/react-router", () => ({
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof Router>()),
   Link: ({
     to,
     children,

@@ -27,7 +27,7 @@ export type AttachmentMetadata = Pick<
   "targetResourceType" | "title" | "description"
 >;
 
-function attachmentMetadata(
+export function attachmentMetadata(
   attachment: Partial<AttachmentMetadata>,
   edit: AttachmentEdit,
 ): AttachmentMetadata {
