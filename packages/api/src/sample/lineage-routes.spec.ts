@@ -196,7 +196,7 @@ describe("the public sample lineage", () => {
     },
   );
 
-  pgTest.for(["withdrawn", "tombstone"] as const)(
+  pgTest.for(["withdrawn", "embargo", "tombstone"] as const)(
     "should show a %s ancestor and everything above it",
     async (status, { db }) => {
       // Arrange
@@ -279,25 +279,28 @@ describe("the public sample lineage", () => {
     expect(await lineageStatus(db, root.igsn!)).toBe(404);
   });
 
-  pgTest("should answer the lineage of a withdrawn sample", async ({ db }) => {
-    // Arrange
-    const ownerId = await owner(db);
-    const parent = await insertLineageSample(db, ownerId, "Parent");
-    const root = await insertLineageSample(
-      db,
-      ownerId,
-      "Withdrawn root",
-      [parent.id],
-      "withdrawn",
-    );
-    // Act
-    const lineage = await getLineage(db, root.igsn!);
-    // Assert
-    expect(lineage.nodes.map((node) => node.name)).toEqual([
-      "Parent",
-      "Withdrawn root",
-    ]);
-  });
+  pgTest.for(["withdrawn", "embargo"] as const)(
+    "should answer the lineage of a %s sample",
+    async (status, { db }) => {
+      // Arrange
+      const ownerId = await owner(db);
+      const parent = await insertLineageSample(db, ownerId, "Parent");
+      const root = await insertLineageSample(
+        db,
+        ownerId,
+        "Hidden root",
+        [parent.id],
+        status,
+      );
+      // Act
+      const lineage = await getLineage(db, root.igsn!);
+      // Assert
+      expect(lineage.nodes.map((node) => node.name)).toEqual([
+        "Parent",
+        "Hidden root",
+      ]);
+    },
+  );
 
   pgTest("should answer 400 for a malformed IGSN", async ({ db }) => {
     // Act & Assert

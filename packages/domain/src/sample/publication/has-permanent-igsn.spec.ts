@@ -9,6 +9,7 @@ describe("hasPermanentIgsn", () => {
     ["publish_failed", false],
     ["published", true],
     ["withdrawn", true],
+    ["embargo", true],
     ["tombstone", true],
   ] as [SampleStatus, boolean][])(
     "should answer %s with %s",

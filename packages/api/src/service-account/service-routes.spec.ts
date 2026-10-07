@@ -337,7 +337,7 @@ describe("GET /service/samples", () => {
       for (const status of ["withdrawn", "tombstone"] as const) {
         const sample = await inLaboratory(db, archivedSample, IN_REACH);
         await publishSample(db, sample.id);
-        await setSampleStatus(db, sample.id, status);
+        await setSampleStatus(db, sample.id, { status });
       }
       // Act
       const res = await anonymousRequest(app, "");
@@ -381,7 +381,7 @@ describe("GET /service/samples", () => {
       const sample = await inLaboratory(db, publishableSample, IN_REACH);
       if (status !== "draft") {
         await publishSample(db, sample.id);
-        await setSampleStatus(db, sample.id, status);
+        await setSampleStatus(db, sample.id, { status });
       }
       // Act
       const res = await listSamples(app);
@@ -658,7 +658,7 @@ describe("GET /service/samples/:igsn", () => {
       igsnOf: async (db: Kysely<DB>) => {
         const sample = await inLaboratory(db, publishableSample, IN_REACH);
         const published = (await publishSample(db, sample.id))!;
-        await setSampleStatus(db, sample.id, "withdrawn");
+        await setSampleStatus(db, sample.id, { status: "withdrawn" });
         return published.igsn!;
       },
     },
@@ -704,7 +704,7 @@ describe("GET /service/samples/:igsn", () => {
         .execute();
       if (status !== "draft") {
         await publishSample(db, sample.id);
-        await setSampleStatus(db, sample.id, status);
+        await setSampleStatus(db, sample.id, { status });
       }
       const { igsn } = (await readSample(db, sample.id))!;
       // Act
@@ -1194,7 +1194,7 @@ describe("POST /service/samples", () => {
       igsnOf: async (db: Kysely<DB>) => {
         const parent = await inLaboratory(db, publishableSample, IN_REACH);
         const published = (await publishSample(db, parent.id))!;
-        await setSampleStatus(db, parent.id, "withdrawn");
+        await setSampleStatus(db, parent.id, { status: "withdrawn" });
         return published.igsn!;
       },
     },

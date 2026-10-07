@@ -102,11 +102,13 @@ export type SampleRepository = {
   ): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
   /** `withdrawn` mints the IGSN while keeping the sample out of public view. */
-  publish(id: string, status: PublishStatus): Promise<Sample | null>;
-  setStatus(
+  publish(
     id: string,
-    status: SetSampleStatusBody["status"],
+    status: PublishStatus,
+    publishedAt?: string,
   ): Promise<Sample | null>;
+  setStatus(id: string, body: SetSampleStatusBody): Promise<Sample | null>;
+  listDueEmbargoes(now: Date): Promise<string[]>;
   remove(id: string): Promise<void>;
   getEditLock(id: string): Promise<SampleEditLock | null>;
   acquireEditLock(id: string, userId: string): Promise<SampleEditLock | null>;

@@ -33,6 +33,7 @@ import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-locat
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
+import { embargoPublicationDateSchema } from "@projet-igsn/domain/sample/publication/embargo-publication-date";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { duplicateCheckCriteria } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
@@ -66,6 +67,7 @@ import { hasUnsavedAttachmentChanges } from "#/samples/has-unsaved-attachment-ch
 import { LocalIdFields } from "#/samples/local-id-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { ProvenanceStatusField } from "#/samples/provenance-status-field.tsx";
+import { PublicationDateField } from "#/samples/publication-date-field.tsx";
 import { publishBlockerLines } from "#/samples/publish-blocker-field-label.ts";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
@@ -178,6 +180,30 @@ export type SampleSubmitMenuItem = Omit<ConfirmMenuAction, "onConfirm"> & {
   onConfirm: (value: CreateSample) => void | Promise<unknown>;
 };
 
+type SamplePublish = (
+  value: CreateSample,
+  status: PublishStatus,
+  publishedAt?: string,
+) => void | Promise<unknown>;
+
+const PUBLISH_TEXT: Record<
+  PublishStatus,
+  { title: () => string; description: () => string }
+> = {
+  published: {
+    title: m.publish_sample_title,
+    description: m.publish_sample_warning,
+  },
+  withdrawn: {
+    title: m.publish_withdrawn_sample_title,
+    description: m.publish_withdrawn_sample_warning,
+  },
+  embargo: {
+    title: m.publish_embargo_sample_title,
+    description: m.publish_embargo_sample_warning,
+  },
+};
+
 export type SampleFormAction =
   | {
       kind: "submit";
@@ -189,10 +215,7 @@ export type SampleFormAction =
       kind: "publish";
       label: string;
       disabled?: boolean;
-      onPublish: (
-        value: CreateSample,
-        status: PublishStatus,
-      ) => void | Promise<unknown>;
+      onPublish: SamplePublish;
     }
   | { kind: "link"; label: string; href: string };
 
@@ -296,7 +319,8 @@ export function SampleForm({
     title?: string;
     description?: string;
     note?: string;
-    onConfirm: () => void;
+    publishedAt?: string;
+    onConfirm: (publishedAt?: string) => void;
   } | null>(null);
   const findDuplicates = async (value: CreateSample) => {
     const criteria = duplicateCheckCriteria(value, {
@@ -309,29 +333,21 @@ export function SampleForm({
   };
   const askPublish = async (
     status: PublishStatus,
-    onPublish: (
-      value: CreateSample,
-      status: PublishStatus,
-    ) => void | Promise<unknown>,
+    onPublish: SamplePublish,
   ) => {
     const parsed = sampleDraftSchema.safeParse(form.state.values);
     const duplicates = parsed.success ? await findDuplicates(parsed.data) : [];
     if (duplicates === null) return;
     setConfirming({
       duplicates,
-      title:
-        status === "withdrawn"
-          ? m.publish_withdrawn_sample_title()
-          : m.publish_sample_title(),
-      description:
-        status === "withdrawn"
-          ? m.publish_withdrawn_sample_warning()
-          : m.publish_sample_warning(),
+      title: PUBLISH_TEXT[status].title(),
+      description: PUBLISH_TEXT[status].description(),
       note:
         duplicates.length > 0 ? m.duplicate_samples_description() : undefined,
-      onConfirm: () =>
+      publishedAt: status === "embargo" ? "" : undefined,
+      onConfirm: (publishedAt) =>
         void form.handleSubmit({
-          onValid: (value) => onPublish(value, status),
+          onValid: (value) => onPublish(value, status, publishedAt),
           checkDuplicates: false,
         }),
     });
@@ -506,6 +522,10 @@ export function SampleForm({
                   label: m.action_withdraw(),
                   onSelect: () =>
                     void askPublish("withdrawn", action.onPublish),
+                },
+                {
+                  label: m.action_publish_with_embargo(),
+                  onSelect: () => void askPublish("embargo", action.onPublish),
                 },
               ]}
             />
@@ -781,10 +801,25 @@ export function SampleForm({
           {confirming ? (
             <DuplicateSamplesDialog
               {...confirming}
+              body={
+                confirming.publishedAt === undefined ? null : (
+                  <PublicationDateField
+                    value={confirming.publishedAt}
+                    onChange={(publishedAt) =>
+                      setConfirming({ ...confirming, publishedAt })
+                    }
+                  />
+                )
+              }
+              confirmDisabled={
+                confirming.publishedAt !== undefined &&
+                !embargoPublicationDateSchema.safeParse(confirming.publishedAt)
+                  .success
+              }
               onConfirm={() => {
-                const { onConfirm } = confirming;
+                const { onConfirm, publishedAt } = confirming;
                 setConfirming(null);
-                onConfirm();
+                onConfirm(publishedAt);
               }}
               onCancel={() => setConfirming(null)}
             />

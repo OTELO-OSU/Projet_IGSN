@@ -50,7 +50,7 @@ describe("public manual group routes", () => {
         manualGroupIds: [WITHDRAWN_ONLY],
       });
       await publishSample(db, withdrawn.id);
-      await setSampleStatus(db, withdrawn.id, "withdrawn");
+      await setSampleStatus(db, withdrawn.id, { status: "withdrawn" });
       // Act
       const res = await testClient(createApp(db).app)["manual-groups"].$get();
       // Assert

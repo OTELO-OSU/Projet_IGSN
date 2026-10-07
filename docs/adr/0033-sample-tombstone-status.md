@@ -28,6 +28,8 @@ A published or withdrawn sample keeps a permanent IGSN (ADR 0032), so it cannot 
 
 **"My samples" hides tombstones; the moderation list shows them**, so an owner loses no visibility they still have a right to beyond what management reach already grants.
 
+`embargo` joins the publicly resolvable set through `PUBLIC_SAMPLE_STATUSES` and the lifecycle sort; see ADR [0056](0056-sample-embargo-status.md).
+
 ## Rejected
 
 - **Hard delete**: the same reason as ADR 0032, a permanent IGSN cannot be deleted.

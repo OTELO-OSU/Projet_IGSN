@@ -62,6 +62,7 @@ export const sampleStatusSchema = z.enum([
   "draft",
   "publishing",
   "publish_failed",
+  "embargo",
   "published",
   "withdrawn",
   "tombstone",

@@ -24,7 +24,7 @@ function declarableWhere(
   return eb.or([
     eb("sample.status", "=", "published"),
     eb.and([
-      eb("sample.status", "=", "withdrawn"),
+      eb("sample.status", "in", ["withdrawn", "embargo"]),
       eb.or([
         eb.exists(
           eb

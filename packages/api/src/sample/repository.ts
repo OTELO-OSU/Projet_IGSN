@@ -155,9 +155,21 @@ export function createSampleRepository(
         return published;
       }),
     update: synced(updateSample),
-    publish: (id, status) =>
-      withTransaction(db, (trx) => publishSample(trx, id, status, dataCite)),
+    publish: (id, status, publishedAt) =>
+      withTransaction(db, (trx) =>
+        publishSample(trx, id, status, dataCite, publishedAt),
+      ),
     setStatus: synced(setSampleStatus),
+    listDueEmbargoes: tx(async (trx, now: Date) => {
+      const rows = await trx
+        .selectFrom("sample")
+        .select("id")
+        .where("status", "=", "embargo")
+        .where("published_at", "<=", now)
+        .orderBy("id")
+        .execute();
+      return rows.map(({ id }) => id);
+    }),
     remove: tx(deleteSample),
     getEditLock: tx(getEditLock),
     acquireEditLock: tx(acquireEditLock),

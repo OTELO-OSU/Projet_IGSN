@@ -9,9 +9,13 @@ import { createInstitutionalGroupRepository } from "./institutional-group/reposi
 import { createSendMail } from "./mail/send-mail.ts";
 import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { startWebhookWorker } from "./sample-batch/webhook-worker.ts";
+import { createSampleRepository } from "./sample/repository.ts";
+import { scheduleEmbargoRelease } from "./sample/service/embargo-release-schedule.ts";
 import { startPublishingWorker } from "./sample/service/publishing-worker.ts";
+import { releaseDueEmbargoes } from "./sample/service/release-due-embargoes.ts";
 import { scheduleStagedUploadCleanup } from "./staged-upload/cleanup-schedule.ts";
 import { createStagedUploads } from "./staged-upload/staged-uploads.ts";
+import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { schedulePendingUsersDigest } from "./user/pending-users-digest-schedule.ts";
 import { createUserRepository } from "./user/repository.ts";
 import { sendPendingUsersDigest } from "./user/send-pending-users-digest.ts";
@@ -36,6 +40,16 @@ schedulePendingUsersDigest(() => {
     sendMail,
     adminUrl,
   );
+});
+
+scheduleEmbargoRelease(() => {
+  releaseDueEmbargoes(
+    {
+      samples: createSampleRepository(db, attachmentsDir, dataCiteConfig()),
+      userSamples: createUserSampleRepository(db),
+    },
+    { sendMail, adminUrl },
+  ).catch(console.error);
 });
 
 const stagedUploads = createStagedUploads(attachmentsDir);

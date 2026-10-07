@@ -1,5 +1,6 @@
 import type { Sample } from "../sample.ts";
 
+import { publicSampleResponseSchema } from "../sample-validator.ts";
 import { toWithdrawnSample } from "./withdrawn-sample.ts";
 
 const withdrawn: Sample = {
@@ -71,21 +72,31 @@ const withdrawn: Sample = {
 };
 
 describe("toWithdrawnSample", () => {
-  it("should keep only the whitelisted fields of the withdrawn sample", () => {
-    expect(toWithdrawnSample(withdrawn)).toEqual({
-      status: "withdrawn",
-      igsn: "CNRS1234567890",
-      name: "Rhyolite 11",
-      nature: "hand_sample",
-      type: "dredge",
-      material: "rock_and_sediment.rock.other",
-      specificName: "Pitchstone",
-      location: {
-        region: { kind: "country", country: "FR" },
-        localityName: "Mont-Dore",
-      },
-      collectorFirstname: "Claire",
-      collectorLastname: "Martin",
+  it.each(["withdrawn", "embargo"] as const)(
+    "should keep only the whitelisted fields of a %s sample",
+    (status) => {
+      expect(toWithdrawnSample({ ...withdrawn, status })).toEqual({
+        status,
+        igsn: "CNRS1234567890",
+        name: "Rhyolite 11",
+        nature: "hand_sample",
+        type: "dredge",
+        material: "rock_and_sediment.rock.other",
+        specificName: "Pitchstone",
+        location: {
+          region: { kind: "country", country: "FR" },
+          localityName: "Mont-Dore",
+        },
+        collectorFirstname: "Claire",
+        collectorLastname: "Martin",
+      });
+    },
+  );
+
+  it("should answer a redacted embargo sample in the public sample response", () => {
+    const view = { ...toWithdrawnSample(withdrawn), status: "embargo" };
+    expect(publicSampleResponseSchema.parse({ data: view })).toEqual({
+      data: view,
     });
   });
 

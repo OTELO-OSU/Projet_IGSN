@@ -1294,6 +1294,7 @@ describe("SampleForm", () => {
           repository: publishableRepository,
         },
         "published",
+        undefined,
       ),
     );
     expect(onSubmit).not.toHaveBeenCalled();

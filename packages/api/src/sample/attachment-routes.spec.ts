@@ -627,7 +627,7 @@ describe("public attachment download", () => {
       const client = await createTestApp(db);
       const { igsn, attachmentId, sampleId } =
         await publishedSampleWithFile(client);
-      await setSampleStatus(db, sampleId, "withdrawn");
+      await setSampleStatus(db, sampleId, { status: "withdrawn" });
       // Act
       const res = await client.samples[":igsn"].attachments[
         ":attachmentId"

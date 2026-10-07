@@ -1,6 +1,7 @@
 import type { WithdrawnSample } from "@projet-igsn/domain/sample/publication/withdrawn-sample";
 
 import { useEffect, useState } from "react";
+import { vi } from "vitest";
 
 import { publishedSample } from "../../../test/published-sample.ts";
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
@@ -64,7 +65,18 @@ function WithdrawnOnEvent() {
   );
 }
 
-describe("SampleView of a withdrawn sample", () => {
+const signedIn = {
+  isAuthenticated: true,
+  user: { access_token: "a-token", profile: { sub: "jean" } },
+} as Parameters<typeof stubAuth>[1];
+
+const hiddenStatuses: WithdrawnSample["status"][] = ["withdrawn", "embargo"];
+
+describe("SampleView of a withdrawn or embargoed sample", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("should keep the open lineage graph when the sample turns withdrawn", async () => {
     const screen = await renderWithRouter(stubAuth(<WithdrawnOnEvent />), [
       "/samples/$igsn",
@@ -95,27 +107,36 @@ describe("SampleView of a withdrawn sample", () => {
       .toBeInTheDocument();
   });
 
-  it("should show only the whitelisted fields", async () => {
-    const screen = await renderWithRouter(<SampleView sample={sample()} />);
+  it.each(hiddenStatuses)(
+    "should show only the whitelisted fields of a %s sample",
+    async (status) => {
+      const screen = await renderWithRouter(
+        <SampleView sample={sample({ status })} />,
+      );
 
-    await expect.element(screen.getByText("Powder")).toBeVisible();
-    await expect
-      .element(
-        screen.getByRole("list", { name: "Type" }).getByText("Core Half round"),
-      )
-      .toBeVisible();
-    await expect
-      .element(
-        screen.getByRole("list", { name: "Material" }).getByText("Igneous"),
-      )
-      .toBeVisible();
-    await expect.element(screen.getByText("Pitchstone")).toBeVisible();
-    await expect.element(screen.getByText("France > Mont-Dore")).toBeVisible();
-    await expect.element(screen.getByText("Claire Martin")).toBeVisible();
-    expect(
-      screen.getByRole("heading", { name: "Process steps" }).query(),
-    ).toBeNull();
-  });
+      await expect.element(screen.getByText("Powder")).toBeVisible();
+      await expect
+        .element(
+          screen
+            .getByRole("list", { name: "Type" })
+            .getByText("Core Half round"),
+        )
+        .toBeVisible();
+      await expect
+        .element(
+          screen.getByRole("list", { name: "Material" }).getByText("Igneous"),
+        )
+        .toBeVisible();
+      await expect.element(screen.getByText("Pitchstone")).toBeVisible();
+      await expect
+        .element(screen.getByText("France > Mont-Dore"))
+        .toBeVisible();
+      await expect.element(screen.getByText("Claire Martin")).toBeVisible();
+      expect(
+        screen.getByRole("heading", { name: "Process steps" }).query(),
+      ).toBeNull();
+    },
+  );
 
   it("should show no internal id even when the payload carries one", async () => {
     const screen = await renderWithRouter(
@@ -138,25 +159,36 @@ describe("SampleView of a withdrawn sample", () => {
       .toBeInTheDocument();
   });
 
-  it("should offer the private notice and a way to contact the owner", async () => {
-    const screen = await renderWithRouter(<SampleView sample={sample()} />);
+  it.each(hiddenStatuses)(
+    "should offer the private notice of a %s sample and a way to contact the owner, but no edit action",
+    async (status) => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response("{}", { status: 200 }),
+      );
+      const screen = await renderWithRouter(
+        stubAuth(<SampleView sample={sample({ status })} />, signedIn),
+      );
 
-    await expect
-      .element(
-        screen.getByRole("heading", { level: 2, name: "Private sample" }),
-      )
-      .toBeVisible();
-    await expect
-      .element(
-        screen.getByText(
-          "This sample is private. For more information, please contact the owner of the sample listing.",
-        ),
-      )
-      .toBeVisible();
-    await expect
-      .element(screen.getByRole("button", { name: "Contact the record owner" }))
-      .toBeVisible();
-  });
+      await expect
+        .element(
+          screen.getByRole("heading", { level: 2, name: "Private sample" }),
+        )
+        .toBeVisible();
+      await expect
+        .element(
+          screen.getByText(
+            "This sample is private. For more information, please contact the owner of the sample listing.",
+          ),
+        )
+        .toBeVisible();
+      await expect
+        .element(
+          screen.getByRole("button", { name: "Contact the record owner" }),
+        )
+        .toBeVisible();
+      expect(screen.getByRole("link", { name: "Edit" }).query()).toBeNull();
+    },
+  );
 
   it("should show a person without a firstname as the lastname alone", async () => {
     const screen = await renderWithRouter(

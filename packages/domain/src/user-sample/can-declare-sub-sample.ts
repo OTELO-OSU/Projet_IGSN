@@ -13,6 +13,7 @@ export function canDeclareSubSample(
     case "published":
       return true;
     case "withdrawn":
+    case "embargo":
       return access.role !== null || access.managed;
     case "tombstone":
       return access.managed;

@@ -2,8 +2,40 @@ import {
   DEFAULT_PAGE_SIZE,
   listSamplesQuerySchema,
   pageSizeSchema,
+  publishQuerySchema,
+  setSampleStatusBodySchema,
   updateSampleBodySchema,
 } from "./sample-validator";
+
+const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+
+describe.each([
+  ["setSampleStatusBodySchema", setSampleStatusBodySchema],
+  ["publishQuerySchema", publishQuerySchema],
+])("%s", (_, schema) => {
+  it.each([
+    { status: "embargo", publishedAt: tomorrow },
+    { status: "published" },
+  ])("should accept %o", (body) => {
+    expect(schema.parse(body)).toEqual(body);
+  });
+
+  it.each([
+    { status: "embargo" },
+    { status: "published", publishedAt: tomorrow },
+  ])(
+    "should refuse %o, since only an embargo carries a publication date",
+    (body) => {
+      expect(schema.safeParse(body).success).toBe(false);
+    },
+  );
+});
+
+describe("publishQuerySchema", () => {
+  it("should publish by default", () => {
+    expect(publishQuerySchema.parse({})).toEqual({ status: "published" });
+  });
+});
 
 describe("updateSampleBodySchema", () => {
   const body = {

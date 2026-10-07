@@ -51,13 +51,13 @@ const sample = (overrides: Partial<CreateSample> = {}): CreateSample => ({
 const publish = async (
   db: Transactional<DB>,
   overrides: Partial<CreateSample> = {},
-  status: SetSampleStatusBody["status"] = "published",
+  status: Exclude<SetSampleStatusBody["status"], "embargo"> = "published",
 ): Promise<Sample> => {
   const created = await insertSample(db, sample(overrides));
   const published = (await publishSample(db, created.id))!;
   return status === "published"
     ? published
-    : (await setSampleStatus(db, created.id, status))!;
+    : (await setSampleStatus(db, created.id, { status }))!;
 };
 
 const CRITERIA: DuplicateCriteria = {

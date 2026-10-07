@@ -9,6 +9,8 @@ import { setSampleStatus } from "../sample/service/set-sample-status.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { publishableSample } from "./sample-fixtures.ts";
 
+const EMBARGO_PUBLICATION_DATE = "2099-01-01";
+
 export async function insertParent(
   db: Kysely<DB>,
   ownerId: string,
@@ -30,7 +32,9 @@ export async function insertParent(
     db,
     created.id,
     status === "tombstone" ? "published" : status,
+    null,
+    status === "embargo" ? EMBARGO_PUBLICATION_DATE : undefined,
   );
   if (status !== "tombstone") return published!;
-  return (await setSampleStatus(db, created.id, "tombstone"))!;
+  return (await setSampleStatus(db, created.id, { status: "tombstone" }))!;
 }

@@ -17,6 +17,7 @@ export function toPublicSample(sample: Sample): PublicSample {
       };
     }
     case "withdrawn":
+    case "embargo":
       return toWithdrawnSample(sample);
     case "draft":
     case "publishing":

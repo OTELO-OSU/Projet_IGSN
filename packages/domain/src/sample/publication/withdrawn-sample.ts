@@ -14,7 +14,7 @@ export const withdrawnSampleSchema = sampleSchema
     specificName: true,
   })
   .extend({
-    status: z.literal("withdrawn"),
+    status: z.enum(["withdrawn", "embargo"]),
     igsn: igsnSchema,
     location: z
       .object({
@@ -31,7 +31,7 @@ export type WithdrawnSample = z.infer<typeof withdrawnSampleSchema>;
 export function toWithdrawnSample(sample: Sample): WithdrawnSample {
   const context = sample.scientificContext;
   return {
-    status: "withdrawn",
+    status: withdrawnSampleSchema.shape.status.parse(sample.status),
     igsn: igsnSchema.parse(sample.igsn),
     name: sample.name,
     nature: sample.nature,

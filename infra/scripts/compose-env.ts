@@ -89,6 +89,12 @@ const VARS: EnvVar[] = [
     default: "15",
   },
   {
+    name: "EMBARGO_RELEASE_CRON",
+    purpose:
+      "Cron pattern (Europe/Paris) of the embargo release job; every minute on the dev stack.",
+    default: "0 6 * * *",
+  },
+  {
     name: "SAMPLE_LOCK_POLL_SECONDS",
     purpose:
       "Admin lock-poll interval, 30 when unset, baked into the bundle as VITE_SAMPLE_LOCK_POLL_SECONDS.",

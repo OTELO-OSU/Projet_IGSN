@@ -350,9 +350,9 @@ describe("countPublishedFacets", () => {
     await insertSample(db, { ...draft, nature: "powder" });
     await insertPublished(db, { nature: "thin_section" });
     const withdrawn = await insertPublished(db, { nature: "powder" });
-    await setSampleStatus(db, withdrawn.id, "withdrawn");
+    await setSampleStatus(db, withdrawn.id, { status: "withdrawn" });
     const tombstoned = await insertPublished(db, { nature: "powder" });
-    await setSampleStatus(db, tombstoned.id, "tombstone");
+    await setSampleStatus(db, tombstoned.id, { status: "tombstone" });
     // Act
     const { nature } = await countPublishedFacets(db, page);
     // Assert

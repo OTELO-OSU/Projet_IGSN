@@ -20,7 +20,6 @@ import {
   MAP_LIST_SIZE,
   PAGE_SIZES,
   pageSizeSchema,
-  publishStatusSchema,
   requestSampleDeletionBodySchema,
   searchEligibleParentsQuerySchema,
   setSampleStatusBodySchema,
@@ -211,9 +210,6 @@ export const validateRequestDeletionBody = validator("json", (value, c) => {
   }
   return parsed.data;
 });
-
-export const publishStatusQuerySchema =
-  publishStatusSchema.default("published");
 
 export const validateStatusBody = validator("json", (value, c) => {
   const parsed = setSampleStatusBodySchema.safeParse(value);

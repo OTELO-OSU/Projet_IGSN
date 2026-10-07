@@ -50,29 +50,32 @@ describe("the eligible parent search", () => {
     },
   );
 
-  pgTest("should find the caller's own withdrawn sample", async ({ db }) => {
-    // Arrange
-    const caller = await provisionUser(db, "test-token", {
-      status: "accepted",
-    });
-    const sample = await insertParent(
-      db,
-      caller.id,
-      "withdrawn",
-      "Gabbro des Vosges",
-    );
-    // Act
-    const data = await search(db, { search: "Gabbro" });
-    // Assert
-    expect(data).toEqual([
-      {
-        id: sample.id,
-        igsn: sample.igsn,
-        name: sample.name,
-        material: sample.material,
-      },
-    ]);
-  });
+  pgTest.for(["withdrawn", "embargo"] as const)(
+    "should find the caller's own %s sample",
+    async (status, { db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const sample = await insertParent(
+        db,
+        caller.id,
+        status,
+        "Gabbro des Vosges",
+      );
+      // Act
+      const data = await search(db, { search: "Gabbro" });
+      // Assert
+      expect(data).toEqual([
+        {
+          id: sample.id,
+          igsn: sample.igsn,
+          name: sample.name,
+          material: sample.material,
+        },
+      ]);
+    },
+  );
 
   pgTest.for(["withdrawn", "tombstone"] as const)(
     "should find a stranger's %s sample within the caller's moderation reach",

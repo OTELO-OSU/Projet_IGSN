@@ -8,6 +8,7 @@ import { availabilityStatusSchema } from "./curation/availability-status.ts";
 import { existenceStatusSchema } from "./curation/existence-status.ts";
 import { sampleLineageSchema } from "./lineage/model.ts";
 import { sampleParentSchema } from "./parent/model.ts";
+import { embargoPublicationDateSchema } from "./publication/embargo-publication-date.ts";
 import {
   duplicateCriteriaSchema,
   suspectedDuplicateSchema,
@@ -223,16 +224,39 @@ export const sampleLineageResponseSchema = z.object({
 
 export type SampleLineageResponse = z.infer<typeof sampleLineageResponseSchema>;
 
-export const setSampleStatusBodySchema = z.strictObject({
-  status: z.enum(["published", "withdrawn", "tombstone"]),
-});
+export const setSampleStatusBodySchema = z.discriminatedUnion("status", [
+  z.strictObject({ status: z.enum(["published", "withdrawn", "tombstone"]) }),
+  z.strictObject({
+    status: z.literal("embargo"),
+    publishedAt: embargoPublicationDateSchema,
+  }),
+]);
 
 export type SetSampleStatusBody = z.infer<typeof setSampleStatusBodySchema>;
 
-export const publishStatusSchema =
-  setSampleStatusBodySchema.shape.status.exclude(["tombstone"]);
+export const publishStatusSchema = z.enum([
+  "published",
+  "withdrawn",
+  "embargo",
+]);
 
 export type PublishStatus = z.infer<typeof publishStatusSchema>;
+
+export const publishQuerySchema = z
+  .object({
+    status: publishStatusSchema.default("published"),
+    publishedAt: embargoPublicationDateSchema.optional(),
+  })
+  .refine(
+    ({ status, publishedAt }) =>
+      (status === "embargo") === (publishedAt !== undefined),
+    {
+      message: "a publication date goes with an embargo, and only with one",
+      path: ["publishedAt"],
+    },
+  );
+
+export type PublishQuery = z.infer<typeof publishQuerySchema>;
 
 const adminSampleListItemSchema = sampleSchema.extend({
   owner: userSchema

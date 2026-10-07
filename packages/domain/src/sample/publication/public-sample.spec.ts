@@ -34,10 +34,13 @@ describe("toPublicSample", () => {
     },
   );
 
-  it("should redact a withdrawn sample", () => {
-    const withdrawn = { ...sample, status: "withdrawn" } as Sample;
-    expect(toPublicSample(withdrawn)).toEqual(toWithdrawnSample(withdrawn));
-  });
+  it.each(["withdrawn", "embargo"] as SampleStatus[])(
+    "should redact a %s sample",
+    (status) => {
+      const hidden = { ...sample, status } as Sample;
+      expect(toPublicSample(hidden)).toEqual(toWithdrawnSample(hidden));
+    },
+  );
 
   it("should keep the publishing error out of a published view", () => {
     expect(

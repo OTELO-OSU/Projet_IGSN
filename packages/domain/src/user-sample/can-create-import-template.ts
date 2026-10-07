@@ -7,7 +7,7 @@ export function canCreateImportTemplate(sample: {
   material: string | null;
 }): boolean {
   return (
-    (sample.status === "published" || sample.status === "withdrawn") &&
+    ["published", "withdrawn", "embargo"].includes(sample.status) &&
     sample.material !== null &&
     isMassImportableMaterial(sample.material)
   );

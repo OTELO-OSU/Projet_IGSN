@@ -61,7 +61,7 @@ export function SampleView({
           content: <LineageView lineage={lineage} />,
         }
       : null;
-  const withdrawn = sample.status === "withdrawn";
+  const withdrawn = sample.status !== "published";
   const sections = withdrawn
     ? withdrawnSampleSections(sample, lineageSection)
     : sampleSections(sample, lineageSection);

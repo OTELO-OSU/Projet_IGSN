@@ -27,6 +27,8 @@ A published sample keeps a permanent IGSN, but an owner may want it out of publi
 
 **Toggling is one endpoint**, `PUT /admin/samples/:id/status`, editor-only, 409 on a draft. The admin edit page renders `SampleStatusButton`, next to the existing publish action, offering "Withdraw" on a published sample and "Republish" on a withdrawn one.
 
+A seventh status, `embargo`, resolves publicly like `withdrawn`; see ADR [0056](0056-sample-embargo-status.md).
+
 ### Rejected
 
 - **A second `withdrawn` boolean** alongside `published`: two independently settable flags allow the nonsense state "withdrawn but never published", and every one of the call sites above would need its own combination of the two instead of one status read.

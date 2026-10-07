@@ -8,6 +8,7 @@ describe("SampleStatusBadge", () => {
   it.each<[SampleStatus, string]>([
     ["publishing", "Publishing"],
     ["publish_failed", "Publish failed"],
+    ["embargo", "Under embargo"],
   ])("should label a %s sample %s", async (status, label) => {
     const screen = await render(<SampleStatusBadge status={status} />);
 

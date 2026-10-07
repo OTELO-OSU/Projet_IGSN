@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
@@ -16,6 +16,8 @@ export type ConfirmMenuAction = {
   label: string;
   title: string;
   description: string;
+  body?: ReactNode;
+  confirmDisabled?: boolean;
   onConfirm: () => void;
 };
 
@@ -36,7 +38,11 @@ export function ConfirmMenuButton({
   className?: string;
   items: ConfirmMenuItem[];
 }) {
-  const [pending, setPending] = useState<ConfirmMenuAction>();
+  const [pendingLabel, setPendingLabel] = useState<string>();
+  const pending = items.find(
+    (item): item is ConfirmMenuAction =>
+      item.label === pendingLabel && "onConfirm" in item,
+  );
 
   return (
     <>
@@ -58,7 +64,9 @@ export function ConfirmMenuButton({
             <DropdownMenuItem
               key={item.label}
               onSelect={() =>
-                "onSelect" in item ? item.onSelect() : setPending(item)
+                "onSelect" in item
+                  ? item.onSelect()
+                  : setPendingLabel(item.label)
               }
             >
               {item.label}
@@ -69,9 +77,11 @@ export function ConfirmMenuButton({
       {pending ? (
         <ConfirmDialog
           open
-          onOpenChange={() => setPending(undefined)}
+          onOpenChange={() => setPendingLabel(undefined)}
           title={pending.title}
           description={pending.description}
+          body={pending.body}
+          confirmDisabled={pending.confirmDisabled}
           onConfirm={pending.onConfirm}
         />
       ) : null}

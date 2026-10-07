@@ -9,7 +9,7 @@ import { translator } from "../mail/i18n.ts";
 
 type SampleModeratedEdit = {
   owner: Pick<User, "email" | "name" | "firstname">;
-  fields: PublishStatus | SampleMailField[];
+  fields: Exclude<PublishStatus, "embargo"> | SampleMailField[];
   sampleName: string;
   sampleUrl: string;
 };

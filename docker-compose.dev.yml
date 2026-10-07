@@ -211,6 +211,7 @@ services:
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
       UPLOAD_LIMIT: "5"
       SAMPLE_EDIT_LOCK_TTL_MINUTES: "15"
+      EMBARGO_RELEASE_CRON: "* * * * *"
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost

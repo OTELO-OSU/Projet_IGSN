@@ -164,10 +164,10 @@ function CreateSamplePage() {
           kind: "publish",
           label: m.action_publish(),
           disabled: me.isPending,
-          onPublish: (value, status) =>
+          onPublish: (value, status, publishedAt) =>
             createSample.mutateAsync(value).then((sample) =>
               publishSample.mutate(
-                { id: sample.id, status },
+                { id: sample.id, status, publishedAt },
                 {
                   onSuccess: () => navigate({ to: "/" }),
                   onError: () =>

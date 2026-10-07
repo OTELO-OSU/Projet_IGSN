@@ -1,3 +1,5 @@
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
+
 import {
   listSamplesResponseSchema,
   MAP_LIST_SIZE,
@@ -107,7 +109,7 @@ describe("public sample routes", () => {
     await publishSample(client, draft.id);
     await createSample(client, "Basalte du Massif Central");
     const retired = await createPublishedSample(client, "Rhyolite retirée");
-    await setSampleStatus(db, retired.id, "withdrawn");
+    await setSampleStatus(db, retired.id, { status: "withdrawn" });
     // Act
     const res = await client.samples.$get({
       query: { page: "1", perPage: "10" },
@@ -577,13 +579,16 @@ describe("public sample routes", () => {
     },
   );
 
-  pgTest(
-    "should reduce a withdrawn sample to its public whitelist",
-    async ({ db }) => {
+  pgTest.for([
+    { status: "withdrawn" },
+    { status: "embargo", publishedAt: "2099-01-01" },
+  ] satisfies SetSampleStatusBody[])(
+    "should reduce a $status sample to its public whitelist",
+    async (body, { db }) => {
       // Arrange
       const client = await acceptedClient(db);
       const published = await createPublishedSample(client, "Rhyolite retirée");
-      await setSampleStatus(db, published.id, "withdrawn");
+      await setSampleStatus(db, published.id, body);
       // Act
       const res = await client.samples[":igsn"].$get({
         param: { igsn: published.igsn! },
@@ -592,7 +597,7 @@ describe("public sample routes", () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({
         data: {
-          status: "withdrawn",
+          status: body.status,
           igsn: published.igsn,
           name: "Rhyolite retirée",
           nature: "powder",
@@ -779,7 +784,7 @@ describe("public sample routes", () => {
       const client = await acceptedClient(db);
       const published = await createPublishedSample(client, "Rhyolite retirée");
       await linkCollector(db, published.id);
-      await setSampleStatus(db, published.id, "withdrawn");
+      await setSampleStatus(db, published.id, { status: "withdrawn" });
       // Act
       const res = await client.samples[":igsn"].$get({
         param: { igsn: published.igsn! },
@@ -799,7 +804,7 @@ describe("public sample routes", () => {
     // Arrange
     const client = await acceptedClient(db);
     const published = await createPublishedSample(client, "Erased rhyolite");
-    await setSampleStatus(db, published.id, "tombstone");
+    await setSampleStatus(db, published.id, { status: "tombstone" });
     // Act
     const res = await client.samples[":igsn"].$get({
       param: { igsn: published.igsn! },

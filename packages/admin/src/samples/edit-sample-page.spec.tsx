@@ -19,6 +19,7 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { CALLER_GROUPS } from "../../test/caller-groups.ts";
+import { dateFromToday } from "../../test/date-from-today.ts";
 import { FakeXhr } from "../../test/fake-xhr.ts";
 import { worker } from "../../test/msw.ts";
 import { pickPath } from "../../test/pick-hierarchy.ts";
@@ -39,6 +40,7 @@ vi.mock("react-oidc-context", () => ({
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 const DATACITE_ERROR = "DataCite registration failed (HTTP 422)";
 const LOCK_EXPIRY = "2026-07-01T10:15:00.000Z";
+const EMBARGO_END = "2027-03-01T00:00:00.000Z";
 
 type LockHolder = {
   userId: string;
@@ -189,6 +191,7 @@ function fakeApi(
     existenceStatus,
     availabilityStatus: allowedAvailabilityStatuses(existenceStatus)[0],
     publicationYear: status === "draft" ? null : 2026,
+    publishedAt: status === "embargo" ? EMBARGO_END : null,
     resourceType: null,
     economicInterestElements: [],
     economicResourceTypePrecision: null,
@@ -273,11 +276,11 @@ function fakeApi(
     }),
     http.post("*/samples/:id/publish", ({ request }) => {
       if (fail === "publish") return new HttpResponse(null, { status: 500 });
-      const status = new URL(request.url).searchParams.get(
-        "status",
-      ) as SampleStatus;
+      const { searchParams } = new URL(request.url);
+      const status = searchParams.get("status") as SampleStatus;
+      const publishedAt = searchParams.get("publishedAt");
       sample = { ...sample, status, igsn: IGSN, internalNumber: 42 };
-      calls.push(`PUBLISH ${status}`);
+      calls.push([`PUBLISH ${status}`, publishedAt].filter(Boolean).join(" "));
       return HttpResponse.json({
         data: sample,
         role,
@@ -287,7 +290,11 @@ function fakeApi(
     http.put("*/samples/:id/status", async ({ request }) => {
       const body = (await request.json()) as SetSampleStatusBody;
       sample = { ...sample, status: body.status };
-      calls.push(`STATUS ${body.status}`);
+      calls.push(
+        body.status === "embargo"
+          ? `STATUS embargo ${body.publishedAt}`
+          : `STATUS ${body.status}`,
+      );
       return HttpResponse.json({
         data: sample,
         role,
@@ -847,6 +854,74 @@ describe("EditSamplePage", () => {
     await vi.waitFor(() => expect(calls).toEqual(["STATUS withdrawn"]));
   });
 
+  it("should show an embargoed sample's publication date, its public page link and frozen fields, with no withdraw action", async () => {
+    const { screen } = await renderEditPage("embargo");
+
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent(
+        "This sample is under embargo until 3/1/2027, when it is published automatically.",
+      );
+    await expect
+      .element(screen.getByRole("link", { name: "View public page" }))
+      .toHaveAttribute("href", `http://localhost:3000/samples/${IGSN}`);
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Groups this sample belongs to" }),
+      )
+      .toBeDisabled();
+    await screen.getByRole("button", { name: "More actions" }).click();
+    await expect
+      .element(
+        screen.getByRole("menuitem", { name: "Change publication date" }),
+      )
+      .toBeVisible();
+    expect(
+      screen
+        .getByRole("menuitem", { name: "Withdraw", exact: true })
+        .elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should publish an embargoed sample now when the change is confirmed", async () => {
+    const { screen, calls } = await renderEditPage("embargo");
+
+    await screen
+      .getByRole("button", { name: "Publish now", exact: true })
+      .click();
+    await expect
+      .element(screen.getByRole("dialog", { name: "Publish sample now" }))
+      .toHaveTextContent(/notified by mail/i);
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await vi.waitFor(() => expect(calls).toEqual(["STATUS published"]));
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample published");
+  });
+
+  it("should save the edits, then move an embargoed sample's publication date", async () => {
+    const date = dateFromToday(1, 0);
+    const { screen, calls } = await renderEditPage("embargo");
+
+    await screen.getByRole("button", { name: "More actions" }).click();
+    await screen
+      .getByRole("menuitem", { name: "Change publication date" })
+      .click();
+    const dialog = screen.getByRole("dialog", {
+      name: "Change publication date",
+    });
+    await dialog.getByLabelText("Publication date").fill(date);
+    await dialog.getByRole("button", { name: "Confirm" }).click();
+
+    await vi.waitFor(() =>
+      expect(calls).toEqual([
+        "PUT Basalte du Massif Central",
+        `STATUS embargo ${date}`,
+      ]),
+    );
+  });
+
   it("should disable Publish and explain in a tooltip when the sample material stops at its root", async () => {
     const { screen } = await renderEditPage("draft", "rock_and_sediment");
     const publish = screen.getByRole("button", {
@@ -1273,6 +1348,38 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample published as withdrawn");
+  });
+
+  it("should publish with embargo from the publish menu once a valid publication date is picked", async () => {
+    const date = dateFromToday(0, 30);
+    const { screen, calls } = await renderEditPage();
+    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen
+      .getByRole("button", { name: "More publishing options" })
+      .click();
+    await screen
+      .getByRole("menuitem", { name: "Publish with embargo", exact: true })
+      .click();
+    const dialog = screen.getByRole("dialog", {
+      name: "Publish sample with embargo",
+    });
+    await expect
+      .element(dialog.getByRole("button", { name: "Confirm" }))
+      .toBeDisabled();
+
+    await dialog.getByLabelText("Publication date").fill(date);
+    await dialog.getByRole("button", { name: "Confirm" }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "My samples" }))
+      .toBeVisible();
+    expect(calls).toEqual([
+      "PUT Grès de Fontainebleau",
+      `PUBLISH embargo ${date}`,
+    ]);
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample published with embargo");
   });
 
   it("should show an error toast when saving fails", async () => {
