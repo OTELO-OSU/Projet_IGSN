@@ -1,11 +1,11 @@
-import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator";
-
 import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
 import { ConfirmMenuButton } from "#/samples/confirm-menu-button.tsx";
 
+type SetStatusText = "published" | "withdrawn" | "publish_now";
+
 const TEXT: Record<
-  PublishStatus,
+  SetStatusText,
   { label: () => string; title: () => string; description: () => string }
 > = {
   published: {
@@ -18,34 +18,36 @@ const TEXT: Record<
     title: m.restore_withdrawn_sample_title,
     description: m.restore_withdrawn_sample_warning,
   },
+  publish_now: {
+    label: m.action_publish_now,
+    title: m.publish_now_sample_title,
+    description: m.publish_now_sample_warning,
+  },
 };
 
+type SetStatusChoice = { text: SetStatusText; onConfirm: () => void };
+
 export function SetStatusButton({
-  status,
-  menuStatus,
-  disabled,
+  text,
   onConfirm,
-}: {
-  status: PublishStatus;
-  menuStatus?: PublishStatus;
-  disabled?: boolean;
-  onConfirm: (to: PublishStatus) => void;
-}) {
-  const text = TEXT[status];
+  menu,
+  disabled,
+}: SetStatusChoice & { menu?: SetStatusChoice; disabled?: boolean }) {
+  const { label, title, description } = TEXT[text];
   const button = (
     <ConfirmButton
       variant="outline"
-      className={menuStatus ? "rounded-r-none" : undefined}
-      title={text.title()}
-      description={text.description()}
+      className={menu ? "rounded-r-none" : undefined}
+      title={title()}
+      description={description()}
       disabled={disabled}
-      onConfirm={() => onConfirm(status)}
+      onConfirm={onConfirm}
     >
-      {text.label()}
+      {label()}
     </ConfirmButton>
   );
-  if (!menuStatus) return button;
-  const menuText = TEXT[menuStatus];
+  if (!menu) return button;
+  const menuText = TEXT[menu.text];
   return (
     <div className="flex">
       {button}
@@ -59,7 +61,7 @@ export function SetStatusButton({
             label: menuText.label(),
             title: menuText.title(),
             description: menuText.description(),
-            onConfirm: () => onConfirm(menuStatus),
+            onConfirm: menu.onConfirm,
           },
         ]}
       />

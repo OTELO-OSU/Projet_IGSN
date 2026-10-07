@@ -223,6 +223,43 @@ test.describe("samples", () => {
     await detail.expectWithdrawnNotice();
   });
 
+  test("a researcher publishes a new sample with embargo, then publishes it now", async ({
+    page,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    await list.goToCreate();
+
+    const create = sampleCreatePage(page);
+    const name = `Embargoed on arrival ${Date.now()}`;
+    const publicationDate = new Date();
+    publicationDate.setUTCMonth(publicationDate.getUTCMonth() + 6);
+    const date = publicationDate.toISOString().slice(0, 10);
+    await create.fillName(name);
+    await create.selectNature("Thin section");
+    await create.fillPublishableFields();
+    await create.publishWithEmbargo(date);
+    await list.expectVisible();
+
+    const edit = sampleEditPage(page);
+    await list.expectSampleRowWithStatus(name, "Under embargo");
+    await list.openSample(name);
+    await edit.expectEmbargoHint(date);
+    const sampleId = edit.sampleId();
+    const igsn = await edit.publicPageIgsn();
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(igsn);
+    await detail.expectWithdrawnNotice();
+
+    await edit.goto(sampleId);
+    await edit.publishNow();
+    await edit.goToList();
+    await list.expectSampleRowWithStatus(name, "Published");
+    await detail.goto(igsn);
+    await detail.expectSample(name, igsn);
+  });
+
   test("a published sample shows the same internal id in admin and on its public page", async ({
     page,
   }) => {

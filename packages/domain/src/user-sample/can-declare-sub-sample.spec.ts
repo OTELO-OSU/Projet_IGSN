@@ -21,6 +21,13 @@ describe("canDeclareSubSample", () => {
     ],
     ["a withdrawn sample is open to moderation reach", "withdrawn", null, true],
     [
+      "an embargo sample is open to a role on it",
+      "embargo",
+      "contributor",
+      false,
+    ],
+    ["an embargo sample is open to moderation reach", "embargo", null, true],
+    [
       "a tombstone sample is open to a manager whose scope covers it",
       "tombstone",
       null,
@@ -57,6 +64,12 @@ describe("canDeclareSubSample", () => {
     [
       "a withdrawn sample needs a role on it or moderation reach",
       "withdrawn",
+      null,
+      false,
+    ],
+    [
+      "an embargo sample needs a role on it or moderation reach",
+      "embargo",
       null,
       false,
     ],

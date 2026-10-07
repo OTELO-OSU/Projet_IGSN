@@ -56,7 +56,7 @@ async function sampleOf(
     );
   }
   if (status === "tombstone")
-    await setSampleStatus(db, created.id, "tombstone");
+    await setSampleStatus(db, created.id, { status: "tombstone" });
   return created;
 }
 

@@ -6,6 +6,7 @@ describe("canCreateImportTemplate", () => {
   it.each([
     ["published", "rock_and_sediment.rock"],
     ["withdrawn", "rock_and_sediment.sediment"],
+    ["embargo", "rock_and_sediment.sediment"],
   ] as [SampleStatus, string][])(
     "should allow a %s sample of %s",
     (status, material) => {

@@ -15,6 +15,12 @@ describe("canSetSampleStatus", () => {
     ["owner", true, "draft", "withdrawn", false],
     ["owner", true, "publishing", "published", false],
     ["owner", true, "publish_failed", "published", false],
+    ["editor", false, "embargo", "published", true],
+    ["editor", false, "embargo", "embargo", true],
+    [null, true, "embargo", "tombstone", true],
+    ["contributor", false, "embargo", "published", false],
+    ["editor", false, "embargo", "withdrawn", false],
+    ["editor", false, "published", "embargo", false],
   ] as [
     UserSampleRole | null,
     boolean,

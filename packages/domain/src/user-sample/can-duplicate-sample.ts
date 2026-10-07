@@ -7,6 +7,7 @@ export function canDuplicateSample(sample: { status: SampleStatus }): boolean {
     case "publish_failed":
     case "published":
     case "withdrawn":
+    case "embargo":
       return true;
     case "tombstone":
       return false;

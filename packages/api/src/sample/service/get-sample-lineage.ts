@@ -3,6 +3,7 @@ import type { RawBuilder } from "kysely";
 
 import { sampleLineageSchema } from "@projet-igsn/domain/sample/lineage/model";
 import { PERMANENT_IGSN_STATUSES } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
+import { PUBLIC_SAMPLE_STATUSES } from "@projet-igsn/domain/sample/publication/public-sample-statuses";
 import { sql } from "kysely";
 
 import type { DB } from "../../db.ts";
@@ -36,7 +37,7 @@ export async function getSampleLineage(
     .selectFrom("sample")
     .select(["id", "igsn", "name"])
     .where("igsn", "=", igsn)
-    .where("status", "in", ["published", "withdrawn"])
+    .where("status", "in", PUBLIC_SAMPLE_STATUSES)
     .executeTakeFirst();
   if (!root) return null;
 

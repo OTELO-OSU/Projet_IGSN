@@ -670,7 +670,7 @@ describe("a tombstoned sample", () => {
   const setStatus = (
     app: App,
     id: string,
-    status: SetSampleStatusBody["status"],
+    status: Exclude<SetSampleStatusBody["status"], "embargo">,
     headers: Record<string, string> = authHeader,
   ) =>
     testClient(app).admin.samples[":id"].status.$put(
@@ -680,7 +680,7 @@ describe("a tombstoned sample", () => {
 
   async function arrangeManaged(
     db: Db,
-    status: SetSampleStatusBody["status"] = "published",
+    status: Exclude<SetSampleStatusBody["status"], "embargo"> = "published",
   ) {
     const { app, owner } = await arrangeManager(db);
     const created = await ownedSample(
@@ -690,7 +690,7 @@ describe("a tombstoned sample", () => {
       IN_REACH,
     );
     await publishSample(db, created.id);
-    const sample = await setSampleStatus(db, created.id, status);
+    const sample = await setSampleStatus(db, created.id, { status });
     return { app, owner, sample: sample! };
   }
 

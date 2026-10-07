@@ -9,6 +9,7 @@ describe("canDuplicateSample", () => {
     ["publish_failed", true],
     ["published", true],
     ["withdrawn", true],
+    ["embargo", true],
     ["tombstone", false],
   ] as [SampleStatus, boolean][])(
     "should answer %s with %s",

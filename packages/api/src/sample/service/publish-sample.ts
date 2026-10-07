@@ -17,7 +17,9 @@ export async function publishSample(
   id: string,
   status: PublishStatus = "published",
   config: DataCiteConfig | null = null,
+  publishedAt?: string,
 ): Promise<Sample | null> {
+  const at = publishedAt ? sql`${publishedAt}::timestamptz` : sql`now()`;
   const row = await db
     .updateTable("sample")
     .set({
@@ -25,8 +27,8 @@ export async function publishSample(
       publishing_error: null,
       igsn: sql`coalesce(igsn, ${generateIgsnSuffix(id)})`,
       doi_prefix: sql`coalesce(doi_prefix, ${config?.prefix ?? null})`,
-      publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
-      published_at: sql`coalesce(published_at, now())`,
+      publication_year: sql`coalesce(publication_year, extract(year from ${at})::int)`,
+      published_at: sql`coalesce(published_at, ${at})`,
       // ponytail: a rolled-back publish burns its sequence value, so numbers may skip; a gapless counter needs a locked counter row.
       internal_number: sql`coalesce(internal_number, nextval('sample_internal_number_seq'))`,
     })

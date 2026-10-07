@@ -1333,7 +1333,7 @@ describe("admin sample routes", () => {
     const setStatus = (
       client: Client,
       id: string,
-      status: SetSampleStatusBody["status"],
+      status: Exclude<SetSampleStatusBody["status"], "embargo">,
     ) =>
       client.admin.samples[":id"].status.$put(
         { param: { id }, json: { status } },
@@ -1993,7 +1993,7 @@ describe("admin sample routes", () => {
         await publishSample(db, sample.id);
       }
       if (status === "withdrawn") {
-        await setSampleStatus(db, sample.id, status);
+        await setSampleStatus(db, sample.id, { status });
       }
       return sample;
     }
@@ -3338,7 +3338,7 @@ describe("admin sample routes", () => {
         status = "draft",
       }: {
         role?: "owner" | "contributor" | "moderator";
-        status?: "draft" | SetSampleStatusBody["status"];
+        status?: "draft" | Exclude<SetSampleStatusBody["status"], "embargo">;
       } = {},
     ) {
       const caller = await insertUser(db, authenticatedCallerEmail);
@@ -3366,7 +3366,7 @@ describe("admin sample routes", () => {
       }
       if (status !== "draft") {
         await publishSample(db, sample.id);
-        await setSampleStatus(db, sample.id, status);
+        await setSampleStatus(db, sample.id, { status });
       }
       return { caller, sample };
     }

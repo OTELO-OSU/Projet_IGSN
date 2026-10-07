@@ -198,11 +198,18 @@ export function sampleEditPage(page: Page) {
       await confirm("Restore sample as withdrawn");
     },
     republish: () => confirmStatusChange("Republish", "Republish sample"),
+    publishNow: () => confirmStatusChange("Publish now", "Publish sample now"),
     expectStatusAction: (name: string) =>
       expect(page.getByRole("button", { name })).toBeVisible(),
     expectWithdrawnHint: () =>
       expect(
         page.getByText("This sample is withdrawn from public view."),
+      ).toBeVisible(),
+    expectEmbargoHint: (date: string) =>
+      expect(
+        page.getByText(
+          `This sample is under embargo until ${date}, when it is published automatically.`,
+        ),
       ).toBeVisible(),
 
     openRelatedResourcesTab: () => openTab("Related URL or document"),

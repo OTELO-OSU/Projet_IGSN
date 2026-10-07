@@ -1,14 +1,13 @@
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
-import type {
-  PublishStatus,
-  SetSampleStatusBody,
-} from "@projet-igsn/domain/sample/sample-validator";
+import type { Sample, SampleStatus } from "@projet-igsn/domain/sample/sample";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 
 import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
+import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
+import { embargoPublicationDateSchema } from "@projet-igsn/domain/sample/publication/embargo-publication-date";
 import { canCreateImportTemplate } from "@projet-igsn/domain/user-sample/can-create-import-template";
 import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
@@ -19,12 +18,14 @@ import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-samp
 import { useQueries } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { InfoIcon } from "lucide-react";
+import { useState } from "react";
 import { z } from "zod";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { parentFieldSuggestions } from "#/samples/parent-field-suggestions.ts";
+import { PublicationDateField } from "#/samples/publication-date-field.tsx";
 import { SampleActionsMenu } from "#/samples/sample-actions-menu.tsx";
 import { sampleFormTabSchema } from "#/samples/sample-form-tabs.ts";
 import {
@@ -48,9 +49,13 @@ import {
 } from "#/samples/use-update-sample.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-const PUBLIC_HINT: Partial<Record<SampleStatus, () => string>> = {
+const PUBLIC_HINT: Partial<
+  Record<SampleStatus, (sample: Pick<Sample, "publishedAt">) => string>
+> = {
   withdrawn: m.sample_withdrawn_hint,
   tombstone: m.sample_tombstone_hint,
+  embargo: ({ publishedAt }) =>
+    m.sample_embargo_hint({ date: publishedAt ? formatDate(publishedAt) : "" }),
 };
 
 export const Route = createFileRoute("/samples/$sampleId")({
@@ -72,6 +77,7 @@ function EditSamplePage() {
   const publishSample = usePublishSample();
   const setStatus = useSetSampleStatus(sampleId);
   const deleteSample = useDeleteSample(sampleId);
+  const [publicationDate, setPublicationDate] = useState("");
   const { heldByOther } = useSampleEditLock(
     sampleId,
     query.data != null && canUpdateSample(query.data.role, query.data),
@@ -122,16 +128,24 @@ function EditSamplePage() {
       : conflict === "stale"
         ? m.edit_sample_stale()
         : undefined;
-  const publicHint = PUBLIC_HINT[status]?.();
+  const publicHint = PUBLIC_HINT[status]?.(query.data);
   const parents = parentQueries
     .map((parentQuery) => parentQuery.data)
     .filter((parent) => parent != null);
-  const restoreButton = (to: PublishStatus, menuStatus?: PublishStatus) => (
+  const restoreButton = (
+    text: "published" | "publish_now",
+    menu?: "withdrawn",
+  ) => (
     <SetStatusButton
-      status={to}
-      menuStatus={menuStatus}
+      text={text}
+      onConfirm={() => setStatus.mutate({ status: "published" })}
+      menu={
+        menu && {
+          text: menu,
+          onConfirm: () => setStatus.mutate({ status: menu }),
+        }
+      }
       disabled={isPending}
-      onConfirm={(status) => setStatus.mutate(status)}
     />
   );
   const withdrawItem: SampleSubmitMenuItem = {
@@ -139,7 +153,9 @@ function EditSamplePage() {
     title: m.withdraw_sample_title(),
     description: m.withdraw_sample_warning(),
     onConfirm: (value) =>
-      updateSample.mutateAsync(value).then(() => setStatus.mutate("withdrawn")),
+      updateSample
+        .mutateAsync(value)
+        .then(() => setStatus.mutate({ status: "withdrawn" })),
   };
   const tombstoneItem: SampleSubmitMenuItem = {
     label: m.action_tombstone(),
@@ -147,13 +163,38 @@ function EditSamplePage() {
     description: m.tombstone_sample_warning(),
     onConfirm: (value) =>
       updateSample.mutateAsync(value).then(() =>
-        setStatus.mutate("tombstone", {
-          onSuccess: () => void navigate({ to: listRoute }),
-        }),
+        setStatus.mutate(
+          { status: "tombstone" },
+          {
+            onSuccess: () => void navigate({ to: listRoute }),
+          },
+        ),
       ),
+  };
+  const changePublicationDateItem: SampleSubmitMenuItem = {
+    label: m.action_change_publication_date(),
+    title: m.change_publication_date_title(),
+    description: m.change_publication_date_warning(),
+    body: (
+      <PublicationDateField
+        value={publicationDate}
+        onChange={setPublicationDate}
+      />
+    ),
+    confirmDisabled:
+      !embargoPublicationDateSchema.safeParse(publicationDate).success,
+    onConfirm: (value) =>
+      updateSample
+        .mutateAsync(value)
+        .then(() =>
+          setStatus.mutate({ status: "embargo", publishedAt: publicationDate }),
+        ),
   };
   const statusItems = [
     ...(status === "published" && can("withdrawn") ? [withdrawItem] : []),
+    ...(status === "embargo" && can("embargo")
+      ? [changePublicationDateItem]
+      : []),
     ...(can("tombstone") ? [tombstoneItem] : []),
   ];
   const formActions: Pick<
@@ -166,10 +207,13 @@ function EditSamplePage() {
       }
     : {
         readOnlyReason: lockedMessage ?? rejection,
-        statusAction:
-          status === "withdrawn" && can("published")
+        statusAction: !can("published")
+          ? undefined
+          : status === "withdrawn"
             ? restoreButton("published")
-            : undefined,
+            : status === "embargo"
+              ? restoreButton("publish_now")
+              : undefined,
         secondaryAction: {
           kind: "submit",
           label: m.action_save(),
@@ -187,10 +231,10 @@ function EditSamplePage() {
           : {
               kind: "publish",
               label: m.action_publish(),
-              onPublish: (value, publishStatus) =>
+              onPublish: (value, publishStatus, publishedAt) =>
                 updateSample.mutateAsync(value).then(() =>
                   publishSample.mutate(
-                    { id: sampleId, status: publishStatus },
+                    { id: sampleId, status: publishStatus, publishedAt },
                     {
                       onSuccess: () => navigate({ to: listRoute }),
                     },

@@ -153,7 +153,7 @@ describe("POST /samples/:igsn/contact", () => {
       // Arrange
       const { sendMail, contact } = arrangeApp(db);
       const { sample, email } = await arrangeInstitutionalOwner(db);
-      await setSampleStatus(db, sample.id, "withdrawn");
+      await setSampleStatus(db, sample.id, { status: "withdrawn" });
       // Act
       const res = await contact(sample.igsn!);
       // Assert

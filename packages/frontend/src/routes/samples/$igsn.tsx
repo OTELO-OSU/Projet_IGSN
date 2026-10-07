@@ -24,7 +24,7 @@ export const Route = createFileRoute("/samples/$igsn")({
     if (!sample) {
       throw notFound();
     }
-    return { title: sample.name, withdrawn: sample.status === "withdrawn" };
+    return { title: sample.name, withdrawn: sample.status !== "published" };
   },
   head: ({ loaderData }) => ({
     meta: [

@@ -14,9 +14,15 @@ describe("setSampleStatus", () => {
       const created = await insertSample(db, draft);
       const published = await publishSample(db, created.id);
       // Act
-      const withdrawn = await setSampleStatus(db, created.id, "withdrawn");
-      const tombstoned = await setSampleStatus(db, created.id, "tombstone");
-      const republished = await setSampleStatus(db, created.id, "published");
+      const withdrawn = await setSampleStatus(db, created.id, {
+        status: "withdrawn",
+      });
+      const tombstoned = await setSampleStatus(db, created.id, {
+        status: "tombstone",
+      });
+      const republished = await setSampleStatus(db, created.id, {
+        status: "published",
+      });
       // Assert
       expect(published?.internalNumber).toEqual(expect.any(Number));
       expect(withdrawn).toEqual({ ...published, status: "withdrawn" });

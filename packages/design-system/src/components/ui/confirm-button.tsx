@@ -26,6 +26,7 @@ type ConfirmDialogProps = {
   closeLabel: string;
   confirmPhrase?: ConfirmPhrase;
   body?: ReactNode;
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -33,7 +34,7 @@ type ConfirmDialogProps = {
 };
 
 type ConfirmButtonProps = ComponentProps<typeof Button> &
-  Omit<ConfirmDialogProps, "children" | "body">;
+  Omit<ConfirmDialogProps, "children" | "body" | "confirmDisabled">;
 
 export function ConfirmButton({
   title,
@@ -73,6 +74,7 @@ export function ConfirmDialog({
   closeLabel,
   confirmPhrase,
   body,
+  confirmDisabled = false,
   onConfirm,
   open,
   onOpenChange,
@@ -91,6 +93,7 @@ export function ConfirmDialog({
           confirmLabel={confirmLabel}
           cancelLabel={cancelLabel}
           confirmPhrase={confirmPhrase}
+          confirmDisabled={confirmDisabled}
           onConfirm={onConfirm}
         />
       </DialogContent>
@@ -102,11 +105,13 @@ function ConfirmBody({
   confirmLabel,
   cancelLabel,
   confirmPhrase,
+  confirmDisabled,
   onConfirm,
 }: {
   confirmLabel: string;
   cancelLabel: string;
   confirmPhrase?: ConfirmPhrase;
+  confirmDisabled: boolean;
   onConfirm: () => void;
 }) {
   const inputId = useId();
@@ -136,7 +141,10 @@ function ConfirmBody({
           <Button
             type="submit"
             variant="destructive"
-            disabled={confirmPhrase ? typed !== confirmPhrase.text : false}
+            disabled={
+              confirmDisabled ||
+              (confirmPhrase ? typed !== confirmPhrase.text : false)
+            }
             onClick={onConfirm}
           >
             {confirmLabel}

@@ -17,6 +17,10 @@ export const SAMPLE_STATUS: Record<
     className: "bg-red-100 text-red-800",
     label: m.status_publish_failed,
   },
+  embargo: {
+    className: "bg-sky-100 text-sky-800",
+    label: m.status_embargo,
+  },
   published: {
     className: "bg-green-100 text-green-800",
     label: m.status_published,

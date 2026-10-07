@@ -23,7 +23,7 @@ export async function notifySampleModerated({
   userSamples: Pick<UserSampleRepository, "listCollaborators">;
   mail: { sendMail: SendMail; adminUrl: string };
   sample: Pick<Sample, "id" | "name">;
-  fields: PublishStatus | SampleMailField[];
+  fields: Exclude<PublishStatus, "embargo"> | SampleMailField[];
   actorId?: string;
 }): Promise<void> {
   try {

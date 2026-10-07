@@ -308,5 +308,18 @@ export function sampleFormPage(page: Page) {
         .click();
       await confirm("Publish sample as withdrawn");
     },
+    publishWithEmbargo: async (date: string) => {
+      await page
+        .getByRole("button", { name: "More publishing options" })
+        .click();
+      await page
+        .getByRole("menuitem", { name: "Publish with embargo", exact: true })
+        .click();
+      const dialog = page.getByRole("dialog", {
+        name: "Publish sample with embargo",
+      });
+      await dialog.getByLabel("Publication date").fill(date);
+      await confirm("Publish sample with embargo");
+    },
   };
 }

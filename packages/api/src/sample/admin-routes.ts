@@ -27,6 +27,7 @@ import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-per
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { publishQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
@@ -64,6 +65,7 @@ import { findImportDuplicates } from "./import-template/find-import-duplicates.t
 import { internalIdRequestMail } from "./import-template/internal-id-request-mail.ts";
 import { validateImport } from "./import-template/validate-import.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
+import { notifyEmbargo } from "./notify-embargo.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { notifySubSampleDeclared } from "./notify-sub-sample-declared.ts";
@@ -73,7 +75,6 @@ import { requireSampleAccess } from "./require-sample-access.ts";
 import { sampleDeletionRequestMail } from "./sample-deletion-request-mail.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
-  publishStatusQuerySchema,
   validateAddCollaboratorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
@@ -651,10 +652,11 @@ export function createSampleAdminRoutes(
       if (!isSampleEditor(c.get("role"))) {
         return c.json({ error: "Forbidden" }, 403);
       }
-      const status = publishStatusQuerySchema.safeParse(c.req.query("status"));
-      if (!status.success) {
+      const query = publishQuerySchema.safeParse(c.req.query());
+      if (!query.success) {
         return c.json({ error: "Invalid publish status" }, 400);
       }
+      const { status, publishedAt } = query.data;
       if (sample.status === "publishing" || hasPermanentIgsn(sample)) {
         return c.json({ error: "Sample is already published" }, 409);
       }
@@ -664,14 +666,26 @@ export function createSampleAdminRoutes(
       ) {
         return c.json({ error: "Sample is not ready to publish" }, 409);
       }
-      const published = await repository.publish(id, status.data);
-      if (mail && c.get("moderating")) {
+      const published = await repository.publish(id, status, publishedAt);
+      if (!published) {
+        return c.json({ error: "Not found" }, 404);
+      }
+      if (mail && status === "embargo") {
+        void notifyEmbargo({
+          event: "started",
+          userSamples: userSampleRepository,
+          sample: published,
+          actor: c.get("user"),
+          mail,
+        });
+      }
+      if (mail && status !== "embargo" && c.get("moderating")) {
         // ponytail: fire and forget; a retry queue if a lost notification ever matters.
         void notifySampleModerated({
           userSamples: userSampleRepository,
           mail,
           sample,
-          fields: status.data,
+          fields: status,
         });
       }
       return c.json({ data: published });
@@ -689,16 +703,35 @@ export function createSampleAdminRoutes(
         if (!hasPermanentIgsn(sample)) {
           return c.json({ error: "Sample is not published" }, 409);
         }
-        const status = c.req.valid("json").status;
+        const body = c.req.valid("json");
         if (
-          !canSetSampleStatus(c.get("role"), c.get("managed"), sample, status)
+          !canSetSampleStatus(
+            c.get("role"),
+            c.get("managed"),
+            sample,
+            body.status,
+          )
         ) {
           return c.json({ error: "Forbidden" }, 403);
         }
-        const updated = await repository.setStatus(
-          c.req.valid("param").id,
-          status,
-        );
+        const id = c.req.valid("param").id;
+        const updated = await repository.setStatus(id, body);
+        if (!updated) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (
+          mail &&
+          sample.status === "embargo" &&
+          body.status === "published"
+        ) {
+          void notifyEmbargo({
+            event: "ended",
+            userSamples: userSampleRepository,
+            sample: updated,
+            actor: c.get("user"),
+            mail,
+          });
+        }
         return c.json({ data: updated });
       },
     )

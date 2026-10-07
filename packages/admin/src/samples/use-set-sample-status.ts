@@ -9,22 +9,23 @@ import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 
 const SUCCESS_MESSAGE: Record<SetSampleStatusBody["status"], () => string> = {
-  published: m.republish_sample_success,
+  published: m.publish_sample_success,
   withdrawn: m.withdraw_sample_success,
   tombstone: m.tombstone_sample_success,
+  embargo: m.publication_date_updated,
 };
 
 export function useSetSampleStatus(id: string) {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (status: SetSampleStatusBody["status"]) => {
+    mutationFn: async (body: SetSampleStatusBody) => {
       const res = await apiFetch(
         new URL(`admin/samples/${id}/status`, API_URL),
         {
           method: "PUT",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify(body),
         },
       );
       if (!res.ok) {
@@ -32,7 +33,7 @@ export function useSetSampleStatus(id: string) {
       }
       return sampleResponseSchema.parse(await res.json()).data;
     },
-    onSuccess: (_sample, status) => {
+    onSuccess: (_sample, { status }) => {
       toast.success(SUCCESS_MESSAGE[status]());
       return queryClient.invalidateQueries({ queryKey: ["samples"] });
     },

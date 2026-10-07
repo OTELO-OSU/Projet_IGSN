@@ -57,7 +57,7 @@ describe("public user routes", () => {
         name: "Withdrawn sample",
       });
       await publishSample(db, withdrawnSample.id);
-      await setSampleStatus(db, withdrawnSample.id, "withdrawn");
+      await setSampleStatus(db, withdrawnSample.id, { status: "withdrawn" });
       const draftOnly = await insertSample(db, { ...draft, name: "Draft" });
       await insertSampleOwner(db, published.id, publisher.id);
       await insertSampleOwner(db, pendingSample.id, pending.id);

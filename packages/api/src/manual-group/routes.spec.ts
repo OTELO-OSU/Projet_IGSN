@@ -409,7 +409,7 @@ describe("admin manual group routes", () => {
       const sample = await insertSampleInGroup(db, curie.id, MASSIF);
       await publishSample(db, sample);
       if (status === "withdrawn") {
-        await setSampleStatus(db, sample, "withdrawn");
+        await setSampleStatus(db, sample, { status: "withdrawn" });
       }
       const client = await asSuperAdmin(db);
       // Act
