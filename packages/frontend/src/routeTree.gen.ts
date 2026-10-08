@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TombstoneRouteImport } from './routes/tombstone'
+import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SamplesIgsnRouteImport } from './routes/samples/$igsn'
@@ -20,9 +22,19 @@ const TombstoneRoute = TombstoneRouteImport.update({
   path: '/tombstone',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsOfUseRoute = TermsOfUseRouteImport.update({
+  id: '/terms-of-use',
+  path: '/terms-of-use',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnersRoute = PartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -44,14 +56,18 @@ const SamplesIgsnRoute = SamplesIgsnRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/faq': typeof FaqRoute
+  '/partners': typeof PartnersRoute
   '/search': typeof SearchRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/faq': typeof FaqRoute
+  '/partners': typeof PartnersRoute
   '/search': typeof SearchRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
@@ -59,22 +75,48 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/faq': typeof FaqRoute
+  '/partners': typeof PartnersRoute
   '/search': typeof SearchRoute
+  '/terms-of-use': typeof TermsOfUseRoute
   '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/faq' | '/search' | '/tombstone' | '/samples/$igsn'
+  fullPaths:
+    | '/'
+    | '/faq'
+    | '/partners'
+    | '/search'
+    | '/terms-of-use'
+    | '/tombstone'
+    | '/samples/$igsn'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/faq' | '/search' | '/tombstone' | '/samples/$igsn'
-  id: '__root__' | '/' | '/faq' | '/search' | '/tombstone' | '/samples/$igsn'
+  to:
+    | '/'
+    | '/faq'
+    | '/partners'
+    | '/search'
+    | '/terms-of-use'
+    | '/tombstone'
+    | '/samples/$igsn'
+  id:
+    | '__root__'
+    | '/'
+    | '/faq'
+    | '/partners'
+    | '/search'
+    | '/terms-of-use'
+    | '/tombstone'
+    | '/samples/$igsn'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FaqRoute: typeof FaqRoute
+  PartnersRoute: typeof PartnersRoute
   SearchRoute: typeof SearchRoute
+  TermsOfUseRoute: typeof TermsOfUseRoute
   TombstoneRoute: typeof TombstoneRoute
   SamplesIgsnRoute: typeof SamplesIgsnRoute
 }
@@ -88,11 +130,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TombstoneRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms-of-use': {
+      id: '/terms-of-use'
+      path: '/terms-of-use'
+      fullPath: '/terms-of-use'
+      preLoaderRoute: typeof TermsOfUseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partners': {
+      id: '/partners'
+      path: '/partners'
+      fullPath: '/partners'
+      preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -122,7 +178,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FaqRoute: FaqRoute,
+  PartnersRoute: PartnersRoute,
   SearchRoute: SearchRoute,
+  TermsOfUseRoute: TermsOfUseRoute,
   TombstoneRoute: TombstoneRoute,
   SamplesIgsnRoute: SamplesIgsnRoute,
 }
