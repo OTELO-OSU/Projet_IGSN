@@ -30,7 +30,9 @@ build:
     - ': "${DOMAIN:?set DOMAIN as a $DEPLOY_ENV environment variable}"'
     - ': "${OIDC_ISSUER:?set OIDC_ISSUER as a $DEPLOY_ENV environment variable}"'
     - ': "${OIDC_CLIENT_ID:?set OIDC_CLIENT_ID as a $DEPLOY_ENV environment variable}"'
-    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+    # A job-local config holding the auth keeps a shell runner's docker from storing it in the host's D-Bus secret service, absent in CI.
+    - export DOCKER_CONFIG="$(mktemp -d)"
+    - printf '{"auths":{"%s":{"auth":"%s"}}}' "$CI_REGISTRY" "$(printf '%s:%s' "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')" > "$DOCKER_CONFIG/config.json"
     - docker build -f packages/api/Dockerfile --target prod -t "$IMAGE_PREFIX/api:$IMAGE_TAG" .
     - |
       docker build -f packages/admin/Dockerfile --target prod -t "$IMAGE_PREFIX/admin:$IMAGE_TAG" \
