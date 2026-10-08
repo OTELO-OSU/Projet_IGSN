@@ -149,7 +149,7 @@ describe("ResultsMapDialog", () => {
     await cardOf(screen).hover();
     await cardOf(screen).unhover();
 
-    await expect.element(markerOf(screen)).toHaveClass("bg-amber-500");
+    await expect.element(markerOf(screen)).toHaveClass("bg-tertiary");
   });
 
   it("should clear the selection when the map's background is clicked", async () => {

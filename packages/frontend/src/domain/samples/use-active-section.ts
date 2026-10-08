@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const READING_BAND_BELOW_HEADER = "-140px 0px -60% 0px";
+const READING_BAND_BELOW_HEADER = "-188px 0px -60% 0px";
 
 export function useActiveSection(ids: string[]): string | undefined {
   const [activeId, setActiveId] = useState(ids[0]);

@@ -58,7 +58,7 @@ export function LineageView({ lineage }: { lineage: SampleLineage }) {
     <div
       role="group"
       aria-label={m.lineage_graph_label()}
-      className="relative mt-2 h-96 rounded border bg-sky-50/40"
+      className="bg-primary/5 relative mt-2 h-96 rounded border"
     >
       <div className="absolute inset-0">
         {mounted ? (

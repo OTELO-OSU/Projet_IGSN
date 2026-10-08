@@ -37,7 +37,7 @@ export function LazyLocationMap({
 
   return (
     <div>
-      <p id={HINT_ID} className="mb-2 text-sky-100">
+      <p id={HINT_ID} className="text-muted-foreground mb-2">
         {m.search_map_hint()}
       </p>
       <div

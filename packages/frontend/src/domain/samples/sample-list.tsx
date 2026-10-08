@@ -235,9 +235,9 @@ export function SampleList({
               <Link
                 to="/samples/$igsn"
                 params={{ igsn }}
-                className="block h-full rounded-lg border p-4 hover:border-sky-800 hover:bg-sky-50"
+                className="hover:border-primary hover:bg-primary/5 block h-full rounded-lg border p-4"
               >
-                <h2 className="font-semibold text-sky-900" data-highlight>
+                <h2 className="text-primary font-semibold" data-highlight>
                   {name}
                 </h2>
                 <CardDetails
@@ -254,10 +254,10 @@ export function SampleList({
           <li
             key={igsn}
             id={sampleCardId(igsn)}
-            className={`relative scroll-my-3 rounded-lg border p-4 hover:border-sky-800 hover:bg-sky-50 ${isSelected ? "border-amber-500 bg-amber-50 ring-4 ring-amber-300" : ""}`}
+            className={`hover:border-primary hover:bg-primary/5 relative scroll-my-3 rounded-lg border p-4 ${isSelected ? "border-secondary bg-secondary/5 ring-secondary/60 ring-4" : ""}`}
             {...hoverHandlers}
           >
-            <h2 className="pe-8 font-semibold text-sky-900">
+            <h2 className="text-primary pe-8 font-semibold">
               <button
                 type="button"
                 aria-current={isSelected ? "true" : undefined}

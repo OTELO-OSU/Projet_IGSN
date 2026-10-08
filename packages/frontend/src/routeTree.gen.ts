@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TombstoneRouteImport } from './routes/tombstone'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SamplesIgsnRouteImport } from './routes/samples/$igsn'
 
@@ -22,6 +23,11 @@ const TombstoneRoute = TombstoneRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,12 +43,14 @@ const SamplesIgsnRoute = SamplesIgsnRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/faq': typeof FaqRoute
   '/search': typeof SearchRoute
   '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/faq': typeof FaqRoute
   '/search': typeof SearchRoute
   '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/faq': typeof FaqRoute
   '/search': typeof SearchRoute
   '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/search' | '/tombstone' | '/samples/$igsn'
+  fullPaths: '/' | '/faq' | '/search' | '/tombstone' | '/samples/$igsn'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/search' | '/tombstone' | '/samples/$igsn'
-  id: '__root__' | '/' | '/search' | '/tombstone' | '/samples/$igsn'
+  to: '/' | '/faq' | '/search' | '/tombstone' | '/samples/$igsn'
+  id: '__root__' | '/' | '/faq' | '/search' | '/tombstone' | '/samples/$igsn'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FaqRoute: typeof FaqRoute
   SearchRoute: typeof SearchRoute
   TombstoneRoute: typeof TombstoneRoute
   SamplesIgsnRoute: typeof SamplesIgsnRoute
@@ -85,6 +95,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FaqRoute: FaqRoute,
   SearchRoute: SearchRoute,
   TombstoneRoute: TombstoneRoute,
   SamplesIgsnRoute: SamplesIgsnRoute,

@@ -9,6 +9,7 @@ export const paraglideOptions: CompilerOptions = {
   urlPatterns: [
     { pattern: "", localized: [["en", "/en"]] },
     { pattern: "/search", localized: [["en", "/en/search"]] },
+    { pattern: "/faq", localized: [["en", "/en/faq"]] },
     { pattern: "/samples/:igsn", localized: [["en", "/en/samples/:igsn"]] },
   ],
 };

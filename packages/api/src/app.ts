@@ -39,6 +39,8 @@ import { createServiceRoutes } from "./service-account/service-routes.ts";
 import { createStagedUploadRoutes } from "./staged-upload/routes.ts";
 import { createStagedUploads } from "./staged-upload/staged-uploads.ts";
 import { createTusServer } from "./staged-upload/tus-server.ts";
+import { createStatsRepository } from "./stats/repository.ts";
+import { createStatsRoutes } from "./stats/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
 import { createPublicUserRoutes } from "./user/public-routes.ts";
@@ -128,6 +130,10 @@ export function createApp(
   const publicManualGroupRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .route("/", createPublicManualGroupRoutes(manualGroupRepository));
+
+  const publicStatsRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .route("/", createStatsRoutes(createStatsRepository(database)));
 
   const publicUserRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
@@ -265,6 +271,7 @@ export function createApp(
     .get("/", (c) => c.json({ message: "OK" }))
     .route("/samples", publicSampleRoutes)
     .route("/manual-groups", publicManualGroupRoutes)
+    .route("/stats", publicStatsRoutes)
     .route("/users", publicUserRoutes)
     .route("/service", serviceRoutes)
     .route("/admin", adminRoutes);

@@ -34,8 +34,8 @@ function SampleNode({ data }: NodeProps<SampleNodeType>) {
       <div
         className={`flex h-full flex-col items-center justify-center rounded border px-3 text-center text-sm ${
           data.generation === 0
-            ? "border-sky-800 bg-sky-800 text-white"
-            : "border-sky-200 bg-white"
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-primary/20 bg-white"
         }`}
       >
         {data.generation === 0 ? (
@@ -44,14 +44,14 @@ function SampleNode({ data }: NodeProps<SampleNodeType>) {
           </>
         ) : data.tombstone ? (
           // A tombstoned sample's own page answers 404, so it is named, not linked.
-          <span className="flex flex-col items-center text-sky-900/80">
+          <span className="text-primary/80 flex flex-col items-center">
             {name} <span className="sr-only">{relation}</span>
           </span>
         ) : (
           <Link
             to="/samples/$igsn"
             params={{ igsn: data.igsn }}
-            className="nodrag nopan flex flex-col items-center text-sky-800 underline"
+            className="nodrag nopan text-primary flex flex-col items-center underline"
           >
             {name} <span className="sr-only">{relation}</span>
           </Link>
@@ -68,7 +68,7 @@ function MoreNode({ data }: NodeProps<MoreNodeType>) {
       role="img"
       aria-label={m.lineage_more_hint({ count: data.count })}
       title={m.lineage_more_hint({ count: data.count })}
-      className="flex h-full items-center justify-center rounded border border-dashed border-sky-200 px-3 text-sm text-sky-900/70"
+      className="border-primary/20 text-primary/70 flex h-full items-center justify-center rounded border border-dashed px-3 text-sm"
     >
       {m.lineage_more({ count: data.count })}
     </div>

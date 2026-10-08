@@ -3,9 +3,30 @@
 @source "../../design-system/src";
 
 :root {
-  --primary: #0069a8;
+  --primary: #013a68;
   --primary-foreground: #fff;
-  --ring: #0069a8;
+  --ring: #013a68;
+  --secondary: #386f64;
+  --secondary-foreground: #fff;
+  --tertiary: #c05f39;
+  --body: #0f76a1;
+  --muted-foreground: oklch(0.442 0.017 285.786);
+}
+
+@theme inline {
+  --color-tertiary: var(--tertiary);
+  --color-body: var(--body);
+}
+
+@layer utilities {
+  [data-slot="button"][data-variant="secondary"] {
+    border-color: var(--secondary);
+    color: var(--secondary);
+
+    &:hover {
+      background-color: color-mix(in oklab, var(--secondary) 8%, transparent);
+    }
+  }
 }
 
 html,

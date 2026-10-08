@@ -97,7 +97,7 @@ export function SampleView({
         {withdrawn ? null : (
           <nav
             aria-label={m.sample_section_sample()}
-            className="sticky top-28 hidden shrink-0 self-start md:block"
+            className="sticky top-40 hidden shrink-0 self-start md:block"
           >
             <ul className="space-y-1 border-l">
               {sections.map(({ id, title }) => (
@@ -117,7 +117,7 @@ export function SampleView({
               key={id}
               id={id}
               aria-labelledby={`${id}-heading`}
-              className="mt-8 scroll-mt-32 first:mt-0"
+              className="mt-8 scroll-mt-32 first:mt-0 sm:scroll-mt-44"
             >
               <SectionHeading id={`${id}-heading`}>{title}</SectionHeading>
               {content}

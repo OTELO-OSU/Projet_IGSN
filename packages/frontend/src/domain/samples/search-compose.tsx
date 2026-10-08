@@ -53,11 +53,11 @@ function RemoveEngineButton({
             type="button"
             variant="ghost"
             size="icon"
-            className={`text-white hover:bg-white/20 hover:text-white ${
+            className={
               engine === "text"
                 ? "size-14"
                 : "absolute end-0 top-3 size-8 -translate-y-1/2"
-            }`}
+            }
             aria-label={label}
             onClick={onRemove}
           >
@@ -116,9 +116,8 @@ export function SearchCompose({
   const submitButton = (
     <Button
       type="submit"
-      variant="secondary"
       size="lg"
-      className="ms-auto h-14"
+      className="ms-auto h-12 rounded-full px-6"
       disabled={queries.every((query) => !query.value) && !shrunk}
     >
       {m.search_action()}
@@ -137,13 +136,16 @@ export function SearchCompose({
           >
             <div className="flex-1">
               {engine === "text" ? (
-                <SearchInput
-                  value={value}
-                  onChange={(event) => setValue(engine, event.target.value)}
-                  label={m.samples_search_label()}
-                  placeholder={m.search_placeholder()}
-                  className="h-14 md:text-base"
-                />
+                <div className="border-primary/20 bg-background has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-ring/50 [&_svg]:text-primary flex items-center gap-2 rounded-full border p-2 ps-3 shadow-xs has-[input:focus-visible]:ring-[3px] [&_svg]:size-5">
+                  <SearchInput
+                    value={value}
+                    onChange={(event) => setValue(engine, event.target.value)}
+                    label={m.samples_search_label()}
+                    placeholder={m.search_placeholder()}
+                    className="h-12 border-0 bg-transparent ps-10 shadow-none focus-visible:ring-0 md:text-base"
+                  />
+                  {hasMap ? null : submitButton}
+                </div>
               ) : (
                 <LazyLocationMap
                   value={value}
@@ -158,7 +160,6 @@ export function SearchCompose({
                 onRemove={() => removeEngine(engine)}
               />
             ) : null}
-            {engine === "text" && !hasMap ? submitButton : null}
           </div>
         ))}
       </div>
@@ -170,7 +171,7 @@ export function SearchCompose({
               key={engine}
               type="button"
               variant="link"
-              className="h-auto gap-1 px-0 py-1 text-white hover:no-underline"
+              className="h-auto gap-1 px-0 py-1 hover:no-underline"
               onClick={() => setQueries([...queries, { engine, value: "" }])}
             >
               <PlusIcon aria-hidden />

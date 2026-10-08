@@ -40,17 +40,17 @@ const CLUSTER_PAGE_SIZE = 10;
 const CLUSTER_PAD_DEGREES = 1e-4;
 const MOVE_DEBOUNCE_MS = 500;
 const MIN_SHAPE_PX = 24;
-const SHAPE_STYLE = { color: "#075985", weight: 2, fillOpacity: 0.15 };
+const SHAPE_STYLE = { color: "#013a68", weight: 2, fillOpacity: 0.15 };
 const HIGHLIGHTED_SHAPE_STYLE = {
-  color: "#f59e0b",
+  color: "#c05f39",
   weight: 3,
   fillOpacity: 0.25,
 };
 
 const MARKER_CLASS = "rounded-full border-2 border-white shadow";
-const HIGHLIGHT_CLASS = "bg-amber-500 ring-4 ring-amber-300";
+const HIGHLIGHT_CLASS = "bg-tertiary ring-4 ring-tertiary/60";
 const SAMPLE_ICON = L.divIcon({
-  className: `${MARKER_CLASS} bg-sky-800`,
+  className: `${MARKER_CLASS} bg-primary`,
   iconSize: [16, 16],
 });
 const HIGHLIGHTED_ICON = L.divIcon({
@@ -64,7 +64,7 @@ function clusterIcon(count: number, isHighlighted: boolean): L.DivIcon {
   let icon = clusterIcons.get(key);
   if (!icon) {
     icon = L.divIcon({
-      className: `${MARKER_CLASS} text-xs font-semibold text-white ${isHighlighted ? HIGHLIGHT_CLASS : "bg-sky-900"}`,
+      className: `${MARKER_CLASS} text-xs font-semibold text-white ${isHighlighted ? HIGHLIGHT_CLASS : "bg-primary"}`,
       html: `<span aria-hidden="true" class="flex size-full items-center justify-center">${count}</span>`,
       iconSize: [32, 32],
     });
