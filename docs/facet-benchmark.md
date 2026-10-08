@@ -14,7 +14,7 @@ What the search sidebar's facet counts (`GET /samples/facets`) cost in plain Pos
 
 ## Setup
 
-- **Host:** an AWS `t3.xlarge` running the [benchmark stack](../infra/benchmark/README.md), the api at 2 database connections, 200,000 random published samples.
+- **Host:** an AWS `t3.xlarge` running the benchmark stack, the api at 2 database connections, 200,000 random published samples.
 - **Postgres:** capped at 2 CPUs and 8 GB, on each image's default settings: 2 GB of shared buffers and 20 MB of work memory for ParadeDB, 128 MB and 4 MB for plain Postgres.
 - **Load run:** 10 simulated readers load search pages back to back for 30 s (60 s for v2).
 - **Simulated searches:** half type one of 5 words, half draw a regional map box, each with 0 to 5 random filters and 1 in 3 an age range.
@@ -103,5 +103,5 @@ where (name_unaccented @@@ pdb.regex('.*granite.*')
 
 ## Reproducing
 
-- Run `make benchmark-deploy` to create the host, then `make grid` and `make concurrency` on it, with `ENDPOINTS=list`, `ENDPOINTS=facets` or both; the [benchmark README](../infra/benchmark/README.md) has the details.
+- Seed a Postgres with `make db-seed-bench` (or `seed:bench`), then run `pnpm -F @projet-igsn/api bench:grid` and `pnpm -F @projet-igsn/api bench:concurrency` against it.
 - The runs live in the gitignored `benchmark-results/`: `naive-implementation/` for plain Postgres, `paradedb-v1/` and `paradedb-v2/` for ParadeDB, each `conditions.csv` naming its commit.

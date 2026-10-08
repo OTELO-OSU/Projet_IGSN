@@ -1,24 +1,43 @@
-type Env = "prod" | "preprod";
+import { readFileSync } from "node:fs";
+
+type Env = "preproduction" | "production";
 
 type EnvVar = {
   name: string;
   purpose: string;
-  scope?: Env;
   required?: true | string;
   secret?: boolean;
   default?: string;
   placeholder?: string | Partial<Record<Env, string>>;
   deployOnly?: boolean;
-  fromWorkflow?: boolean;
+  fromPipeline?: boolean;
 };
+
+type Source = Record<string, string | undefined>;
+
+type Pair = { name: string; value: string };
 
 const VARS: EnvVar[] = [
   {
-    name: "IMAGE_TAG",
-    purpose: "Release tag of the images to run, set by the release workflow.",
-    scope: "prod",
+    name: "IMAGE_PREFIX",
+    purpose: "Registry path of the images, `$CI_REGISTRY_IMAGE`.",
     required: true,
-    fromWorkflow: true,
+    placeholder: "registry.example.org/group/project",
+    fromPipeline: true,
+  },
+  {
+    name: "IMAGE_TAG",
+    purpose: "Tag of the images to run.",
+    required: true,
+    placeholder: { preproduction: "preprod-<short sha>", production: "v1.2.3" },
+    fromPipeline: true,
+  },
+  {
+    name: "HTTP_PORT",
+    purpose:
+      "Host port Caddy publishes for the infra team's TLS proxy, distinct per environment on the shared host.",
+    required: true,
+    placeholder: { preproduction: "8081", production: "8080" },
   },
   {
     name: "DOMAIN",
@@ -102,17 +121,17 @@ const VARS: EnvVar[] = [
   },
   {
     name: "OIDC_ISSUER",
-    purpose:
-      "SSO realm; must match the VITE_OIDC_AUTHORITY baked into the images.",
-    scope: "prod",
+    purpose: "SSO realm, also baked into the bundles as VITE_OIDC_AUTHORITY.",
     required: true,
+    placeholder: {
+      preproduction: "https://sso-test.earth-data.fr/realms/gaia-data",
+    },
   },
   {
     name: "OIDC_CLIENT_ID",
-    purpose:
-      "SSO client; must match the VITE_OIDC_CLIENT_ID baked into the images.",
-    scope: "prod",
+    purpose: "SSO client, also baked into the bundles as VITE_OIDC_CLIENT_ID.",
     required: true,
+    placeholder: { preproduction: "formaterre-igsn" },
   },
   {
     name: "OIDC_ALLOWED_IDENTITY_PROVIDERS",
@@ -124,8 +143,8 @@ const VARS: EnvVar[] = [
     purpose:
       "Unset disables DOI registration: samples publish without a DOI; set, publishing answers 502 when DataCite refuses the record.",
     placeholder: {
-      prod: "https://api.datacite.org",
-      preprod: "https://api.test.datacite.org",
+      preproduction: "https://api.test.datacite.org",
+      production: "https://api.datacite.org",
     },
   },
   {
@@ -143,65 +162,43 @@ const VARS: EnvVar[] = [
     required: "DATACITE_API_HOST",
   },
   {
-    name: "SSH_HOST",
-    purpose: "Deploy target, reachable from the GitHub runners.",
-    scope: "prod",
+    name: "PORTAINER_URL",
+    purpose: "Base URL of the Portainer the stack is deployed on.",
     required: true,
+    placeholder: "https://portainer.example.org",
     deployOnly: true,
   },
   {
-    name: "SSH_PORT",
-    purpose: "Deploy target SSH port, 22 when unset.",
-    scope: "prod",
-    deployOnly: true,
-  },
-  {
-    name: "SSH_USER",
-    purpose: "Deploy user, member of the docker group.",
-    scope: "prod",
-    required: true,
-    deployOnly: true,
-  },
-  {
-    name: "SSH_PRIVATE_KEY",
-    purpose: "Private key authorized on the deploy target.",
-    scope: "prod",
+    name: "PORTAINER_API_KEY",
+    purpose: "Portainer access token of the deploy user.",
     required: true,
     secret: true,
     deployOnly: true,
   },
   {
-    name: "SSH_KNOWN_HOSTS",
-    purpose:
-      "Host public key of the deploy target, as `ssh-keyscan -p $SSH_PORT $SSH_HOST` prints it.",
-    scope: "prod",
+    name: "PORTAINER_STACK_ID",
+    purpose: "Id of this environment's Portainer stack.",
     required: true,
+    placeholder: "12",
+    deployOnly: true,
+  },
+  {
+    name: "PORTAINER_ENDPOINT_ID",
+    purpose: "Id of the Portainer environment running the stack.",
+    required: true,
+    placeholder: "1",
     deployOnly: true,
   },
 ];
 
 const MISSING_EXIT_CODE = 3;
 
-function sources(): Record<string, string | undefined> {
-  const json = (raw: string | undefined): Record<string, unknown> =>
-    raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+const STACK_FILE = new URL("../stack/docker-compose.yml", import.meta.url);
 
-  return {
-    ...Object.fromEntries(
-      Object.entries({
-        ...json(process.env.GITHUB_VARS_JSON),
-        ...json(process.env.GITHUB_SECRETS_JSON),
-      }).map(([name, value]) => [name, String(value)]),
-    ),
-    ...process.env,
-  };
-}
-
-function resolve(vars: EnvVar[]): Map<string, string> {
-  const source = sources();
+function resolve(source: Source): Map<string, string> {
   const values = new Map<string, string>();
 
-  for (const { name, default: fallback } of vars) {
+  for (const { name, default: fallback } of VARS) {
     const value = source[name] || fallback;
     if (value) values.set(name, value);
   }
@@ -216,90 +213,87 @@ function isRequired(variable: EnvVar, values: Map<string, string>): boolean {
   );
 }
 
-function scoped(env: Env): EnvVar[] {
-  return VARS.filter((variable) => !variable.scope || variable.scope === env);
+export function stackEnv(source: Source): Pair[] {
+  const values = resolve(source);
+
+  return VARS.filter((variable) => !variable.deployOnly).flatMap(({ name }) => {
+    const value = values.get(name);
+    if (value === undefined) return [];
+    if (value.includes("\n"))
+      throw new Error(`${name} must not contain a newline`);
+    return [{ name, value }];
+  });
 }
 
-function check(env: Env): void {
-  const vars = scoped(env);
-  const values = resolve(vars);
-  const missing = vars.filter(
+function check(): void {
+  const values = resolve(process.env);
+  const missing = VARS.filter(
     (variable) => isRequired(variable, values) && !values.has(variable.name),
   );
 
   if (missing.length > 0) {
     console.error(
-      `missing required ${env} variables: ${missing.map((v) => v.name).join(", ")}`,
+      `missing required variables: ${missing.map((v) => v.name).join(", ")}`,
     );
     process.exit(MISSING_EXIT_CODE);
   }
 }
 
-export function quote(value: string): string {
-  const escaped = value.replace(/[\\"$]/g, (char) =>
-    char === "$" ? "$$" : `\\${char}`,
+function payload(): void {
+  console.info(
+    JSON.stringify({
+      stackFileContent: readFileSync(STACK_FILE, "utf8"),
+      env: stackEnv(process.env),
+      prune: true,
+      pullImage: true,
+    }),
   );
-  return `"${escaped}"`;
 }
 
-function write(env: Env): void {
-  const vars = scoped(env).filter((variable) => !variable.deployOnly);
-  const values = resolve(vars);
-
-  for (const { name } of vars) {
-    const value = values.get(name);
-    if (value === undefined) continue;
-    if (value.includes("\n"))
-      throw new Error(`${name} must not contain a newline`);
-    console.info(`${name}=${quote(value)}`);
-  }
+function example(variable: EnvVar): string {
+  const { default: fallback, placeholder } = variable;
+  if (fallback) return `\`${fallback}\``;
+  if (typeof placeholder === "string") return `\`${placeholder}\``;
+  return Object.entries(placeholder ?? {})
+    .map(([env, value]) => `${env}: \`${value}\``)
+    .join("<br>");
 }
 
-function example(env: Env): void {
-  for (const variable of scoped(env).filter((v) => !v.deployOnly)) {
-    const placeholder =
-      typeof variable.placeholder === "object"
-        ? variable.placeholder[env]
-        : variable.placeholder;
-    console.info(
-      `${variable.name}=${variable.secret ? "" : (variable.default ?? placeholder ?? "")}`,
-    );
-  }
-}
+function table(): void {
+  console.info(`# Deploy variables
 
-function table(env: Env): void {
-  console.info("| Name | Required | Source | Purpose |");
-  console.info("| ---- | -------- | ------ | ------- |");
-  for (const variable of scoped(env)) {
+- Generated by \`make env-docs\` from \`infra/scripts/compose-env.ts\`, never edit by hand.
+- Define each on GitLab as [deploy.md](deploy.md#defining-the-variables-in-gitlab) explains.
+
+| Name | Required | Kind | Example | Purpose |
+| ---- | -------- | ---- | ------- | ------- |`);
+  for (const variable of VARS) {
     const required =
       variable.required === true
         ? "yes"
         : typeof variable.required === "string"
-          ? `with ${variable.required}`
+          ? `with \`${variable.required}\``
           : "no";
-    const source = variable.fromWorkflow
-      ? "release tag"
+    const kind = variable.fromPipeline
+      ? "pipeline"
       : variable.secret
         ? "secret"
         : "variable";
     console.info(
-      `| \`${variable.name}\` | ${required} | ${source} | ${variable.purpose} |`,
+      `| \`${variable.name}\` | ${required} | ${kind} | ${example(variable)} | ${variable.purpose} |`,
     );
   }
 }
 
-const COMMANDS = { check, write, example, table };
+const COMMANDS = { check, payload, table };
 
 if (import.meta.main) {
   const command = process.argv[2] ?? "";
-  const env = process.argv[process.argv.indexOf("--env") + 1];
 
-  if (!(command in COMMANDS) || (env !== "prod" && env !== "preprod")) {
-    console.error(
-      "usage: compose-env.ts check|write|example|table --env prod|preprod",
-    );
+  if (!(command in COMMANDS)) {
+    console.error("usage: compose-env.ts check|payload|table");
     process.exit(1);
   }
 
-  COMMANDS[command as keyof typeof COMMANDS](env);
+  COMMANDS[command as keyof typeof COMMANDS]();
 }

@@ -73,36 +73,6 @@ BENCH_COUNT ?= 50000
 db-seed-bench:								## Add $(BENCH_COUNT) random published samples to the dev Postgres to benchmark search (dev stack must be up, migrations applied)
 	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api seed:bench --count $(BENCH_COUNT)
 
-BENCHMARK_TF = tofu -chdir=infra/benchmark/tf
-BENCHMARK_BUILD = docker build -f src/packages/api/Dockerfile
-BENCHMARK_SSH = infra/benchmark/scripts/ssh.sh
-BENCHMARK_BUILD_CSV = git_sha,$(shell git rev-parse HEAD)\ngit_dirty,$(if $(shell git status --porcelain),true,false)\n
-
-benchmark-deploy:							## Create the temporary AWS benchmark host (AUTO_APPROVE=1 skips the prompt), then push the stack to it
-	@$(BENCHMARK_TF) init
-	@$(BENCHMARK_TF) apply $(if $(AUTO_APPROVE),-auto-approve)
-	@$(MAKE) --no-print-directory benchmark-push
-
-benchmark-push:							## Ship the working tree to the benchmark host, build the api images there (native amd64) and recreate its stack
-	@git archive --format=tar $$(git stash create | grep . || echo HEAD) | $(BENCHMARK_SSH) "set -e; \
-		cloud-init status --wait >/dev/null 2>&1 || true; until docker compose version >/dev/null 2>&1; do sleep 5; done; \
-		rm -rf src && mkdir src && tar -x -C src; \
-		$(BENCHMARK_BUILD) --target prod -t igsn-api:bench src; \
-		$(BENCHMARK_BUILD) --target dev -t igsn-api:bench-runner src; \
-		mkdir -p benchmark && cp src/infra/benchmark/docker-compose.yml src/infra/benchmark/Makefile benchmark/; \
-		printf '$(BENCHMARK_BUILD_CSV)' >benchmark/build.csv && make -C benchmark up"
-
-benchmark-connect:							## Open an SSH session in ~/benchmark on the benchmark host, :22 open to your IP until you exit
-	@$(BENCHMARK_SSH) -t 'cd benchmark && exec bash -l'
-
-benchmark-pull:							## Download every run in ~/benchmark/results on the benchmark host into benchmark-results/
-	@mkdir -p benchmark-results
-	@$(BENCHMARK_SSH) 'tar -c -C benchmark/results .' | tar -x -C benchmark-results
-	@ls benchmark-results
-
-benchmark-destroy:							## Delete the benchmark host and its security group (AUTO_APPROVE=1 skips the prompt); run benchmark-pull first
-	@$(BENCHMARK_TF) destroy $(if $(AUTO_APPROVE),-auto-approve)
-
 mail-digest:								## Mail the pending-accounts digest now instead of waiting for 7:00; read it on http://localhost:1080 (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api digest:send
 
@@ -149,27 +119,6 @@ $(ROUTE_TREES) &: $(shell find packages/*/src/routes -type d)
 	@pnpm -r --parallel run generate-routes
 	@touch $(ROUTE_TREES)
 
-env-example:							## Regenerate the prod and preprod compose env examples
-	@node infra/scripts/compose-env.ts example --env prod > infra/prod/docker-compose.env.example
-	@node infra/scripts/compose-env.ts example --env preprod > infra/preprod/docker-compose.env.example
-
-env-list:								## List the deployment variables and secrets (ENV=prod|preprod)
-	@node infra/scripts/compose-env.ts table --env $(or $(ENV),prod)
-
-preprod-deploy:							## Deploy to preprod over SSH (requires DOMAIN=...)
-	@DOMAIN=$(DOMAIN) ./infra/preprod/scripts/deploy.sh
-
-preprod-ssh:							## Open temporary SSH access to the preprod host and connect
-	@./infra/preprod/scripts/ssh-access.sh connect
-
-preprod-ssh-send-key:					## Install your SSH key on the preprod host (optional SSH_PUBLIC_KEY_PATH=...)
-	@./infra/preprod/scripts/ssh-send-key.sh "$(SSH_PUBLIC_KEY_PATH)"
-
-preprod-tofu-init:						## Init preprod tofu (S3 backend)
-	@tofu -chdir=infra/preprod/tf init -backend-config=backend.hcl
-
-preprod-tofu-plan:						## Plan preprod infra changes
-	@tofu -chdir=infra/preprod/tf plan
-
-preprod-tofu-apply:						## Apply preprod infra changes
-	@tofu -chdir=infra/preprod/tf apply
+env-docs:								## Regenerate docs/deploy-variables.md from infra/scripts/compose-env.ts
+	@node infra/scripts/compose-env.ts table > docs/deploy-variables.md
+	@pnpm exec oxfmt docs/deploy-variables.md

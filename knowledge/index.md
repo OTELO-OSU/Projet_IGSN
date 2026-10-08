@@ -57,8 +57,8 @@ okf_version: "0.2"
 # infrastructure
 
 - [API rate limiting](rate-limiting.md) - In-process counters, one limiter per mount, keyed on the edge-forwarded client IP for public reads and on the JWT sub for admin.
-- [Preprod on a single AWS EC2 host](preprod-infrastructure.md) - Three app containers plus Postgres on one EC2 host behind Caddy and Cloudflare on a single origin, deployed manually with images shipped over SSH.
-- [Single origin, path-routed apps](single-origin-routing.md) - Frontend, admin and api share one origin behind Caddy, the admin at /admin and the api at /api, in dev, e2e and preprod alike; only Caddy knows the topology.
+- [Preprod and prod on Portainer from GitLab CI](preprod-infrastructure.md) - One infra/stack/ deployed twice on a shared Portainer, GitLab CI building the images and updating each stack through the Portainer API, Caddy on plain HTTP behind the infra team's TLS proxy.
+- [Single origin, path-routed apps](single-origin-routing.md) - Frontend, admin and api share one origin behind Caddy, the admin at /admin and the api at /api, in dev, e2e and the deployed stacks alike; only Caddy knows the topology.
 
 # persistence
 
@@ -70,7 +70,7 @@ okf_version: "0.2"
 # practice
 
 - [API trust boundary and security rules](api-trust-boundary-security.md) - api holds the only real boundary: every payload validated, authorization per resource, fields picked explicitly, responses shaped explicitly.
-- [Compose parity across dev, e2e and preprod](infra-parity-rule.md) - A change to a service's runtime requirements lands in the dev, preprod and e2e compose files in the same change.
+- [Compose parity across dev, e2e and the deploy stack](infra-parity-rule.md) - A change to a service's runtime requirements lands in the dev, deploy and e2e compose files in the same change.
 - [Development practices](dev-practices.md) - Laziest solution that works, docs read through Context7, dependencies only with explicit approval, ADRs only for costly-to-reverse decisions.
 - [Form kit and the hidden-value lifecycle](form-kit-and-hidden-values.md) - Every form uses useAppForm with a domain Zod schema; a hidden value is kept while editing, dropped on save, cleared after.
 - [i18n strategy](i18n-strategy.md) - Vocabularies are stored as codes and translated in domain; coverage fails the build, and the api mails resolve with i18next instead of Paraglide.
