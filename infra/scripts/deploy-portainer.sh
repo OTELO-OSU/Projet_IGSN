@@ -16,7 +16,7 @@ node infra/scripts/compose-env.ts check
 body="$(mktemp)"
 trap 'rm -f "$body"' EXIT
 
-status="$(node infra/scripts/compose-env.ts payload | curl -sS -o "$body" -w '%{http_code}' --max-time 600 \
+status="$(node infra/scripts/compose-env.ts payload | curl -sS -o "$body" -w '%{http_code} %{redirect_url}' --max-time 600 \
 	-X PUT \
 	-H "X-API-Key: $PORTAINER_API_KEY" \
 	-H "Content-Type: application/json" \

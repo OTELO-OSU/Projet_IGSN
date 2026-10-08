@@ -35,7 +35,7 @@ jobs:
         run: |
           AUTH=$(printf 'oauth2:%s' "$GITLAB_TOKEN" | base64 -w0)
 
-          git \
+          timeout 30 git \
             -c http.extraHeader="Authorization: Basic $AUTH" \
             ls-remote pytheas
 
@@ -46,7 +46,7 @@ jobs:
         run: |
           AUTH=$(printf 'oauth2:%s' "$GITLAB_TOKEN" | base64 -w0)
 
-          git \
+          timeout 30 git \
             -c http.extraHeader="Authorization: Basic $AUTH" \
             push --force \
             pytheas \
@@ -59,7 +59,7 @@ jobs:
         run: |
           AUTH=$(printf 'oauth2:%s' "$GITLAB_TOKEN" | base64 -w0)
 
-          git \
+          timeout 30 git \
             -c http.extraHeader="Authorization: Basic $AUTH" \
             push \
             pytheas \
