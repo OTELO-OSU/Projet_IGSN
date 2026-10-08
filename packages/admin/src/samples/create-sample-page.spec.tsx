@@ -109,6 +109,11 @@ const SOURCE = {
   ...PARENT,
   id: SOURCE_ID,
   name: "Basalte du Massif Central",
+  scientificContext: {
+    provenanceStatus: "collection_specimen",
+    collectorFirstname: "Alfred",
+    collectorLastname: "Wegener",
+  },
   manualGroups: [BASALT_TEAM],
   parents: [
     {
@@ -507,6 +512,7 @@ describe("CreateSamplePage", () => {
 
     await screen.getByLabelText(/name/i).fill("Synthetic MC x VG");
     await openTab(screen, "Sample classification");
+    await screen.getByRole("button", { name: "Add a specific name" }).click();
     await expect
       .element(
         screen.getByRole("button", {
@@ -777,30 +783,51 @@ describe("CreateSamplePage", () => {
       .toHaveTextContent("Sample published");
   }, 15000);
 
-  it("should prefill the operator with the current user", async () => {
-    const screen = await renderCreatePage();
-    worker.use(
-      http.get("*/admin/users/search", () =>
-        HttpResponse.json({
-          data: [
-            {
-              id: "3f2504e0-4f89-41d3-9a0c-0305000000f1",
-              email: "marie.dupont@cnrs.fr",
-              firstname: "Marie",
-              name: "Dupont",
-              orcid: null,
-            },
-          ],
-        }),
-      ),
-    );
+  it.each([
+    { tab: "Sample classification", person: "Operator name" },
+    { tab: "Scientific context", person: "Collector name" },
+  ])(
+    "should prefill the $person with the current user",
+    async ({ tab, person }) => {
+      const screen = await renderCreatePage();
+      worker.use(
+        http.get("*/admin/users/search", () =>
+          HttpResponse.json({
+            data: [
+              {
+                id: "3f2504e0-4f89-41d3-9a0c-0305000000f1",
+                email: "marie.dupont@cnrs.fr",
+                firstname: "Marie",
+                name: "Dupont",
+                orcid: null,
+              },
+            ],
+          }),
+        ),
+      );
 
-    await openTab(screen, "Sample classification");
-    await pick(screen, "Material *", "Synthetic rock / mineral");
+      await openTab(screen, "Sample classification");
+      await pick(screen, "Material *", "Synthetic rock / mineral");
+      await openTab(screen, tab);
+
+      await expect
+        .element(screen.getByRole("combobox", { name: person }))
+        .toHaveTextContent("Marie Dupont");
+    },
+  );
+
+  it("should keep a duplicated sample's collector over the current user", async () => {
+    const screen = await renderDuplicatePage(SOURCE_ID);
+
+    await openTab(screen, "Scientific context");
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Operator name" }))
-      .toHaveTextContent("Marie Dupont");
+      .element(
+        screen
+          .getByRole("group", { name: "Collector name" })
+          .getByRole("textbox", { name: /last name/i }),
+      )
+      .toHaveValue("Wegener");
   });
 
   it("should keep Publish disabled until the current user is known", async () => {

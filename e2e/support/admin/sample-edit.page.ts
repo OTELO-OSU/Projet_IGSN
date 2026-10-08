@@ -88,6 +88,7 @@ export function sampleEditPage(page: Page) {
       expect(page.getByLabel(/name/i)).toHaveValue(name),
     fillSpecificName: async (value: string) => {
       await openTab("Sample classification");
+      await page.getByRole("button", { name: "Add a specific name" }).click();
       await page.getByLabel("Specific Name").fill(value);
     },
     goToList: () => page.getByRole("link", { name: "IGSN Dashboard" }).click(),

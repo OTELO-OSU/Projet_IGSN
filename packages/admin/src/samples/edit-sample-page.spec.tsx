@@ -173,6 +173,7 @@ function fakeApi(
     collectionMethod: null,
     collectionMethodDescription: null,
     specificName: "MC-2026-007",
+    mineralClassifications: [{ strunzId: "9", mindatId: null }],
     location: { position: { type: "point", longitude: 3, latitude: 45 } },
     description: {
       collectionDate: {

@@ -323,6 +323,56 @@ describe("SampleSyntheticDetailsFields", () => {
     );
   });
 
+  const collectionDate = {
+    precision: "hour",
+    start: "2026-01-05T10:00",
+    end: "2026-01-05T10:00",
+    timeZone: "Europe/Paris",
+  } as const;
+  const synthesisDate = {
+    precision: "day",
+    start: "2025-12-01",
+    end: "2025-12-01",
+  } as const;
+
+  it.each([
+    {
+      outcome: "copy the collection date into an empty synthesis date",
+      syntheticDetails: {},
+      expected: collectionDate,
+    },
+    {
+      outcome: "keep a synthesis date already filled",
+      syntheticDetails: { synthesisDate },
+      expected: synthesisDate,
+    },
+  ])(
+    "should $outcome once the material turns synthetic",
+    async ({ syntheticDetails, expected }) => {
+      const onSubmit = vi.fn();
+      const screen = await renderSyntheticForm(onSubmit, {
+        ...syntheticDefaults,
+        material: "rock_and_sediment.mineral",
+        description: { collectionDate },
+        syntheticDetails,
+      });
+
+      await pickMaterial(screen, "Mineral", SYNTHETIC_MATERIAL);
+
+      await expect
+        .element(screen.getByLabelText("Date *", { exact: true }))
+        .toHaveValue(expected.start);
+      await screen.getByRole("button", { name: "Create" }).click();
+      await vi.waitFor(() =>
+        expect(onSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({
+            syntheticDetails: { synthesisDate: expected },
+          }),
+        ),
+      );
+    },
+  );
+
   it("should freeze the whole operator on a published synthetic sample", async () => {
     const screen = await render(
       <TooltipProvider>
@@ -402,7 +452,7 @@ describe("SampleSyntheticDetailsFields", () => {
       .toBeEnabled();
   });
 
-  it("should list the current user first in the operator picker alone", async () => {
+  it("should list the current user first in the operator and collector pickers", async () => {
     const screen = await renderSyntheticForm();
     const searches: string[] = [];
     worker.use(
@@ -424,7 +474,7 @@ describe("SampleSyntheticDetailsFields", () => {
     await vi.waitFor(() =>
       expect(searches).toEqual([
         "?includeSelf=true&selfFirst=true",
-        "?includeSelf=true",
+        "?includeSelf=true&selfFirst=true",
       ]),
     );
   });
@@ -443,7 +493,7 @@ describe("SampleSyntheticDetailsFields", () => {
         <SampleForm
           onCancel={noop}
           defaultValues={{ ...syntheticDefaults, syntheticDetails: operator }}
-          defaultOperatorUserId={CURRENT_USER_ID}
+          defaultContactUserId={CURRENT_USER_ID}
           primaryAction={createAction(onSubmit)}
         />,
       );

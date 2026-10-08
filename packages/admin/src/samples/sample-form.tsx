@@ -112,6 +112,7 @@ import {
 } from "#/samples/use-attachment-changes.ts";
 import { useCheckSampleDuplicates } from "#/samples/use-check-sample-duplicates.ts";
 import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
+import { withDefaultContacts } from "#/samples/with-default-contacts.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 const DEFAULT_TAB: SampleFormTab = "identity";
@@ -228,7 +229,7 @@ export type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: Partial<CreateSample>;
-  defaultOperatorUserId?: string;
+  defaultContactUserId?: string;
   parents?: SampleFormParent[];
   fieldSuggestions?: FieldSuggestionRule;
   status?: SampleStatus;
@@ -249,7 +250,7 @@ export function SampleForm({
   onCancel,
   isPending,
   defaultValues,
-  defaultOperatorUserId,
+  defaultContactUserId,
   parents = [],
   fieldSuggestions = NO_FIELD_SUGGESTIONS,
   status = "draft",
@@ -357,20 +358,11 @@ export function SampleForm({
     attachments,
     attachmentChanges,
   );
-  const draft = toSampleDraft(defaultValues);
-  const { operatorUserId, operatorFirstname, operatorLastname } =
-    draft.syntheticDetails;
   const form = useAppForm({
-    defaultValues:
-      operatorUserId || operatorFirstname || operatorLastname
-        ? draft
-        : {
-            ...draft,
-            syntheticDetails: {
-              ...draft.syntheticDetails,
-              operatorUserId: defaultOperatorUserId,
-            },
-          },
+    defaultValues: withDefaultContacts(
+      toSampleDraft(defaultValues),
+      defaultContactUserId,
+    ),
     onSubmitMeta: {
       onValid: defaultSubmit,
       checkDuplicates: wasPublished,

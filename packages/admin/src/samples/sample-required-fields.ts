@@ -19,7 +19,10 @@ import { ROWS } from "#/samples/location-position-fields.tsx";
 import { MEASUREMENTS } from "#/samples/measurement-fields.tsx";
 import { READINGS } from "#/samples/sample-condition-fields.tsx";
 import { publishBlockerField } from "#/samples/sample-draft-field-errors.ts";
-import { type SampleDraft } from "#/samples/sample-draft-schema.ts";
+import {
+  isUnclassified,
+  type SampleDraft,
+} from "#/samples/sample-draft-schema.ts";
 import { samplePublishInput } from "#/samples/sample-publish-input.ts";
 import {
   EXPERIMENT_DURATION,
@@ -165,7 +168,8 @@ export function saveRequiredFields(values: SampleDraft): LabeledField[] {
         m.field_relation_type,
       ),
     ]),
-    ...(allowsMineralClassifications(material)
+    ...(allowsMineralClassifications(material) &&
+    !isUnclassified(values.mineralClassifications)
       ? values.mineralClassifications.map(({ path }, index) => ({
           name: `mineralClassifications[${index}].path`,
           isMet: path.length > 0,

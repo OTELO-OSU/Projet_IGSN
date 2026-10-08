@@ -504,6 +504,7 @@ const sampleRowSchema = sampleSchema
     repository: true,
     syntheticDetails: true,
     age: true,
+    mineralClassifications: true,
     igsn: true,
     publishingError: true,
   })

@@ -56,10 +56,16 @@ export function sampleFormPage(page: Page) {
 
   const addClassificationRow = async () => {
     await openTab("Sample classification");
-    const rank =
-      (await page
-        .getByRole("button", { name: /^Remove classification / })
-        .count()) + 1;
+    const rows = page.getByRole("group", { name: /^Classification \d+$/ });
+    await expect(rows.first()).toBeVisible();
+    const rank = (await rows.count()) + 1;
+    const isFirstRowBlank =
+      rank === 2 &&
+      (await rows
+        .first()
+        .getByRole("button", { name: /^Remove (?!classification \d+$)/ })
+        .count()) === 0;
+    if (isFirstRowBlank) return rows.first();
     await page.getByRole("button", { name: "Add classification" }).click();
     const row = page.getByRole("group", {
       name: `Classification ${rank}`,

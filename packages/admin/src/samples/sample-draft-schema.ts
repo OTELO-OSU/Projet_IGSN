@@ -245,11 +245,13 @@ export const toSampleDraft = (
       description: step.description ?? "",
     };
   }),
-  mineralClassifications: (value?.mineralClassifications ?? []).map((row) => ({
-    key: crypto.randomUUID(),
-    path: toHierarchyPath(toMineralPath(row)),
-    abundance: row.abundance ?? undefined,
-  })),
+  mineralClassifications: value?.mineralClassifications?.length
+    ? value.mineralClassifications.map((row) => ({
+        key: crypto.randomUUID(),
+        path: toHierarchyPath(toMineralPath(row)),
+        abundance: row.abundance ?? undefined,
+      }))
+    : [{ key: crypto.randomUUID(), path: [], abundance: undefined }],
   manualGroupIds: value?.manualGroupIds ?? [],
   parentIds: value?.parentIds ?? [],
   ...toEconomicInterestDraft(value),
@@ -284,11 +286,20 @@ export const composeProcessSteps = (steps: ProcessStepDraft[]) =>
     description: step.description.trim() || undefined,
   }));
 
-const composeMineralClassifications = (
+export const isUnclassified = ([
+  first,
+  ...rest
+]: MineralClassificationDraft[]) =>
+  rest.length === 0 &&
+  first !== undefined &&
+  first.path.length === 0 &&
+  first.abundance === undefined;
+
+export const composeMineralClassifications = (
   rows: MineralClassificationDraft[],
   material: string | null,
 ) =>
-  allowsMineralClassifications(material)
+  allowsMineralClassifications(material) && !isUnclassified(rows)
     ? rows.map(({ path, abundance }) => {
         const value = composeHierarchyValue(path);
         return { ...(value === null ? {} : fromMineralPath(value)), abundance };

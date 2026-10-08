@@ -29,7 +29,12 @@ export function SampleClassificationTab({
         ) : null}
         {allowsSpecificName(material) ? (
           <form.AppField name="specificName">
-            {(field) => <field.TextField label={m.field_specific_name()} />}
+            {(field) => (
+              <field.TextField
+                label={m.field_specific_name()}
+                reveal={{ label: m.reveal_specific_name(), canReveal: true }}
+              />
+            )}
           </form.AppField>
         ) : null}
       </FormSection>

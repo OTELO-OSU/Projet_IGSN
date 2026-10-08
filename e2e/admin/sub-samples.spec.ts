@@ -34,6 +34,7 @@ test.describe("sub samples", () => {
     await create.fillName(parentName);
     await create.selectNature("Thin section");
     await create.fillPublishableFields({ material: "Mineral" });
+    await create.addStrunzClass(["Silicates"]);
     await create.publish();
 
     await list.expectVisible();
@@ -119,6 +120,7 @@ test.describe("sub samples", () => {
     await create.fillName(parentName);
     await create.selectNature("Thin section");
     await create.fillPublishableFields({ material: "Mineral" });
+    await create.addStrunzClass(["Silicates"]);
     await create.publish();
 
     await list.expectVisible();
@@ -187,6 +189,7 @@ test.describe("sub samples", () => {
       await create.fillName(name);
       await create.selectNature("Thin section");
       await create.fillPublishableFields({ material: "Mineral" });
+      await create.addStrunzClass(["Silicates"]);
       if (orientation) await create.setOriented(orientation);
       await create.publish();
       await list.expectVisible();

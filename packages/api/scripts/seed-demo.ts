@@ -59,6 +59,7 @@ const created = await insertSamples(
   db,
   DEMO_SAMPLES.map((row, index) => ({
     ...row,
+    mineralClassifications: DEMO_MINERAL_CLASSIFICATIONS[row.name],
     owner: owners[index % owners.length]!,
   })),
 );

@@ -8,7 +8,7 @@ Accepted.
 
 ## Context
 
-A mineral sample (material at or under `rock_and_sediment.mineral`) lists 0..n classifications. Each row is a Strunz category, optionally a sub-category, optionally a Mindat mineral, with an optional abundance. The categories and sub-categories come from a geologist's spreadsheet, and the 6239 minerals from a Mindat export keyed by true Strunz sub-class (`9.E`).
+A mineral sample (material at or under `rock_and_sediment.mineral`) lists 0..n classifications on a draft, and publishing needs at least one (`mineral_classification_missing`). Each row is a Strunz category, optionally a sub-category, optionally a Mindat mineral, with an optional abundance. The categories and sub-categories come from a geologist's spreadsheet, and the 6239 minerals from a Mindat export keyed by true Strunz sub-class (`9.E`).
 
 ## Decision
 

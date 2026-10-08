@@ -7,6 +7,7 @@ export const PUBLISH_BLOCKER_PATH: Record<PublishBlocker, (string | number)[]> =
     type_incomplete: ["type"],
     material_missing: ["material"],
     material_incomplete: ["material"],
+    mineral_classification_missing: ["mineralClassifications", 0],
     location_position_missing: ["location"],
     collection_date_missing: ["description", "collectionDate"],
     numeric_age_unit_missing: ["age", "numericAgeUnit"],

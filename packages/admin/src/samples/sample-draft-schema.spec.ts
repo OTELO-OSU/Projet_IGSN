@@ -480,12 +480,16 @@ describe("sampleDraftSchema", () => {
     });
   });
 
+  it("should compose a lone blank classification row to no classification", () => {
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        mineralClassifications: [{ key: "k0", path: [], abundance: undefined }],
+      }),
+    ).not.toHaveProperty("mineralClassifications");
+  });
+
   it.each([
-    {
-      paths: [null],
-      field: "mineralClassifications[0].path",
-      message: "Required.",
-    },
     {
       paths: ["9", null],
       field: "mineralClassifications[1].path",
