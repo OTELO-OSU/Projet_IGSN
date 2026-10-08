@@ -37,7 +37,7 @@
 ## GitLab setup
 
 - Enable the Container Registry.
-- Provide a runner able to run docker-in-docker (privileged).
+- Provide a shell runner whose user can run docker.
 - Protect `main`, `preprod` and the `v*` tags.
 - Allow the mirror token's user (Maintainer) to force push on `main` and `preprod` and to create `v*` tags.
 - Define the variables as the next section says.
