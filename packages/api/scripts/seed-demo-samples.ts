@@ -1774,6 +1774,12 @@ export const DEMO_MINERAL_CLASSIFICATIONS: Record<
   string,
   MineralClassification[]
 > = {
+  "Alpine Quartz Crystal": [
+    { strunzId: "4.A-E", mindatId: 3337, abundance: "major" },
+  ],
+  "Rio Tinto Pyrite": [
+    { strunzId: "2.B-E", mindatId: 3314, abundance: "major" },
+  ],
   "Minas Gerais Beryl": [
     { strunzId: "9" },
     { strunzId: "4.F-G" },

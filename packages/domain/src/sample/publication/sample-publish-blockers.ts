@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { User } from "../../user/model.ts";
 import type { SampleAttachment } from "../attachment/model.ts";
 import type { ContactLink } from "../contact-link.ts";
+import type { MineralClassification } from "../mineral/model.ts";
 import type { SampleProcessStep } from "../process-step/model.ts";
 import type { SampleRelation } from "../relation/model.ts";
 import type { Sample } from "../sample.ts";
@@ -14,6 +15,7 @@ import { requiresLocation } from "../location/requires-location.ts";
 import { verticalValues } from "../location/vertical-values.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
+import { allowsMineralClassifications } from "../mineral/allows-mineral-classifications.ts";
 import { isSyntheticMaterial } from "../synthetic-details/is-synthetic-material.ts";
 import { needsStartingMaterialComposition } from "../synthetic-details/needs-starting-material-composition.ts";
 import { isSampleTypeComplete } from "../type/is-complete.ts";
@@ -25,6 +27,7 @@ export const publishBlockerSchema = z.enum([
   "type_incomplete",
   "material_missing",
   "material_incomplete",
+  "mineral_classification_missing",
   "location_position_missing",
   "collection_date_missing",
   "numeric_age_unit_missing",
@@ -73,6 +76,7 @@ export type PublishableFields = Pick<
 > & {
   relations: readonly Partial<Pick<SampleRelation, "targetResourceType">>[];
   processSteps: readonly Partial<Pick<SampleProcessStep, "date">>[];
+  mineralClassifications: readonly Partial<MineralClassification>[];
   parentIds?: readonly string[];
 };
 
@@ -92,6 +96,7 @@ export function toPublishableFields(
     syntheticDetails: sample.syntheticDetails ?? null,
     relations: sample.relations ?? [],
     processSteps: sample.processSteps ?? [],
+    mineralClassifications: sample.mineralClassifications ?? [],
     parentIds: sample.parentIds ?? [],
   };
 }
@@ -158,6 +163,13 @@ const fieldRequirements = (
       sample.material === null ? "material_missing" : "material_incomplete",
     isMet: materialComplete,
   });
+
+  if (allowsMineralClassifications(sample.material)) {
+    requirements.push({
+      blocker: "mineral_classification_missing",
+      isMet: sample.mineralClassifications.length > 0,
+    });
+  }
 
   const hasParent =
     (sample.parentIds?.length ?? 0) > 0 || (sample.parents?.length ?? 0) > 0;

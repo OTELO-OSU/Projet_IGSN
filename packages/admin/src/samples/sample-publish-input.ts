@@ -10,6 +10,7 @@ import { composeLocation } from "#/samples/compose-location.ts";
 import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
 import { composeSyntheticDetails } from "#/samples/compose-synthetic-details.ts";
 import {
+  composeMineralClassifications,
   composeProcessSteps,
   type SampleDraft,
 } from "#/samples/sample-draft-schema.ts";
@@ -41,6 +42,10 @@ export function samplePublishInput(
       targetResourceType: targetResourceType || null,
     })),
     processSteps: composeProcessSteps(values.processSteps),
+    mineralClassifications: composeMineralClassifications(
+      values.mineralClassifications,
+      material,
+    ),
     parentIds: values.parentIds,
     attachments,
   } as SamplePublishInput;

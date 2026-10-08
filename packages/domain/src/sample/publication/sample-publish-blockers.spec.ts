@@ -152,10 +152,24 @@ describe("samplePublishBlockers", () => {
     ).toEqual([]);
   });
 
-  it("should publish the family mineral, which has no sub-level", () => {
+  it.each<[string, string, Sample["mineralClassifications"], string[]]>([
+    [
+      "block a mineral with no classification",
+      "rock_and_sediment.mineral",
+      [],
+      ["mineral_classification_missing"],
+    ],
+    [
+      "publish a mineral with one classification",
+      "rock_and_sediment.mineral",
+      [{ strunzId: "9.E" }],
+      [],
+    ],
+    ["not require a classification of a non-mineral", base.material!, [], []],
+  ])("should %s", (_label, material, mineralClassifications, blockers) => {
     expect(
-      samplePublishBlockers({ ...base, material: "rock_and_sediment.mineral" }),
-    ).toEqual([]);
+      samplePublishBlockers({ ...base, material, mineralClassifications }),
+    ).toEqual(blockers);
   });
 
   it("should report a blocker for a value outside the vocabulary rather than treat it as publishable", () => {

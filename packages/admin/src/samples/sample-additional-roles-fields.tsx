@@ -49,7 +49,6 @@ export function SampleAdditionalRolesFields() {
                     />
                   }
                 />
-                <hr className="mt-2 sm:max-w-72" />
               </div>
             ))}
           </>

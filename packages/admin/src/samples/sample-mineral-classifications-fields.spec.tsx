@@ -37,8 +37,10 @@ const renderClassificationTab = async (
 const row = (screen: Screen, index: number) =>
   screen.getByRole("group", { name: `Classification ${index}`, exact: true });
 
-const addRow = async (screen: Screen, index: number) => {
-  await screen.getByRole("button", { name: "Add classification" }).click();
+const openRow = async (screen: Screen, index: number) => {
+  if (index > 1) {
+    await screen.getByRole("button", { name: "Add classification" }).click();
+  }
   await row(screen, index)
     .getByRole("combobox", { name: "Classification *", exact: true })
     .click();
@@ -78,6 +80,24 @@ describe("SampleMineralClassificationsFields", () => {
     },
   );
 
+  it("should start a mineral with one required classification row and no remove button", async () => {
+    const screen = await renderClassificationTab("rock_and_sediment.mineral");
+
+    await expect
+      .element(
+        row(screen, 1).getByRole("combobox", {
+          name: "Classification *",
+          exact: true,
+        }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        row(screen, 1).getByRole("button", { name: "Remove classification 1" }),
+      )
+      .not.toBeInTheDocument();
+  });
+
   it("should list the classifications before the specific name", async () => {
     const screen = await renderClassificationTab("rock_and_sediment.mineral");
 
@@ -87,7 +107,7 @@ describe("SampleMineralClassificationsFields", () => {
       list
         .element()
         .compareDocumentPosition(
-          screen.getByLabelText("Specific Name", { exact: true }).element(),
+          screen.getByRole("button", { name: "Add a specific name" }).element(),
         ) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
@@ -99,7 +119,7 @@ describe("SampleMineralClassificationsFields", () => {
       onSubmit,
     );
 
-    await addRow(screen, 1);
+    await openRow(screen, 1);
     await screen
       .getByPlaceholder("Search a class or a mineral...")
       .fill("Muscovite");
@@ -144,7 +164,7 @@ describe("SampleMineralClassificationsFields", () => {
         onSubmit,
       );
 
-      await addRow(screen, 1);
+      await openRow(screen, 1);
       for (const level of levels) await pickOption(screen, level);
       if (stop) await pickOption(screen, "Stop here");
 
@@ -159,10 +179,10 @@ describe("SampleMineralClassificationsFields", () => {
       onSubmit,
     );
 
-    await addRow(screen, 1);
+    await openRow(screen, 1);
     await pickOption(screen, "Silicates");
     await pickOption(screen, "Stop here");
-    await addRow(screen, 2);
+    await openRow(screen, 2);
     await pickOption(screen, "Oxides and Hydroxides");
     await pickOption(screen, "Stop here");
     await row(screen, 1)

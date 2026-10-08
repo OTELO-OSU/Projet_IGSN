@@ -119,7 +119,7 @@ function CreateSamplePage() {
 
       <SampleForm
         currentUser={me.data}
-        defaultOperatorUserId={me.data?.id}
+        defaultContactUserId={me.data?.id}
         defaultValues={
           source
             ? toDuplicateDefaults(

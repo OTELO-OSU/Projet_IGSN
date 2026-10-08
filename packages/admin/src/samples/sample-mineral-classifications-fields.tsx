@@ -43,15 +43,17 @@ export function SampleMineralClassificationsFields() {
                 >
                   {m.legend_mineral_classification({ index: index + 1 })}
                 </span>
-                <FieldListRemoveButton
-                  label={m.action_remove_mineral_classification({
-                    index: index + 1,
-                  })}
-                  disabled={isDisabled}
-                  onClick={() =>
-                    form.removeFieldValue("mineralClassifications", index)
-                  }
-                />
+                {rows.length > 1 ? (
+                  <FieldListRemoveButton
+                    label={m.action_remove_mineral_classification({
+                      index: index + 1,
+                    })}
+                    disabled={isDisabled}
+                    onClick={() =>
+                      form.removeFieldValue("mineralClassifications", index)
+                    }
+                  />
+                ) : null}
               </div>
               <div className="grid gap-4 sm:flex sm:flex-wrap">
                 <form.AppField name={`mineralClassifications[${index}].path`}>
@@ -81,7 +83,6 @@ export function SampleMineralClassificationsFields() {
                   )}
                 </form.AppField>
               </div>
-              <hr className="mt-2 sm:max-w-72" />
             </div>
           ))
         }

@@ -45,6 +45,7 @@ const PUBLISH_BLOCKER_FIELD_LABELS: Record<
   relation_resource_type_missing: m.publish_field_relation_resource_type,
   process_step_date_missing: m.field_process_step_dates,
   attachment_metadata_missing: m.publish_field_attachment_resource_type,
+  mineral_classification_missing: m.field_mineral_classification,
   parent_not_found: null,
   attachment_limit_exceeded: null,
   user_not_verified: null,

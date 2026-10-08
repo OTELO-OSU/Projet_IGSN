@@ -491,17 +491,18 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should offer only the optional specific name for the Other rock", async () => {
+  it("should offer only the optional specific name for the Other rock, behind a link revealing it", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
     await pickPath(screen, "Material *", "Rock", "Other");
+    await screen.getByRole("button", { name: "Add a specific name" }).click();
 
     await expect
       .element(screen.getByLabelText("Specific Name", { exact: true }))
-      .toBeVisible();
+      .toHaveFocus();
     await expect
       .element(screen.getByLabelText(/other material name/i))
       .not.toBeInTheDocument();
@@ -691,6 +692,7 @@ describe("SampleForm", () => {
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
+    await screen.getByRole("button", { name: "Add a specific name" }).click();
     await screen.getByLabelText(/specific name/i).fill("MC-2026-007");
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -722,13 +724,12 @@ describe("SampleForm", () => {
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
-    await expect.element(screen.getByLabelText(/specific name/i)).toBeVisible();
+    const reveal = screen.getByRole("button", { name: "Add a specific name" });
+    await expect.element(reveal).toBeVisible();
 
     await pickPath(screen, "Material *", "Rock", "Unknown");
 
-    await expect
-      .element(screen.getByLabelText(/specific name/i))
-      .not.toBeInTheDocument();
+    await expect.element(reveal).not.toBeInTheDocument();
   });
 
   it("should walk the collection-method levels and submit the deepest path", async () => {
@@ -1236,6 +1237,7 @@ describe("SampleForm", () => {
           nature: "thin_section",
           type: "dredge",
           material: "rock_and_sediment.mineral",
+          mineralClassifications: [{ strunzId: "9", mindatId: null }],
           collectionMethod: null,
           collectionMethodDescription: null,
           specificName: "MC-2026-007",
@@ -1268,6 +1270,7 @@ describe("SampleForm", () => {
           nature: "thin_section",
           type: "dredge",
           material: "rock_and_sediment.mineral",
+          mineralClassifications: [{ strunzId: "9", mindatId: null }],
           collectionMethod: null,
           collectionMethodDescription: null,
           localId: null,
@@ -1553,6 +1556,7 @@ describe("SampleForm", () => {
               type: "dredge",
               material,
               specificName,
+              mineralClassifications: [{ strunzId: "9", mindatId: null }],
               collectionMethod: null,
               collectionMethodDescription: null,
               location: {
@@ -1600,6 +1604,7 @@ describe("SampleForm", () => {
             nature: "thin_section",
             type: "dredge",
             material: "rock_and_sediment.mineral",
+            mineralClassifications: [{ strunzId: "9", mindatId: null }],
             collectionMethod: null,
             collectionMethodDescription: null,
             location: {
@@ -1646,6 +1651,7 @@ describe("SampleForm", () => {
             nature: "thin_section",
             type: "dredge",
             material: "rock_and_sediment.mineral",
+            mineralClassifications: [{ strunzId: "9", mindatId: null }],
             collectionMethod: null,
             collectionMethodDescription: null,
             location: {

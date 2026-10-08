@@ -44,6 +44,7 @@ export function SampleScientificContextFields() {
                   <ContactNameFields
                     label={m.field_collector_name()}
                     person="scientificContext.collector"
+                    selfFirst
                   />
 
                   <ContactNameFields
@@ -175,6 +176,7 @@ export function SampleScientificContextFields() {
                 <ContactNameFields
                   label={m.field_collector_name()}
                   person="scientificContext.collector"
+                  selfFirst
                 />
 
                 <form.Subscribe
