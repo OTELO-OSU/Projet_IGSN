@@ -2,6 +2,7 @@ import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import {
   HeadContent,
+  Link,
   Outlet,
   Scripts,
   createRootRouteWithContext,
@@ -64,8 +65,8 @@ function RootLayout() {
         </main>
         <Toaster />
 
-        <footer className="mt-16">
-          <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-10">
+        <footer className="mt-16 pb-10">
+          <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 pt-10">
             <span aria-hidden className="bg-border h-px flex-1" />
             <ExternalLink href="https://www.cnrs.fr/" className="shrink-0">
               <img
@@ -75,6 +76,14 @@ function RootLayout() {
               />
             </ExternalLink>
             <span aria-hidden className="bg-border h-px flex-1" />
+          </div>
+          <div className="mx-auto -mt-8 max-w-6xl ps-6 pe-8 text-right">
+            <Link
+              to="/terms-of-use"
+              className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+            >
+              {m.footer_terms_of_use()}
+            </Link>
           </div>
         </footer>
       </div>
