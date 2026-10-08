@@ -2,7 +2,6 @@ import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import {
   HeadContent,
-  Link,
   Outlet,
   Scripts,
   createRootRouteWithContext,
@@ -11,8 +10,8 @@ import { AuthProvider } from "react-oidc-context";
 
 import type { MyRouterContext } from "../router-context";
 
-import { AuthControls } from "../auth/auth-controls.tsx";
 import { onSigninCallback, userManager } from "../auth/oidc-config.ts";
+import { SiteHeader } from "../header/site-header.tsx";
 import { m } from "../paraglide/messages.js";
 import { getLocale, localizeHref } from "../paraglide/runtime.js";
 import "../styles.css";
@@ -54,40 +53,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   shellComponent: RootDocument,
 });
 
-const NAV_LINK_CLASS =
-  "text-primary data-[status=active]:decoration-primary font-medium underline-offset-8 data-[status=active]:underline data-[status=active]:decoration-2";
-
 function RootLayout() {
   return (
     <AuthProvider userManager={userManager} onSigninCallback={onSigninCallback}>
       <div className="flex min-h-svh flex-col">
-        <header className="bg-background/80 sticky top-0 z-40 backdrop-blur">
-          <div className="mx-auto flex h-20 max-w-6xl items-center gap-3 px-6 sm:h-32 sm:gap-6">
-            <Link to="/" aria-label={m.app_title()} className="shrink-0">
-              <img
-                src={`${import.meta.env.BASE_URL}logo-igsn.svg`}
-                alt=""
-                className="h-12 w-auto sm:h-22"
-              />
-            </Link>
-            <nav
-              aria-label={m.header_nav_label()}
-              className="ml-auto flex gap-4 sm:gap-6"
-            >
-              <Link
-                to="/"
-                activeOptions={{ exact: true }}
-                className={NAV_LINK_CLASS}
-              >
-                {m.header_nav_search()}
-              </Link>
-              <Link to="/faq" className={NAV_LINK_CLASS}>
-                {m.header_nav_faq()}
-              </Link>
-            </nav>
-            <AuthControls />
-          </div>
-        </header>
+        <SiteHeader />
 
         <main className="w-full flex-1">
           <Outlet />
