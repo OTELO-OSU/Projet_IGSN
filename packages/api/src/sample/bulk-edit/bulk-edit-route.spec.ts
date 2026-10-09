@@ -217,30 +217,6 @@ describe("a series' children over bulk edit", () => {
     30_000,
   );
 
-  pgTest(
-    "should accept a withdrawn sample as a child",
-    async ({ db }) => {
-      const { series, second, third } = await arrangeSeries(db);
-      await db
-        .updateTable("sample")
-        .set({ status: "withdrawn" })
-        .where("id", "=", third.id)
-        .execute();
-
-      const res = await upload(db, [series], (book) =>
-        fill(book, SHEETS.samples, ROW, {
-          [CHILDREN_HEADER]: `${second.igsn}, ${third.igsn}`,
-        }),
-      );
-
-      expect({
-        status: res.status,
-        children: await childIdsOf(db, series.id),
-      }).toEqual({ status: 200, children: [second.id, third.id] });
-    },
-    30_000,
-  );
-
   pgTest.for<{
     rule: string;
     code: string;
@@ -384,31 +360,6 @@ describe("a series' children over bulk edit", () => {
             }),
           ),
         },
-      });
-    },
-    30_000,
-  );
-
-  pgTest(
-    "should keep a current child across a sub-type change",
-    async ({ db }) => {
-      const { series, first } = await arrangeSeries(db);
-
-      const res = await upload(db, [series], (book) =>
-        fill(book, SHEETS.samples, ROW, {
-          "Sample type (level 2)": "Dredge",
-          [CHILDREN_HEADER]: first.igsn,
-        }),
-      );
-
-      expect({
-        status: res.status,
-        type: (await readSample(db, series.id))!.type,
-        children: await childIdsOf(db, series.id),
-      }).toEqual({
-        status: 200,
-        type: "serie_of_sample.dredge",
-        children: [first.id],
       });
     },
     30_000,

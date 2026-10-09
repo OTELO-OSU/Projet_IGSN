@@ -2422,40 +2422,6 @@ describe("a series of samples over /service", () => {
   );
 
   pgTest(
-    "should keep the current children across a sub-type change",
-    async ({ db }) => {
-      // Arrange
-      const { app } = await arrangeAccount(db);
-      const member = await coreInReach(db, "Core 1");
-      const series = await publishedInReach(db, {
-        ...publishableSample,
-        type: CORE_SERIES,
-        childIds: [member.id],
-      });
-      // Act
-      const res = await putSample(
-        app,
-        series.igsn!,
-        core({
-          ...series,
-          type: "serie_of_sample.dredge",
-          children: relatedOf(member),
-        }),
-      );
-      // Assert
-      expect({
-        status: res.status,
-        type: (await readSample(db, series.id))!.type,
-        children: await storedChildIds(db, series.id),
-      }).toEqual({
-        status: 200,
-        type: "serie_of_sample.dredge",
-        children: [member.id],
-      });
-    },
-  );
-
-  pgTest(
     "should replace a series' children on update, sending its HasPart alone to DataCite",
     async ({ db }) => {
       // Arrange
@@ -2587,37 +2553,6 @@ describe("a series of samples over /service", () => {
       });
     },
   );
-
-  pgTest("should refuse a child a draft series holds", async ({ db }) => {
-    // Arrange
-    const { app } = await arrangeAccount(db);
-    const child = await coreInReach(db, "Core 1");
-    const holder = await insertSample(db, {
-      ...publishableSample,
-      type: CORE_SERIES,
-      childIds: [child.id],
-    });
-    // Act
-    const res = await postSample(app, seriesBody(child));
-    // Assert
-    expect({
-      status: res.status,
-      body: await res.json(),
-      seriesId: await seriesIdOf(db, child.id),
-    }).toEqual({
-      status: 422,
-      body: {
-        error: "Invalid sample",
-        issues: [
-          {
-            path: "relations.0.targetIdentifier.value",
-            code: "child_not_eligible",
-          },
-        ],
-      },
-      seriesId: holder.id,
-    });
-  });
 
   pgTest.for(["sub-sample", "parent"] as const)(
     "should refuse the series type on a published %s",

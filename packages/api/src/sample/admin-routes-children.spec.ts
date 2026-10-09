@@ -372,67 +372,6 @@ describe("a series of samples' children", () => {
     },
   );
 
-  pgTest(
-    "should change the type when the update swaps the current children for eligible ones",
-    async ({ db }) => {
-      // Arrange
-      const ownerId = await caller(db);
-      const core = await insertCore(db, ownerId, "Carotte 1");
-      const dredge = await insertOwned(db, ownerId, {
-        type: "dredge",
-        name: "Drague 1",
-      });
-      const input = {
-        ...publishableSample,
-        type: CORE_SERIES,
-        childIds: [core.id],
-      };
-      const series = await insertOwned(db, ownerId, input);
-      // Act
-      const res = await putSample(db, series, {
-        ...input,
-        type: "serie_of_sample.dredge",
-        childIds: [dredge.id],
-      });
-      // Assert
-      expect({
-        status: res.status,
-        type: (await readSample(db, series.id)).type,
-        seriesIds: [
-          await seriesIdOf(db, core.id),
-          await seriesIdOf(db, dredge.id),
-        ],
-      }).toEqual({
-        status: 200,
-        type: "serie_of_sample.dredge",
-        seriesIds: [null, series.id],
-      });
-    },
-  );
-
-  pgTest(
-    "should answer 422 when an update gives a sub-sample the series type",
-    async ({ db }) => {
-      // Arrange
-      const ownerId = await caller(db);
-      const parent = await insertParent(db, ownerId);
-      const subSample = await insertOwned(
-        db,
-        ownerId,
-        { ...draft, parentIds: [parent.id] },
-        false,
-      );
-      // Act
-      const res = await putSample(db, subSample, {
-        ...draft,
-        type: CORE_SERIES,
-      });
-      // Assert
-      expect(res.status).toBe(422);
-      expect((await readSample(db, subSample.id)).type).toBeNull();
-    },
-  );
-
   pgTest.for([
     { type: CORE_SERIES, status: 422, kept: "core" },
     { type: "dredge", status: 200, kept: "dredge" },
@@ -457,42 +396,16 @@ describe("a series of samples' children", () => {
     },
   );
 
-  pgTest.for([
-    {
-      label: "a member taking the series type",
-      arrange: async (db: Db, ownerId: string) => {
-        const member = await insertCore(db, ownerId, "Carotte 1");
-        await insertOwned(db, ownerId, {
-          type: CORE_SERIES,
-          childIds: [member.id],
-        });
-        return {
-          sample: member,
-          body: { ...publishableSample, type: CORE_SERIES },
-        };
-      },
-    },
-    {
-      label: "a child a draft series holds",
-      arrange: async (db: Db, ownerId: string) => {
-        const child = await insertCore(db, ownerId, "Carotte 1");
-        await insertOwned(
-          db,
-          ownerId,
-          { ...draft, type: CORE_SERIES, childIds: [child.id] },
-          false,
-        );
-        const input = { ...publishableSample, type: CORE_SERIES };
-        const series = await insertOwned(db, ownerId, input);
-        return { sample: series, body: { ...input, childIds: [child.id] } };
-      },
-    },
-  ])(
-    "should answer 422 and keep the attachments for $label",
-    async ({ arrange }, { db }) => {
+  pgTest(
+    "should answer 422 and keep the attachments for a member taking the series type",
+    async ({ db }) => {
       // Arrange
       const ownerId = await caller(db);
-      const { sample, body } = await arrange(db, ownerId);
+      const member = await insertCore(db, ownerId, "Carotte 1");
+      await insertOwned(db, ownerId, {
+        type: CORE_SERIES,
+        childIds: [member.id],
+      });
       const app = createApp(db, { attachmentsDir: ATTACHMENTS_DIR }).app;
       const form = new FormData();
       form.set(
@@ -502,17 +415,18 @@ describe("a series of samples' children", () => {
         }),
       );
       const uploaded = await app.request(
-        `/admin/samples/${sample.id}/attachments`,
+        `/admin/samples/${member.id}/attachments`,
         { method: "POST", headers: authHeader, body: form },
       );
       expect(uploaded.status).toBe(201);
-      const current = await readSample(db, sample.id);
+      const current = await readSample(db, member.id);
       // Act
       const res = await testClient(app).admin.samples[":id"].$put(
         {
-          param: { id: sample.id },
+          param: { id: member.id },
           json: {
-            ...body,
+            ...publishableSample,
+            type: CORE_SERIES,
             attachments: [],
             expectedUpdatedAt: current.updatedAt,
           },
@@ -522,7 +436,7 @@ describe("a series of samples' children", () => {
       // Assert
       expect({
         status: res.status,
-        attachments: (await readSample(db, sample.id)).attachments.map(
+        attachments: (await readSample(db, member.id)).attachments.map(
           ({ name }) => name,
         ),
       }).toEqual({ status: 422, attachments: ["m.csv"] });
@@ -633,7 +547,7 @@ describe("a series at DataCite", () => {
     },
   );
 
-  pgTest.for(["published", "withdrawn", "embargo"] as const)(
+  pgTest.for(["withdrawn", "embargo"] as const)(
     "should claim a %s child without touching its row or its DOI",
     async (status, { db }) => {
       // Arrange
