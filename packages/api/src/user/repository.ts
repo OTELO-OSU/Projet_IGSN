@@ -440,6 +440,27 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
         };
       });
     },
+    acceptCharter: async (userId) => {
+      await withTransaction(db, (trx) =>
+        trx
+          .updateTable("user")
+          .set({
+            charter_accepted_at: sql`coalesce(charter_accepted_at, now())`,
+          })
+          .where("id", "=", userId)
+          .execute(),
+      );
+    },
+    hasAcceptedCharter: async (userId) => {
+      const row = await withTransaction(db, (trx) =>
+        trx
+          .selectFrom("user")
+          .select("charter_accepted_at")
+          .where("id", "=", userId)
+          .executeTakeFirst(),
+      );
+      return Boolean(row?.charter_accepted_at);
+    },
     findByOrcid: async (orcid) => {
       const row = await withTransaction(db, (trx) =>
         trx

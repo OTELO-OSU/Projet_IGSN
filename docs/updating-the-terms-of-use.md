@@ -7,12 +7,14 @@ This guide is for anyone rewording the public Terms of Use (`/terms-of-use`). No
 - The text: [packages/domain/messages/en.json](../packages/domain/messages/en.json), every line whose key starts with `charter_`.
 - The layout (section order, the list of international standards and their links): [packages/design-system/src/components/ui/charter.tsx](../packages/design-system/src/components/ui/charter.tsx).
 
-The text sits in `domain` so the admin app can show the same charter, one edit changing both.
+The text sits in `domain` so the admin app shows the same charter in the popup every user accepts before declaring, one edit changing both.
 
 ## Reword
 
 1. In `en.json`, find the `charter_` line holding the text.
 2. Change the text between the quotes, leaving the key untouched.
+
+Users who already accepted are not asked again after a reword; asking them again needs a developer.
 
 Writing rules:
 

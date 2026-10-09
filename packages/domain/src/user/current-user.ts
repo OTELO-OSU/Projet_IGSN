@@ -13,6 +13,7 @@ export const currentUserSchema = z.object({
   orcid: z.string().nullable(),
   status: userStatusSchema,
   superAdmin: z.boolean(),
+  charterAccepted: z.boolean(),
   managedLaboratories: z.array(z.string()),
   managedManualGroups: z.array(manualGroupSchema),
   ...institutionalGroupsFields,

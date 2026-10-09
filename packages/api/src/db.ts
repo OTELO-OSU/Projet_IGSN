@@ -247,6 +247,7 @@ type UserTable = {
   status: Generated<UserStatus>;
   super_admin: Generated<boolean>;
   created_at: Generated<Date>;
+  charter_accepted_at: Generated<Date | null>;
 };
 
 type UserSampleTable = {

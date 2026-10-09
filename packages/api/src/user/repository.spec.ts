@@ -171,6 +171,51 @@ describe("createUserRepository", () => {
     });
   });
 
+  pgTest(
+    "should record no charter acceptance for a user on first sight",
+    async ({ db }) => {
+      // Arrange
+      const users = createUserRepository(db);
+      const { id } = await users.upsert(claims);
+      // Act
+      const accepted = await users.hasAcceptedCharter(id);
+      // Assert
+      expect(accepted).toBe(false);
+    },
+  );
+
+  pgTest(
+    "should keep the first charter acceptance date when accepted again",
+    async ({ db }) => {
+      // Arrange
+      const users = createUserRepository(db);
+      const first = new Date("2026-10-01T08:00:00Z");
+      const { id } = await insertUser(db, claims.email, {
+        charterAcceptedAt: first,
+      });
+      // Act
+      await users.acceptCharter(id);
+      // Assert
+      expect(await users.hasAcceptedCharter(id)).toBe(true);
+      const row = await db
+        .selectFrom("user")
+        .select("charter_accepted_at")
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow();
+      expect(row.charter_accepted_at).toEqual(first);
+    },
+  );
+
+  pgTest("should record the charter acceptance", async ({ db }) => {
+    // Arrange
+    const users = createUserRepository(db);
+    const { id } = await users.upsert(claims);
+    // Act
+    await users.acceptCharter(id);
+    // Assert
+    expect(await users.hasAcceptedCharter(id)).toBe(true);
+  });
+
   describe("search", () => {
     const CALLER_ID = "01890a5d-ac96-774b-bcce-b302099a80ff";
 

@@ -1,4 +1,5 @@
 import { adminPage } from "../support/admin/admin.page";
+import { charterPage } from "../support/admin/charter.page";
 import { institutionalGroupsPage } from "../support/admin/institutional-groups.page";
 import {
   RESEARCHERS,
@@ -107,6 +108,7 @@ test.describe("sign in from the public frontend", () => {
     await sampleDetailPage(page).goto(sample.igsn);
     await header.signIn();
     await completeIdpLogin(page, RESEARCHERS.theo);
+    await charterPage(page).accept();
 
     await institutionalGroupsPage(page).expectShown();
   });

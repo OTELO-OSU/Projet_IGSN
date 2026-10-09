@@ -48,6 +48,7 @@ describe("currentUser routes", () => {
       sub: "test-token",
       status: "pending",
       superAdmin: false,
+      charterAccepted: false,
       managedLaboratories: [],
       managedManualGroups: [],
       email: tokenEmail("test-token"),
@@ -213,6 +214,35 @@ describe("currentUser routes", () => {
     });
     expect(await me.json()).toMatchObject({ ...TRIO_A, status: "accepted" });
   });
+
+  pgTest("should record the caller's charter acceptance", async ({ db }) => {
+    // Arrange
+    const client = testClient(createApp(db).app);
+    // Act
+    const res = await client.admin.currentUser["charter-acceptance"].$put(
+      undefined,
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(204);
+    const me = await client.admin.currentUser.$get(undefined, {
+      headers: authHeader,
+    });
+    expect(await me.json()).toMatchObject({ charterAccepted: true });
+  });
+
+  pgTest(
+    "should answer 401 to an unauthenticated charter acceptance",
+    async ({ db }) => {
+      // Act
+      const res = await createApp(db).app.request(
+        "/admin/currentUser/charter-acceptance",
+        { method: "PUT" },
+      );
+      // Assert
+      expect(res.status).toBe(401);
+    },
+  );
 
   pgTest(
     "should answer 401 to an unauthenticated groups set",

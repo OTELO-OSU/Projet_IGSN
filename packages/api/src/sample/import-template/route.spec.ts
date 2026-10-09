@@ -986,6 +986,7 @@ describe("import upload route", () => {
   pgTest(
     "should answer 503 and queue nothing when DataCite does not answer",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       stubDataCite(new Response("", { status: 503 }));
 
       const res = await upload(db, await cleanFile());
@@ -999,6 +1000,7 @@ describe("import upload route", () => {
   pgTest(
     "should refuse the downloaded template posted back empty with its issues",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       const template = await (await download(db)).blob();
 
       const res = await upload(
@@ -1026,6 +1028,7 @@ describe("import upload route", () => {
   ] as const)(
     "should refuse the file %s typed %s as 415",
     async ([name, type], { db }) => {
+      await provisionUser(db, "test-token");
       const res = await upload(db, new File(["a,b"], name, { type }));
 
       expect(res.status).toBe(415);
@@ -1035,6 +1038,7 @@ describe("import upload route", () => {
   pgTest(
     "should refuse a workbook over its size cap as 413",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       const res = await upload(
         db,
         new File([new Uint8Array(IMPORT_MAX_BYTES + 1)], "big.xlsx", {
@@ -1050,6 +1054,7 @@ describe("import upload route", () => {
   );
 
   pgTest("should refuse a missing file as 400", async ({ db }) => {
+    await provisionUser(db, "test-token");
     const res = await upload(db);
 
     expect(res.status).toBe(400);

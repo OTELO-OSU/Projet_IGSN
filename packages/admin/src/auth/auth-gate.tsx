@@ -19,6 +19,7 @@ import { m } from "#/paraglide/messages.js";
 import { AppLayout } from "./app-layout.tsx";
 import { CenteredLoader } from "./centered-loader.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
+import { CharterGate } from "./charter-gate.tsx";
 import { IdentityGate } from "./identity-gate.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
 
@@ -78,9 +79,11 @@ export function AuthGate({ children }: { children?: ReactNode }) {
 
   return (
     <IdentityGate isOrcid={isOrcid} onSignOut={signOut}>
-      <InstitutionalGroupsGate onSignOut={signOut}>
-        <AppLayout onSignOut={signOut}>{children}</AppLayout>
-      </InstitutionalGroupsGate>
+      <CharterGate onSignOut={signOut}>
+        <InstitutionalGroupsGate onSignOut={signOut}>
+          <AppLayout onSignOut={signOut}>{children}</AppLayout>
+        </InstitutionalGroupsGate>
+      </CharterGate>
     </IdentityGate>
   );
 }

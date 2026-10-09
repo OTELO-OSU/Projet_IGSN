@@ -52,6 +52,7 @@ describe("app", () => {
         institutionalLaboratory: null,
         status: "accepted",
         superAdmin: true,
+        charterAccepted: true,
         managedLaboratories: [],
         managedManualGroups: [],
       });

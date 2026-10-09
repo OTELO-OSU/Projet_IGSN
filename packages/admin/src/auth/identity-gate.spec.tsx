@@ -16,6 +16,7 @@ const fakeIdentity = (status: number, body?: BodyInit) =>
             orcid: null,
             status: "accepted",
             superAdmin: false,
+            charterAccepted: true,
             managedLaboratories: [],
             managedManualGroups: [],
           })

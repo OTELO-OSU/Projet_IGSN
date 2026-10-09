@@ -18,6 +18,7 @@ export function insertUser(
     institutionalOrganization?: string;
     institutionalOsu?: string;
     institutionalLaboratory?: string;
+    charterAcceptedAt?: Date | null;
   } = {},
 ): Promise<{ id: string }> {
   return db
@@ -34,6 +35,10 @@ export function insertUser(
       institutional_organization: overrides.institutionalOrganization ?? null,
       institutional_osu: overrides.institutionalOsu ?? null,
       institutional_laboratory: overrides.institutionalLaboratory ?? null,
+      charter_accepted_at:
+        overrides.charterAcceptedAt === undefined
+          ? new Date()
+          : overrides.charterAcceptedAt,
     })
     .returning("id")
     .executeTakeFirstOrThrow();

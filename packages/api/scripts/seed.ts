@@ -33,6 +33,7 @@ type SeedUser = SampleOwner & {
   orcid?: string;
   status: UserStatus;
   superAdmin: boolean;
+  hasAcceptedCharter?: false;
 };
 
 const researcherKeySchema = z.enum([
@@ -151,6 +152,7 @@ const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Theo",
     status: "pending",
     superAdmin: false,
+    hasAcceptedCharter: false,
     institutionalOrganization: null,
     institutionalOsu: null,
     institutionalLaboratory: null,
@@ -310,10 +312,12 @@ async function seedOwners(
           institutionalOsu,
           institutionalLaboratory,
           manualGroups: _manualGroups,
+          hasAcceptedCharter = true,
           ...owner
         }) => ({
           ...owner,
           super_admin: superAdmin,
+          charter_accepted_at: hasAcceptedCharter ? new Date() : null,
           institutional_organization: institutionalOrganization,
           institutional_osu: institutionalOsu,
           institutional_laboratory: institutionalLaboratory,
@@ -329,6 +333,7 @@ async function seedOwners(
         ),
         institutional_osu: eb.ref("excluded.institutional_osu"),
         institutional_laboratory: eb.ref("excluded.institutional_laboratory"),
+        charter_accepted_at: eb.ref("excluded.charter_accepted_at"),
       })),
     )
     .execute();

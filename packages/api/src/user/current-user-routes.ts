@@ -39,6 +39,7 @@ export function createCurrentUserRoutes(
         orcid: user.orcid,
         status: user.status,
         superAdmin: user.superAdmin,
+        charterAccepted: await users.hasAcceptedCharter(user.id),
         managedLaboratories: managedLaboratoryCodes(managed),
         managedManualGroups: await manualGroups.listByIds(
           managed.manualGroupIds,
@@ -77,6 +78,10 @@ export function createCurrentUserRoutes(
         return c.body(null, 204);
       },
     )
+    .put("/charter-acceptance", requireActiveSession, async (c) => {
+      await users.acceptCharter(c.get("user").id);
+      return c.body(null, 204);
+    })
     .get("/attachable-manual-groups", async (c) => {
       const body: ManualGroupsResponse = {
         data: await manualGroups.listAttachableForUser(c.get("user").id),
