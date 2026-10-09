@@ -96,8 +96,8 @@ services:
     image: ${IMAGE_PREFIX:?IMAGE_PREFIX is required}/caddy:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped
     ports:
-      # Portainer binds CLIENT_PORT per stack, so it stays out of compose-env.ts.
-      - "${CLIENT_PORT:?CLIENT_PORT is required}:80"
+      # ponytail: published host port for the infra team's TLS proxy, swap for their shared network once the edge is settled.
+      - "${HTTP_PORT:?HTTP_PORT is required}:80"
     depends_on:
       api:
         condition: service_healthy

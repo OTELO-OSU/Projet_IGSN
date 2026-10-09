@@ -33,6 +33,13 @@ const VARS: EnvVar[] = [
     fromPipeline: true,
   },
   {
+    name: "HTTP_PORT",
+    purpose:
+      "Host port Caddy publishes for the infra team's TLS proxy, distinct per environment on the shared host.",
+    required: true,
+    placeholder: { preproduction: "8081", production: "8080" },
+  },
+  {
     name: "DOMAIN",
     purpose: "Apex domain: the stack is served at https://igsn.$DOMAIN.",
     required: true,

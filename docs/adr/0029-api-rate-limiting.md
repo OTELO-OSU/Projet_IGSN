@@ -38,7 +38,7 @@ Originally preprod sat behind Cloudflare and trusted `0.0.0.0/0`, sound only whi
 
 ## Trust dependencies and known limits
 
-- Caddy trusts private ranges only, so `CLIENT_PORT` must be reachable from the infra proxy alone: a direct hit through Docker's userland proxy looks like a private peer, and its forged `X-Forwarded-For` would be trusted. See [deploy.md](../deploy.md).
+- Caddy trusts private ranges only, so `HTTP_PORT` must be reachable from the infra proxy alone: a direct hit through Docker's userland proxy looks like a private peer, and its forged `X-Forwarded-For` would be trusted. See [deploy.md](../deploy.md).
 - `TRUST_PROXY_HEADERS` is mandatory, or `/samples` gets a site-wide 50/min cap instead of a per-visitor one.
 - The admin budget also covers uploads, so it prices disk exhaustion rather than preventing it: a 100 MB body costs the same one point as a row write. Needs a quota or a separate volume; the 429 fires before the body is parsed, so a refusal writes nothing.
 - A 429 during SSR renders a bare error boundary and a 500, with no `Retry-After`.

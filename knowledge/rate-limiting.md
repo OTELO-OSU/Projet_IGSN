@@ -37,7 +37,7 @@ Drop step 2 and the api never sees a real IP; drop 3 and SSR views bill the fron
 
 **Trust dependencies and known limits**, each its own ticket:
 
-- `CLIENT_PORT` must be reachable from the infra proxy alone: a direct hit forwarded by Docker's userland proxy looks like a private peer, and its forged `X-Forwarded-For` would be trusted.
+- `HTTP_PORT` must be reachable from the infra proxy alone: a direct hit forwarded by Docker's userland proxy looks like a private peer, and its forged `X-Forwarded-For` would be trusted.
 - `trusted_proxies_strict` must NOT be set alongside `trusted_proxies static 0.0.0.0/0`, or `{client_ip}` degrades to Caddy's own address; with private ranges only it is safe.
 - The admin budget also covers uploads, so it prices disk exhaustion rather than preventing it, though the 429 fires before the body is parsed.
 - A 429 during SSR renders a bare error boundary and a 500, with no `Retry-After`.
