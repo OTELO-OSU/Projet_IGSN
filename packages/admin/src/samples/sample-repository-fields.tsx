@@ -67,7 +67,12 @@ export function SampleRepositoryFields() {
       </form.AppField>
 
       <form.AppField name="repository.collectionName">
-        {(field) => <field.TextField label={m.field_collection_name()} />}
+        {(field) => (
+          <field.TextField
+            label={m.field_collection_name()}
+            placeholder={m.collection_name_placeholder()}
+          />
+        )}
       </form.AppField>
 
       <fieldset className="grid gap-4">

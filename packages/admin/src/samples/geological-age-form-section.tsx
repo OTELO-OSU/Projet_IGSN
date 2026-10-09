@@ -64,7 +64,12 @@ export function GeologicalAgeFormSection() {
       ) : null}
 
       <form.AppField name="age.geologicalUnit">
-        {(field) => <field.TextField label={m.field_geological_unit()} />}
+        {(field) => (
+          <field.TextField
+            label={m.field_geological_unit()}
+            placeholder={m.geological_unit_placeholder()}
+          />
+        )}
       </form.AppField>
     </FormSection>
   );

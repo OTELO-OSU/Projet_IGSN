@@ -628,7 +628,10 @@ export function SampleForm({
                         <FormSection title={m.section_sample()}>
                           <form.AppField name="name">
                             {(field) => (
-                              <field.TextField label={m.field_name()} />
+                              <field.TextField
+                                label={m.field_name()}
+                                placeholder={m.name_placeholder()}
+                              />
                             )}
                           </form.AppField>
 

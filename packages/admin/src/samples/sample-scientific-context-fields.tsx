@@ -87,7 +87,12 @@ export function SampleScientificContextFields() {
                   </form.AppField>
 
                   <form.AppField name="scientificContext.funding">
-                    {(field) => <field.TextField label={m.field_funding()} />}
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_funding()}
+                        placeholder={m.funding_placeholder()}
+                      />
+                    )}
                   </form.AppField>
 
                   <form.AppField name="scientificContext.researchProgramKind">
@@ -115,6 +120,7 @@ export function SampleScientificContextFields() {
                           {(field) => (
                             <field.TextField
                               label={researchProgramNameLabel(kind)}
+                              placeholder={m.research_program_name_placeholder()}
                             />
                           )}
                         </form.AppField>
@@ -151,7 +157,10 @@ export function SampleScientificContextFields() {
 
                   <form.AppField name="scientificContext.launchPlatformName">
                     {(field) => (
-                      <field.TextField label={m.field_launch_platform_name()} />
+                      <field.TextField
+                        label={m.field_launch_platform_name()}
+                        placeholder={m.launch_platform_name_placeholder()}
+                      />
                     )}
                   </form.AppField>
                 </FormSection>
