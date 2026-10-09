@@ -1,5 +1,5 @@
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import type { DataCiteConfig } from "../datacite/config.ts";
@@ -30,6 +30,7 @@ import { getSample } from "./service/get-sample.ts";
 import { insertOwnedSample } from "./service/insert-owned-sample.ts";
 import { insertSampleAttachment } from "./service/insert-sample-attachment.ts";
 import { isSampleModerated } from "./service/is-sample-moderated.ts";
+import { listDescendantIds } from "./service/list-descendant-ids.ts";
 import { listPublishedSamplesByIgsns } from "./service/list-published-samples-by-igsns.ts";
 import {
   listExportableSamples,
@@ -70,7 +71,7 @@ export function createSampleRepository(
     (...args: A): Promise<Sample | null> =>
       withTransaction(db, async (trx) => {
         const sample = await write(trx, ...args);
-        if (sample) await syncDoi(dataCite, sample);
+        if (sample) await syncDoi(dataCite, trx, sample);
         return sample;
       });
   return {
@@ -96,6 +97,7 @@ export function createSampleRepository(
     findBatchDuplicates: tx(findBatchDuplicateSamples),
     findStatusByIgsn: tx(findSampleStatusByIgsn),
     getPublicLineage: tx(getSampleLineage),
+    listDescendantIds: tx(listDescendantIds),
     create: (input, owner) =>
       withTransaction(db, async (trx) =>
         getSampleById(
@@ -166,7 +168,9 @@ export function createSampleRepository(
         if (!published) throw new Error("Sample vanished before publish");
         return published;
       }),
-    update: synced(updateSample),
+    update: synced((trx, id: string, input: CreateSample) =>
+      updateSample(trx, id, input, dataCite),
+    ),
     publish: (id, status, publishedAt) =>
       withTransaction(db, (trx) =>
         publishSample(trx, id, status, dataCite, publishedAt),

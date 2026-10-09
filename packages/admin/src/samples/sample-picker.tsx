@@ -18,6 +18,7 @@ export const samplePickerLabels = () => ({
 export function SamplePicker({
   onChange,
   exclude,
+  childId,
   ...props
 }: {
   id: string;
@@ -26,10 +27,13 @@ export function SamplePicker({
   placeholder: string;
   clearLabel?: string;
   exclude?: string;
+  childId?: string;
+  disabled?: boolean;
 }) {
   const picker = usePicker();
   const found = useSearchEligibleParents(picker.search, exclude, {
     enabled: picker.isOpen,
+    childId,
   });
   return (
     <SearchPicker

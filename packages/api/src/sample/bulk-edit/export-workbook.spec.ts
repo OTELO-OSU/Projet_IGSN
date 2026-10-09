@@ -125,14 +125,8 @@ describe("samples export workbook", () => {
     });
   });
 
-  it("should protect no sheet and grey only the identifiers, the fields frozen by publication and the frozen material levels of each row", () => {
-    const always = [
-      "Sample #",
-      "IGSN",
-      "Parent IGSN",
-      "Provenance status",
-      "Manual group",
-    ];
+  it("should protect no sheet and grey only the identifiers, a stored parent, the fields frozen by publication and the frozen material levels of each row", () => {
+    const always = ["Sample #", "IGSN", "Provenance status", "Manual group"];
     const collector = ["Collector first name", "Collector last name"];
 
     expect({
@@ -152,6 +146,7 @@ describe("samples export workbook", () => {
       protectedSheets: [],
       researchProjectSample: [
         ...always,
+        "Parent IGSN",
         ...collector,
         "Material (level 1)",
         "Material (level 2)",

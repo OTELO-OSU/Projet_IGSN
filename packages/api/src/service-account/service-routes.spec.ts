@@ -769,7 +769,8 @@ describe("the Accept header of the /service GET routes", () => {
       map: toDataCiteSample,
       schema: dataCiteSampleSchema,
       listSchema: dataCiteListSamplesResponseSchema,
-      listOf: (cores: CoreSample[]) => envelope(cores.map(toDataCiteSample)),
+      listOf: (cores: CoreSample[]) =>
+        envelope(cores.map((record) => toDataCiteSample(record))),
     },
     {
       format: "iSamples",
@@ -1762,15 +1763,6 @@ const FROZEN_CASES: FrozenCase[] = [
     }),
     path: "manualGroups.0",
   },
-  {
-    field: "the parent relation",
-    seed: publishableSample,
-    edit: (body) => ({
-      ...body,
-      relations: [parentRelation("ABCDEFGHJKMNPQRSTVWXYZ0123")],
-    }),
-    path: "relations.0",
-  },
 ];
 
 describe("PUT /service/samples/:igsn", () => {
@@ -1957,6 +1949,143 @@ describe("PUT /service/samples/:igsn", () => {
       expect(
         (await readSample(db, created.id))?.scientificContext,
       ).not.toHaveProperty("chiefScientistUserId");
+    },
+  );
+
+  pgTest(
+    "should add a parent relation to a parentless published sample, which takes the parent's location",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const parent = await ownedParent(db, owner.id);
+      const created = await publishedInReach(db);
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...core(created),
+        relations: [parentRelation(parent.igsn!)],
+      });
+      // Assert
+      expect(res.status).toBe(200);
+      const body = coreSampleSchema.parse(await res.json());
+      expect(body).toEqual(await storedCore(db, created.id));
+      expect({
+        parents: body.relations?.flatMap(
+          (relation) => parentIgsnOf(relation) ?? [],
+        ),
+        location: body.production.location,
+      }).toEqual({
+        parents: [parent.igsn],
+        location: core(parent).production.location,
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse a body dropping the stored parent relation and write nothing",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const parent = await ownedParent(db, owner.id);
+      const created = await publishedInReach(db, {
+        ...publishableSample,
+        parentIds: [parent.id],
+      });
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...renamed(created, "Renamed"),
+        relations: [],
+      });
+      // Assert
+      expect(res.status).toBe(403);
+      expect(frozenServiceSampleSchema.parse(await res.json())).toEqual({
+        error: "Forbidden",
+        issues: [{ path: "relations", code: "field_frozen" }],
+      });
+      expect((await readSample(db, created.id))?.name).toBe(
+        publishableSample.name,
+      );
+    },
+  );
+
+  pgTest(
+    "should report an added parent relation that does not resolve",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const created = await publishedInReach(db);
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...core(created),
+        relations: [parentRelation("ABCDEFGHJKMNPQRSTVWXYZ0123")],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "relations.0.targetIdentifier.value",
+            code: "parent_not_found",
+          },
+        ],
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse a second parent relation on a one-parent published sample",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const parent = await ownedParent(db, owner.id);
+      const second = await ownedParent(db, owner.id);
+      const created = await publishedInReach(db, {
+        ...publishableSample,
+        parentIds: [parent.id],
+      });
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...core(created),
+        relations: [parentRelation(parent.igsn!), parentRelation(second.igsn!)],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "relations.1",
+            code: "custom",
+            message: expect.any(String),
+          },
+        ],
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse a parent relation naming the sample itself",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const created = await publishedInReach(db);
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...core(created),
+        relations: [parentRelation(created.igsn!)],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "relations.0.targetIdentifier.value",
+            code: "custom",
+            message: expect.any(String),
+          },
+        ],
+      });
     },
   );
 

@@ -263,7 +263,7 @@ export const updateSampleRoute = createRoute({
   tags: TAGS,
   summary: "Update a published sample",
   description:
-    "Replaces the record of a published sample the account's managed groups reach. Publication freezes part of the record, and the parents of a sample are set at creation, so neither can be edited here.",
+    "Replaces the record of a published sample the account's managed groups reach. Publication freezes part of the record. A parentless sample may gain one parent relation, whose location then replaces its own, but never a second, and a parent relation is never removed.",
   security: SECURITY,
   request: {
     query: confirmDuplicatesQuery,
@@ -282,7 +282,7 @@ export const updateSampleRoute = createRoute({
     415: UNSUPPORTED_MEDIA_TYPE,
     422: json(
       invalidServiceSampleSchema,
-      "The record cannot stay published as it stands, one issue per reason.",
+      "The record cannot stay published as it stands, one issue per reason, an added parent relation that resolves to no published sample or to the sample or one of its descendants included.",
     ),
     429: THROTTLED,
     500: FAILED,

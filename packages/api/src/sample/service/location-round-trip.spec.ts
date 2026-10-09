@@ -466,6 +466,81 @@ describe("a child sample's location", () => {
   );
 
   pgTest(
+    "should re-point every descendant sharing the old location at the added parent's, deleting the orphaned row",
+    async ({ db }) => {
+      const parent = await insertParent(db, { ...base, location: paris });
+      const sample = await insertParent(db, { ...base, location: lyon });
+      const child = await insertParent(db, { ...base, parentIds: [sample.id] });
+      const grandChild = await insertSample(db, {
+        ...base,
+        parentIds: [child.id],
+      });
+      await updateSample(db, sample.id, {
+        ...base,
+        location: lyon,
+        parentIds: [parent.id],
+      });
+      const inherited = await locationIdOf(db, parent.id);
+      expect({
+        sample: await locationIdOf(db, sample.id),
+        child: await locationIdOf(db, child.id),
+        grandChild: await locationIdOf(db, grandChild.id),
+        rows: await countLocations(db),
+      }).toEqual({
+        sample: inherited,
+        child: inherited,
+        grandChild: inherited,
+        rows: 1,
+      });
+    },
+  );
+
+  pgTest(
+    "should leave a descendant that cleared its inherited location without one",
+    async ({ db }) => {
+      const parent = await insertParent(db, { ...base, location: paris });
+      const sample = await insertParent(db, { ...base, location: lyon });
+      const child = await insertSample(db, { ...base, parentIds: [sample.id] });
+      await updateSample(db, child.id, base);
+      await updateSample(db, sample.id, {
+        ...base,
+        location: lyon,
+        parentIds: [parent.id],
+      });
+      expect(await locationIdOf(db, child.id)).toBeNull();
+    },
+  );
+
+  pgTest(
+    "should carry a location-less sample's sole-parented descendants to the added parent's location, stopping at a two-parent one",
+    async ({ db }) => {
+      const parent = await insertParent(db, { ...base, location: paris });
+      const sample = await insertParent(db, base);
+      const other = await insertParent(db, base);
+      const child = await insertSample(db, { ...base, parentIds: [sample.id] });
+      const blend = await insertParent(db, {
+        ...base,
+        material: "rock_and_sediment.synthetic_rock_mineral",
+        parentIds: [sample.id, other.id],
+      });
+      const blendChild = await insertSample(db, {
+        ...base,
+        parentIds: [blend.id],
+      });
+      await updateSample(db, sample.id, { ...base, parentIds: [parent.id] });
+      expect({
+        child: await locationIdOf(db, child.id),
+        blend: await locationIdOf(db, blend.id),
+        blendChild: await locationIdOf(db, blendChild.id),
+      }).toEqual({
+        child: await locationIdOf(db, parent.id),
+        blend: null,
+        blendChild: null,
+      });
+    },
+  );
+
+  pgTest(
     "should leave the child of a synthetic parent without a location",
     async ({ db }) => {
       const parent = await insertParent(db, {

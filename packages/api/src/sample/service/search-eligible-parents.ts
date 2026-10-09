@@ -9,6 +9,7 @@ import { expressionBuilder } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
+import { listDescendantIds } from "./list-descendant-ids.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
   notVirtualSampleWhere,
@@ -41,15 +42,23 @@ function declarableWhere(
   return eb.and([statusWhere, notVirtualSampleWhere]);
 }
 
-export function searchEligibleParents(
+export async function searchEligibleParents(
   db: Transactional<DB>,
-  { search, exclude }: SearchEligibleParentsQuery,
+  { search, exclude, childId }: SearchEligibleParentsQuery,
   userId: string,
   scope: ModerationScope | null,
 ): Promise<SampleParent[]> {
   const eb = expressionBuilder<DB, "sample">();
+  const related =
+    childId === undefined
+      ? []
+      : [
+          childId,
+          ...((await listDescendantIds(db, [childId])).get(childId) ?? []),
+        ];
   return searchSamplePicker(db, search, [
     declarableWhere(userId, scope),
     ...(exclude === undefined ? [] : [eb("id", "<>", exclude)]),
+    ...(related.length === 0 ? [] : [eb("id", "not in", related)]),
   ]);
 }

@@ -1,6 +1,7 @@
 import type { AdditionalRole } from "@projet-igsn/domain/sample/additional-role/role";
 import type { DatePrecision } from "@projet-igsn/domain/sample/date-range";
 import type { MineralAbundance } from "@projet-igsn/domain/sample/mineral/model";
+import type { SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import type { ProcessStepKind } from "@projet-igsn/domain/sample/process-step/kind";
 import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import type { IdentifierType } from "@projet-igsn/domain/sample/relation/identifier-type";
@@ -82,6 +83,7 @@ import {
   toSyntheticDetailsDraft,
 } from "#/samples/compose-synthetic-details.ts";
 import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
+import { isLocated } from "#/samples/is-located.ts";
 
 export type RelationDraft = {
   key: string;
@@ -185,8 +187,12 @@ export type SampleDraft = {
   childIds: string[];
 } & EconomicInterestDraft;
 
+export type SampleDraftSource = Partial<CreateSample> & {
+  parents?: readonly Pick<SampleParent, "id">[];
+};
+
 export const toSampleDraft = (
-  value?: Partial<CreateSample>,
+  value?: SampleDraftSource,
   options: DraftOptions = {},
 ): SampleDraft => ({
   name: value?.name,
@@ -255,7 +261,7 @@ export const toSampleDraft = (
       }))
     : [{ key: crypto.randomUUID(), path: [], abundance: undefined }],
   manualGroupIds: value?.manualGroupIds ?? [],
-  parentIds: value?.parentIds ?? [],
+  parentIds: value?.parentIds ?? value?.parents?.map(({ id }) => id) ?? [],
   childIds: value?.childIds ?? [],
   ...toEconomicInterestDraft(value),
 });
@@ -357,7 +363,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     physiographicEnvironment: locationAllowed
       ? composeHierarchyValue(draft.physiographicEnvironmentPath)
       : null,
-    location: locationAllowed ? composeLocation(draft.location) : null,
+    location: isLocated(draft) ? composeLocation(draft.location) : null,
     description: composeDescription(draft.description),
     ...(condition ? { condition } : {}),
     security: composeSecurity(draft.security),

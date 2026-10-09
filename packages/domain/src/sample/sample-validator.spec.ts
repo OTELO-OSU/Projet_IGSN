@@ -48,13 +48,13 @@ describe("updateSampleBodySchema", () => {
     expect(updateSampleBodySchema.safeParse(body).success).toBe(true);
   });
 
-  it("should reject an edit carrying parentIds, since parentage is set at creation", () => {
+  it("should accept an edit carrying parentIds, since a parent may be added after creation", () => {
     expect(
       updateSampleBodySchema.safeParse({
         ...body,
         parentIds: ["11111111-1111-4111-8111-111111111111"],
       }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 

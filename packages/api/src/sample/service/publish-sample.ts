@@ -8,6 +8,7 @@ import type { DataCiteConfig } from "../../datacite/config.ts";
 import type { DB } from "../../db.ts";
 
 import { syncDoi } from "../../datacite/sync-doi.ts";
+import { syncParentRelations } from "../../datacite/sync-parent-relations.ts";
 import { queueBatchWebhooks } from "../../sample-batch/queue-batch-webhooks.ts";
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
@@ -38,7 +39,10 @@ export async function publishSample(
   if (!row) return null;
   const sample = await getSampleById(db, id);
   // ponytail: the row stays locked for the DataCite round trip, and a commit failing after a successful PUT leaves a DOI the next publish re-registers, PUT being idempotent.
-  await syncDoi(config, sample, { firstRegistration: true });
+  await syncDoi(config, db, sample, { firstRegistration: true });
+  for (const parent of sample.parents) {
+    await syncParentRelations(config, db, parent.id);
+  }
   await queueBatchWebhooks(db, [id]);
   return sample;
 }

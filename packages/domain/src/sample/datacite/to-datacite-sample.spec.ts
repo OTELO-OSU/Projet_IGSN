@@ -509,6 +509,35 @@ describe("the related identifiers of a DataCite record", () => {
       ).toBe("Other");
     },
   );
+
+  it("should list each child sample as IsSourceOf after the sample's own relations", () => {
+    // Arrange
+    const children = [
+      { igsn: "ABCDEFGHJKMNPQRS0123456789" },
+      { igsn: "CNRS1234567890" },
+    ];
+    // Act
+    const { relatedIdentifiers } = toDataCiteSample(
+      core(RESEARCH_PROJECT_SAMPLE),
+      children,
+    );
+    // Assert
+    expect(relatedIdentifiers).toEqual([
+      ...toDataCiteSample(core(RESEARCH_PROJECT_SAMPLE)).relatedIdentifiers,
+      {
+        relatedIdentifier: "ABCDEFGHJKMNPQRS0123456789",
+        relatedIdentifierType: "DOI",
+        relationType: "IsSourceOf",
+        resourceTypeGeneral: "PhysicalObject",
+      },
+      {
+        relatedIdentifier: "CNRS1234567890",
+        relatedIdentifierType: "IGSN",
+        relationType: "IsSourceOf",
+        resourceTypeGeneral: "PhysicalObject",
+      },
+    ]);
+  });
 });
 
 describe("the Core coverage of the DataCite mapping", () => {

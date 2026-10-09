@@ -6,6 +6,8 @@ Date: 2026-09-17
 
 Accepted.
 
+Amended 2026-10-08: `updateSampleSchema` now carries an optional `parentIds`, see ADR [0058](0058-parents-added-after-creation.md); the api check against the stored rows stays, since the field is optional on update and absent from the bulk edit.
+
 ## Context
 
 A sub-sample records only its parent(s), never how it was produced from them: whether it was sawn, powdered, or set aside for preservation. A researcher documenting a thin section wants to say a block was cut, then polished, each step dated and described.

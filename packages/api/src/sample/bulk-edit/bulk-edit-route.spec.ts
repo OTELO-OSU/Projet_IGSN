@@ -418,6 +418,51 @@ describe("POST /admin/samples/bulk-edit", () => {
   );
 
   pgTest(
+    "should add the parent a parentless row names, the sample taking its location, and mirror it on DataCite only once the queue drains",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const parent = await insertParent(db, caller.id, "published", "Parent");
+      const sample = await insertParent(db, caller.id);
+      await db
+        .updateTable("sample")
+        .set({ doi_prefix: STUB_DATACITE_CONFIG.prefix })
+        .where("id", "in", [parent.id, sample.id])
+        .execute();
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      const putUrls = () =>
+        fetchMock.mock.calls
+          .filter(([, init]) => init?.method === "PUT")
+          .map(([url]) => url);
+
+      const res = await upload(db, [sample], (book) =>
+        fill(book, SHEETS.samples, ROW, { "Parent IGSN": parent.igsn }),
+      );
+      const duringUpload = putUrls();
+      fetchMock.mockClear();
+      await drainPublishingQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
+      const republished = await readSample(db, sample.id);
+
+      expect({
+        status: res.status,
+        duringUpload,
+        drained: putUrls(),
+        parents: republished?.parents.map(({ id }) => id),
+        location: republished?.location,
+      }).toEqual({
+        status: 200,
+        duringUpload: [],
+        drained: [sample.igsn, parent.igsn].map(
+          (igsn) =>
+            `${STUB_DATACITE_CONFIG.host}/dois/${STUB_DATACITE_CONFIG.prefix}/${igsn}`,
+        ),
+        parents: [parent.id],
+        location: parent.location,
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
     "should save a sample past a blocker it already had when published",
     async ({ db }) => {
       const caller = await provisionUser(db, "test-token");

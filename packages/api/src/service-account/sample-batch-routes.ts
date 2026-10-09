@@ -26,6 +26,8 @@ import {
 import { checkDataCite } from "../datacite/check-datacite.ts";
 import { dataCiteConfig } from "../datacite/config.ts";
 import { webhookTarget } from "../sample-batch/public-host.ts";
+import { PARENT_CYCLE } from "../sample/service/add-sample-parents.ts";
+import { findCyclicParentLinks } from "../sample/service/find-cyclic-parent-links.ts";
 import {
   catchChildNotEligible,
   ChildNotEligibleError,
@@ -53,6 +55,7 @@ type Deps = ServiceSampleChecksDeps & {
 
 type CheckedItem = {
   write: SampleBatchItemWrite;
+  addedParentIds: readonly string[];
   duplicates: (
     confirmed: boolean | undefined,
   ) => Promise<BatchSuspectedDuplicate[]>;
@@ -111,6 +114,7 @@ async function checkItem(
     return {
       value: {
         write: { partnerId, create: input },
+        addedParentIds: [],
         duplicates: (confirmed) =>
           suspectedDuplicates(
             deps.samples,
@@ -141,10 +145,14 @@ async function checkItem(
   if (lock && lock.userId !== account.sampleOwner.id) {
     return { issues: [serviceSampleIssue("sample_locked", SAMPLE_KEY_PATH)] };
   }
-  if (changedSampleFields(current, merged).length === 0) {
+  if (
+    changedSampleFields(current, merged).length === 0 &&
+    checked.value.parents.length === 0
+  ) {
     return {
       value: {
         write: { partnerId, unchanged: { id: current.id } },
+        addedParentIds: [],
         duplicates: async () => [],
         duplicateKey: null,
       },
@@ -156,6 +164,7 @@ async function checkItem(
         partnerId,
         update: { id: current.id, input: merged, updatedAt: current.updatedAt },
       },
+      addedParentIds: checked.value.parents.map(({ id }) => id),
       duplicates: (confirmed) =>
         suspectedDuplicates(
           deps.samples,
@@ -210,6 +219,27 @@ export function registerSampleBatchRoutes(
       }
       if (issues.length > 0) {
         return invalidSample(c, issues);
+      }
+      const links = checked.flatMap(({ write, addedParentIds }, index) =>
+        "update" in write && addedParentIds.length > 0
+          ? [{ index, childId: write.update.id, parentIds: addedParentIds }]
+          : [],
+      );
+      const cyclic = findCyclicParentLinks(
+        links,
+        await deps.samples.listDescendantIds(
+          links.map(({ childId }) => childId),
+        ),
+      );
+      if (cyclic.length > 0) {
+        return invalidSample(
+          c,
+          cyclic.flatMap((at) =>
+            atItem(links[at]!.index, [
+              serviceSampleIssue("custom", ["relations"], PARENT_CYCLE),
+            ]),
+          ),
+        );
       }
       const { confirmDuplicates } = c.req.valid("query");
       const conflicts: SampleBatchConflict["items"] = [];

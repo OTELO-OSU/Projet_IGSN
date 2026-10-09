@@ -190,6 +190,7 @@ export type SampleResponse = z.infer<typeof sampleResponseSchema>;
 export const searchEligibleParentsQuerySchema = z.object({
   search: searchTermSchema,
   exclude: z.uuid().optional().catch(undefined),
+  childId: z.uuid().optional(),
 });
 
 export type SearchEligibleParentsQuery = z.infer<

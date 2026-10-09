@@ -144,6 +144,43 @@ describe("the eligible parent search", () => {
     expect(data.map((parent) => parent.id)).toEqual([second.id]);
   });
 
+  pgTest(
+    "should hide the sample being parented and its descendants",
+    async ({ db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const publishedChildOf = async (parentId: string, name: string) => {
+        const { id } = await insertSample(db, {
+          ...publishableSample,
+          name,
+          parentIds: [parentId],
+        });
+        await insertSampleOwner(db, id, caller.id);
+        return (await publishSample(db, id))!;
+      };
+      const sample = await insertParent(
+        db,
+        caller.id,
+        "published",
+        "Gabbro sample",
+      );
+      const child = await publishedChildOf(sample.id, "Gabbro child");
+      await publishedChildOf(child.id, "Gabbro grandchild");
+      const unrelated = await insertParent(
+        db,
+        caller.id,
+        "published",
+        "Gabbro unrelated",
+      );
+      // Act
+      const data = await search(db, { search: "Gabbro", childId: sample.id });
+      // Assert
+      expect(data.map((found) => found.id)).toEqual([unrelated.id]);
+    },
+  );
+
   pgTest("should match an exact IGSN", async ({ db }) => {
     // Arrange
     const caller = await provisionUser(db, "test-token", {

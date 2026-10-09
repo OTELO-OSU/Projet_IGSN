@@ -8,7 +8,7 @@ export async function inheritParentLocation(
   db: Transactional<DB>,
   sampleId: string,
   parentId: string,
-): Promise<void> {
+): Promise<string | null> {
   const parent = await db
     .selectFrom("sample")
     .select(["material", "location_id"])
@@ -19,11 +19,12 @@ export async function inheritParentLocation(
     parent.location_id === null ||
     !allowsLocation(parent.material)
   ) {
-    return;
+    return null;
   }
   await db
     .updateTable("sample")
     .set({ location_id: parent.location_id })
     .where("id", "=", sampleId)
     .execute();
+  return parent.location_id;
 }

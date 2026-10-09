@@ -2977,7 +2977,7 @@ describe("SampleForm post-publication field lock", () => {
       .toHaveTextContent("Related URL or document > Relation resource type");
   });
 
-  it("should offer no parent tab when the sample has no parent", async () => {
+  it("should offer no parent tab on a parentless sample being created", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );

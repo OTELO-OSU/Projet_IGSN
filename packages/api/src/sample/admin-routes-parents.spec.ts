@@ -9,7 +9,7 @@ import {
 } from "@projet-igsn/domain/sample/sample-validator";
 import { sampleCollaboratorsResponseSchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { testClient } from "hono/testing";
-import { describe, expect, vi } from "vitest";
+import { describe, expect, onTestFinished, vi } from "vitest";
 
 import type { DB } from "../db.ts";
 
@@ -19,6 +19,7 @@ import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { draft, publishableSample } from "../tests/sample-fixtures.ts";
+import { STUB_DATACITE_CONFIG, stubDataCite } from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
@@ -44,6 +45,34 @@ const parentOf = (...parents: Sample[]) =>
 const createChild = (db: Db, parentIds: string[], body: CreateSample = draft) =>
   testClient(createApp(db).app).admin.samples.$post(
     { json: { ...body, parentIds } },
+    { headers: authHeader },
+  );
+
+const ownLocated = {
+  ...publishableSample,
+  location: {
+    position: { type: "point" as const, longitude: 4.83, latitude: 45.76 },
+  },
+  description: {
+    collectionDate: {
+      precision: "day" as const,
+      start: "2025-03-01",
+      end: "2025-03-01",
+    },
+  },
+} satisfies CreateSample;
+
+const updateWithParents = (
+  db: Db,
+  stored: Sample,
+  body: CreateSample,
+  parentIds: string[],
+) =>
+  testClient(createApp(db).app).admin.samples[":id"].$put(
+    {
+      param: { id: stored.id },
+      json: { ...body, parentIds, expectedUpdatedAt: stored.updatedAt },
+    },
     { headers: authHeader },
   );
 
@@ -293,8 +322,169 @@ describe("a sample's parents", () => {
     },
   );
 
+  pgTest.for(["draft", "published"] as const)(
+    "should add a parent to a parentless %s sample, which takes its location and collection date",
+    async (status, { db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const parentOwner = await insertUser(db, "keeper@univ-lorraine.fr");
+      const parent = await insertParent(db, parentOwner.id);
+      const own = await insertSample(db, ownLocated);
+      await insertSampleOwner(db, own.id, caller.id);
+      if (status === "published") await publishSample(db, own.id);
+      const stored = (await readSample(db, own.id)).data;
+      // Act
+      const res = await updateWithParents(db, stored, ownLocated, [parent.id]);
+      // Assert
+      expect(res.status).toBe(200);
+      const { data } = sampleResponseSchema.parse(await res.json());
+      expect({
+        parents: data.parents,
+        location: data.location,
+        collectionDate: data.description?.collectionDate,
+        locationRows: await db.selectFrom("location").select("id").execute(),
+        collaborators: await collaboratorsOf(db, own.id),
+      }).toEqual({
+        parents: parentOf(parent),
+        location: parent.location,
+        collectionDate: parent.description?.collectionDate,
+        locationRows: [{ id: expect.any(String) }],
+        collaborators: [
+          { id: caller.id, role: "owner" },
+          { id: parentOwner.id, role: "contributor" },
+        ],
+      });
+    },
+  );
+
+  pgTest.for([
+    { status: "published" as const, parentPuts: 1 },
+    { status: "draft" as const, parentPuts: 0 },
+  ])(
+    "should PUT the parent's relations alone $parentPuts time(s) when a parent is added to a $status sample",
+    async ({ status, parentPuts }, { db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      onTestFinished(() => {
+        vi.unstubAllGlobals();
+        delete process.env.DATACITE_API_HOST;
+      });
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const { id: parentId } = await insertSample(db, publishableSample);
+      await insertSampleOwner(db, parentId, caller.id);
+      const parent = (await publishSample(
+        db,
+        parentId,
+        "published",
+        STUB_DATACITE_CONFIG,
+      ))!;
+      const own = await insertSample(db, ownLocated);
+      await insertSampleOwner(db, own.id, caller.id);
+      if (status === "published") {
+        await publishSample(db, own.id, "published", STUB_DATACITE_CONFIG);
+      }
+      const stored = (await readSample(db, own.id)).data;
+      fetchMock.mockClear();
+      // Act
+      const res = await updateWithParents(db, stored, ownLocated, [parentId]);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        fetchMock.mock.calls
+          .filter(([url]) => String(url).endsWith(`/${parent.igsn}`))
+          .map(([, init]) => JSON.parse(init.body).data.attributes),
+      ).toEqual(
+        Array.from({ length: parentPuts }, () => ({
+          relatedIdentifiers: [
+            expect.objectContaining({
+              relatedIdentifier: stored.igsn,
+              relationType: "IsSourceOf",
+            }),
+          ],
+        })),
+      );
+    },
+  );
+
   pgTest(
-    "should answer 400 when an update body carries parentIds",
+    "should answer 502 when DataCite refuses the parent's relations",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      onTestFinished(() => {
+        vi.unstubAllGlobals();
+        delete process.env.DATACITE_API_HOST;
+      });
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const publishedWithDoi = async (input: CreateSample) => {
+        const { id } = await insertSample(db, input);
+        await insertSampleOwner(db, id, caller.id);
+        await publishSample(db, id, "published", STUB_DATACITE_CONFIG);
+        return (await readSample(db, id)).data;
+      };
+      const parent = await publishedWithDoi(publishableSample);
+      const own = await publishedWithDoi(ownLocated);
+      fetchMock.mockImplementation(async (url: string) =>
+        url.endsWith(`/${parent.igsn}`)
+          ? new Response("nope", { status: 500 })
+          : new Response("{}", { status: 201 }),
+      );
+      // Act
+      const res = await updateWithParents(db, own, ownLocated, [parent.id]);
+      // Assert
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 502,
+        body: { error: "DOI sync failed" },
+      });
+    },
+  );
+
+  pgTest(
+    "should mail the parent owner when a parent is added to a sample",
+    async ({ db }) => {
+      // Arrange
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const owner = await insertUser(db, "owner-3e2@univ-lorraine.fr");
+      const parent = await insertParent(db, owner.id);
+      const own = await insertSample(db, draft);
+      await insertSampleOwner(db, own.id, caller.id);
+      const app = createApp(db, {
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+      }).app;
+      // Act
+      const res = await testClient(app).admin.samples[":id"].$put(
+        {
+          param: { id: own.id },
+          json: {
+            ...draft,
+            parentIds: [parent.id],
+            expectedUpdatedAt: own.updatedAt,
+          },
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({ to: ["owner-3e2@univ-lorraine.fr"] }),
+        ),
+      );
+    },
+  );
+
+  pgTest(
+    "should answer 422 and keep the stored parent when an update drops it",
     async ({ db }) => {
       // Arrange
       const caller = await provisionUser(db, "test-token", {
@@ -308,22 +498,86 @@ describe("a sample's parents", () => {
       });
       await insertSampleOwner(db, child.id, caller.id);
       // Act
-      const res = await createApp(db).app.request(
-        `/admin/samples/${child.id}`,
-        {
-          method: "PUT",
-          headers: { ...authHeader, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...draft,
-            parentIds: [other.id],
-            expectedUpdatedAt: child.updatedAt,
-          }),
-        },
-      );
+      const res = await updateWithParents(db, child, draft, [other.id]);
       // Assert
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(422);
       expect((await readSample(db, child.id)).data.parents).toEqual(
         parentOf(parent),
+      );
+    },
+  );
+
+  pgTest.for(["itself", "its child"] as const)(
+    "should answer 422 and add no parent when the sample would descend from %s",
+    async (target, { db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const { id } = await insertParent(db, caller.id);
+      const { id: childId } = await insertSample(db, {
+        ...publishableSample,
+        parentIds: [id],
+      });
+      await insertSampleOwner(db, childId, caller.id);
+      await publishSample(db, childId);
+      const sample = (await readSample(db, id)).data;
+      // Act
+      const res = await updateWithParents(db, sample, publishableSample, [
+        target === "itself" ? sample.id : childId,
+      ]);
+      // Assert
+      expect(res.status).toBe(422);
+      expect((await readSample(db, sample.id)).data.parents).toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should answer 422 and add no parent when the added parent is a draft",
+    async ({ db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const parent = await insertParent(db, caller.id, "draft");
+      const own = await insertSample(db, draft);
+      await insertSampleOwner(db, own.id, caller.id);
+      // Act
+      const res = await updateWithParents(db, own, draft, [parent.id]);
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual(PARENT_NOT_ELIGIBLE);
+      expect((await readSample(db, own.id)).data.parents).toEqual([]);
+    },
+  );
+
+  pgTest.for([
+    { label: "a second parent to a one-parent sample", stored: 1 },
+    { label: "two parents at once to a parentless sample", stored: 0 },
+  ])(
+    "should answer 422 and keep the stored parents when adding $label",
+    async ({ stored }, { db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const first = await insertParent(db, caller.id, "published", "Andésite");
+      const second = await insertParent(db, caller.id, "published", "Basalte");
+      const kept = [first].slice(0, stored);
+      const child = await insertSample(db, {
+        ...syntheticDraft,
+        parentIds: kept.map(({ id }) => id),
+      });
+      await insertSampleOwner(db, child.id, caller.id);
+      // Act
+      const res = await updateWithParents(db, child, syntheticDraft, [
+        first.id,
+        second.id,
+      ]);
+      // Assert
+      expect(res.status).toBe(422);
+      expect((await readSample(db, child.id)).data.parents).toEqual(
+        parentOf(...kept),
       );
     },
   );

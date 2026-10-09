@@ -9,13 +9,13 @@ import { useApiClient } from "#/use-api-client.ts";
 export function useSearchEligibleParents(
   search: string,
   exclude: string | undefined,
-  { enabled = true }: { enabled?: boolean } = {},
+  { enabled = true, childId }: { enabled?: boolean; childId?: string } = {},
 ) {
   const apiFetch = useApiClient();
   const term = search.length >= MIN_SEARCH_LENGTH ? search : "";
   return useQuery({
     enabled,
-    queryKey: ["samples", "eligible-parents", term, exclude],
+    queryKey: ["samples", "eligible-parents", term, exclude, childId],
     queryFn: async () => {
       const url = new URL("admin/samples/parents", API_URL);
       if (term !== "") {
@@ -23,6 +23,9 @@ export function useSearchEligibleParents(
       }
       if (exclude !== undefined) {
         url.searchParams.set("exclude", exclude);
+      }
+      if (childId !== undefined) {
+        url.searchParams.set("childId", childId);
       }
       const { data } = await apiJson(
         apiFetch,

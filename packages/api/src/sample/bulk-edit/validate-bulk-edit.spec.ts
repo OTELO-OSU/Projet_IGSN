@@ -18,7 +18,10 @@ import {
   fill,
   sheetOf,
 } from "../import-template/import-fixture.ts";
+import { resolvePublishedParents } from "../import-template/resolve-published-parents.ts";
 import { insertSample } from "../service/insert-sample.ts";
+import { listDescendantIds } from "../service/list-descendant-ids.ts";
+import { listPublishedSamplesByIgsns } from "../service/list-published-samples-by-igsns.ts";
 import { publishSample } from "../service/publish-sample.ts";
 import { updateSample } from "../service/update-sample.ts";
 import { exportWorkbook } from "./export-workbook.ts";
@@ -86,7 +89,11 @@ async function exported(samples: Sample[]): Promise<ExcelJS.Workbook> {
   return book;
 }
 
-async function validated(book: ExcelJS.Workbook, samples: Sample[]) {
+async function validated(
+  db: Kysely<DB>,
+  book: ExcelJS.Workbook,
+  samples: Sample[],
+) {
   const bytes = new Uint8Array(await book.xlsx.writeBuffer()).buffer;
   return validateBulkEdit(
     bytes,
@@ -100,6 +107,15 @@ async function validated(book: ExcelJS.Workbook, samples: Sample[]) {
       );
     },
     { resolve: async () => new Map(), canEdit: () => false },
+    (igsns) =>
+      resolvePublishedParents(
+        {
+          listPublishedByIgsns: (igsns) =>
+            listPublishedSamplesByIgsns(db, igsns),
+        },
+        igsns,
+      ),
+    (ids) => listDescendantIds(db, ids),
   );
 }
 
@@ -135,9 +151,11 @@ describe("validateBulkEdit", () => {
         .execute();
       const stored = (await readSample(db, sample.id))!;
 
-      const { issues, samples } = await validated(await exported([stored]), [
-        stored,
-      ]);
+      const { issues, samples } = await validated(
+        db,
+        await exported([stored]),
+        [stored],
+      );
       await updateSample(db, stored.id, samples[0]!.input);
 
       expect({ issues, ids: samples.map(({ id }) => id) }).toEqual({
@@ -163,7 +181,7 @@ describe("validateBulkEdit", () => {
       const book = await exported([sample]);
       deleteColumn(book, SHEETS.samples, "Local ID");
 
-      const { samples } = await validated(book, [sample]);
+      const { samples } = await validated(db, book, [sample]);
 
       expect(samples[0]?.input.localId).toBe("L-1");
     },
@@ -177,7 +195,7 @@ describe("validateBulkEdit", () => {
       const book = await exported([sample]);
       fill(book, SHEETS.samples, ROW, { "Local ID": null });
 
-      const { issues, samples } = await validated(book, [sample]);
+      const { issues, samples } = await validated(db, book, [sample]);
 
       expect({ issues, localId: samples[0]?.input.localId }).toEqual({
         issues: [],
@@ -204,7 +222,7 @@ describe("validateBulkEdit", () => {
       const book = await exported([sample]);
       fill(book, SHEETS.samples, ROW, { "Research program kind": "Cruise" });
 
-      const { issues, samples } = await validated(book, [sample]);
+      const { issues, samples } = await validated(db, book, [sample]);
       await updateSample(db, sample.id, samples[0]!.input);
 
       expect(issues).toEqual([]);
@@ -223,7 +241,7 @@ describe("validateBulkEdit", () => {
       const book = await exported([sample]);
       book.removeWorksheet(sheetOf(book, SHEETS.relations).id);
 
-      const { samples } = await validated(book, [sample]);
+      const { samples } = await validated(db, book, [sample]);
 
       expect(samples[0]?.input.relations).toEqual([
         expect.objectContaining(RELATION),
@@ -239,7 +257,7 @@ describe("validateBulkEdit", () => {
       const book = await exported([sample]);
       sheetOf(book, SHEETS.relations).spliceRows(ROW, 1);
 
-      const { issues, samples } = await validated(book, [sample]);
+      const { issues, samples } = await validated(db, book, [sample]);
 
       expect({ issues, relations: samples[0]?.input.relations ?? [] }).toEqual({
         issues: [],
@@ -256,7 +274,7 @@ describe("validateBulkEdit", () => {
       const book = await exported([sample]);
       deleteColumn(book, SHEETS.relations, "Title");
 
-      const { issues } = await validated(book, [sample]);
+      const { issues } = await validated(db, book, [sample]);
 
       expect(issues).toEqual([
         { sheet: SHEETS.relations, column: "Title", code: "missing_column" },
@@ -274,11 +292,11 @@ describe("validateBulkEdit", () => {
     "should refuse a changed frozen cell %s",
     { timeout: 30_000 },
     async ([column, value], { db }) => {
-      const sample = await published(db);
+      const { sample } = await publishedSubSample(db, []);
       const book = await exported([sample]);
       fill(book, SHEETS.samples, ROW, { [column!]: value });
 
-      const { issues, samples } = await validated(book, [sample]);
+      const { issues, samples } = await validated(db, book, [sample]);
 
       expect({ issues, samples }).toEqual({
         issues: expect.arrayContaining([issue(column!, "frozen_field")]),
@@ -297,7 +315,7 @@ describe("validateBulkEdit", () => {
       const book = await exported([sample]);
       fill(book, SHEETS.samples, ROW, { "Material (level 4)": "clay" });
 
-      const { issues, samples } = await validated(book, [sample]);
+      const { issues, samples } = await validated(db, book, [sample]);
 
       expect({ issues, material: samples[0]?.input.material }).toEqual({
         issues: [],
@@ -314,7 +332,7 @@ describe("validateBulkEdit", () => {
       const book = await exported([sample]);
       fill(book, SHEETS.samples, ROW, { "Existence status": null });
 
-      const { issues } = await validated(book, [sample]);
+      const { issues } = await validated(db, book, [sample]);
 
       expect(issues).toEqual(
         expect.arrayContaining([
@@ -338,7 +356,7 @@ describe("validateBulkEdit", () => {
         ...PREPARATION_CELLS,
       });
 
-      const { issues, samples } = await validated(book, [sample]);
+      const { issues, samples } = await validated(db, book, [sample]);
       await updateSample(db, sample.id, samples[0]!.input);
       const stored = await readSample(db, sample.id);
 
@@ -372,7 +390,7 @@ describe("validateBulkEdit", () => {
         ...PREPARATION_CELLS,
       });
 
-      const { issues, samples } = await validated(book, [parent, sample]);
+      const { issues, samples } = await validated(db, book, [parent, sample]);
 
       expect({ issues, samples }).toEqual({
         issues: [
@@ -381,6 +399,89 @@ describe("validateBulkEdit", () => {
             "process_steps_without_parent",
             SHEETS.processSteps,
           ),
+        ],
+        samples: [],
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should add the parent a parentless row names, dropping its location and collection date for the inherited ones",
+    async ({ db }) => {
+      const parent = await published(db);
+      const sample = await published(db, {
+        ...STORED,
+        description: {
+          collectionDate: {
+            precision: "day",
+            start: "2025-03-01",
+            end: "2025-03-01",
+          },
+        },
+      });
+      const book = await exported([sample]);
+      fill(book, SHEETS.samples, ROW, { "Parent IGSN": parent.igsn });
+
+      const { issues, samples } = await validated(db, book, [sample]);
+
+      expect({
+        issues,
+        parentIds: samples[0]?.input.parentIds,
+        location: samples[0]?.input.location,
+        collectionDate: samples[0]?.input.description?.collectionDate,
+      }).toEqual({
+        issues: [],
+        parentIds: [parent.id],
+        location: undefined,
+        collectionDate: parent.description?.collectionDate,
+      });
+    },
+    30_000,
+  );
+
+  pgTest.for(["itself", "its child"] as const)(
+    "should refuse a parentless row naming %s as its parent",
+    { timeout: 30_000 },
+    async (target, { db }) => {
+      const { parent: sample, sample: child } = await publishedSubSample(
+        db,
+        [],
+      );
+      const book = await exported([sample]);
+      fill(book, SHEETS.samples, ROW, {
+        "Parent IGSN": target === "itself" ? sample.igsn : child.igsn,
+      });
+
+      const { issues, samples } = await validated(db, book, [sample]);
+
+      expect({ issues, samples }).toEqual({
+        issues: [issue("Parent IGSN", "parent_cycle")],
+        samples: [],
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse two parentless rows naming each other as parent",
+    async ({ db }) => {
+      const first = await published(db);
+      const second = await published(db);
+      const book = await exported([first, second]);
+      fill(book, SHEETS.samples, ROW, { "Parent IGSN": second.igsn });
+      fill(book, SHEETS.samples, ROW + 1, { "Parent IGSN": first.igsn });
+
+      const { issues, samples } = await validated(db, book, [first, second]);
+
+      expect({ issues, samples }).toEqual({
+        issues: [
+          issue("Parent IGSN", "parent_cycle"),
+          expect.objectContaining({
+            sheet: SHEETS.samples,
+            row: ROW + 1,
+            column: "Parent IGSN",
+            code: "parent_cycle",
+          }),
         ],
         samples: [],
       });
