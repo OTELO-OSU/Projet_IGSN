@@ -4,6 +4,7 @@ interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
   readonly VITE_ADMIN_URL?: string;
   readonly VITE_FRONTEND_URL?: string;
+  readonly VITE_DATA_GOUV_DATASET_URL?: string;
   readonly VITE_OIDC_AUTHORITY?: string;
   readonly VITE_OIDC_CLIENT_ID?: string;
 }

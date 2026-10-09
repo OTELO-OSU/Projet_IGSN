@@ -38,6 +38,7 @@
   "results_map_title": "Search results on the map",
   "results_map_capped": "Only the first {count} results are listed: zoom in to list them all.",
   "opens_in_new_tab": "(opens in a new tab)",
+  "open_data_link": "Download all samples (data.gouv.fr)",
   "results_map_view_sample": "View sample",
   "results_map_cluster": "{count} samples",
   "results_map_more": "and {count} more",

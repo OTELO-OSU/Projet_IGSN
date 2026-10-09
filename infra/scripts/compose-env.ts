@@ -162,6 +162,33 @@ const VARS: EnvVar[] = [
     required: "DATACITE_API_HOST",
   },
   {
+    name: "DATA_GOUV_URL",
+    purpose:
+      "Unset disables the monthly open-data CSV export; set, the api replaces the dataset's CSVs on data.gouv.fr each month.",
+    placeholder: {
+      preproduction: "https://demo.data.gouv.fr",
+      production: "https://www.data.gouv.fr",
+    },
+  },
+  {
+    name: "DATA_GOUV_NAME",
+    purpose:
+      "Id of the data.gouv.fr dataset the export replaces its CSVs in; the api stops at boot if the URL is set without it.",
+    required: "DATA_GOUV_URL",
+  },
+  {
+    name: "DATA_GOUV_TOKEN",
+    purpose:
+      "data.gouv.fr API key of the dataset's owner; the api stops at boot if the URL is set without it.",
+    required: "DATA_GOUV_URL",
+    secret: true,
+  },
+  {
+    name: "DATA_GOUV_CRON",
+    purpose: "Cron pattern (Europe/Paris) of the data.gouv.fr export job.",
+    default: "0 3 1 * *",
+  },
+  {
     name: "PORTAINER_URL",
     purpose: "Base URL of the Portainer the stack is deployed on.",
     required: true,
