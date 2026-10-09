@@ -75,6 +75,7 @@ const FIELD_TAB: Record<keyof SampleDraft | "attachments", SampleFormTab> = {
   collectionMethodDescription: "identity",
   processSteps: "identity",
   manualGroupIds: "identity",
+  childIds: "identity",
   materialPath: "classification",
   texture: "classification",
   metamorphicFacies: "classification",

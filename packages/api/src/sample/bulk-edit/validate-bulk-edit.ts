@@ -6,20 +6,26 @@ import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
+import { canBecomeSeries } from "@projet-igsn/domain/sample/type/can-become-series";
+import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
 
 import type { ParsedRows } from "../import-template/read-rows.ts";
 import type { TemplateLayout } from "../import-template/template-layout.ts";
 
 import { queueBuild } from "../import-template/build-queue.ts";
 import {
+  CHILDREN_IGSNS_HEADER,
   type Column,
   plainHeader,
+  SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
   SHEETS,
 } from "../import-template/columns.ts";
 import { openWorkbook } from "../import-template/open-workbook.ts";
 import { readRows, textOf } from "../import-template/read-rows.ts";
 import { reportProcessStepsWithoutParent } from "../import-template/report-process-steps-without-parent.ts";
+import { type SeriesChildCandidates } from "../import-template/resolve-import-children.ts";
+import { igsnsInCell } from "../import-template/resolve-import-parents.ts";
 import { templateLayout } from "../import-template/template-layout.ts";
 import {
   byPosition,
@@ -69,6 +75,10 @@ const rowIssue = (
   code: ImportIssueCode,
   column = SAMPLE_KEY_HEADER,
 ): ImportIssue => ({ sheet: SHEETS.samples, row, column, code });
+
+const SAMPLE_TYPE_HEADER = plainHeader(
+  SAMPLE_COLUMNS.find(({ path, level }) => path === "type" && level === 1)!,
+);
 
 const textOfCell = (value: StoredCell | undefined) =>
   value === null || value === undefined ? undefined : String(value);
@@ -155,6 +165,7 @@ async function validateMatched(
   parsed: ParsedRows,
   matched: readonly Matched[],
   layout: TemplateLayout,
+  childCandidates: SeriesChildCandidates,
 ) {
   const present = new Set(layout[0]?.columns.map(plainHeader));
   const presentSheets = new Set(layout.map(({ name }) => name));
@@ -162,13 +173,11 @@ async function validateMatched(
   const parentless = matched
     .filter(({ sample }) => sample.parents.length === 0)
     .flatMap(({ row }) => reportProcessStepsWithoutParent(row));
+  const rows = matched.map((match) =>
+    withStoredCells(match, present, presentSheets),
+  );
   const validated = await validateRows(
-    {
-      samples: matched.map((match) =>
-        withStoredCells(match, present, presentSheets),
-      ),
-      orphans: parsed.orphans,
-    },
+    { samples: rows, orphans: parsed.orphans },
     {},
     [],
     NO_PARENTS,
@@ -185,9 +194,25 @@ async function validateMatched(
         ),
       };
     },
+    {
+      ...childCandidates,
+      of: (index) => ({
+        igsns: igsnsInCell(rows[index]!.cells[CHILDREN_IGSNS_HEADER]),
+        series: matched[index]!.sample,
+      }),
+    },
   );
+  const isEveryRowValid = validated.samples.length === matched.length;
+  const seriesInLineage = isEveryRowValid
+    ? validated.samples.flatMap(({ input }, index) => {
+        const { row, sample } = matched[index]!;
+        return isVirtualSample(input.type) && !canBecomeSeries(sample)
+          ? [rowIssue(row, "series_in_lineage", SAMPLE_TYPE_HEADER)]
+          : [];
+      })
+    : [];
   return {
-    issues: [...frozen, ...parentless, ...validated.issues],
+    issues: [...frozen, ...parentless, ...seriesInLineage, ...validated.issues],
     samples: validated.samples.map(({ input }, index) => ({
       id: matched[index]!.sample.id,
       input,
@@ -199,6 +224,7 @@ async function validateMatched(
 export function validateBulkEdit(
   bytes: ArrayBuffer,
   targets: Targets,
+  childCandidates: SeriesChildCandidates,
 ): Promise<{
   issues: ImportIssue[];
   samples: { id: string; input: CreateSample; updatedAt: Date }[];
@@ -218,7 +244,12 @@ export function validateBulkEdit(
     if (parsed.samples.length > MAX_IMPORT_ROWS)
       return rejected([{ sheet: SHEETS.samples, code: "too_many_rows" }]);
     const matching = await matchRows(parsed, targets);
-    const validated = await validateMatched(parsed, matching.matched, layout);
+    const validated = await validateMatched(
+      parsed,
+      matching.matched,
+      layout,
+      childCandidates,
+    );
     const found = [...matching.issues, ...validated.issues];
     return found.length > 0
       ? rejected(

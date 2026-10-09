@@ -9,10 +9,12 @@ import { createDb } from "../src/db.ts";
 import { deleteOrphanLocations } from "../src/sample/service/delete-orphan-locations.ts";
 import { inheritParentLocation } from "../src/sample/service/inherit-parent-location.ts";
 import { replaceSampleAdditionalRoles } from "../src/sample/service/replace-sample-additional-roles.ts";
+import { replaceSampleChildren } from "../src/sample/service/replace-sample-children.ts";
 import { replaceSampleMineralClassifications } from "../src/sample/service/replace-sample-mineral-classifications.ts";
 import { replaceSampleProcessSteps } from "../src/sample/service/replace-sample-process-steps.ts";
 import {
   DEMO_ADDITIONAL_ROLES,
+  DEMO_CHILDREN,
   DEMO_MINERAL_CLASSIFICATIONS,
   DEMO_PARENTS,
   DEMO_PROCESS_STEPS,
@@ -80,6 +82,9 @@ const parentRows = Object.entries(DEMO_PARENTS).flatMap(([child, parents]) =>
 );
 if (parentRows.length > 0) {
   await db.insertInto("sample_parent").values(parentRows).execute();
+}
+for (const [series, children] of Object.entries(DEMO_CHILDREN)) {
+  await replaceSampleChildren(db, sampleId(series), children.map(sampleId));
 }
 // DEMO_PARENTS lists parents before their children, so each copy reads a settled location.
 for (const [child, parents] of Object.entries(DEMO_PARENTS)) {

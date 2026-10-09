@@ -49,6 +49,8 @@ const sample = (overrides: Partial<Sample>): Sample => ({
   owner: { name: "Curie", firstname: "Marie" },
   manualGroups: [],
   parents: [],
+  children: [],
+  hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,

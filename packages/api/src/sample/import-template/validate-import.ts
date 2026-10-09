@@ -34,6 +34,10 @@ import {
 import { reportProcessStepsWithoutParent } from "./report-process-steps-without-parent.ts";
 import { IMPORT_DEFAULTS } from "./required-columns.ts";
 import {
+  resolveImportChildren,
+  type SeriesChildrenSource,
+} from "./resolve-import-children.ts";
+import {
   INHERITED_PATHS,
   type ResolveParentsByIgsn,
   resolveImportParents,
@@ -161,6 +165,7 @@ export async function validateRows(
   prepare: (candidate: SampleCandidate, index: number) => SampleCandidate = (
     candidate,
   ) => candidate,
+  seriesChildren?: SeriesChildrenSource,
 ): Promise<ValidatedImport> {
   const built = buildSampleInputs(parsed, manualGroups);
   const parents = await resolveImportParents(
@@ -170,16 +175,20 @@ export async function validateRows(
     })),
     resolveParentsByIgsn,
   );
-  const reported = new Set([...built.issues, ...parents.issues].map(fieldOf));
+  const children = await resolveImportChildren(parents.samples, seriesChildren);
+  const reported = new Set(
+    [...built.issues, ...parents.issues, ...children.issues].map(fieldOf),
+  );
   const unresolved = new Set(parents.issues.map(({ row }) => row));
   const { issues, samples } = validateSamples(
-    parents.samples.map(prepare),
+    children.samples.map(prepare),
     providedFileNames,
   );
   return {
     issues: [
       ...built.issues,
       ...parents.issues,
+      ...children.issues,
       ...issues.filter(
         (issue) =>
           !reported.has(fieldOf(issue)) &&

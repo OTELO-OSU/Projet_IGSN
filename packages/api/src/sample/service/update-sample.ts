@@ -1,5 +1,6 @@
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 
+import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
 import { sql } from "kysely";
 
 import type { DB } from "../../db.ts";
@@ -11,6 +12,10 @@ import {
   additionalRolesOf,
   replaceSampleAdditionalRoles,
 } from "./replace-sample-additional-roles.ts";
+import {
+  ChildNotEligibleError,
+  replaceSampleChildren,
+} from "./replace-sample-children.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
 import { replaceSampleMineralClassifications } from "./replace-sample-mineral-classifications.ts";
 import { replaceSampleProcessSteps } from "./replace-sample-process-steps.ts";
@@ -23,6 +28,14 @@ export async function writeSample(
   id: string,
   input: CreateSample,
 ): Promise<boolean> {
+  if (isVirtualSample(input.type)) {
+    const membership = await db
+      .selectFrom("sample_series_membership")
+      .select("series_id")
+      .where("sample_id", "=", id)
+      .executeTakeFirst();
+    if (membership) throw new ChildNotEligibleError();
+  }
   const row = await db
     .updateTable("sample")
     .set({ ...sampleColumns(input), updated_at: sql`now()` })
@@ -43,6 +56,7 @@ export async function writeSample(
   if (input.manualGroupIds) {
     await replaceSampleManualGroups(db, id, input.manualGroupIds);
   }
+  await replaceSampleChildren(db, id, input.childIds ?? []);
   return true;
 }
 

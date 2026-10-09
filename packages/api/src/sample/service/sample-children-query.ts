@@ -93,6 +93,33 @@ export function sampleParentsQuery(eb: ExpressionBuilder<DB, "sample">) {
   ).as("parents");
 }
 
+export function sampleHasSubSamplesQuery(eb: ExpressionBuilder<DB, "sample">) {
+  return eb
+    .exists(
+      eb
+        .selectFrom("sample_parent")
+        .select("sample_parent.sample_id")
+        .whereRef("sample_parent.parent_id", "=", "sample.id"),
+    )
+    .$castTo<boolean>()
+    .as("hasSubSamples");
+}
+
+export function sampleChildrenQuery(eb: ExpressionBuilder<DB, "sample">) {
+  return jsonArrayFrom(
+    eb
+      .selectFrom("sample_series_membership")
+      .innerJoin(
+        "sample as child",
+        "child.id",
+        "sample_series_membership.sample_id",
+      )
+      .select(["child.id", "child.igsn", "child.name", "child.material"])
+      .whereRef("sample_series_membership.series_id", "=", "sample.id")
+      .orderBy("child.name"),
+  ).as("children");
+}
+
 const personAccount = (
   eb: ExpressionBuilder<DB, "sample">,
   column:

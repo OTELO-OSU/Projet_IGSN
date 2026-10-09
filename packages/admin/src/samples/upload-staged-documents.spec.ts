@@ -166,6 +166,15 @@ describe("uploadStagedDocuments", () => {
     });
     const tus = fakeTus({ patch: () => 500 });
     const patches = () => tus.requests.filter((r) => r.startsWith("PATCH"));
+    const retryScheduled = (attempt: number) =>
+      new Promise<void>((resolve) => {
+        const poll = setInterval(() => {
+          if (patches().length === attempt && vi.getTimerCount() === 1) {
+            clearInterval(poll);
+            resolve();
+          }
+        }, 5);
+      });
 
     const failed = expect(
       uploadStagedDocuments(
@@ -179,7 +188,7 @@ describe("uploadStagedDocuments", () => {
       [2, 5_000],
       [3, UPLOAD_RATE_WINDOW_SECONDS * 1_000],
     ] as const) {
-      await vi.waitFor(() => expect(patches()).toHaveLength(attempt));
+      await retryScheduled(attempt);
       await vi.advanceTimersByTimeAsync(delayMs - 1);
       expect(patches()).toHaveLength(attempt);
       await vi.advanceTimersByTimeAsync(1);

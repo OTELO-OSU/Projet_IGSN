@@ -14,7 +14,7 @@ import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
-import { SamplePicker } from "#/samples/sample-picker.tsx";
+import { sampleLabel, SamplePicker } from "#/samples/sample-picker.tsx";
 
 export function SecondParentDialog({
   firstParent,
@@ -41,7 +41,7 @@ export function SecondParentDialog({
           <Input
             id="second-parent-first"
             disabled
-            value={`${firstParent.name} (${firstParent.igsn})`}
+            value={sampleLabel(firstParent)}
           />
         </div>
         <div className="grid gap-2">

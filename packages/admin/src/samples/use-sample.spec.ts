@@ -63,3 +63,23 @@ it("should keep offering a group the owner has left while the sample is in it", 
   expect(parsed?.manualGroupOptions).toEqual([BASALT, LEFT_BEHIND]);
   expect(parsed?.manualGroupIds).toEqual([LEFT_BEHIND.id]);
 });
+
+it("should open a series on the ids of its stored children", async () => {
+  const child = {
+    id: "3f2504e0-4f89-41d3-9a0c-0305e82c3321",
+    igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
+    name: "Core A",
+    material: null,
+  };
+
+  const parsed = await parseSampleResponse(
+    Response.json({
+      data: { ...sample, type: "serie_of_sample.core", children: [child] },
+      role: "owner",
+      managed: false,
+      manualGroupOptions: [],
+    }),
+  );
+
+  expect(parsed?.childIds).toEqual([child.id]);
+});

@@ -27,6 +27,8 @@ import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
   sampleAdditionalRolesQuery,
   sampleAttachmentsQuery,
+  sampleChildrenQuery,
+  sampleHasSubSamplesQuery,
   sampleLocationQuery,
   sampleManualGroupsQuery,
   sampleMineralClassificationsQuery,
@@ -172,6 +174,8 @@ async function listSamplesWhere(
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)
       .select(sampleParentsQuery)
+      .select(sampleChildrenQuery)
+      .select(sampleHasSubSamplesQuery)
       .select(samplePersonAccountsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
       .$if(sort === "status", (qb) =>

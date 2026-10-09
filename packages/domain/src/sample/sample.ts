@@ -54,6 +54,7 @@ import {
   syntheticDetailsSchema,
 } from "./synthetic-details/model.ts";
 import { textureSchema, texturesFor } from "./texture/vocabulary.ts";
+import { isVirtualSample } from "./type/is-virtual-sample.ts";
 import { sampleTypeSchema } from "./type/vocabulary.ts";
 
 export const nameSchema = z.string().trim().min(1);
@@ -119,6 +120,8 @@ export const sampleSchema = z.object({
     .default(null),
   manualGroups: z.array(manualGroupSchema).default([]),
   parents: z.array(sampleParentSchema).default([]),
+  children: z.array(sampleParentSchema).default([]),
+  hasSubSamples: z.boolean().default(false),
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
   status: sampleStatusSchema,
@@ -168,6 +171,7 @@ const createSampleFieldsSchema = z.strictObject({
   mineralClassifications: z.array(mineralClassificationSchema).optional(),
   manualGroupIds: z.array(z.uuid()).optional(),
   parentIds: z.array(z.uuid()).max(MAX_SAMPLE_PARENTS).optional(),
+  childIds: z.array(z.uuid()).optional(),
 });
 
 type SampleCheck = Omit<
@@ -265,6 +269,30 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
       code: "custom",
       path: ["material"],
       message: "a sample with two parents must be synthetic",
+    });
+  }
+  if (
+    value.childIds != null &&
+    new Set(value.childIds).size !== value.childIds.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["childIds"],
+      message: "a child is listed twice",
+    });
+  }
+  if ((value.childIds?.length ?? 0) > 0 && !isVirtualSample(value.type)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["childIds"],
+      message: "only a series of samples carries children",
+    });
+  }
+  if ((value.parentIds?.length ?? 0) > 0 && isVirtualSample(value.type)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["type"],
+      message: "a series of samples has no parent",
     });
   }
   const rows = value.mineralClassifications ?? [];

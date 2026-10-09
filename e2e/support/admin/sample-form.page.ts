@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { pickHierarchyLevel } from "../pick-hierarchy.ts";
 import { frontendUrl } from "../urls.ts";
+import { pickComboboxOption } from "./pick-combobox-option.ts";
 
 const SYNTHETIC_MATERIAL = "Synthetic rock / mineral";
 
@@ -130,6 +131,13 @@ export function sampleFormPage(page: Page) {
     },
 
     pickType: (label: string) => pickHierarchy("Type", label),
+    attachChild: ({ name, igsn }: { name: string; igsn: string }) =>
+      pickComboboxOption(page, {
+        field: "Add a sample",
+        option: new RegExp(`^${name}`),
+        query: name,
+        chipLabel: `Detach ${name} (${igsn})`,
+      }),
     expectCompleteTypeWithoutRepeatedLevel: async (label: string) => {
       await expect(
         page.getByRole("option", { name: "Stop here", exact: true }),
@@ -150,7 +158,7 @@ export function sampleFormPage(page: Page) {
       material = SYNTHETIC_MATERIAL,
       collectionDate = true,
     }: {
-      type?: string;
+      type?: string | string[];
       material?: string | string[] | null;
       collectionDate?: boolean;
     } = {}) => {

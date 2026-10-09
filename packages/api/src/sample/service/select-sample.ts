@@ -4,6 +4,8 @@ import { type Transactional } from "../../transaction.ts";
 import {
   sampleAdditionalRolesQuery,
   sampleAttachmentsQuery,
+  sampleChildrenQuery,
+  sampleHasSubSamplesQuery,
   sampleLocationQuery,
   sampleManualGroupsQuery,
   sampleMineralClassificationsQuery,
@@ -26,5 +28,7 @@ export const selectSample = (db: Transactional<DB>) =>
     .select(sampleAttachmentsQuery)
     .select(sampleManualGroupsQuery)
     .select(sampleParentsQuery)
+    .select(sampleChildrenQuery)
+    .select(sampleHasSubSamplesQuery)
     .select(sampleOwnerQuery)
     .select(samplePersonAccountsQuery);

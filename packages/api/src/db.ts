@@ -276,6 +276,11 @@ type SampleParentTable = {
   parent_id: string;
 };
 
+type SampleSeriesMembershipTable = {
+  sample_id: string;
+  series_id: string;
+};
+
 type UserManagedInstitutionalGroupTable = {
   user_id: string;
   kind: InstitutionalGroupKind;
@@ -338,6 +343,7 @@ export type DB = {
   sample: SampleTable;
   sample_manual_group: SampleManualGroupTable;
   sample_parent: SampleParentTable;
+  sample_series_membership: SampleSeriesMembershipTable;
   sample_relation: SampleRelationTable;
   sample_process_step: SampleProcessStepTable;
   sample_additional_role: SampleAdditionalRoleTable;

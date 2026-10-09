@@ -21,15 +21,20 @@ import {
   createSampleSchema,
   updateSampleSchema,
 } from "@projet-igsn/domain/sample/sample";
+import { canBecomeSeries } from "@projet-igsn/domain/sample/type/can-become-series";
+import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
+import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 
 import { uploadLimit } from "../sample/upload-limit.ts";
 import {
-  type ResolvedParent,
+  childIssues,
+  type ResolvedRelated,
   createServiceSampleIssues,
   processStepsOnRootIssue,
 } from "./create-service-sample-issues.ts";
 import {
+  coreSampleIssue,
   frozenFieldIssues,
   publishBlockerIssues,
   serviceSampleIssue,
@@ -39,7 +44,10 @@ import {
 export type ServiceSampleChecksDeps = {
   samples: Pick<
     SampleRepository,
-    "getPublicByIgsn" | "isModerated" | "findDuplicates"
+    | "listPublishedByIgsns"
+    | "listPublicSeriesLinkCandidatesByIgsns"
+    | "isModerated"
+    | "findDuplicates"
   >;
   manualGroups: Pick<ManualGroupRepository, "listAttachableForUser">;
 };
@@ -65,49 +73,74 @@ const refusedUpdate = (
   issues: ServiceSampleIssue[],
 ) => ({ refusal, issues });
 
-export async function findPublished(
+export const findPublished = async (
   samples: ServiceSampleChecksDeps["samples"],
   igsn: Igsn,
-): Promise<Sample | null> {
-  const sample = await samples.getPublicByIgsn(igsn);
-  return sample?.status === "published" ? sample : null;
-}
+): Promise<Sample | null> =>
+  (await samples.listPublishedByIgsns([igsn])).get(igsn) ?? null;
 
-const findPublishedByIgsn = (
-  samples: ServiceSampleChecksDeps["samples"],
-  igsn: string,
-) => {
-  const parsed = igsnSchema.safeParse(igsn);
-  return parsed.success ? findPublished(samples, parsed.data) : null;
+const resolveRelated = async <T>(
+  listByIgsns: (igsns: string[]) => Promise<ReadonlyMap<string, T>>,
+  related: readonly { igsn: string; relationIndex: number }[],
+): Promise<ResolvedRelated<T>[]> => {
+  const igsns = related.map(({ igsn }) => igsnSchema.safeParse(igsn).data);
+  const found = await listByIgsns(igsns.filter((igsn) => igsn !== undefined));
+  return related.map(({ relationIndex }, index) => ({
+    relationIndex,
+    sample: found.get(igsns[index] ?? "") ?? null,
+  }));
 };
+
+const listDeclarableParents =
+  (samples: ServiceSampleChecksDeps["samples"]) =>
+  async (igsns: string[]): Promise<ReadonlyMap<string, Sample>> =>
+    new Map(
+      [...(await samples.listPublishedByIgsns(igsns))].filter(([, parent]) =>
+        canDeclareSubSample(parent, { role: null, managed: false }),
+      ),
+    );
+
+const accountChildCandidates =
+  (samples: ServiceSampleChecksDeps["samples"], account: ServiceAccount) =>
+  (igsns: string[]) =>
+    samples.listPublicSeriesLinkCandidatesByIgsns(
+      igsns,
+      null,
+      managerScope(account.id, account.managedGroups),
+    );
+
+const resolvedIds = (
+  resolved: readonly ResolvedRelated<{ id: string }>[],
+): string[] =>
+  resolved.flatMap(({ sample }) => (sample === null ? [] : [sample.id]));
 
 export async function checkServiceCreate(
   { samples, manualGroups }: ServiceSampleChecksDeps,
-  ownerId: string,
+  account: ServiceAccount,
   body: CoreSampleBody,
 ): Promise<Checked<CheckedCreate>> {
-  const { sample, parents } = fromCoreSample(body);
-  const resolved: ResolvedParent[] = await Promise.all(
-    parents.map(async ({ igsn, relationIndex }) => ({
-      relationIndex,
-      sample: await findPublishedByIgsn(samples, igsn),
-    })),
-  );
+  const { sample, parents, children } = fromCoreSample(body);
+  const [resolved, resolvedChildren] = await Promise.all([
+    resolveRelated(listDeclarableParents(samples), parents),
+    resolveRelated(accountChildCandidates(samples, account), children),
+  ]);
   const parsed = createSampleSchema.safeParse({
     ...sample,
-    parentIds: resolved
-      .map(({ sample: parent }) => parent?.id)
-      .filter((id) => id != null),
+    parentIds: resolvedIds(resolved),
+    childIds: resolvedIds(resolvedChildren),
   });
   if (!parsed.success) {
     return refused(...zodIssues(parsed.error));
   }
-  const issues = await createServiceSampleIssues(
-    { manualGroups },
-    ownerId,
-    parsed.data,
-    resolved,
-  );
+  const issues = [
+    ...childIssues(resolvedChildren),
+    ...(await createServiceSampleIssues(
+      { manualGroups },
+      account.sampleOwner.id,
+      parsed.data,
+      resolved,
+    )),
+  ];
   if (issues.length > 0) {
     return refused(...issues);
   }
@@ -143,7 +176,7 @@ export async function checkServiceUpdate(
       serviceSampleIssue("sample_not_editable", SAMPLE_KEY_PATH),
     ]);
   }
-  const { sample, parents } = fromCoreSample(body);
+  const { sample, parents, children } = fromCoreSample(body);
   const stored = new Set(current.parents.map(({ igsn }) => igsn));
   const changed = parents.findIndex(
     ({ igsn }) => !stored.has(igsnSchema.parse(igsn)),
@@ -156,8 +189,19 @@ export async function checkServiceUpdate(
       ]),
     ]);
   }
+  const held = new Map(current.children.map(({ id, igsn }) => [igsn, id]));
+  const heldIdOf = ({ igsn }: { igsn: string }) =>
+    held.get(igsnSchema.safeParse(igsn).data ?? "");
+  const resolvedChildren = await resolveRelated(
+    accountChildCandidates(samples, account),
+    children.filter((child) => heldIdOf(child) === undefined),
+  );
   const parsed = updateSampleSchema.safeParse({
     ...keepContactLinks(sample, current),
+    childIds: [
+      ...children.flatMap((child) => heldIdOf(child) ?? []),
+      ...resolvedIds(resolvedChildren),
+    ],
     // Core has no slot for the local id description nor the archive contact email, so a round trip keeps the stored ones.
     localIdDescription:
       sample.localId == null ? null : current.localIdDescription,
@@ -174,6 +218,19 @@ export async function checkServiceUpdate(
   const frozen = frozenFieldEdits(parsed.data, merged);
   if (frozen.length > 0) {
     return refusedUpdate("frozen", frozenFieldIssues(frozen));
+  }
+  const ineligible = childIssues(resolvedChildren, current.id);
+  if (ineligible.length > 0) {
+    return refusedUpdate("invalid", ineligible);
+  }
+  if (isVirtualSample(merged.type) && !canBecomeSeries(current)) {
+    return refusedUpdate("invalid", [
+      coreSampleIssue(
+        "custom",
+        ["type"],
+        "a series of samples has no parent nor sub-sample",
+      ),
+    ]);
   }
   const blockers = newPublishBlockers(current, merged, uploadLimit);
   if (blockers.length > 0) {

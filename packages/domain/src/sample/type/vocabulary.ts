@@ -28,7 +28,16 @@ const typeTree = {
     ],
   },
   dredge: { searchable: true },
-  serie_of_sample: { searchable: true },
+  serie_of_sample: {
+    searchable: true,
+    choices: ["core", "dredge", "individual_sample"],
+  },
+  "serie_of_sample.core": { searchable: true, label: "core" },
+  "serie_of_sample.dredge": { searchable: true, label: "dredge" },
+  "serie_of_sample.individual_sample": {
+    searchable: true,
+    label: "individual_sample",
+  },
   inapplicable: { searchable: true },
   individual_sample: { searchable: true },
   half_round: { searchable: true },

@@ -9,21 +9,11 @@ import {
   toPublishableFields,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
-import { isSampleTypeComplete } from "@projet-igsn/domain/sample/type/is-complete";
-import { SAMPLE_TYPES } from "@projet-igsn/domain/sample/type/vocabulary";
 
 import type { Column } from "./columns.ts";
 
 import { SAMPLE_COLUMNS, TEMPLATE_MATERIAL_PATHS } from "./columns.ts";
 import { CONDITIONAL_FIELDS, conditionOf } from "./conditional-fields.ts";
-
-const HIERARCHIES: Record<
-  string,
-  { paths: readonly string[]; isComplete: (path: string) => boolean }
-> = {
-  material: { paths: TEMPLATE_MATERIAL_PATHS, isComplete: isMaterialComplete },
-  type: { paths: SAMPLE_TYPES, isComplete: isSampleTypeComplete },
-};
 
 const REQUIRED_PATHS = [
   ...(createSampleSchema.safeParse({}).error?.issues ?? []).map(
@@ -38,20 +28,24 @@ const GOVERNED_PATHS = CONDITIONAL_FIELDS.flatMap((field) =>
   conditionOf(field) === undefined ? [] : field.paths,
 );
 
-function publishFrontier(path: string): number {
-  const hierarchy = HIERARCHIES[path];
-  if (hierarchy === undefined)
-    throw new Error(`No completeness known for the hierarchy ${path}`);
-  const { paths, isComplete } = hierarchy;
-  return Math.max(
-    ...paths
-      .filter(
-        (candidate) =>
-          isComplete(candidate) &&
-          (!candidate.includes(".") || !isComplete(parentPath(candidate))),
-      )
-      .map((candidate) => candidate.split(".").length),
-  );
+const MATERIAL_PUBLISH_FRONTIER = Math.max(
+  ...TEMPLATE_MATERIAL_PATHS.filter(
+    (candidate) =>
+      isMaterialComplete(candidate) &&
+      (!candidate.includes(".") || !isMaterialComplete(parentPath(candidate))),
+  ).map((candidate) => candidate.split(".").length),
+);
+
+const REQUIRED_LEVELS: Readonly<Record<string, number>> = {
+  material: MATERIAL_PUBLISH_FRONTIER,
+  type: 1,
+};
+
+function requiredLevel(path: string): number {
+  const level = REQUIRED_LEVELS[path];
+  if (level === undefined)
+    throw new Error(`No required level known for the hierarchy ${path}`);
+  return level;
 }
 
 export const IMPORT_DEFAULTS: Readonly<Record<string, string>> = {
@@ -64,7 +58,7 @@ const isRequired = ({ path, level }: Column) =>
   !(path in IMPORT_DEFAULTS) &&
   REQUIRED_PATHS.some((required) => isPathAtOrUnder(path, required)) &&
   !GOVERNED_PATHS.some((governed) => isPathAtOrUnder(path, governed)) &&
-  (level === undefined || level <= publishFrontier(path));
+  (level === undefined || level <= requiredLevel(path));
 
 export const REQUIRED_SAMPLE_COLUMNS: readonly Column[] =
   SAMPLE_COLUMNS.filter(isRequired);

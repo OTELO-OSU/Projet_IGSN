@@ -3,10 +3,9 @@ import type { Kysely } from "kysely";
 
 import type { DB } from "../db.ts";
 
-import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
 import { setSampleStatus } from "../sample/service/set-sample-status.ts";
-import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
+import { insertOwned } from "./insert-owned.ts";
 import { publishableSample } from "./sample-fixtures.ts";
 
 const EMBARGO_PUBLICATION_DATE = "2099-01-01";
@@ -17,8 +16,7 @@ export async function insertParent(
   status: Sample["status"] = "published",
   name: string = publishableSample.name,
 ): Promise<Sample> {
-  const created = await insertSample(db, { ...publishableSample, name });
-  await insertSampleOwner(db, created.id, ownerId);
+  const created = await insertOwned(db, ownerId, { name }, false);
   if (status === "draft") return created;
   if (status === "publishing" || status === "publish_failed") {
     await db

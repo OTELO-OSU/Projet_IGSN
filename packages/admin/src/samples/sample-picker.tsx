@@ -5,6 +5,16 @@ import { useSearchEligibleParents } from "#/samples/use-search-eligible-parents.
 import { SearchPicker } from "#/search-picker/search-picker.tsx";
 import { usePicker } from "#/search-picker/use-picker.ts";
 
+export const sampleLabel = (sample: SampleParent) =>
+  `${sample.name} (${sample.igsn})`;
+
+export const samplePickerLabels = () => ({
+  labelOf: (sample: SampleParent) => sample.name,
+  valueLabel: sampleLabel,
+  detailOf: (sample: SampleParent) => sample.igsn,
+  suggestionsLabel: m.second_parent_suggestions_label(),
+});
+
 export function SamplePicker({
   onChange,
   exclude,
@@ -24,14 +34,11 @@ export function SamplePicker({
   return (
     <SearchPicker
       {...props}
+      {...samplePickerLabels()}
       picker={picker}
       found={found}
       onChange={onChange}
-      labelOf={(sample) => sample.name}
-      valueLabel={(sample) => `${sample.name} (${sample.igsn})`}
-      detailOf={(sample) => sample.igsn}
       searchPlaceholder={m.second_parent_search_placeholder()}
-      suggestionsLabel={m.second_parent_suggestions_label()}
       emptyText={m.second_parent_empty()}
     />
   );

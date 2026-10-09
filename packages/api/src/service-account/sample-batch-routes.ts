@@ -27,6 +27,10 @@ import { checkDataCite } from "../datacite/check-datacite.ts";
 import { dataCiteConfig } from "../datacite/config.ts";
 import { webhookTarget } from "../sample-batch/public-host.ts";
 import {
+  catchChildNotEligible,
+  ChildNotEligibleError,
+} from "../sample/service/replace-sample-children.ts";
+import {
   createSampleBatchRoute,
   getSampleBatchRoute,
 } from "./service-route-definitions.ts";
@@ -100,11 +104,7 @@ async function checkItem(
 ): Promise<Checked<CheckedItem>> {
   const igsn = sample.identification.sampleIdentifier;
   if (igsn === undefined) {
-    const checked = await checkServiceCreate(
-      deps,
-      account.sampleOwner.id,
-      sample,
-    );
+    const checked = await checkServiceCreate(deps, account, sample);
     if ("issues" in checked) return checked;
     const { input } = checked.value;
     const criteria = toDuplicateCriteria(input);
@@ -234,13 +234,18 @@ export function registerSampleBatchRoutes(
       if (!(await checkDataCite(dataCiteConfig()))) {
         return c.json({ error: "DataCite unavailable" }, 503);
       }
-      const batch = await deps.sampleBatches.create({
-        serviceAccountId: account.id,
-        ownerId: account.sampleOwner.id,
-        groups: account,
-        items: checked.map(({ write }) => write),
-        webhook,
-      });
+      const batch = await catchChildNotEligible(
+        deps.sampleBatches.create({
+          serviceAccountId: account.id,
+          ownerId: account.sampleOwner.id,
+          groups: account,
+          items: checked.map(({ write }) => write),
+          webhook,
+        }),
+      );
+      if (batch instanceof ChildNotEligibleError) {
+        return invalidSample(c, [serviceSampleIssue("child_not_eligible", [])]);
+      }
       return c.json(batch, 202);
     })
     .openapi(

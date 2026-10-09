@@ -88,13 +88,19 @@ async function exported(samples: Sample[]): Promise<ExcelJS.Workbook> {
 
 async function validated(book: ExcelJS.Workbook, samples: Sample[]) {
   const bytes = new Uint8Array(await book.xlsx.writeBuffer()).buffer;
-  return validateBulkEdit(bytes, async (numbers) => {
-    const found = samples.filter(
-      ({ internalNumber }) =>
-        internalNumber !== null && numbers.includes(internalNumber),
-    );
-    return new Map(found.map((sample) => [sample.internalNumber!, { sample }]));
-  });
+  return validateBulkEdit(
+    bytes,
+    async (numbers) => {
+      const found = samples.filter(
+        ({ internalNumber }) =>
+          internalNumber !== null && numbers.includes(internalNumber),
+      );
+      return new Map(
+        found.map((sample) => [sample.internalNumber!, { sample }]),
+      );
+    },
+    { resolve: async () => new Map(), canEdit: () => false },
+  );
 }
 
 const issue = (column: string, code: string, sheet: string = SHEETS.samples) =>

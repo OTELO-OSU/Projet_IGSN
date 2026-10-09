@@ -328,6 +328,8 @@ function EditSamplePage() {
         defaultValues={query.data}
         manualGroupOptions={query.data.manualGroupOptions}
         parents={query.data.parents}
+        storedChildren={query.data.children}
+        hasSubSamples={query.data.hasSubSamples}
         fieldSuggestions={
           parents.length > 1 ? parentFieldSuggestions(parents) : undefined
         }

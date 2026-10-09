@@ -3,6 +3,13 @@ import type { Sample } from "../sample.ts";
 import { publicSampleResponseSchema } from "../sample-validator.ts";
 import { toWithdrawnSample } from "./withdrawn-sample.ts";
 
+const MEMBER = {
+  id: "6b2d3c4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e",
+  igsn: "CNRS1234567892",
+  name: "Rhyolite 12",
+  material: "rock_and_sediment.rock.other",
+};
+
 const withdrawn: Sample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Rhyolite 11",
@@ -62,6 +69,8 @@ const withdrawn: Sample = {
   owner: { name: "Martin", firstname: "Jean" },
   manualGroups: [],
   parents: [],
+  children: [],
+  hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,
@@ -89,6 +98,7 @@ describe("toWithdrawnSample", () => {
         },
         collectorFirstname: "Claire",
         collectorLastname: "Martin",
+        children: [],
       });
     },
   );
@@ -98,6 +108,16 @@ describe("toWithdrawnSample", () => {
     expect(publicSampleResponseSchema.parse({ data: view })).toEqual({
       data: view,
     });
+  });
+
+  it("should keep the members of a withdrawn series of samples", () => {
+    expect(
+      toWithdrawnSample({
+        ...withdrawn,
+        type: "serie_of_sample.dredge",
+        children: [MEMBER],
+      }),
+    ).toMatchObject({ children: [MEMBER] });
   });
 
   it("should report no collector nor location when the sample has none", () => {
