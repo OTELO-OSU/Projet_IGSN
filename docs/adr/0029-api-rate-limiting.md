@@ -34,7 +34,7 @@ Two costly-to-reverse decisions: counter storage, and how the api learns the rea
 
 Drop step 2 and the api never sees a real IP; drop 3 and SSR views bill the frontend container; drop 4 and every visitor shares one bucket.
 
-Originally preprod sat behind Cloudflare and trusted `0.0.0.0/0`, sound only while the security group admitted Cloudflare alone. Preprod and prod now run on Portainer with no Cloudflare, see [ADR 0002](0002-deploy-on-portainer-from-gitlab.md).
+Originally preprod sat behind Cloudflare and trusted `0.0.0.0/0`, sound only while the security group admitted Cloudflare alone. Preprod and prod now run on Portainer with no Cloudflare, see [ADR 0002](0002-deploy-on-portainer-from-github.md).
 
 ## Trust dependencies and known limits
 

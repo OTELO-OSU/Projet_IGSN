@@ -57,7 +57,7 @@ okf_version: "0.2"
 # infrastructure
 
 - [API rate limiting](rate-limiting.md) - In-process counters, one limiter per mount, keyed on the edge-forwarded client IP for public reads and on the JWT sub for admin.
-- [Preprod and prod on Portainer from GitLab CI](preprod-infrastructure.md) - One infra/stack/ deployed twice on a shared Portainer, GitLab CI building the images and updating each stack through the Portainer API, Caddy on plain HTTP behind the infra team's TLS proxy.
+- [Preprod and prod on Portainer from GitHub Actions](preprod-infrastructure.md) - One infra/stack/ deployed twice on a shared Portainer, GitHub Actions pushing the images to GHCR and updating each stack through the Portainer API over the infra team's VPN, Caddy on plain HTTP behind the infra team's TLS proxy.
 - [Single origin, path-routed apps](single-origin-routing.md) - Frontend, admin and api share one origin behind Caddy, the admin at /admin and the api at /api, in dev, e2e and the deployed stacks alike; only Caddy knows the topology.
 
 # persistence

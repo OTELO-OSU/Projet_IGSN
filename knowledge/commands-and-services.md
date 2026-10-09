@@ -29,7 +29,7 @@ Stack commands:
 - `make dev` runs the stack via `docker-compose.dev.yml` (watch plus build).
 - `make test-e2e` stands up a throwaway prod stack, runs the Playwright e2e, and tears it down.
 - `make db-seed-demo` re-seeds the demo data; `make db-import-legacy` loads the legacy dump into a throwaway database and imports it ([[legacy-import]]).
-- Deploys run from GitLab CI, not from a make target; `make env-docs` regenerates the deploy variables doc ([[preprod-infrastructure]]).
+- Deploys run from GitHub Actions, not from a make target; `make env-docs` regenerates the deploy variables doc ([[preprod-infrastructure]]).
 
 Dev services: one origin, http://localhost:3000, with `frontend` at `/`, `admin` at `/admin` and `api` at `/api` ([[single-origin-routing]]); `keycloak` http://localhost:8080; `maildev` UI http://localhost:1080.
 

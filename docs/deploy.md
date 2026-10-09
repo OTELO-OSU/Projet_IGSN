@@ -2,11 +2,9 @@
 
 ## Overview
 
-- One stack definition, `infra/stack/`, is deployed twice on one shared Portainer, as the stacks of the GitLab environments `preproduction` and `production`.
-- GitLab CI (`.gitlab-ci.yml`) builds the api, admin, frontend and caddy images and pushes them to the GitLab Container Registry.
-- It then updates the Portainer stack through its API (`infra/scripts/deploy-portainer.sh`).
-- The GitHub repo stays the development home (PRs, `check.yml`).
-- `.github/workflows/mirror-pytheas.yml` mirrors `main` and `v*` tags to `gitlab.osupytheas.fr/insu/Projet_IGSN`.
+- One stack definition, `infra/stack/`, is deployed twice on one shared Portainer, as the stacks of the GitHub environments `preproduction` and `production`.
+- GitHub Actions (`.github/workflows/deploy.yml`) builds the api, admin, frontend and caddy images and pushes them to GHCR.
+- It then connects to the infra team's VPN with openfortivpn and updates the Portainer stack through its API (`infra/scripts/deploy-portainer.sh`).
 - Postgres runs in the stack on the `paradedb/paradedb` image, its data in the `paradedb-data` volume, never exposed off the host.
 - Attachments live in the `attachments` volume.
 - Auth uses the GaiaData SSO, the test SSO for preprod.
@@ -27,72 +25,67 @@
 ## What triggers a deploy
 
 - A push to `main` deploys to preproduction.
-- The "Deploy preprod" GitHub workflow (Actions > Deploy preprod > Run workflow, pick any branch) force-pushes that branch to the GitLab `preprod` branch, which deploys to preproduction.
+- **Actions > Deploy > Run workflow** on any branch deploys that branch to preproduction (or `gh workflow run deploy.yml --ref <branch>`).
+- GitHub offers that button only once `deploy.yml` is on `main`.
+- A manual run on a tag is skipped, so production deploys only from a pushed tag.
 - A `vX.Y.Z` tag (a GitHub release) deploys to production, only when it is the highest such tag.
 - An older `vX.Y.Z` tag builds its images, then skips the deploy and ends green.
 - Any other tag (`-rc`) runs nothing.
 - Images are tagged `preprod-<short sha>` and with the release tag.
-- Until Portainer is connected, the deploy job ends "passed with warnings" naming the missing variables, the images already pushed.
+- Until Portainer is connected, the run ends green with a warning naming the missing variables, the images already pushed.
 
-## GitLab setup
+## GitHub setup
 
-- Enable the Container Registry.
-- Provide a shell runner whose user can run docker.
-- Protect `main`, `preprod` and the `v*` tags.
-- Allow the mirror token's user (Maintainer) to force push on `main` and `preprod` and to create `v*` tags.
+- Create the environments `preproduction` and `production` (**Settings > Environments**).
+- Restrict `production`'s deployment branches and tags to the tags `v*`.
+- Leave `preproduction` unrestricted, or a manual run from a branch is refused.
+- Add a tag ruleset on `v*` (**Settings > Rules > Rulesets**) restricting creations, updates and deletions to maintainers, or any writer can deploy to production by pushing a tag.
 - Define the variables as the next section says.
-- Set the registry cleanup policy (see [Storage](#storage)).
+- After the first run, make the four `api`, `admin`, `frontend` and `caddy` packages public (package page > **Package settings** > **Change visibility**), so Portainer pulls them anonymously.
+- Delete the now unused `PYTHEAS_GITLAB_TOKEN` repository secret.
 
-## Defining the variables in GitLab
+## Defining the variables in GitHub
 
 [deploy-variables.md](deploy-variables.md) lists every variable, whether it is required, and whether it is a secret.
 
-- You need the Maintainer role on the GitLab project.
-- Open the project, then **Settings > CI/CD**, and expand **Variables**.
-- Select **Add variable** once per variable and environment.
-- **Key**: the name from the list, exactly.
+- Open **Settings > Environments**, then the environment.
+- Select **Add environment secret** for a row whose kind is `secret`, **Add environment variable** for a row whose kind is `variable`.
+- **Name**: the name from the list, exactly.
 - **Value**: the value for that environment, on one line.
-- **Type**: **Variable**.
-- **Environment scope**: `preproduction` or `production`, so each environment gets its own value.
-- A value identical in both environments can be added once with the scope **All (default)** (`*`) instead.
-- **Protect variable**: checked, so only pipelines on the protected `main`, `preprod` and `v*` refs see it.
-- Pipelines run only on those refs, so an unprotected ref gets no variable and its deploy stops on the missing ones.
-- **Visibility**: **Masked and hidden** for a row whose kind is `secret`, **Visible** otherwise.
-- GitLab refuses to mask a value that is too short or uses unsupported characters: regenerate such a secret rather than leaving it visible.
-- **Expand variable reference**: unchecked, so a `$` in a value reaches the stack as written.
-- Skip the `pipeline` rows: `.gitlab-ci.yml` sets them.
+- Set every value in each environment, none at repository level.
+- A variable is never masked and this public repo's run logs are public, so a `secret` row is never a variable.
+- Skip the `pipeline` rows: the workflow sets them.
 - An optional variable left out takes the default shown in the list.
-- A changed value takes effect on the next pipeline.
-- A value baked into a bundle (`DOMAIN`, `OIDC_*`, `UPLOAD_LIMIT`, `SAMPLE_LOCK_POLL_SECONDS`) needs a whole new pipeline, since re-running the deploy job alone keeps the old value in the bundle.
+- Every run rebuilds the bundles, so a changed value needs a new run only.
 
 ## Portainer setup
 
 Once per environment:
 
-- Add the GitLab registry with a deploy token holding `read_registry`, and record its expiry.
 - Create the stack in the target Portainer environment (Web editor, any placeholder compose).
 - Its id from the URL is `PORTAINER_STACK_ID`, and the environment id is `PORTAINER_ENDPOINT_ID`.
 - An access token of the deploy user is `PORTAINER_API_KEY`.
 - Give each stack its own `HTTP_PORT`.
-- Never edit the stack's env in Portainer: each deploy replaces the whole list from GitLab.
+- Never edit the stack's env in Portainer: each deploy replaces the whole list from GitHub.
+- The deploy reaches Portainer through the infra team's Fortinet VPN, so ask them for an account without OTP, set in the `VPN_*` variables.
+- `PORTAINER_URL` must be reachable through that tunnel.
 
 ## Deploying
 
-- The job checks the variables, then PUTs the compose file and env to the stack with `pullImage` and `prune`.
+- The job checks the variables, connects the VPN, then PUTs the compose file and env to the stack with `pullImage` and `prune`.
 - Portainer runs `migrate`, then the apps.
 - The job then smoke-tests `/`, `/api/` and `/admin/`.
-- A deploy of a branch already at the same commit pushes nothing, so re-run its last GitLab pipeline instead.
 - A branch carrying a migration leaves preprod's schema ahead of `main`.
 - Later `main` deploys then fail at `migrate` until that branch merges or the preprod database volume is reset.
 - `DATABASE_PASSWORD` is read by Postgres only when it creates its volume.
-- Changing it later in GitLab breaks the api until the role's password is changed too.
+- Changing it later in GitHub breaks the api until the role's password is changed too.
 
 ## Rolling back
 
 - Set `IMAGE_TAG` to the older tag in the Portainer stack and update it.
 - Do so only when no migration landed since, as the older `migrate` refuses a schema with migrations it does not know.
 - Otherwise roll forward or restore.
-- The next deploy restores GitLab's values.
+- The next deploy restores GitHub's values.
 
 ## First super admin
 
@@ -105,20 +98,12 @@ Once per environment:
 
 ## Storage
 
-Every preproduction deploy pushes four new `preprod-<short sha>` images, which pile up in the GitLab registry and on the Portainer host until something removes them.
+Every preproduction deploy pushes four new `preprod-<short sha>` images, which pile up in GHCR and on the Portainer host until something removes them.
 
-### GitLab registry cleanup policy
+### GHCR
 
-- Open the project, then **Settings > Packages and registries**, expand **Container registry**, and under **Container registry cleanup policies** select **Set cleanup rules**.
-- **Toggle**: on.
-- **Run cleanup**: every day.
-- **Keep the most recent**: 5 tags per image.
-- **Keep tags matching**: `v\d+\.\d+\.\d+`, so release images are never removed.
-- **Remove tags older than**: 14 days.
-- **Remove tags matching**: `preprod-.*`.
-- Select **Save**.
-- A tag is removed only when it matches the remove pattern, not the keep pattern, is not among the 5 most recent, and is older than 14 days.
-- The policy removes tags only: the GitLab instance admin frees the disk with the registry garbage collection, unless the registry runs online garbage collection.
+- GHCR keeps every `preprod-<short sha>` tag, free for public packages.
+- Delete old ones from the package page if needed.
 
 ### Portainer host
 
