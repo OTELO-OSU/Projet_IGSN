@@ -34,7 +34,7 @@ Accepted
 
 - One shared host, so prod and preprod share its fate.
 - No HA and no backup yet.
-- The edge (`HTTP_PORT`, `trusted_proxies`) is a knob to settle with the infra team.
+- The edge (`CLIENT_PORT`, `trusted_proxies`) is a knob to settle with the infra team.
 - Env edits made in Portainer are overwritten by the next deploy.
 - A migration blocks a rollback.
 - The deploy depends on a VPN account without OTP.

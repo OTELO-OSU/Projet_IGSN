@@ -15,11 +15,11 @@
 
 ## Edge
 
-- Caddy serves plain HTTP on `HTTP_PORT`, behind the infra team's TLS reverse proxy (still to be confirmed with them).
+- Caddy serves plain HTTP on `CLIENT_PORT`, the host port Portainer binds per stack, behind the infra team's TLS reverse proxy (still to be confirmed with them).
 - It path-routes `/api` (prefix stripped), `/admin`, and the rest to the frontend, and sets the security headers.
 - It trusts only private-range peers for the visitor IP (`trusted_proxies_strict`), so the api's rate limits key on the real client.
 - `TRUST_PROXY_HEADERS=true` on the api is mandatory, or every visitor shares one bucket; see [ADR 0029](adr/0029-api-rate-limiting.md).
-- `HTTP_PORT` must be reachable from the infra proxy only (host firewall).
+- `CLIENT_PORT` must be reachable from the infra proxy only (host firewall).
 - Otherwise Docker can forward a direct hit through its userland proxy (IPv6 for instance), which Caddy then sees as a private peer.
 - Caddy would then trust that hit's forged `X-Forwarded-For`, letting a client dodge the rate limits.
 
@@ -68,7 +68,6 @@ Once per environment:
 - Create the stack in the target Portainer environment (Web editor, any placeholder compose).
 - Its id from the URL is `PORTAINER_STACK_ID`, and the environment id is `PORTAINER_ENDPOINT_ID`.
 - An access token of the deploy user is `PORTAINER_API_KEY`.
-- Give each stack its own `HTTP_PORT`.
 - Never edit the stack's env in Portainer: each deploy replaces the whole list from GitHub.
 - The deploy reaches the registry and Portainer through the infra team's Fortinet VPN, so ask them for an account without OTP, set in the `VPN_*` variables.
 - `PORTAINER_URL` must be reachable through that tunnel.
