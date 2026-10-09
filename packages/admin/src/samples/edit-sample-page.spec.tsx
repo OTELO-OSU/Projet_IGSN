@@ -1,7 +1,10 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 import type { ExistenceStatus } from "@projet-igsn/domain/sample/curation/existence-status";
 import type { SampleParent } from "@projet-igsn/domain/sample/parent/model";
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
+import type {
+  SampleStatus,
+  SynchronizationStatus,
+} from "@projet-igsn/domain/sample/sample";
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
@@ -87,6 +90,7 @@ let editPageSearch = "";
 let sampleFetched = false;
 let sampleMetamorphicFabric: string | null = null;
 let sampleParents: SampleParent[] = [];
+let sampleSynchronizationStatus: SynchronizationStatus | null = null;
 
 const PARENT: SampleParent = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
@@ -133,6 +137,7 @@ beforeEach(() => {
   sampleFetched = false;
   sampleMetamorphicFabric = null;
   sampleParents = [];
+  sampleSynchronizationStatus = null;
 });
 
 const describedAttachments = (count: number): SampleAttachment[] =>
@@ -227,7 +232,9 @@ function fakeApi(
     doiPrefix: null,
     internalNumber: status === "draft" ? null : 42,
     status,
-    publishingError: status === "publish_failed" ? DATACITE_ERROR : null,
+    synchronizationStatus: sampleSynchronizationStatus,
+    synchronizationError:
+      sampleSynchronizationStatus === "failed" ? DATACITE_ERROR : null,
     createdAt: "2026-06-01T00:00:00.000Z",
     updatedAt: "2026-07-01T10:00:00.000Z",
   };
@@ -775,21 +782,26 @@ describe("EditSamplePage", () => {
     },
   );
 
-  it("should explain a failed publication and offer publishing again", async () => {
-    const { screen } = await renderEditPage("publish_failed");
+  it("should explain a failed synchronization and offer publishing again", async () => {
+    sampleSynchronizationStatus = "failed";
+    const { screen } = await renderEditPage("draft");
 
     await expect
       .element(screen.getByRole("alert"))
       .toHaveTextContent(
-        `Publication failed: ${DATACITE_ERROR}. Publish to retry; if the problem persists, contact an administrator.`,
+        `DataCite synchronization failed: ${DATACITE_ERROR}. Retry to queue it again.`,
       );
+    await expect
+      .element(screen.getByText("Synchronization failed", { exact: true }))
+      .toBeVisible();
     await expect
       .element(screen.getByRole("button", { name: "Publish", exact: true }))
       .toBeVisible();
   });
 
-  it("should hold a sample read-only while it is being published", async () => {
-    const { screen } = await renderEditPage("publishing");
+  it("should hold a draft read-only while its publication is queued", async () => {
+    sampleSynchronizationStatus = "pending";
+    const { screen } = await renderEditPage("draft");
 
     await expect
       .element(screen.getByRole("button", { name: "Save", exact: true }))

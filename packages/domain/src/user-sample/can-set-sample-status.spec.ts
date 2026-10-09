@@ -13,8 +13,6 @@ describe("canSetSampleStatus", () => {
     ["editor", true, "tombstone", "published", true],
     ["owner", false, "tombstone", "withdrawn", false],
     ["owner", true, "draft", "withdrawn", false],
-    ["owner", true, "publishing", "published", false],
-    ["owner", true, "publish_failed", "published", false],
     ["editor", false, "embargo", "published", true],
     ["editor", false, "embargo", "embargo", true],
     [null, true, "embargo", "tombstone", true],

@@ -7,6 +7,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
+import { markForSynchronization } from "./mark-for-synchronization.ts";
 
 function publicationDateOf(body: SetSampleStatusBody) {
   switch (body.status) {
@@ -36,5 +37,6 @@ export async function setSampleStatus(
     .returning("id")
     .executeTakeFirst();
   if (!row) return null;
+  await markForSynchronization(db, [id]);
   return getSampleById(db, id);
 }

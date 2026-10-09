@@ -12,7 +12,7 @@ import { insertParent } from "../tests/insert-parent.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
-import { drainPublishingQueue } from "./service/publishing-worker.ts";
+import { drainSynchronizationQueue } from "./service/synchronization-worker.ts";
 
 type Db = Kysely<DB>;
 
@@ -107,7 +107,7 @@ describe("the eligible child search", () => {
         type: CORE_SERIES,
         childIds: [taken.id],
       });
-      await drainPublishingQueue(db, null, []);
+      await drainSynchronizationQueue(db, null, []);
       // Act
       const data = await search(db, { search: "Carotte", exclude: series.id });
       // Assert

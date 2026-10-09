@@ -6,6 +6,8 @@ Date: 2026-09-28
 
 Accepted.
 
+Superseded by ADR [0059](0059-datacite-synchronization-queue.md) for the status-as-queue: `publishing` and `publish_failed` became `synchronization_status`.
+
 ## Context
 
 Phase 4 of the Excel bulk import must publish up to `MAX_IMPORT_ROWS` samples, each requiring a DataCite `PUT` (10s timeout, rate-limited). One HTTP request cannot hold 500 sequential registrations, and the original plan's whole-batch transaction left registered DOIs orphaned on a mid-batch rollback.

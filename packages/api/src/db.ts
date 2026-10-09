@@ -1,5 +1,8 @@
 import type { InstitutionalGroupKind } from "@projet-igsn/domain/institutional-group/model";
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
+import type {
+  SampleStatus,
+  SynchronizationStatus,
+} from "@projet-igsn/domain/sample/sample";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 
 import { Kysely, type Generated } from "kysely";
@@ -171,7 +174,8 @@ type SampleTable = {
   contributor_ids: Generated<string[]>;
   mineral_classification_paths: Generated<string[]>;
   location_geom: Generated<string | null>;
-  publishing_error: string | null;
+  synchronization_status: SynchronizationStatus | null;
+  synchronization_error: string | null;
   created_at: Generated<Date>;
   published_at: Generated<Date | null>;
   updated_at: Generated<Date>;

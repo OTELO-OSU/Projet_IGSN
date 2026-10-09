@@ -393,7 +393,8 @@ export async function insertSamples(
           id,
           igsn,
           status,
-          publishingError,
+          synchronizationStatus,
+          synchronizationError,
           existingBlockers: _existingBlockers,
           ...create
         }) => {
@@ -401,7 +402,9 @@ export async function insertSamples(
           return {
             id,
             status,
-            publishing_error: publishingError ?? null,
+            synchronization_status:
+              synchronizationStatus ?? (permanent ? "synced" : null),
+            synchronization_error: synchronizationError ?? null,
             igsn: igsn ?? null,
             location_id: located.has(id) ? id : null,
             publication_year: permanent ? SEED_PUBLICATION_YEAR : null,
@@ -506,7 +509,8 @@ const sampleRowSchema = sampleSchema
     age: true,
     mineralClassifications: true,
     igsn: true,
-    publishingError: true,
+    synchronizationStatus: true,
+    synchronizationError: true,
   })
   .partial({
     type: true,
@@ -528,7 +532,8 @@ const sampleRowSchema = sampleSchema
     syntheticDetails: true,
     age: true,
     igsn: true,
-    publishingError: true,
+    synchronizationStatus: true,
+    synchronizationError: true,
   })
   .extend({
     status: sampleStatusSchema.default("draft"),
@@ -577,7 +582,8 @@ function parseSampleRow(row: SampleRow): z.output<typeof sampleRowSchema> {
     id: _id,
     igsn: _igsn,
     status,
-    publishingError: _publishingError,
+    synchronizationStatus: _synchronizationStatus,
+    synchronizationError: _synchronizationError,
     existingBlockers,
     ...create
   } = parsed;
@@ -856,8 +862,8 @@ export const SEED_SAMPLES: SeedSample[] = [
       collectorLastname: "Martin",
     },
     repository: SEED_REPOSITORY,
-    status: "publish_failed",
-    publishingError: "DataCite registration failed (HTTP 500)",
+    synchronizationStatus: "failed",
+    synchronizationError: "DataCite registration failed (HTTP 500)",
   },
   {
     id: "00000000-0000-7000-8000-000000000009",

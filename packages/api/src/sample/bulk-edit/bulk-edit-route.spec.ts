@@ -25,7 +25,7 @@ import {
 import { SHEETS } from "../import-template/columns.ts";
 import { deleteColumn, fill } from "../import-template/import-fixture.ts";
 import { acquireEditLock } from "../service/acquire-edit-lock.ts";
-import { drainPublishingQueue } from "../service/publishing-worker.ts";
+import { drainSynchronizationQueue } from "../service/synchronization-worker.ts";
 import { exportWorkbook } from "./export-workbook.ts";
 
 const ROW = 3;
@@ -306,7 +306,7 @@ describe("a series' children over bulk edit", () => {
       const { series, first, second } = await arrangeSeries(db);
       await db
         .updateTable("sample")
-        .set({ status: "publishing" })
+        .set({ synchronization_status: "pending" })
         .where("id", "=", first.id)
         .execute();
 
@@ -391,24 +391,36 @@ describe("POST /admin/samples/bulk-edit", () => {
   });
 
   pgTest(
-    "should queue every edited sample for republishing, then publish it under the same IGSN and date",
+    "should queue every edited sample for synchronization, keeping it published under the same IGSN and date",
     async ({ db }) => {
       const caller = await provisionUser(db, "test-token");
       const sample = await insertParent(db, caller.id);
 
       const res = await upload(db, [sample], setLocalId("EDITED"));
-      const queued = await statusAndLocalId(db, [sample.id]);
+      const queued = await db
+        .selectFrom("sample")
+        .select(["id", "status", "synchronization_status", "local_id"])
+        .where("id", "=", sample.id)
+        .execute();
       stubDataCite(new Response("{}", { status: 201 }));
-      await drainPublishingQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
       const republished = await readSample(db, sample.id);
 
       expect({ status: res.status, body: await res.json(), queued }).toEqual({
         status: 200,
         body: { count: 1 },
-        queued: [{ id: sample.id, status: "publishing", local_id: "EDITED" }],
+        queued: [
+          {
+            id: sample.id,
+            status: "published",
+            synchronization_status: "pending",
+            local_id: "EDITED",
+          },
+        ],
       });
       expect(republished).toMatchObject({
         status: "published",
+        synchronizationStatus: "synced",
         localId: "EDITED",
         igsn: sample.igsn,
         publishedAt: sample.publishedAt,
@@ -439,7 +451,7 @@ describe("POST /admin/samples/bulk-edit", () => {
       );
       const duringUpload = putUrls();
       fetchMock.mockClear();
-      await drainPublishingQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
       const republished = await readSample(db, sample.id);
 
       expect({
@@ -451,7 +463,7 @@ describe("POST /admin/samples/bulk-edit", () => {
       }).toEqual({
         status: 200,
         duringUpload: [],
-        drained: [sample.igsn, parent.igsn].map(
+        drained: [parent.igsn, sample.igsn].map(
           (igsn) =>
             `${STUB_DATACITE_CONFIG.host}/dois/${STUB_DATACITE_CONFIG.prefix}/${igsn}`,
         ),

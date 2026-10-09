@@ -17,6 +17,7 @@ import { withdrawnSampleSchema } from "./publication/withdrawn-sample.ts";
 import {
   sampleSchema,
   sampleStatusSchema,
+  synchronizationStatusSchema,
   updateSampleSchema,
 } from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
@@ -143,6 +144,9 @@ export const listSamplesQuerySchema = z.object({
   status: sampleStatusSchema.optional().catch(undefined),
   existenceStatus: existenceStatusSchema.optional().catch(undefined),
   availabilityStatus: availabilityStatusSchema.optional().catch(undefined),
+  synchronizationStatus: synchronizationStatusSchema
+    .optional()
+    .catch(undefined),
   ownerId: z.uuid().optional().catch(undefined),
   institution: institutionFilterSchema.optional().catch(undefined),
   ...facetQueryFields(),
@@ -152,12 +156,12 @@ export const listSamplesQuerySchema = z.object({
 
 export type ListSamplesQuery = z.infer<typeof listSamplesQuerySchema>;
 
-export const retryPublicationResponseSchema = z.object({
+export const retrySynchronizationResponseSchema = z.object({
   count: z.number().int(),
 });
 
-export type RetryPublicationResponse = z.infer<
-  typeof retryPublicationResponseSchema
+export type RetrySynchronizationResponse = z.infer<
+  typeof retrySynchronizationResponseSchema
 >;
 
 export const listSamplesResponseSchema = z.object({
@@ -166,6 +170,20 @@ export const listSamplesResponseSchema = z.object({
 });
 
 export type ListSamplesResponse = z.infer<typeof listSamplesResponseSchema>;
+
+export const publicListSamplesResponseSchema = z.object({
+  data: z.array(
+    sampleSchema.omit({
+      synchronizationStatus: true,
+      synchronizationError: true,
+    }),
+  ),
+  meta: z.object({ total: z.number() }),
+});
+
+export type PublicListSamplesResponse = z.infer<
+  typeof publicListSamplesResponseSchema
+>;
 
 // Counts are disjunctive, each facet ignoring its own filter, and a hierarchy node's count includes its descendants.
 export const sampleFacetCountsSchema = z.record(
@@ -207,10 +225,12 @@ export type EligibleParentsResponse = z.infer<
 
 export const publicSampleResponseSchema = z.object({
   data: z.discriminatedUnion("status", [
-    sampleSchema.omit({ publishingError: true }).extend({
-      status: z.literal("published"),
-      canContactArchive: z.boolean(),
-    }),
+    sampleSchema
+      .omit({ synchronizationStatus: true, synchronizationError: true })
+      .extend({
+        status: z.literal("published"),
+        canContactArchive: z.boolean(),
+      }),
     withdrawnSampleSchema,
   ]),
 });

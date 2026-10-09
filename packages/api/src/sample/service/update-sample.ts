@@ -3,13 +3,13 @@ import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
 import { sql } from "kysely";
 
-import type { DataCiteConfig } from "../../datacite/config.ts";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import { addSampleParents } from "./add-sample-parents.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
 import { inheritParentCollectionDate } from "./inherit-parent-collection-date.ts";
+import { markForSynchronization } from "./mark-for-synchronization.ts";
 import {
   additionalRolesOf,
   replaceSampleAdditionalRoles,
@@ -29,7 +29,6 @@ export async function writeSample(
   db: Transactional<DB>,
   id: string,
   input: CreateSample,
-  dataCite: DataCiteConfig | null,
 ): Promise<boolean> {
   if (isVirtualSample(input.type)) {
     const membership = await db
@@ -46,7 +45,7 @@ export async function writeSample(
     .returning("id")
     .executeTakeFirst();
   if (!row) return false;
-  if (!(await addSampleParents(db, id, input.parentIds, dataCite))) {
+  if (!(await addSampleParents(db, id, input.parentIds))) {
     await writeSampleLocation(db, id, input.location);
   }
   await inheritParentCollectionDate(db, id);
@@ -62,6 +61,7 @@ export async function writeSample(
     await replaceSampleManualGroups(db, id, input.manualGroupIds);
   }
   await replaceSampleChildren(db, id, input.childIds ?? []);
+  await markForSynchronization(db, [id]);
   return true;
 }
 
@@ -69,9 +69,6 @@ export async function updateSample(
   db: Transactional<DB>,
   id: string,
   input: CreateSample,
-  dataCite: DataCiteConfig | null = null,
 ): Promise<Sample | null> {
-  return (await writeSample(db, id, input, dataCite))
-    ? getSampleById(db, id)
-    : null;
+  return (await writeSample(db, id, input)) ? getSampleById(db, id) : null;
 }

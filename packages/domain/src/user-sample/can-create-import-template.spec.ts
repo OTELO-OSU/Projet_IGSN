@@ -16,8 +16,6 @@ describe("canCreateImportTemplate", () => {
 
   it.each([
     ["draft", "rock_and_sediment.rock"],
-    ["publishing", "rock_and_sediment.rock"],
-    ["publish_failed", "rock_and_sediment.rock"],
     ["tombstone", "rock_and_sediment.rock"],
     ["published", null],
     ["published", "rock_and_sediment.mineral"],

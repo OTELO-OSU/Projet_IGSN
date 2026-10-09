@@ -75,7 +75,8 @@ const withdrawn: Sample = {
   institutionalOsu: null,
   institutionalLaboratory: null,
   status: "withdrawn",
-  publishingError: null,
+  synchronizationStatus: "synced",
+  synchronizationError: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 };

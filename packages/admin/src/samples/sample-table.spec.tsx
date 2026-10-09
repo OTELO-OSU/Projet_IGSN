@@ -71,7 +71,8 @@ const sample: AdminSampleListItem = {
   status: "draft",
   createdAt: new Date("2026-06-01T00:00:00.000Z"),
   publishedAt: null,
-  publishingError: null,
+  synchronizationStatus: null,
+  synchronizationError: null,
   updatedAt: new Date("2026-07-01T10:00:00.000Z"),
 };
 const samples = [sample];
@@ -323,9 +324,16 @@ describe("SampleTable", () => {
     expect(screen.getByText(/^sample-/).elements()).toHaveLength(0);
   });
 
-  it("should badge a sample with its status label", async () => {
-    const screen = await renderTable([{ ...sample, status: "tombstone" }]);
-    await expect.element(screen.getByText("Tombstone")).toBeInTheDocument();
+  it("should badge a sample with its status and synchronization labels", async () => {
+    const screen = await renderTable([
+      { ...sample, status: "tombstone", synchronizationStatus: "pending" },
+    ]);
+    const statusCell = screen
+      .getByRole("cell")
+      .filter({ hasText: "Tombstone" });
+    await expect
+      .element(statusCell)
+      .toHaveTextContent("Synchronization pending");
   });
 
   it("should request an asc then desc status sort when the header is clicked", async () => {

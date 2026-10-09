@@ -8,10 +8,10 @@ import type { DataCiteConfig } from "../../datacite/config.ts";
 import type { DB } from "../../db.ts";
 
 import { syncDoi } from "../../datacite/sync-doi.ts";
-import { syncParentRelations } from "../../datacite/sync-parent-relations.ts";
 import { queueBatchWebhooks } from "../../sample-batch/queue-batch-webhooks.ts";
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
+import { markForSynchronization } from "./mark-for-synchronization.ts";
 
 export async function publishSample(
   db: Transactional<DB>,
@@ -25,7 +25,8 @@ export async function publishSample(
     .updateTable("sample")
     .set({
       status,
-      publishing_error: null,
+      synchronization_status: "synced",
+      synchronization_error: null,
       igsn: sql`coalesce(igsn, ${generateIgsnSuffix(id)})`,
       doi_prefix: sql`coalesce(doi_prefix, ${config?.prefix ?? null})`,
       publication_year: sql`coalesce(publication_year, extract(year from ${at})::int)`,
@@ -40,9 +41,10 @@ export async function publishSample(
   const sample = await getSampleById(db, id);
   // ponytail: the row stays locked for the DataCite round trip, and a commit failing after a successful PUT leaves a DOI the next publish re-registers, PUT being idempotent.
   await syncDoi(config, db, sample, { firstRegistration: true });
-  for (const parent of sample.parents) {
-    await syncParentRelations(config, db, parent.id);
-  }
+  await markForSynchronization(
+    db,
+    sample.parents.map(({ id }) => id),
+  );
   await queueBatchWebhooks(db, [id]);
   return sample;
 }

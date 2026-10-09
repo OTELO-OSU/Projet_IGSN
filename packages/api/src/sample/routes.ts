@@ -1,7 +1,7 @@
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
-  ListSamplesResponse,
+  PublicListSamplesResponse,
   PublicSampleResponse,
   SampleFacetCountsResponse,
   SampleLineageResponse,
@@ -37,8 +37,15 @@ export function createSampleRoutes(
       const { data, total } = await repository.listPublished(
         c.req.valid("query"),
       );
-      const body: ListSamplesResponse = {
-        data: data.map(redactPrivateContacts),
+      const body: PublicListSamplesResponse = {
+        data: data.map((sample) => {
+          const {
+            synchronizationStatus: _status,
+            synchronizationError: _error,
+            ...listed
+          } = redactPrivateContacts(sample);
+          return listed;
+        }),
         meta: { total },
       };
       return c.json(body);

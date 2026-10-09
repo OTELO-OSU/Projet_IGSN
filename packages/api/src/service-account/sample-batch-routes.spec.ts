@@ -19,12 +19,13 @@ import { acquireEditLock } from "../sample/service/acquire-edit-lock.ts";
 import { PARENT_CYCLE } from "../sample/service/add-sample-parents.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
-import { drainPublishingQueue } from "../sample/service/publishing-worker.ts";
+import { drainSynchronizationQueue } from "../sample/service/synchronization-worker.ts";
 import { insertSampleBatch } from "../tests/insert-sample-batch.ts";
 import { insertServiceAccount } from "../tests/insert-service-account.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { publishableSample } from "../tests/sample-fixtures.ts";
+import { savepointTransactions } from "../tests/savepoint-transactions.ts";
 import { STUB_DATACITE_CONFIG, stubDataCite } from "../tests/stub-datacite.ts";
 import { hashApiKey } from "./api-key.ts";
 
@@ -215,9 +216,10 @@ describe("POST /service/samples/batch", () => {
         items: ["p-1", "p-2"].map((partnerId) => ({
           partnerId,
           id: expect.any(String),
-          status: "publishing",
+          status: "draft",
+          synchronizationStatus: "pending",
           igsn: null,
-          publishingError: null,
+          synchronizationError: null,
         })),
       });
       expect(
@@ -238,7 +240,7 @@ describe("POST /service/samples/batch", () => {
       ).toEqual(
         ["Basalt A", "Basalt B"].map((name) => ({
           name,
-          status: "publishing",
+          status: "draft",
           institutional_organization: "04vfs2w97",
           institutional_osu: "OTELo",
           institutional_laboratory: IN_REACH,
@@ -272,9 +274,10 @@ describe("POST /service/samples/batch", () => {
         items: ["p-1", "p-2"].map((partnerId) => ({
           partnerId,
           id: expect.any(String),
-          status: "publishing",
+          status: "draft",
+          synchronizationStatus: "pending",
           igsn: null,
-          publishingError: null,
+          synchronizationError: null,
         })),
       });
       expect(
@@ -493,20 +496,6 @@ describe("POST /service/samples/batch", () => {
       },
     },
     {
-      rule: "a sample still queued for publication",
-      code: "sample_publishing",
-      path: "items.0.sample.identification.sampleIdentifier",
-      items: async (db: Kysely<DB>) => {
-        const sample = await publishedIn(db);
-        await db
-          .updateTable("sample")
-          .set({ status: "publishing" })
-          .where("id", "=", sample.id)
-          .execute();
-        return [{ partnerId: "p-1", sample: renamed(sample, "Renamed") }];
-      },
-    },
-    {
       rule: "a parent that is not published",
       code: "parent_not_found",
       path: "items.0.sample.relations.0.targetIdentifier.value",
@@ -676,7 +665,7 @@ describe("POST /service/samples/batch", () => {
       const existing = await publishedIn(db, researchProjectSample);
       await db
         .updateTable("sample")
-        .set({ status: "publishing", igsn: null })
+        .set({ status: "draft", synchronization_status: "pending", igsn: null })
         .where("id", "=", existing.id)
         .execute();
       // Act
@@ -721,8 +710,9 @@ describe("POST /service/samples/batch", () => {
             partnerId: "same",
             id: existing.id,
             status: "published",
+            synchronizationStatus: "synced",
             igsn: existing.igsn,
-            publishingError: null,
+            synchronizationError: null,
           },
         ],
       };
@@ -766,7 +756,12 @@ describe("POST /service/samples/batch", () => {
           .where("sample_id", "=", existing.id)
           .execute(),
       }).toEqual({
-        items: [expect.objectContaining({ status: "publishing" })],
+        items: [
+          expect.objectContaining({
+            status: "published",
+            synchronizationStatus: "pending",
+          }),
+        ],
         parents: [{ parent_id: parent.id }],
       });
     },
@@ -858,7 +853,7 @@ describe("GET /service/batches/:id", () => {
         },
       ]);
       const { id } = (await posted.json()) as { id: string };
-      await drainPublishingQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
       const createdId = await idNamed(db, "Basalt A");
       // Act
       const res = await getBatch(app, id);
@@ -871,15 +866,17 @@ describe("GET /service/batches/:id", () => {
             partnerId: "new",
             id: createdId,
             status: "published",
+            synchronizationStatus: "synced",
             igsn: generateIgsnSuffix(createdId),
-            publishingError: null,
+            synchronizationError: null,
           },
           {
             partnerId: "existing",
             id: existing.id,
             status: "published",
+            synchronizationStatus: "synced",
             igsn: existing.igsn,
-            publishingError: null,
+            synchronizationError: null,
           },
         ],
       });
@@ -887,7 +884,7 @@ describe("GET /service/batches/:id", () => {
   );
 
   pgTest(
-    "should read a failed publication as publish_failed with its error",
+    "should read a failed publication as a failed draft with its error",
     async ({ db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
@@ -897,7 +894,11 @@ describe("GET /service/batches/:id", () => {
       ]);
       const { id } = (await posted.json()) as { id: string };
       fetchMock.mockImplementation(FAILING);
-      await drainPublishingQueue(db, STUB_DATACITE_CONFIG, NO_DELAYS);
+      await drainSynchronizationQueue(
+        savepointTransactions(db),
+        STUB_DATACITE_CONFIG,
+        NO_DELAYS,
+      );
       // Act
       const res = await getBatch(app, id);
       // Assert
@@ -907,8 +908,10 @@ describe("GET /service/batches/:id", () => {
         items: [
           {
             partnerId: "p-1",
-            status: "publish_failed",
-            publishingError: "DataCite registration failed (HTTP 500)",
+            status: "draft",
+            synchronizationStatus: "failed",
+            igsn: null,
+            synchronizationError: "DataCite registration failed (HTTP 500)",
           },
         ],
       });

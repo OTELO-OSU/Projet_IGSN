@@ -1,7 +1,9 @@
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
+import { publishableSample } from "../../tests/sample-fixtures.ts";
 import { insertSample } from "./insert-sample.ts";
+import { publishSample } from "./publish-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
 describe("updateSample", () => {
@@ -129,6 +131,34 @@ describe("updateSample", () => {
       );
       // Assert
       expect(updated).toBeNull();
+    },
+  );
+
+  pgTest.for([
+    { kind: "draft", failed: false, expected: null },
+    { kind: "draft", failed: true, expected: "failed" },
+    { kind: "published", failed: false, expected: "pending" },
+    { kind: "published", failed: true, expected: "pending" },
+  ] as const)(
+    "should leave a $kind sample $expected after an edit when its synchronization failed: $failed",
+    async ({ kind, failed, expected }, { db }) => {
+      // Arrange
+      const created = await insertSample(db, publishableSample);
+      if (kind === "published") await publishSample(db, created.id);
+      if (failed) {
+        await db
+          .updateTable("sample")
+          .set({ synchronization_status: "failed" })
+          .where("id", "=", created.id)
+          .execute();
+      }
+      // Act
+      const updated = await updateSample(db, created.id, {
+        ...publishableSample,
+        name: "Edited",
+      });
+      // Assert
+      expect(updated?.synchronizationStatus).toBe(expected);
     },
   );
 });

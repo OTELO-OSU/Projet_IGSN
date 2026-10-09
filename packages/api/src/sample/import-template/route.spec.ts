@@ -461,7 +461,12 @@ const queuedSamples = (db: Kysely<DB>) =>
   db
     .selectFrom("sample")
     .innerJoin("user_sample", "user_sample.sample_id", "sample.id")
-    .select(["sample.status", "user_sample.user_id", "user_sample.role"])
+    .select([
+      "sample.status",
+      "sample.synchronization_status",
+      "user_sample.user_id",
+      "user_sample.role",
+    ])
     .execute();
 
 const REPORT_TEXT = "Field report body";
@@ -528,7 +533,12 @@ describe("import upload route", () => {
         body: { count: 1 },
       });
       expect(await queuedSamples(db)).toEqual([
-        { status: "publishing", user_id: caller.id, role: "owner" },
+        {
+          status: "draft",
+          synchronization_status: "pending",
+          user_id: caller.id,
+          role: "owner",
+        },
       ]);
     },
     30_000,
@@ -769,7 +779,7 @@ describe("import upload route", () => {
           await db
             .selectFrom("sample")
             .select("internal_number")
-            .where("status", "=", "publishing")
+            .where("synchronization_status", "=", "pending")
             .orderBy("internal_number")
             .execute()
         ).map(({ internal_number }) => internal_number),
@@ -845,7 +855,12 @@ describe("import upload route", () => {
       const { id: childId, ...child } = await db
         .selectFrom("sample_parent")
         .innerJoin("sample", "sample.id", "sample_parent.sample_id")
-        .select(["sample.id", "sample.status", ...inherited])
+        .select([
+          "sample.id",
+          "sample.status",
+          "sample.synchronization_status",
+          ...inherited,
+        ])
         .where("sample_parent.parent_id", "=", parent.id)
         .executeTakeFirstOrThrow();
       const stored = await db
@@ -865,7 +880,11 @@ describe("import upload route", () => {
         ownerRole,
       }).toEqual({
         status: 200,
-        child: { ...stored, status: "publishing" },
+        child: {
+          ...stored,
+          status: "draft",
+          synchronization_status: "pending",
+        },
         ownerRole: { role: "contributor" },
       });
     },
@@ -923,14 +942,19 @@ describe("import upload route", () => {
       const child = await db
         .selectFrom("sample_parent")
         .innerJoin("sample", "sample.id", "sample_parent.sample_id")
-        .select(["sample.status", "sample.location_id"])
+        .select([
+          "sample.status",
+          "sample.synchronization_status",
+          "sample.location_id",
+        ])
         .where("sample_parent.parent_id", "=", parent.id)
         .executeTakeFirst();
       expect({ status: res.status, body: await res.json(), child }).toEqual({
         status: 200,
         body: { count: 1 },
         child: {
-          status: "publishing",
+          status: "draft",
+          synchronization_status: "pending",
           location_id:
             locatedAncestor && (await locationIdOf(locatedAncestor.id)),
         },

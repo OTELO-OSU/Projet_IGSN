@@ -1,30 +1,47 @@
-import type { SampleStatus } from "../sample/sample.ts";
+import type { SampleStatus, SynchronizationStatus } from "../sample/sample.ts";
 import type { UserSampleRole } from "./model.ts";
 
 import { canDeleteSample } from "./can-delete-sample.ts";
 
 describe("canDeleteSample", () => {
   it.each([
-    ["owner", "draft", true],
-    ["editor", "draft", true],
-    ["contributor", "draft", false],
-    [null, "draft", false],
-    ["owner", "published", false],
-    ["editor", "published", false],
-    ["contributor", "published", false],
-    [null, "published", false],
-    ["owner", "withdrawn", false],
-    ["editor", "withdrawn", false],
-    ["owner", "publishing", false],
-    ["editor", "publishing", false],
-    ["owner", "publish_failed", false],
-    ["editor", "publish_failed", false],
-    ["contributor", "publish_failed", false],
-    [null, "publish_failed", false],
-  ] as [UserSampleRole | null, SampleStatus, boolean][])(
-    "should answer, for the %s on a %s sample, %s",
-    (role, status, expected) => {
-      expect(canDeleteSample(role, { status })).toBe(expected);
+    ["owner", "draft", null, true],
+    ["editor", "draft", null, true],
+  ] as [
+    UserSampleRole | null,
+    SampleStatus,
+    SynchronizationStatus | null,
+    boolean,
+  ][])(
+    "should let the %s delete a %s sample synchronized %s",
+    (role, status, synchronizationStatus) => {
+      expect(canDeleteSample(role, { status, synchronizationStatus })).toBe(
+        true,
+      );
+    },
+  );
+
+  it.each([
+    ["contributor", "draft", null],
+    [null, "draft", null],
+    ["owner", "published", "synced"],
+    ["editor", "published", "synced"],
+    ["contributor", "published", "synced"],
+    [null, "published", "synced"],
+    ["owner", "withdrawn", "synced"],
+    ["editor", "withdrawn", "synced"],
+    ["owner", "draft", "pending"],
+    ["editor", "draft", "pending"],
+    ["owner", "draft", "failed"],
+    ["editor", "draft", "failed"],
+    ["contributor", "draft", "failed"],
+    [null, "draft", "failed"],
+  ] as [UserSampleRole | null, SampleStatus, SynchronizationStatus | null][])(
+    "should refuse the %s deleting a %s sample synchronized %s",
+    (role, status, synchronizationStatus) => {
+      expect(canDeleteSample(role, { status, synchronizationStatus })).toBe(
+        false,
+      );
     },
   );
 });

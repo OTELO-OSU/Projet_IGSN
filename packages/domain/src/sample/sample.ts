@@ -61,8 +61,6 @@ export const nameSchema = z.string().trim().min(1);
 
 export const sampleStatusSchema = z.enum([
   "draft",
-  "publishing",
-  "publish_failed",
   "embargo",
   "published",
   "withdrawn",
@@ -70,6 +68,14 @@ export const sampleStatusSchema = z.enum([
 ]);
 
 export type SampleStatus = z.infer<typeof sampleStatusSchema>;
+
+export const synchronizationStatusSchema = z.enum([
+  "pending",
+  "synced",
+  "failed",
+]);
+
+export type SynchronizationStatus = z.infer<typeof synchronizationStatusSchema>;
 
 export const publicationYearSchema = z.number().int().positive();
 
@@ -125,7 +131,8 @@ export const sampleSchema = z.object({
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
   status: sampleStatusSchema,
-  publishingError: z.string().nullable(),
+  synchronizationStatus: synchronizationStatusSchema.nullable(),
+  synchronizationError: z.string().nullable(),
   createdAt: z.coerce.date(),
   publishedAt: z.coerce.date().nullable().optional(),
   updatedAt: z.coerce.date(),

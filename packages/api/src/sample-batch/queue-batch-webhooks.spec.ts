@@ -8,12 +8,13 @@ import { afterEach, describe, expect, vi } from "vitest";
 import type { DB } from "../db.ts";
 
 import { publishSample } from "../sample/service/publish-sample.ts";
-import { drainPublishingQueue } from "../sample/service/publishing-worker.ts";
+import { drainSynchronizationQueue } from "../sample/service/synchronization-worker.ts";
 import { insertSampleBatch } from "../tests/insert-sample-batch.ts";
 import { insertServiceAccount } from "../tests/insert-service-account.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { publishableSample } from "../tests/sample-fixtures.ts";
+import { savepointTransactions } from "../tests/savepoint-transactions.ts";
 import { STUB_DATACITE_CONFIG, stubDataCite } from "../tests/stub-datacite.ts";
 
 const WEBHOOK = {
@@ -55,7 +56,7 @@ describe("queueBatchWebhooks", () => {
   });
 
   pgTest(
-    "should queue one delivery per published item of a webhook batch, carrying its payload",
+    "should queue one delivery per item the queue publishes, carrying its payload",
     async ({ db }) => {
       // Arrange
       const create = await arrangeBatch(db);
@@ -64,7 +65,7 @@ describe("queueBatchWebhooks", () => {
         { partnerId: "p-2", create: publishableSample },
       ]);
       // Act
-      for (const id of ids) await publishSample(db, id);
+      await drainSynchronizationQueue(db, null, []);
       // Assert
       expect(await deliveries(db)).toEqual(
         ids.map((id, index) => ({
@@ -76,8 +77,9 @@ describe("queueBatchWebhooks", () => {
             partnerId: `p-${index + 1}`,
             id,
             status: "published",
+            synchronizationStatus: "synced",
             igsn: generateIgsnSuffix(id),
-            publishingError: null,
+            synchronizationError: null,
           },
         })),
       );
@@ -98,7 +100,7 @@ describe("queueBatchWebhooks", () => {
   });
 
   pgTest(
-    "should queue one delivery per item the publishing queue fails, carrying its error",
+    "should queue one delivery per item the queue fails, carrying its error",
     async ({ db }) => {
       // Arrange
       stubDataCite(new Response("DataCite is down", { status: 500 }));
@@ -108,7 +110,11 @@ describe("queueBatchWebhooks", () => {
         { partnerId: "p-2", create: publishableSample },
       ]);
       // Act
-      await drainPublishingQueue(db, STUB_DATACITE_CONFIG, []);
+      await drainSynchronizationQueue(
+        savepointTransactions(db),
+        STUB_DATACITE_CONFIG,
+        [],
+      );
       // Assert
       expect(
         (await deliveries(db)).map(
@@ -119,8 +125,9 @@ describe("queueBatchWebhooks", () => {
           batchId,
           partnerId: `p-${index + 1}`,
           id,
-          status: "publish_failed",
-          publishingError: expect.any(String),
+          status: "draft",
+          synchronizationStatus: "failed",
+          synchronizationError: expect.any(String),
         })),
       );
     },

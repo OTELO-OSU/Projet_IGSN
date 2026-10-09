@@ -360,11 +360,11 @@ describe("a sample's parents", () => {
   );
 
   pgTest.for([
-    { status: "published" as const, parentPuts: 1 },
-    { status: "draft" as const, parentPuts: 0 },
+    { status: "published" as const, parentSynchronization: "pending" },
+    { status: "draft" as const, parentSynchronization: "synced" },
   ])(
-    "should PUT the parent's relations alone $parentPuts time(s) when a parent is added to a $status sample",
-    async ({ status, parentPuts }, { db }) => {
+    "should leave the parent $parentSynchronization without calling DataCite when a parent is added to a $status sample",
+    async ({ status, parentSynchronization }, { db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
       onTestFinished(() => {
@@ -376,12 +376,7 @@ describe("a sample's parents", () => {
       });
       const { id: parentId } = await insertSample(db, publishableSample);
       await insertSampleOwner(db, parentId, caller.id);
-      const parent = (await publishSample(
-        db,
-        parentId,
-        "published",
-        STUB_DATACITE_CONFIG,
-      ))!;
+      await publishSample(db, parentId, "published", STUB_DATACITE_CONFIG);
       const own = await insertSample(db, ownLocated);
       await insertSampleOwner(db, own.id, caller.id);
       if (status === "published") {
@@ -392,57 +387,11 @@ describe("a sample's parents", () => {
       // Act
       const res = await updateWithParents(db, stored, ownLocated, [parentId]);
       // Assert
-      expect(res.status).toBe(200);
-      expect(
-        fetchMock.mock.calls
-          .filter(([url]) => String(url).endsWith(`/${parent.igsn}`))
-          .map(([, init]) => JSON.parse(init.body).data.attributes),
-      ).toEqual(
-        Array.from({ length: parentPuts }, () => ({
-          relatedIdentifiers: [
-            expect.objectContaining({
-              relatedIdentifier: stored.igsn,
-              relationType: "IsSourceOf",
-            }),
-          ],
-        })),
-      );
-    },
-  );
-
-  pgTest(
-    "should answer 502 when DataCite refuses the parent's relations",
-    async ({ db }) => {
-      // Arrange
-      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
-      onTestFinished(() => {
-        vi.unstubAllGlobals();
-        delete process.env.DATACITE_API_HOST;
-      });
-      vi.spyOn(console, "error").mockImplementation(() => undefined);
-      const caller = await provisionUser(db, "test-token", {
-        status: "accepted",
-      });
-      const publishedWithDoi = async (input: CreateSample) => {
-        const { id } = await insertSample(db, input);
-        await insertSampleOwner(db, id, caller.id);
-        await publishSample(db, id, "published", STUB_DATACITE_CONFIG);
-        return (await readSample(db, id)).data;
-      };
-      const parent = await publishedWithDoi(publishableSample);
-      const own = await publishedWithDoi(ownLocated);
-      fetchMock.mockImplementation(async (url: string) =>
-        url.endsWith(`/${parent.igsn}`)
-          ? new Response("nope", { status: 500 })
-          : new Response("{}", { status: 201 }),
-      );
-      // Act
-      const res = await updateWithParents(db, own, ownLocated, [parent.id]);
-      // Assert
-      expect({ status: res.status, body: await res.json() }).toEqual({
-        status: 502,
-        body: { error: "DOI sync failed" },
-      });
+      expect({
+        status: res.status,
+        calls: fetchMock.mock.calls,
+        parent: (await readSample(db, parentId)).data.synchronizationStatus,
+      }).toEqual({ status: 200, calls: [], parent: parentSynchronization });
     },
   );
 

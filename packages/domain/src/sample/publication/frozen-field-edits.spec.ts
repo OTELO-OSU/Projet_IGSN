@@ -51,7 +51,8 @@ const stored: Sample = sampleSchema.parse({
   doiPrefix: null,
   internalNumber: 1,
   status: "published",
-  publishingError: null,
+  synchronizationStatus: "synced",
+  synchronizationError: null,
   createdAt: new Date("2020-01-01"),
   updatedAt: new Date("2020-01-01"),
 });

@@ -27,6 +27,7 @@ import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
 import { canSetSampleChildren } from "@projet-igsn/domain/sample/publication/can-set-sample-children";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
+import { isPublicationQueued } from "@projet-igsn/domain/sample/publication/is-publication-queued";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
@@ -392,9 +393,9 @@ export function createSampleAdminRoutes(
       );
       return samplesExportResponse(data);
     })
-    .post("/retry-publication", async (c) =>
+    .post("/retry-synchronization", async (c) =>
       c.json({
-        count: await repository.retryFailedPublications(c.get("user").id),
+        count: await repository.retryFailedSynchronizations(c.get("user").id),
       }),
     )
     .use("/:id", accessibleSample)
@@ -763,7 +764,7 @@ export function createSampleAdminRoutes(
         return c.json({ error: "Invalid publish status" }, 400);
       }
       const { status, publishedAt } = query.data;
-      if (sample.status === "publishing" || hasPermanentIgsn(sample)) {
+      if (isPublicationQueued(sample) || hasPermanentIgsn(sample)) {
         return c.json({ error: "Sample is already published" }, 409);
       }
       // ponytail: the guard's read and publish are separate transactions. Read and publish in one txn if that race matters.

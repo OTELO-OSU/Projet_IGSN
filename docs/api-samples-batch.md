@@ -61,16 +61,18 @@ The answer is the batch itself, the same body `GET /service/batches/{id}` return
     {
       "partnerId": "core-42",
       "id": "0199b3f1-2a4d-7f22-9c01-6e4b8d2f3a51",
-      "status": "publishing",
+      "status": "draft",
+      "synchronizationStatus": "pending",
       "igsn": null,
-      "publishingError": null
+      "synchronizationError": null
     },
     {
       "partnerId": "core-43",
       "id": "0199a0c7-1b2e-7c33-8d45-7f5c9e3a4b62",
       "status": "published",
+      "synchronizationStatus": "synced",
       "igsn": "01K6SZ4V3M8Q2R7T5W9X0Y1Z2A",
-      "publishingError": null
+      "synchronizationError": null
     }
   ]
 }
@@ -78,8 +80,9 @@ The answer is the batch itself, the same body `GET /service/batches/{id}` return
 
 - Keep the batch `id` to poll the batch later.
 - Items come back in the order you sent them.
-- A created or changed item reads `publishing`: it is queued and published in the background, an update item adding only a parent included.
-- An unchanged item reads `published` with its IGSN: nothing more will happen to it.
+- A created item reads `synchronizationStatus: "pending"` on a `draft`: it is queued and published in the background.
+- A changed item reads `pending` on a `published` sample: it stays published and visible while its changes are sent to DataCite, an update item adding only a parent included.
+- An unchanged item reads `synced` with its IGSN: nothing more will happen to it.
 
 ### `422`: an item or the webhook is invalid
 
@@ -105,7 +108,6 @@ The answer is the batch itself, the same body `GET /service/batches/{id}` return
 | `sample_not_editable`            | The sample exists but is outside the service account's reach.                       |
 | `field_frozen`                   | The update changes a field a published sample can no longer change.                 |
 | `duplicate_sample_key`           | The same IGSN is on two items of the batch.                                         |
-| `sample_publishing`              | The sample is still queued from an earlier batch; wait for it and retry.            |
 | `sample_locked`                  | Someone is editing the sample in the registry right now; retry later.               |
 | `parent_not_found`               | A parent the item names is not a published sample, or is a series of samples.       |
 | `child_not_found`                | A child IGSN the item names is not a published, withdrawn or embargoed sample.      |
@@ -158,12 +160,12 @@ A `409` with only `{ "error": "Sample changed, retry" }` means a sample you upda
 
 ## Follow the publication
 
-A queued sample moves from `publishing` to one of:
+A queued sample has `synchronizationStatus: "pending"` and moves to one of:
 
-- `published`, with its `igsn`;
-- `publish_failed`, with the reason in `publishingError`.
+- `synced`, with its `igsn` once published;
+- `failed`, with the reason in `synchronizationError`.
 
-When a publication fails for good, the samples still waiting behind it in the queue fail with the same error. Send the failed items again in a new batch.
+A failure affects that sample alone, the others keep going. Send the failed items again in a new batch.
 
 ### Poll the batch
 
@@ -175,7 +177,7 @@ When a publication fails for good, the samples still waiting behind it in the qu
 
 ### Get a webhook call
 
-Instead of polling, give a `webhook` in the batch body and the registry calls you each time a sample's publication succeeds or fails.
+Instead of polling, give a `webhook` in the batch body and the registry calls you each time a sample's publication or update succeeds or fails.
 
 - `url` must be https, on a public host, with no `user:password@` part, and at most 2048 characters.
 - `secret` is required with a `url`, 16 to 255 characters; the registry signs every call with it, so you can check each call really comes from the registry.
@@ -192,23 +194,24 @@ X-Webhook-Id: 0199b3f2-6c1e-7a51-9d0f-3c8e4b7a2d10
 X-Webhook-Timestamp: 1759670400
 X-Signature: sha256=5d41402abc4b2a76b9719d911017c592...
 
-{"batchId":"0199b3f1-...","partnerId":"core-42","id":"0199b3f1-...","status":"published","igsn":"01K6SZ4V3M8Q2R7T5W9X0Y1Z2A","publishingError":null}
+{"batchId":"0199b3f1-...","partnerId":"core-42","id":"0199b3f1-...","status":"published","synchronizationStatus":"synced","igsn":"01K6SZ4V3M8Q2R7T5W9X0Y1Z2A","synchronizationError":null}
 ```
 
 The body is one batch item plus the batch id:
 
-| Field             | Meaning                                                                   |
-| ----------------- | ------------------------------------------------------------------------- |
-| `batchId`         | The batch the sample was sent in.                                         |
-| `partnerId`       | Your own key for the item, as you sent it.                                |
-| `id`              | The registry's identifier of the sample.                                  |
-| `status`          | `published` on success, `publish_failed` on failure.                      |
-| `igsn`            | The sample's IGSN once published, without a DOI prefix, `null` otherwise. |
-| `publishingError` | Why the publication failed, `null` on success.                            |
+| Field                   | Meaning                                                                   |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `batchId`               | The batch the sample was sent in.                                         |
+| `partnerId`             | Your own key for the item, as you sent it.                                |
+| `id`                    | The registry's identifier of the sample.                                  |
+| `status`                | The sample's status: `published` once published, `draft` before.          |
+| `synchronizationStatus` | `synced` on success, `failed` on failure.                                 |
+| `igsn`                  | The sample's IGSN once published, without a DOI prefix, `null` otherwise. |
+| `synchronizationError`  | Why the synchronization failed, `null` on success.                        |
 
 - Calls are not ordered: two samples of a batch may reach you in any order.
 - Only a sample's latest batch is called: once you send a sample again, its older batch's webhook goes quiet.
-- A later publication of the same sample, from a later batch or from the registry's own interface, calls again.
+- A later synchronization of the same sample, from a later batch or from an edit in the registry's own interface, calls again.
 
 #### Check the signature
 

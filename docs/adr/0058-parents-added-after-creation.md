@@ -6,6 +6,8 @@ Date: 2026-10-08
 
 Accepted.
 
+Superseded by ADR [0059](0059-datacite-synchronization-queue.md) for the partial parent PUT: the parent is queued for a full re-sync.
+
 Amends ADR [0039](0039-two-parent-sub-samples.md) (parents were write-once), ADR [0043](0043-public-lineage-visibility.md) (a cycle was unreachable), ADR [0044](0044-process-steps-on-sub-samples.md) (`updateSampleSchema` now carries `parentIds`) and ADR [0053](0053-ancestor-location-inheritance.md) (inheritance was creation-only).
 
 ## Context

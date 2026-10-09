@@ -22,7 +22,7 @@ async function insertLineageSample(
   ownerId: string,
   name: string,
   parentIds: string[] = [],
-  status: Sample["status"] = "published",
+  status: Parameters<typeof insertParent>[2] = "published",
 ): Promise<Sample> {
   const sample = await insertParent(db, ownerId, status, name);
   await insertSampleParents(db, sample.id, parentIds);
@@ -135,7 +135,7 @@ describe("the public sample lineage", () => {
     },
   );
 
-  pgTest.for(["draft", "publishing", "publish_failed"] as const)(
+  pgTest.for(["draft", "pending", "failed"] as const)(
     "should hide a %s descendant and everything below it",
     async (status, { db }) => {
       // Arrange
@@ -234,7 +234,7 @@ describe("the public sample lineage", () => {
     },
   );
 
-  pgTest.for(["draft", "publishing", "publish_failed"] as const)(
+  pgTest.for(["draft", "pending", "failed"] as const)(
     "should hide a %s ancestor and everything above it",
     async (status, { db }) => {
       // Arrange

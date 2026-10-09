@@ -7,8 +7,11 @@ import { toWithdrawnSample } from "./withdrawn-sample.ts";
 export function toPublicSample(sample: Sample): PublicSample {
   switch (sample.status) {
     case "published": {
-      const { publishingError: _, ...published } =
-        redactPrivateContacts(sample);
+      const {
+        synchronizationStatus: _status,
+        synchronizationError: _error,
+        ...published
+      } = redactPrivateContacts(sample);
       return {
         ...published,
         status: "published",
@@ -20,8 +23,6 @@ export function toPublicSample(sample: Sample): PublicSample {
     case "embargo":
       return toWithdrawnSample(sample);
     case "draft":
-    case "publishing":
-    case "publish_failed":
     case "tombstone":
       throw new Error(`A ${sample.status} sample has no public view`);
   }

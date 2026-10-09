@@ -6,6 +6,8 @@ Date: 2026-09-21
 
 Accepted.
 
+Superseded by ADR [0059](0059-datacite-synchronization-queue.md) for the synchronous sync: every write but a first registration is queued.
+
 ## Context
 
 ADR 0044 registers a DOI at DataCite on publication alone. It left as an open consequence that `PUT /admin/samples/:id/status` and later metadata edits are not synced to DataCite. This closes it: every write of a DOI-bearing sample re-PUTs its full record.

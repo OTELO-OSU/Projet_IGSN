@@ -5,8 +5,6 @@ import { canDuplicateSample } from "./can-duplicate-sample.ts";
 describe("canDuplicateSample", () => {
   it.each([
     ["draft", true],
-    ["publishing", true],
-    ["publish_failed", true],
     ["published", true],
     ["withdrawn", true],
     ["embargo", true],

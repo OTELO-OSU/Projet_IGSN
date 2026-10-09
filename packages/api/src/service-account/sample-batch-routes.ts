@@ -46,10 +46,7 @@ import {
 import { invalidSample, serviceSampleIssue } from "./service-sample-issue.ts";
 
 type Deps = ServiceSampleChecksDeps & {
-  samples: Pick<
-    SampleRepository,
-    "getEditLock" | "findBatchDuplicates" | "findStatusByIgsn"
-  >;
+  samples: Pick<SampleRepository, "getEditLock" | "findBatchDuplicates">;
   sampleBatches: SampleBatchRepository;
 };
 
@@ -130,15 +127,6 @@ async function checkItem(
     };
   }
   const checked = await checkServiceUpdate(deps, account, igsn, sample);
-  if (
-    "refusal" in checked &&
-    checked.refusal === "not_found" &&
-    (await deps.samples.findStatusByIgsn(igsn)) === "publishing"
-  ) {
-    return {
-      issues: [serviceSampleIssue("sample_publishing", SAMPLE_KEY_PATH)],
-    };
-  }
   if ("issues" in checked) return checked;
   const { current, merged } = checked.value;
   const lock = await deps.samples.getEditLock(current.id);

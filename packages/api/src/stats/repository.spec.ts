@@ -1,6 +1,7 @@
 import { describe, expect } from "vitest";
 
 import { insertSample } from "../sample/service/insert-sample.ts";
+import { publishSample } from "../sample/service/publish-sample.ts";
 import { insertParent } from "../tests/insert-parent.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
@@ -9,14 +10,14 @@ import { createStatsRepository } from "./repository.ts";
 
 describe("stats repository", () => {
   pgTest(
-    "should count every declared sample but drafts and tombstones, sub-samples included",
+    "should count every declared sample but drafts, queued or not, and tombstones, sub-samples included",
     async ({ db }) => {
       // Arrange
       const owner = await insertUser(db, "owner@example.org");
       for (const status of [
         "draft",
-        "publishing",
-        "publish_failed",
+        "pending",
+        "failed",
         "published",
         "withdrawn",
         "tombstone",
@@ -28,15 +29,11 @@ describe("stats repository", () => {
         ...draft,
         parentIds: [parent.id],
       });
-      await db
-        .updateTable("sample")
-        .set({ status: "publishing" })
-        .where("id", "=", child.id)
-        .execute();
+      await publishSample(db, child.id);
       // Act
       const stats = await createStatsRepository(db).count();
       // Assert
-      expect(stats).toEqual({ samples: 6, users: 1 });
+      expect(stats).toEqual({ samples: 4, users: 1 });
     },
   );
 

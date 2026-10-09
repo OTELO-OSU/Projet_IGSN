@@ -36,6 +36,7 @@ import {
 } from "#/samples/sample-form.tsx";
 import { SetStatusButton } from "#/samples/set-status-button.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
+import { SynchronizationStatusBadge } from "#/samples/synchronization-status-badge.tsx";
 import { templateCustomizationOfSample } from "#/samples/template-customization-of-sample.ts";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useDeleteSample } from "#/samples/use-delete-sample.ts";
@@ -256,6 +257,9 @@ function EditSamplePage() {
               {query.data.igsn}
             </p>
           ) : null}
+          <SynchronizationStatusBadge
+            synchronizationStatus={query.data.synchronizationStatus}
+          />
           {query.data.internalNumber === null ? null : (
             <p
               aria-label={m.field_internal_id()}
@@ -307,11 +311,12 @@ function EditSamplePage() {
         </div>
       ) : null}
 
-      {status === "publish_failed" && query.data.publishingError ? (
+      {query.data.synchronizationStatus === "failed" &&
+      query.data.synchronizationError ? (
         <Alert variant="destructive">
           <AlertDescription>
-            {m.sample_publish_failed_alert({
-              error: query.data.publishingError,
+            {m.sample_synchronization_failed_alert({
+              error: query.data.synchronizationError,
             })}
           </AlertDescription>
         </Alert>
@@ -339,6 +344,7 @@ function EditSamplePage() {
         attachmentChanges={attachmentChanges}
         isPending={isPending}
         status={status}
+        synchronizationStatus={query.data.synchronizationStatus}
         defaultTab={tab}
         onTabChange={(next) =>
           navigate({

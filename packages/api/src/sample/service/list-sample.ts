@@ -210,7 +210,11 @@ async function listSamplesWhere(
 function adminFilters(
   params: Pick<
     ListSamplesQuery,
-    "institution" | "ownerId" | "existenceStatus" | "availabilityStatus"
+    | "institution"
+    | "ownerId"
+    | "existenceStatus"
+    | "availabilityStatus"
+    | "synchronizationStatus"
   >,
 ): Expression<SqlBool>[] {
   return [
@@ -226,6 +230,11 @@ function adminFilters(
     ...(params.availabilityStatus === undefined
       ? []
       : [sql<SqlBool>`availability_status = ${params.availabilityStatus}`]),
+    ...(params.synchronizationStatus === undefined
+      ? []
+      : [
+          sql<SqlBool>`synchronization_status = ${params.synchronizationStatus}`,
+        ]),
   ];
 }
 

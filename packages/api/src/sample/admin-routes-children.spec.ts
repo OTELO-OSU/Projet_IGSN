@@ -21,12 +21,14 @@ import {
   doiUrlOf,
   hasPartPutsOf,
   registerDois,
+  STUB_DATACITE_CONFIG,
   stubDataCite,
 } from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
+import { drainSynchronizationQueue } from "./service/synchronization-worker.ts";
 
 type Db = Kysely<DB>;
 
@@ -251,6 +253,7 @@ describe("a series of samples' children", () => {
         ...input,
         childIds: [kept.id, added.id],
       });
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, []);
       // Assert
       expect(res.status).toBe(200);
       expect({
@@ -288,6 +291,7 @@ describe("a series of samples' children", () => {
         ...input,
         childIds: [child.id],
       });
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, []);
       // Assert
       expect({
         status: res.status,
@@ -514,7 +518,7 @@ describe("a series at DataCite", () => {
   };
 
   pgTest(
-    "should send the series' HasPart alone, leaving its members' DOIs and statuses alone",
+    "should send the series' HasPart alone once the queue drains, leaving its members' DOIs and statuses alone",
     async ({ db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 200 }));
@@ -532,6 +536,7 @@ describe("a series at DataCite", () => {
         ...input,
         childIds: [kept.id, added.id],
       });
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, []);
       // Assert
       expect({
         status: res.status,
@@ -548,7 +553,7 @@ describe("a series at DataCite", () => {
   );
 
   pgTest.for(["withdrawn", "embargo"] as const)(
-    "should claim a %s child without touching its row or its DOI",
+    "should claim a %s child without touching its row or its DOI, even once the queue drains",
     async (status, { db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 200 }));
@@ -574,6 +579,7 @@ describe("a series at DataCite", () => {
         ...input,
         childIds: [child.id],
       });
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, []);
       // Assert
       expect({
         status: res.status,

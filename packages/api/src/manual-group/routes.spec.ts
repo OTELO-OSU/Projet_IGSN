@@ -369,8 +369,8 @@ describe("admin manual group routes", () => {
     },
   );
 
-  pgTest.for(["draft", "publishing", "publish_failed"] as const)(
-    "should delete a group attached to a %s sample, detaching it and keeping the sample",
+  pgTest.for([null, "pending", "failed"] as const)(
+    "should delete a group attached to a draft sample with a %s synchronization, detaching it and keeping the sample",
     async (status, { db }) => {
       // Arrange
       await insertGroup(db, MASSIF, "Massif Central 2026 94c");
@@ -378,7 +378,7 @@ describe("admin manual group routes", () => {
       const sample = await insertSampleInGroup(db, curie.id, MASSIF);
       await db
         .updateTable("sample")
-        .set({ status })
+        .set({ synchronization_status: status })
         .where("id", "=", sample)
         .execute();
       const client = await asSuperAdmin(db);
@@ -489,8 +489,8 @@ describe("admin manual group routes", () => {
     },
   );
 
-  pgTest.for(["publishing", "publish_failed"] as const)(
-    "should keep a member owning a %s sample of the group detachable",
+  pgTest.for(["pending", "failed"] as const)(
+    "should keep a member owning a draft sample with a %s synchronization of the group detachable",
     async (status, { db }) => {
       // Arrange
       await insertGroup(db, MASSIF, "Massif Central 2026 94c");
@@ -499,7 +499,7 @@ describe("admin manual group routes", () => {
       const sample = await insertSampleInGroup(db, curie.id, MASSIF);
       await db
         .updateTable("sample")
-        .set({ status })
+        .set({ synchronization_status: status })
         .where("id", "=", sample)
         .execute();
       const client = await asSuperAdmin(db);

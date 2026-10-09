@@ -56,7 +56,8 @@ const sample = (overrides: Partial<Sample>): Sample => ({
   institutionalLaboratory: null,
   status: "published",
   createdAt: new Date("2026-06-01T00:00:00.000Z"),
-  publishingError: null,
+  synchronizationStatus: null,
+  synchronizationError: null,
   updatedAt: new Date("2026-07-01T10:00:00.000Z"),
   ...overrides,
 });

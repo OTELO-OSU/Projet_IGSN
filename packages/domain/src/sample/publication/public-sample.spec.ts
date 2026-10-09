@@ -42,18 +42,17 @@ describe("toPublicSample", () => {
     },
   );
 
-  it("should keep the publishing error out of a published view", () => {
-    expect(
-      toPublicSample({ ...sample, publishingError: null }),
-    ).not.toHaveProperty("publishingError");
+  it("should keep the synchronization state out of a published view", () => {
+    const view = toPublicSample({
+      ...sample,
+      synchronizationStatus: "failed",
+      synchronizationError: "DataCite is down",
+    });
+    expect(view).not.toHaveProperty("synchronizationStatus");
+    expect(view).not.toHaveProperty("synchronizationError");
   });
 
-  it.each([
-    "draft",
-    "publishing",
-    "publish_failed",
-    "tombstone",
-  ] as SampleStatus[])(
+  it.each(["draft", "tombstone"] as SampleStatus[])(
     "should refuse a public view of a %s sample",
     (status) => {
       expect(() => toPublicSample({ ...sample, status })).toThrow();

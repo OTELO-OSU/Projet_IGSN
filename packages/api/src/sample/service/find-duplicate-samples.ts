@@ -3,7 +3,6 @@ import type {
   DuplicateCriteria,
   SuspectedDuplicate,
 } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { RawBuilder, SqlBool } from "kysely";
 
 import { batchSuspectedDuplicateSchema } from "@projet-igsn/domain/sample-batch/model";
@@ -67,7 +66,7 @@ const keysOf = (criteria: readonly DuplicateCriteria[]) =>
 const duplicateRowsOfEach = async (
   db: Transactional<DB>,
   criteria: readonly DuplicateCriteria[],
-  statuses: SampleStatus[],
+  includeQueued: boolean,
   exclude?: string,
 ) => {
   if (criteria.length === 0) return [];
@@ -82,7 +81,17 @@ const duplicateRowsOfEach = async (
           .select(["c.id", "c.igsn", "c.name"])
           .where((eb) =>
             eb.and([
-              eb("c.status", "in", statuses),
+              eb.or([
+                eb("c.status", "=", "published"),
+                ...(includeQueued
+                  ? [
+                      eb.and([
+                        eb("c.status", "=", "draft"),
+                        eb("c.synchronization_status", "=", "pending"),
+                      ]),
+                    ]
+                  : []),
+              ]),
               sameText(sql.ref("c.name"), sql`k.name`),
               sql<SqlBool>`c.material = k.material`,
               SAME_COLLECTOR,
@@ -107,7 +116,7 @@ export async function findDuplicateSamplesOfEach(
   criteria: readonly DuplicateCriteria[],
   exclude?: string,
 ): Promise<SuspectedDuplicate[][]> {
-  const rows = await duplicateRowsOfEach(db, criteria, ["published"], exclude);
+  const rows = await duplicateRowsOfEach(db, criteria, false, exclude);
   return rows.map((duplicates) =>
     z.array(suspectedDuplicateSchema).parse(duplicates),
   );
@@ -134,7 +143,7 @@ export async function findBatchDuplicateSamples(
   const [duplicates = []] = await duplicateRowsOfEach(
     db,
     [criteria],
-    ["published", "publishing"],
+    true,
     exclude,
   );
   return z.array(batchSuspectedDuplicateSchema).parse(duplicates);

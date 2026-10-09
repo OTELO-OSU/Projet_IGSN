@@ -4,7 +4,10 @@ import { igsnSchema } from "../igsn/model.ts";
 import { coreSampleBodySchema } from "../sample/core/core-sample-schema.ts";
 import { MAX_IMPORT_ROWS } from "../sample/import/max-import-rows.ts";
 import { suspectedDuplicateSchema } from "../sample/publication/suspected-duplicate.ts";
-import { sampleStatusSchema } from "../sample/sample.ts";
+import {
+  sampleStatusSchema,
+  synchronizationStatusSchema,
+} from "../sample/sample.ts";
 
 const partnerIdSchema = z.string().trim().min(1).max(255).meta({
   description:
@@ -36,7 +39,7 @@ export const sampleBatchWebhookSchema = z
       .refine(hasNoCredentials, "The url must not carry credentials.")
       .meta({
         description:
-          "The https url of a public host, without credentials, receiving one POST { batchId, partnerId, id, status, igsn, publishingError } per sample each time its publication succeeds or fails, with X-Webhook-Id (the same across retries) and X-Webhook-Timestamp (unix seconds) headers. An unchanged item is not queued, so it is never called. A call answered with anything but 2xx is retried with growing delays over about 21 hours, then dropped.",
+          "The https url of a public host, without credentials, receiving one POST { batchId, partnerId, id, status, synchronizationStatus, igsn, synchronizationError } per sample each time its publication succeeds or fails, with X-Webhook-Id (the same across retries) and X-Webhook-Timestamp (unix seconds) headers. An unchanged item is not queued, so it is never called. A call answered with anything but 2xx is retried with growing delays over about 21 hours, then dropped.",
       }),
     secret: z.string().min(16).max(255).meta({
       description:
@@ -77,7 +80,7 @@ export const batchSuspectedDuplicateSchema = suspectedDuplicateSchema
     }),
     igsn: igsnSchema.nullable().meta({
       description:
-        "IGSN of the duplicated sample, with no doi.org or igsn: prefix, null while it is still publishing.",
+        "IGSN of the duplicated sample, with no doi.org or igsn: prefix, null while it is still queued.",
     }),
     name: z.string().meta({
       description: "Name the duplicated sample carries.",
@@ -86,7 +89,7 @@ export const batchSuspectedDuplicateSchema = suspectedDuplicateSchema
   .meta({
     id: "SampleBatchSuspectedDuplicate",
     description:
-      "A published or publishing sample carrying the same name, material and collector as the item.",
+      "A published or queued sample carrying the same name, material and collector as the item.",
   });
 
 export type BatchSuspectedDuplicate = z.infer<
@@ -110,7 +113,7 @@ export const sampleBatchConflictSchema = z
             }),
             duplicates: z.array(batchSuspectedDuplicateSchema).meta({
               description:
-                "The published or publishing samples the item is suspected to duplicate.",
+                "The published or queued samples the item is suspected to duplicate.",
             }),
             batchDuplicates: z.array(z.number().int().nonnegative()).meta({
               description:
@@ -130,7 +133,7 @@ export const sampleBatchConflictSchema = z
   .meta({
     id: "SampleBatchConflict",
     description:
-      "Body returned when items are suspected to duplicate published or publishing samples, or each other.",
+      "Body returned when items are suspected to duplicate published or queued samples, or each other.",
   });
 
 export type SampleBatchConflict = z.infer<typeof sampleBatchConflictSchema>;
@@ -145,14 +148,18 @@ export const sampleBatchSchema = z
             partnerId: partnerIdSchema,
             id: z.uuid().meta({ description: "Identifier of the sample." }),
             status: sampleStatusSchema.meta({
-              description: "Current publication status of the sample.",
+              description:
+                "Lifecycle status of the sample, published once the queue registered it.",
+            }),
+            synchronizationStatus: synchronizationStatusSchema.nullable().meta({
+              description:
+                "pending while the queue still has to call DataCite, synced once it did, failed when it gave up, null for a sample DataCite does not know.",
             }),
             igsn: igsnSchema.nullable().meta({
               description: "IGSN of the sample, null until it is published.",
             }),
-            publishingError: z.string().nullable().meta({
-              description:
-                "Why the last publication attempt failed, null otherwise.",
+            synchronizationError: z.string().nullable().meta({
+              description: "Why the last DataCite call failed, null otherwise.",
             }),
           })
           .meta({ description: "One sample of the batch." }),

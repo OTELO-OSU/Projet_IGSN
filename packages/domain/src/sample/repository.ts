@@ -21,7 +21,7 @@ import type {
   SearchEligibleParentsQuery,
   SetSampleStatusBody,
 } from "./sample-validator.ts";
-import type { CreateSample, Sample, SampleStatus } from "./sample.ts";
+import type { CreateSample, Sample } from "./sample.ts";
 
 export type ListSamplesResult = {
   data: Sample[];
@@ -106,7 +106,6 @@ export type SampleRepository = {
     criteria: DuplicateCriteria,
     exclude?: string,
   ): Promise<BatchSuspectedDuplicate[]>;
-  findStatusByIgsn(igsn: string): Promise<SampleStatus | null>;
   getPublicLineage(igsn: string): Promise<SampleLineage | null>;
   listDescendantIds(
     sampleIds: readonly string[],
@@ -120,7 +119,7 @@ export type SampleRepository = {
   updatePublishing(
     samples: { id: string; input: CreateSample; updatedAt: Date }[],
   ): Promise<number>;
-  retryFailedPublications(userId: string): Promise<number>;
+  retryFailedSynchronizations(userId: string): Promise<number>;
   createPublished(
     input: CreateSample,
     ownerId: string,

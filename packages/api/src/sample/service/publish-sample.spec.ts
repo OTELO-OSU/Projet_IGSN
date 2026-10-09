@@ -8,6 +8,7 @@ import { readSample } from "../../tests/read-sample.ts";
 import { draft, publishableSample } from "../../tests/sample-fixtures.ts";
 import {
   dataCiteEventsOf,
+  doiUrlOf,
   STUB_DATACITE_CONFIG,
   stubDataCite,
 } from "../../tests/stub-datacite.ts";
@@ -237,7 +238,7 @@ describe("publishSample", () => {
       const created = await insertSample(db, publishableSample);
       await db
         .updateTable("sample")
-        .set({ status: "publishing", igsn: "CNRS0000000042" })
+        .set({ synchronization_status: "pending", igsn: "CNRS0000000042" })
         .where("id", "=", created.id)
         .execute();
       // Act
@@ -324,62 +325,12 @@ describe("publishSample with DataCite configured", () => {
     expect(published?.owner).toEqual({ name: "Dupont", firstname: "Marie" });
   });
 
-  const doiUrl = (igsn: string | null) =>
-    `${STUB_DATACITE_CONFIG.host}/dois/${STUB_DATACITE_CONFIG.prefix}/${igsn}`;
-
-  pgTest.for(["first", "repeated"] as const)(
-    "should PUT the parent's relations alone, its child as IsSourceOf, on a sub-sample's %s publication",
-    async (publication, { db }) => {
-      // Arrange
-      const { id: parentId } = await insertSample(db, publishableSample);
-      const parent = (await publishSample(
-        db,
-        parentId,
-        "published",
-        STUB_DATACITE_CONFIG,
-      ))!;
-      const { id } = await insertSample(db, {
-        ...publishableSample,
-        parentIds: [parentId],
-      });
-      if (publication === "repeated") {
-        await publishSample(db, id, "published", STUB_DATACITE_CONFIG);
-      }
-      fetchMock.mockClear();
-      // Act
-      const child = await publishSample(
-        db,
-        id,
-        "published",
-        STUB_DATACITE_CONFIG,
-      );
-      // Assert
-      const [url, init] = fetchMock.mock.calls[1]!;
-      expect({
-        url,
-        attributes: JSON.parse(init.body).data.attributes,
-        status: (await readSample(db, parentId))?.status,
-      }).toEqual({
-        url: doiUrl(parent.igsn),
-        attributes: {
-          relatedIdentifiers: [
-            expect.objectContaining({
-              relatedIdentifier: child!.igsn,
-              relationType: "IsSourceOf",
-            }),
-          ],
-        },
-        status: "published",
-      });
-    },
-  );
-
   pgTest(
-    "should PUT the sub-sample's DOI alone when its parent has no DOI prefix",
+    "should PUT the sub-sample's DOI alone and queue its published parent",
     async ({ db }) => {
       // Arrange
       const { id: parentId } = await insertSample(db, publishableSample);
-      await publishSample(db, parentId);
+      await publishSample(db, parentId, "published", STUB_DATACITE_CONFIG);
       const { id } = await insertSample(db, {
         ...publishableSample,
         parentIds: [parentId],
@@ -393,9 +344,10 @@ describe("publishSample with DataCite configured", () => {
         STUB_DATACITE_CONFIG,
       );
       // Assert
-      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-        doiUrl(child!.igsn),
-      ]);
+      expect({
+        urls: fetchMock.mock.calls.map(([url]) => url),
+        parent: (await readSample(db, parentId))?.synchronizationStatus,
+      }).toEqual({ urls: [doiUrlOf(child!.igsn)], parent: "pending" });
     },
   );
 });

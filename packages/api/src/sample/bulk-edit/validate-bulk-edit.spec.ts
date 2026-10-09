@@ -168,6 +168,7 @@ describe("validateBulkEdit", () => {
           ...relation,
           id: expect.any(String),
         })),
+        synchronizationStatus: "pending",
         updatedAt: expect.any(Date),
       });
     },

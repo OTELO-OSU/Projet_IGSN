@@ -9,11 +9,11 @@ import { insertParent } from "../tests/insert-parent.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 
-const retryPublication = (
+const retrySynchronization = (
   db: Kysely<DB>,
   headers: Record<string, string> = { Authorization: "Bearer test-token" },
 ) =>
-  createApp(db).app.request("/admin/samples/retry-publication", {
+  createApp(db).app.request("/admin/samples/retry-synchronization", {
     method: "POST",
     headers,
   });
@@ -21,38 +21,28 @@ const retryPublication = (
 const statusesOf = (db: Kysely<DB>, ids: string[]) =>
   db
     .selectFrom("sample")
-    .select(["id", "status"])
+    .select(["id", "synchronization_status"])
     .where("id", "in", ids)
     .orderBy("id")
     .execute();
 
-describe("POST /admin/samples/retry-publication", () => {
+describe("POST /admin/samples/retry-synchronization", () => {
   pgTest(
-    "should requeue only the caller's failed publications",
+    "should requeue only the caller's failed synchronizations, drafts and published samples alike",
     async ({ db }) => {
       const caller = await provisionUser(db, "test-token");
       const other = await provisionUser(db, "other");
-      const failedA = await insertParent(
-        db,
-        caller.id,
-        "publish_failed",
-        "Failed A",
-      );
-      const failedB = await insertParent(
-        db,
-        caller.id,
-        "publish_failed",
-        "Failed B",
-      );
+      const failedA = await insertParent(db, caller.id, "failed", "Failed A");
+      const failedB = await insertParent(db, caller.id, "published", "B");
+      await db
+        .updateTable("sample")
+        .set({ synchronization_status: "failed" })
+        .where("id", "=", failedB.id)
+        .execute();
       const draft = await insertParent(db, caller.id, "draft", "Draft");
-      const foreign = await insertParent(
-        db,
-        other.id,
-        "publish_failed",
-        "Foreign",
-      );
+      const foreign = await insertParent(db, other.id, "failed", "Foreign");
 
-      const res = await retryPublication(db);
+      const res = await retrySynchronization(db);
 
       expect({ status: res.status, body: await res.json() }).toEqual({
         status: 200,
@@ -61,10 +51,10 @@ describe("POST /admin/samples/retry-publication", () => {
       const ids = [failedA.id, failedB.id, draft.id, foreign.id];
       expect(await statusesOf(db, ids)).toEqual(
         [
-          { id: failedA.id, status: "publishing" },
-          { id: failedB.id, status: "publishing" },
-          { id: draft.id, status: "draft" },
-          { id: foreign.id, status: "publish_failed" },
+          { id: failedA.id, synchronization_status: "pending" },
+          { id: failedB.id, synchronization_status: "pending" },
+          { id: draft.id, synchronization_status: null },
+          { id: foreign.id, synchronization_status: "failed" },
         ].sort((a, b) => a.id.localeCompare(b.id)),
       );
     },
@@ -75,7 +65,7 @@ describe("POST /admin/samples/retry-publication", () => {
     async ({ db }) => {
       const caller = await provisionUser(db, "test-token");
       const owner = await provisionUser(db, "owner");
-      const sample = await insertParent(db, owner.id, "publish_failed");
+      const sample = await insertParent(db, owner.id, "failed");
       await db
         .insertInto("user_sample")
         .values({
@@ -85,20 +75,20 @@ describe("POST /admin/samples/retry-publication", () => {
         })
         .execute();
 
-      const res = await retryPublication(db);
+      const res = await retrySynchronization(db);
 
       expect({ status: res.status, body: await res.json() }).toEqual({
         status: 200,
         body: { count: 0 },
       });
       expect(await statusesOf(db, [sample.id])).toEqual([
-        { id: sample.id, status: "publish_failed" },
+        { id: sample.id, synchronization_status: "failed" },
       ]);
     },
   );
 
   pgTest("should refuse an anonymous retry as 401", async ({ db }) => {
-    const res = await retryPublication(db, {});
+    const res = await retrySynchronization(db, {});
 
     expect(res.status).toBe(401);
   });

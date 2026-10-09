@@ -1,7 +1,7 @@
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 
 import {
-  listSamplesResponseSchema,
+  publicListSamplesResponseSchema,
   MAP_LIST_SIZE,
   PAGE_SIZES,
   sampleFacetCountsResponseSchema,
@@ -97,7 +97,7 @@ async function searchNames(client: Client, search: string) {
   const res = await client.samples.$get({
     query: { page: "1", perPage: "10", search },
   });
-  const { data } = listSamplesResponseSchema.parse(await res.json());
+  const { data } = publicListSamplesResponseSchema.parse(await res.json());
   return data.map((sample) => sample.name);
 }
 
@@ -122,6 +122,23 @@ describe("public sample routes", () => {
     });
   });
 
+  pgTest(
+    "should keep the synchronization fields off a listed sample",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      await createPublishedSample(client, "Grès de Fontainebleau");
+      // Act
+      const res = await client.samples.$get({
+        query: { page: "1", perPage: "10" },
+      });
+      // Assert
+      const { data } = (await res.json()) as { data: object[] };
+      expect(data[0]).not.toHaveProperty("synchronizationStatus");
+      expect(data[0]).not.toHaveProperty("synchronizationError");
+    },
+  );
+
   pgTest("should serve a page of the map list size", async ({ db }) => {
     // Arrange
     await db
@@ -142,7 +159,7 @@ describe("public sample routes", () => {
       query: { page: "1", perPage: String(MAP_LIST_SIZE) },
     });
     // Assert
-    const { data } = listSamplesResponseSchema.parse(await res.json());
+    const { data } = publicListSamplesResponseSchema.parse(await res.json());
     expect(data).toHaveLength(MAX_PAGE_SIZE + 1);
   });
 
@@ -503,7 +520,7 @@ describe("public sample routes", () => {
       );
       // Assert
       expect(res.status).toBe(200);
-      const body = listSamplesResponseSchema.parse(await res.json());
+      const body = publicListSamplesResponseSchema.parse(await res.json());
       expect(body.meta.total).toBe(1);
       expect(body.data.map((s) => s.name)).toEqual(["Inside"]);
     },
@@ -534,7 +551,7 @@ describe("public sample routes", () => {
         "/samples?page=1&perPage=10&bbox=170,0,-170,20",
       );
       expect(res.status).toBe(200);
-      const body = listSamplesResponseSchema.parse(await res.json());
+      const body = publicListSamplesResponseSchema.parse(await res.json());
       expect(body.meta.total).toBe(1);
       expect(body.data.map((s) => s.name)).toEqual(["Fiji"]);
     },
@@ -555,7 +572,7 @@ describe("public sample routes", () => {
       );
       // Assert
       expect(res.status).toBe(200);
-      const body = listSamplesResponseSchema.parse(await res.json());
+      const body = publicListSamplesResponseSchema.parse(await res.json());
       expect(body.meta.total).toBe(1);
     },
   );

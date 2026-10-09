@@ -4,10 +4,8 @@ import { sampleParentSchema } from "@projet-igsn/domain/sample/parent/model";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
-import type { DataCiteConfig } from "../../datacite/config.ts";
 import type { DB } from "../../db.ts";
 
-import { syncParentRelations } from "../../datacite/sync-parent-relations.ts";
 import { type Transactional } from "../../transaction.ts";
 import { addParentOwnerAsContributor } from "./add-parent-owner-as-contributor.ts";
 import { cascadeInheritedLocation } from "./cascade-inherited-location.ts";
@@ -16,6 +14,7 @@ import { findCyclicParentLinks } from "./find-cyclic-parent-links.ts";
 import { inheritParentLocation } from "./inherit-parent-location.ts";
 import { insertSampleParents } from "./insert-sample-parents.ts";
 import { listDescendantIds } from "./list-descendant-ids.ts";
+import { markForSynchronization } from "./mark-for-synchronization.ts";
 import { sampleParentsQuery } from "./sample-children-query.ts";
 import { writeSampleLocation } from "./write-sample-location.ts";
 
@@ -30,7 +29,6 @@ export async function addSampleParents(
   db: Transactional<DB>,
   sampleId: string,
   submitted: readonly string[] | undefined,
-  dataCite: DataCiteConfig | null,
 ): Promise<boolean> {
   const old = await db
     .selectFrom("sample")
@@ -63,7 +61,6 @@ export async function addSampleParents(
     await deleteOrphanLocations(db, old.location_id);
   }
   await addParentOwnerAsContributor(db, sampleId, added);
-  // ponytail: two writes adding children to the same parent at once each read the list before the other commits, so the last PUT drops one child until the parent's next sync; lock the parent row if that ever shows.
-  if (old.igsn !== null) await syncParentRelations(dataCite, db, parent);
+  if (old.igsn !== null) await markForSynchronization(db, [parent]);
   return true;
 }

@@ -4,19 +4,21 @@ import { HttpResponse, http } from "msw";
 import { render } from "vitest-browser-react";
 
 import { worker } from "../../test/msw.ts";
-import { RetryPublicationButton } from "./retry-publication-button.tsx";
+import { RetrySynchronizationButton } from "./retry-synchronization-button.tsx";
 
 function fakeApi(initialFailed: number) {
   let failed = initialFailed;
   worker.use(
     http.get("*/admin/samples", ({ request }) => {
-      const status = new URL(request.url).searchParams.get("status");
+      const synchronizationStatus = new URL(request.url).searchParams.get(
+        "synchronizationStatus",
+      );
       return HttpResponse.json({
         data: [],
-        meta: { total: status === "publish_failed" ? failed : 0 },
+        meta: { total: synchronizationStatus === "failed" ? failed : 0 },
       });
     }),
-    http.post("*/admin/samples/retry-publication", () => {
+    http.post("*/admin/samples/retry-synchronization", () => {
       const count = failed;
       failed = 0;
       return HttpResponse.json({ count });
@@ -27,32 +29,34 @@ function fakeApi(initialFailed: number) {
 const renderButton = () =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <RetryPublicationButton />
+      <RetrySynchronizationButton />
       <Toaster />
     </QueryClientProvider>,
   );
 
-describe("RetryPublicationButton", () => {
-  it("should render nothing when no publication failed", async () => {
+describe("RetrySynchronizationButton", () => {
+  it("should render nothing when no synchronization failed", async () => {
     fakeApi(0);
     const screen = await renderButton();
 
     await expect.poll(() => screen.container.textContent).toBe("");
     expect(
-      screen.getByRole("button", { name: "Retry publication" }).elements(),
+      screen.getByRole("button", { name: "Retry synchronization" }).elements(),
     ).toHaveLength(0);
   });
 
-  it("should requeue the failed publications, confirm the count and disappear", async () => {
+  it("should requeue the failed synchronizations, confirm the count and disappear", async () => {
     fakeApi(2);
     const screen = await renderButton();
-    const button = screen.getByRole("button", { name: "Retry publication" });
+    const button = screen.getByRole("button", {
+      name: "Retry synchronization",
+    });
 
     await button.click();
 
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
-      .toHaveTextContent("2 samples queued for publication.");
+      .toHaveTextContent("2 samples queued for synchronization.");
     await expect.element(button).not.toBeInTheDocument();
   });
 });
