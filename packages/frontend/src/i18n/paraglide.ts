@@ -11,6 +11,9 @@ export const paraglideOptions: CompilerOptions = {
     { pattern: "/search", localized: [["en", "/en/search"]] },
     { pattern: "/faq", localized: [["en", "/en/faq"]] },
     { pattern: "/partners", localized: [["en", "/en/partners"]] },
+    { pattern: "/terms-of-use", localized: [["en", "/en/terms-of-use"]] },
+    { pattern: "/legal-notice", localized: [["en", "/en/legal-notice"]] },
+    { pattern: "/privacy-policy", localized: [["en", "/en/privacy-policy"]] },
     { pattern: "/samples/:igsn", localized: [["en", "/en/samples/:igsn"]] },
   ],
 };
