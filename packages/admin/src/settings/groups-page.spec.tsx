@@ -57,6 +57,7 @@ function fakeApi({
         orcid: null,
         status: "accepted",
         superAdmin: false,
+        charterAccepted: true,
         managedLaboratories: [],
         managedManualGroups: [],
         ...CALLER_GROUPS,

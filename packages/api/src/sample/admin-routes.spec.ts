@@ -109,6 +109,7 @@ describe("admin sample routes", () => {
   pgTest("should create a sample and return 201", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db).app);
+    await provisionUser(db, "test-token", { status: "pending" });
     // Act
     const res = await client.admin.samples.$post(
       {
@@ -210,6 +211,7 @@ describe("admin sample routes", () => {
     );
 
     pgTest("should refuse a body choosing its own groups", async ({ db }) => {
+      await provisionUser(db, "test-token", { status: "pending" });
       // Act
       const res = await postSample(createApp(db).app, {
         ...draft,
@@ -223,6 +225,7 @@ describe("admin sample routes", () => {
   pgTest("should list created samples", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db).app);
+    await provisionUser(db, "test-token", { status: "pending" });
     await client.admin.samples.$post(
       {
         json: {
@@ -253,6 +256,7 @@ describe("admin sample routes", () => {
       async ({ db }) => {
         // Arrange
         const client = testClient(createApp(db).app);
+        await provisionUser(db, "test-token", { status: "pending" });
         await client.admin.samples.$post(
           {
             json: {
@@ -359,6 +363,7 @@ describe("admin sample routes", () => {
   pgTest("should get a sample by id", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db).app);
+    await provisionUser(db, "test-token", { status: "pending" });
     const created = await client.admin.samples.$post(
       {
         json: {
@@ -396,6 +401,7 @@ describe("admin sample routes", () => {
   pgTest("should update a sample", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db).app);
+    await provisionUser(db, "test-token", { status: "pending" });
     const created = await client.admin.samples.$post(
       {
         json: {
@@ -450,6 +456,7 @@ describe("admin sample routes", () => {
       "should reject a save built on an older version of the sample",
       async ({ db }) => {
         // Arrange
+        await provisionUser(db, "test-token", { status: "pending" });
         const app = createApp(db).app;
         const sample = await createDraft(app);
         // Act
@@ -477,6 +484,7 @@ describe("admin sample routes", () => {
       "should leave the attachments untouched when it rejects a stale save",
       async ({ db }) => {
         // Arrange
+        await provisionUser(db, "test-token", { status: "pending" });
         const app = createApp(db, { attachmentsDir }).app;
         const sample = await createDraft(app);
         const form = new FormData();
@@ -512,6 +520,7 @@ describe("admin sample routes", () => {
       "should advance the version on a save and accept the next one carrying it",
       async ({ db }) => {
         // Arrange
+        await provisionUser(db, "test-token", { status: "pending" });
         const app = createApp(db).app;
         const sample = await createDraft(app);
         const before = new Date("2026-01-01T00:00:00.000Z");
@@ -544,6 +553,7 @@ describe("admin sample routes", () => {
       ["a malformed expectedUpdatedAt", { expectedUpdatedAt: "yesterday" }],
     ] as const)("should answer 400 for %s", async ([, body], { db }) => {
       // Arrange
+      await provisionUser(db, "test-token", { status: "pending" });
       const app = createApp(db).app;
       const sample = await createDraft(app);
       // Act
@@ -1488,6 +1498,7 @@ describe("admin sample routes", () => {
 
   describe("validation", () => {
     pgTest("should reject an empty name with 400", async ({ db }) => {
+      await provisionUser(db, "test-token", { status: "pending" });
       const res = await postSample(createApp(db).app, {
         name: "",
         nature: "powder",
@@ -1519,6 +1530,7 @@ describe("admin sample routes", () => {
     ] as const)(
       "should create a sample with %s",
       async ([, fields, expected], { db }) => {
+        await provisionUser(db, "test-token", { status: "pending" });
         const res = await postSample(createApp(db).app, {
           name: "Basalte du Massif Central",
           nature: "thin_section",
@@ -1535,6 +1547,7 @@ describe("admin sample routes", () => {
       ["an unknown collection method", { collectionMethod: "gravity_corer" }],
       ["an unknown material", { material: "lava" }],
     ] as const)("should reject %s with 400", async ([, fields], { db }) => {
+      await provisionUser(db, "test-token", { status: "pending" });
       const res = await postSample(createApp(db).app, {
         name: "Basalte du Massif Central",
         nature: "thin_section",
@@ -1551,6 +1564,7 @@ describe("admin sample routes", () => {
     });
 
     pgTest("should reject unknown fields with 400", async ({ db }) => {
+      await provisionUser(db, "test-token", { status: "pending" });
       const res = await postSample(createApp(db).app, {
         name: "Grès",
         nature: "powder",
@@ -1562,6 +1576,7 @@ describe("admin sample routes", () => {
     pgTest(
       "should reject a texture inconsistent with the material with 400",
       async ({ db }) => {
+        await provisionUser(db, "test-token", { status: "pending" });
         const res = await postSample(createApp(db).app, {
           name: "Basalt",
           nature: "thin_section",
@@ -1576,6 +1591,7 @@ describe("admin sample routes", () => {
       "should create a metamorphic sample with no facies",
       async ({ db }) => {
         const client = testClient(createApp(db).app);
+        await provisionUser(db, "test-token", { status: "pending" });
         const res = await client.admin.samples.$post(
           {
             json: {
@@ -1606,6 +1622,7 @@ describe("admin sample routes", () => {
     ] as const)(
       "should reject %s on a non-metamorphic material with 400",
       async ([, fields], { db }) => {
+        await provisionUser(db, "test-token", { status: "pending" });
         const res = await postSample(createApp(db).app, {
           name: "Basalt",
           nature: "thin_section",
@@ -1658,6 +1675,28 @@ describe("admin sample routes", () => {
     );
   });
 
+  describe("charter", () => {
+    pgTest.for([
+      ["create", "/admin/samples"],
+      ["import", "/admin/samples/import"],
+    ] as const)(
+      "should refuse to %s before the caller accepts the charter",
+      async ([, path], { db }) => {
+        // Arrange
+        await insertUser(db, authenticatedCallerEmail, {
+          charterAcceptedAt: null,
+        });
+        // Act
+        const res = await createApp(db).app.request(path, {
+          method: "POST",
+          headers: authHeader,
+        });
+        // Assert
+        expect(res.status).toBe(403);
+      },
+    );
+  });
+
   describe("authorization", () => {
     async function insertOtherResearcherSample(
       db: Parameters<typeof createApp>[0],
@@ -1676,6 +1715,7 @@ describe("admin sample routes", () => {
     pgTest("should list only the caller's samples", async ({ db }) => {
       // Arrange
       const client = testClient(createApp(db).app);
+      await provisionUser(db, "test-token", { status: "pending" });
       await client.admin.samples.$post(
         {
           json: {
@@ -2002,6 +2042,7 @@ describe("admin sample routes", () => {
       "should record the author of a new sample as its owner",
       async ({ db }) => {
         const client = testClient(createApp(db).app);
+        await provisionUser(db, "test-token", { status: "pending" });
 
         const created = await client.admin.samples.$post(
           { json: draft },
@@ -2442,6 +2483,7 @@ describe("admin sample routes", () => {
 
     pgTest("should carry the owner of each listed sample", async ({ db }) => {
       const client = testClient(createApp(db).app);
+      await provisionUser(db, "test-token", { status: "pending" });
       await client.admin.samples.$post(
         { json: draft },
         { headers: authHeader },
@@ -2501,6 +2543,7 @@ describe("admin sample routes", () => {
 
     pgTest("should carry the owner role of the caller", async ({ db }) => {
       const client = testClient(createApp(db).app);
+      await provisionUser(db, "test-token", { status: "pending" });
       const created = await client.admin.samples.$post(
         { json: draft },
         { headers: authHeader },

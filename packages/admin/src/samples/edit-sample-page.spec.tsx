@@ -262,6 +262,7 @@ function fakeApi(
         orcid: null,
         status: callerStatus,
         superAdmin: false,
+        charterAccepted: true,
         managedLaboratories: callerManagedLaboratories,
         managedManualGroups: [],
         ...CALLER_GROUPS,

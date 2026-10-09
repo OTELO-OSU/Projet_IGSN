@@ -1,3 +1,4 @@
+import { charterPage } from "../support/admin/charter.page";
 import { institutionalGroupsListPage } from "../support/admin/institutional-groups-list.page";
 import { institutionalGroupsPage } from "../support/admin/institutional-groups.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
@@ -14,6 +15,7 @@ test.describe("institutional groups", () => {
     const settings = settingsPage(page);
 
     await signInAsResearcher(page, RESEARCHERS.theo);
+    await charterPage(page).accept();
     await groups.expectShown();
 
     await groups.declare({

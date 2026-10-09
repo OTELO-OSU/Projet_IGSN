@@ -129,6 +129,7 @@ describe("requireAuth", () => {
         orcid: null,
         status: "pending",
         superAdmin: false,
+        charterAccepted: false,
         managedLaboratories: [],
         managedManualGroups: [],
         institutionalOrganization: null,

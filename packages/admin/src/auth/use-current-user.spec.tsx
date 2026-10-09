@@ -22,6 +22,7 @@ describe("useCurrentUser", () => {
           orcid: null,
           status: "accepted",
           superAdmin: false,
+          charterAccepted: true,
           managedLaboratories: [],
           managedManualGroups: [],
         });

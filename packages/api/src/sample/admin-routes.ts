@@ -53,6 +53,7 @@ import type { SampleAccessEnv } from "./require-sample-access.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { getModerationScope } from "../auth/moderation-scope.ts";
+import { requireCharterAccepted } from "../auth/require-charter-accepted.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import { checkDataCite } from "../datacite/check-datacite.ts";
 import { dataCiteConfig } from "../datacite/config.ts";
@@ -267,53 +268,58 @@ export function createSampleAdminRoutes(
         );
       },
     )
-    .post("/import", validateImportUpload, async (c) => {
-      let parents: ReadonlyMap<string, Sample> = new Map();
-      const form = c.req.valid("form");
-      const ids = form["stagedUploadIds[]"] ?? [];
-      const staged = new Map(
-        (await stagedUploads.findCompleteOwned(ids, c.get("user").id)).map(
-          (upload) => [upload.name, upload],
-        ),
-      );
-      if (staged.size !== ids.length) {
-        return c.json({ error: "Invalid staged uploads" }, 400);
-      }
-      const { issues, samples } = await validateImport(
-        await form.file.arrayBuffer(),
-        new Set(staged.keys()),
-        (numbers) => repository.unavailableInternalNumbers(numbers),
-        () => manualGroups.listAttachableForUser(c.get("user").id),
-        async (igsns) =>
-          (parents = await resolvePublishedParents(repository, igsns)),
-      );
-      if (issues.length > 0) {
-        const body: InvalidImport = { error: "Invalid import", issues };
-        return c.json(body, 422);
-      }
-      if (!(await checkDataCite(dataCiteConfig()))) {
-        return c.json({ error: "DataCite unavailable" }, 503);
-      }
-      const user = c.get("user");
-      const count = await repository.createPublishing(
-        samples.map((sample) => ({
-          ...sample,
-          attachments: sample.attachments.map((metadata) => {
-            const { id, mediaType } = staged.get(metadata.name)!;
-            return { input: { ...metadata, mediaType }, stagedId: id };
-          }),
-        })),
-        user,
-      );
-      notifySubSamplesImported({
-        userSamples: userSampleRepository,
-        mail,
-        declarer: user,
-        parents: [...parents.values()],
-        parentIds: samples.flatMap(({ input }) => input.parentIds ?? []),
-      });
-      return c.json({ count } satisfies ImportAccepted, 200);
-    })
+    .post(
+      "/import",
+      requireCharterAccepted(users),
+      validateImportUpload,
+      async (c) => {
+        let parents: ReadonlyMap<string, Sample> = new Map();
+        const form = c.req.valid("form");
+        const ids = form["stagedUploadIds[]"] ?? [];
+        const staged = new Map(
+          (await stagedUploads.findCompleteOwned(ids, c.get("user").id)).map(
+            (upload) => [upload.name, upload],
+          ),
+        );
+        if (staged.size !== ids.length) {
+          return c.json({ error: "Invalid staged uploads" }, 400);
+        }
+        const { issues, samples } = await validateImport(
+          await form.file.arrayBuffer(),
+          new Set(staged.keys()),
+          (numbers) => repository.unavailableInternalNumbers(numbers),
+          () => manualGroups.listAttachableForUser(c.get("user").id),
+          async (igsns) =>
+            (parents = await resolvePublishedParents(repository, igsns)),
+        );
+        if (issues.length > 0) {
+          const body: InvalidImport = { error: "Invalid import", issues };
+          return c.json(body, 422);
+        }
+        if (!(await checkDataCite(dataCiteConfig()))) {
+          return c.json({ error: "DataCite unavailable" }, 503);
+        }
+        const user = c.get("user");
+        const count = await repository.createPublishing(
+          samples.map((sample) => ({
+            ...sample,
+            attachments: sample.attachments.map((metadata) => {
+              const { id, mediaType } = staged.get(metadata.name)!;
+              return { input: { ...metadata, mediaType }, stagedId: id };
+            }),
+          })),
+          user,
+        );
+        notifySubSamplesImported({
+          userSamples: userSampleRepository,
+          mail,
+          declarer: user,
+          parents: [...parents.values()],
+          parentIds: samples.flatMap(({ input }) => input.parentIds ?? []),
+        });
+        return c.json({ count } satisfies ImportAccepted, 200);
+      },
+    )
     .post("/import/duplicates", validateImportUpload, async (c) => {
       const data = await findImportDuplicates(
         await c.req.valid("form").file.arrayBuffer(),
@@ -414,44 +420,49 @@ export function createSampleAdminRoutes(
       };
       return c.json(body);
     })
-    .post("/", validateCreateSampleBody, async (c) => {
-      const input = c.req.valid("json");
-      const user = c.get("user");
-      const submitted = input.manualGroupIds ?? [];
-      if (submitted.length > 0) {
-        const attachable = await manualGroups.listAttachableForUser(user.id);
-        if (
-          hasUnattachable(
-            submitted,
-            attachable.map((group) => group.id),
-          )
-        ) {
-          return c.json(NOT_ATTACHABLE, 422);
+    .post(
+      "/",
+      requireCharterAccepted(users),
+      validateCreateSampleBody,
+      async (c) => {
+        const input = c.req.valid("json");
+        const user = c.get("user");
+        const submitted = input.manualGroupIds ?? [];
+        if (submitted.length > 0) {
+          const attachable = await manualGroups.listAttachableForUser(user.id);
+          if (
+            hasUnattachable(
+              submitted,
+              attachable.map((group) => group.id),
+            )
+          ) {
+            return c.json(NOT_ATTACHABLE, 422);
+          }
         }
-      }
-      const parents = await findEligibleAddedParents(
-        repository,
-        users,
-        user,
-        { parents: [] },
-        input.parentIds,
-      );
-      if (!parents) {
-        return c.json(PARENT_NOT_ELIGIBLE, 422);
-      }
-      if ((input.childIds ?? []).length > 0) {
-        return c.json(CHILDREN_NEED_PUBLICATION, 422);
-      }
-      const sample = await repository.create(input, user);
-      notifySubSampleDeclared({
-        userSamples: userSampleRepository,
-        mail,
-        declarer: user,
-        subSample: sample,
-        parents,
-      });
-      return c.json({ data: sample }, 201);
-    })
+        const parents = await findEligibleAddedParents(
+          repository,
+          users,
+          user,
+          { parents: [] },
+          input.parentIds,
+        );
+        if (!parents) {
+          return c.json(PARENT_NOT_ELIGIBLE, 422);
+        }
+        if ((input.childIds ?? []).length > 0) {
+          return c.json(CHILDREN_NEED_PUBLICATION, 422);
+        }
+        const sample = await repository.create(input, user);
+        notifySubSampleDeclared({
+          userSamples: userSampleRepository,
+          mail,
+          declarer: user,
+          subSample: sample,
+          parents,
+        });
+        return c.json({ data: sample }, 201);
+      },
+    )
     .get("/:id/collaborators", validateIdParam, async (c) => {
       if (!c.get("sample")) {
         return c.json({ error: "Not found" }, 404);

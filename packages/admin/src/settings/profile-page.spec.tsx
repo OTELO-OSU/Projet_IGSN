@@ -87,6 +87,7 @@ function fakeApi({
         orcid: stored,
         status,
         superAdmin: false,
+        charterAccepted: true,
         managedLaboratories: [],
         managedManualGroups: [],
         ...CALLER_GROUPS,

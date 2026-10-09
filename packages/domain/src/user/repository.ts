@@ -51,6 +51,8 @@ export type UserRepository = {
     userId: string,
     groups: SetInstitutionalGroups,
   ): Promise<{ orphanedGroups: OrphanedGroup[] }>;
+  acceptCharter(userId: string): Promise<void>;
+  hasAcceptedCharter(userId: string): Promise<boolean>;
   findByOrcid(orcid: string): Promise<User | undefined>;
   list(
     query: ListUsersQuery,
