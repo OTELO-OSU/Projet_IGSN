@@ -92,6 +92,7 @@ describe("sampleSchema", () => {
       manualGroups: [],
       parents: [],
       children: [],
+      series: null,
       hasSubSamples: false,
       institutionalOrganization: null,
       institutionalOsu: null,
@@ -524,6 +525,41 @@ describe("createSampleSchema", () => {
       },
     ]);
   });
+
+  it("should reject a series on a series of samples", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Core series 1",
+      type: "serie_of_sample.core",
+      seriesId: PARENT_ID,
+    });
+    expect(result.error?.issues).toMatchObject([
+      { path: ["seriesId"], message: "a series of samples is in no series" },
+    ]);
+  });
+
+  it("should reject a series on a sub-sample", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Core 1",
+      type: "core",
+      parentIds: [PARENT_ID],
+      seriesId: OTHER_PARENT_ID,
+    });
+    expect(result.error?.issues).toMatchObject([
+      { path: ["seriesId"], message: "a sub-sample is in no series" },
+    ]);
+  });
+
+  it.each([null, PARENT_ID])(
+    "should accept the series %s on a core",
+    (seriesId) => {
+      const result = createSampleSchema.safeParse({
+        name: "Core 1",
+        type: "core",
+        seriesId,
+      });
+      expect(result.data).toMatchObject({ seriesId });
+    },
+  );
 
   it.each([
     ["rock_and_sediment.mineral", [{ strunzId: "9.E", mindatId: 2815 }]],

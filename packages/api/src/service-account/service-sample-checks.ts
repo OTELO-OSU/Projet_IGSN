@@ -40,6 +40,8 @@ import {
   createServiceSampleIssues,
   parentNotFoundIssues,
   processStepsOnRootIssue,
+  refusedSeriesIssues,
+  seriesIssues,
 } from "./create-service-sample-issues.ts";
 import {
   coreSampleIssue,
@@ -141,7 +143,7 @@ export async function checkServiceCreate(
   account: ServiceAccount,
   body: CoreSampleBody,
 ): Promise<Checked<CheckedCreate>> {
-  const { sample, parents, children } = fromCoreSample(body);
+  const { sample, parents, children, series } = fromCoreSample(body);
   const [resolved, resolvedChildren] = await Promise.all([
     resolveRelated(listDeclarableParents(samples), parents),
     resolveRelated(accountChildCandidates(samples, account), children),
@@ -156,6 +158,7 @@ export async function checkServiceCreate(
   }
   const issues = [
     ...childIssues(resolvedChildren),
+    ...refusedSeriesIssues(series),
     ...(await createServiceSampleIssues(
       { manualGroups },
       account.sampleOwner.id,
@@ -198,7 +201,7 @@ export async function checkServiceUpdate(
       serviceSampleIssue("sample_not_editable", SAMPLE_KEY_PATH),
     ]);
   }
-  const { sample, parents, children } = fromCoreSample(body);
+  const { sample, parents, children, series } = fromCoreSample(body);
   const submitted = new Set(parents.map(({ igsn }) => normalizedIgsn(igsn)));
   if (current.parents.some(({ igsn }) => !submitted.has(igsn))) {
     return refusedUpdate("frozen", [
@@ -208,10 +211,22 @@ export async function checkServiceUpdate(
   const held = new Map(current.children.map(({ id, igsn }) => [igsn, id]));
   const heldIdOf = ({ igsn }: { igsn: string }) =>
     held.get(igsnSchema.safeParse(igsn).data ?? "");
-  const resolvedChildren = await resolveRelated(
-    accountChildCandidates(samples, account),
-    children.filter((child) => heldIdOf(child) === undefined),
+  const [joined, ...extraSeries] = series;
+  const isStoredSeries =
+    (joined === undefined ? null : igsnSchema.safeParse(joined.igsn).data) ===
+    (current.series?.igsn ?? null);
+  const unheldChildren = children.filter(
+    (child) => heldIdOf(child) === undefined,
   );
+  const resolvedRelated = await resolveRelated(
+    accountChildCandidates(samples, account),
+    [
+      ...unheldChildren,
+      ...(isStoredSeries || joined === undefined ? [] : [joined]),
+    ],
+  );
+  const resolvedChildren = resolvedRelated.slice(0, unheldChildren.length);
+  const resolvedSeries = resolvedRelated.slice(unheldChildren.length);
   const stored = new Set(current.parents.map(({ igsn }) => igsn));
   const resolved = await resolveParents(
     samples,
@@ -255,6 +270,9 @@ export async function checkServiceUpdate(
   const parsed = updateSampleSchema.safeParse({
     ...keepContactLinks(sample, current),
     parentIds: [...current.parents, ...added].map(({ id }) => id),
+    seriesId: isStoredSeries
+      ? (current.series?.id ?? null)
+      : (resolvedSeries[0]?.sample?.id ?? null),
     childIds: [
       ...children.flatMap((child) => heldIdOf(child) ?? []),
       ...resolvedIds(resolvedChildren),
@@ -276,7 +294,11 @@ export async function checkServiceUpdate(
   if (frozen.length > 0) {
     return refusedUpdate("frozen", frozenFieldIssues(frozen));
   }
-  const ineligible = childIssues(resolvedChildren, current.id);
+  const ineligible = [
+    ...childIssues(resolvedChildren, current.id),
+    ...seriesIssues(resolvedSeries, current),
+    ...refusedSeriesIssues(extraSeries),
+  ];
   if (ineligible.length > 0) {
     return refusedUpdate("invalid", ineligible);
   }

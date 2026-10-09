@@ -33,6 +33,7 @@ import { createSampleChildRoutes } from "./sample/child-routes.ts";
 import { createSampleParentRoutes } from "./sample/parent-routes.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
+import { createSampleSeriesRoutes } from "./sample/series-routes.ts";
 import { createServiceAccountOwnerRoutes } from "./service-account/owner-routes.ts";
 import { createServiceAccountRepository } from "./service-account/repository.ts";
 import { createServiceAccountRoutes } from "./service-account/routes.ts";
@@ -216,6 +217,10 @@ export function createApp(
     .route(
       "/samples/children",
       createSampleChildRoutes(sampleRepository, userRepository),
+    )
+    .route(
+      "/samples/series",
+      createSampleSeriesRoutes(sampleRepository, userRepository),
     )
     .route(
       "/samples",

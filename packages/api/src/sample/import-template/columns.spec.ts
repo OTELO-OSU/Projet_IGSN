@@ -15,7 +15,7 @@ const DEFERRED_FIELDS = ["syntheticDetails", "mineralClassifications"];
 
 const ATTACHMENT_ID_FIELD = "attachments.id";
 
-const BULK_EDIT_ONLY_FIELDS = ["childIds"];
+const BULK_EDIT_ONLY_FIELDS = ["childIds", "seriesId"];
 
 const ATTACHMENT_FILE_NAME_FIELD = "attachments.name";
 

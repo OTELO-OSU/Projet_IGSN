@@ -34,6 +34,7 @@ import {
   sampleMineralClassificationsQuery,
   sampleOwnerQuery,
   sampleParentsQuery,
+  sampleSeriesQuery,
   samplePersonAccountsQuery,
   sampleProcessStepsQuery,
   sampleRelationsQuery,
@@ -175,6 +176,7 @@ async function listSamplesWhere(
       .select(sampleManualGroupsQuery)
       .select(sampleParentsQuery)
       .select(sampleChildrenQuery)
+      .select(sampleSeriesQuery)
       .select(sampleHasSubSamplesQuery)
       .select(samplePersonAccountsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))

@@ -9,6 +9,7 @@ import {
   coreRelationType,
   coreTargetResourceType,
   PARENT_RELATION_TYPE,
+  SERIES_RELATION_TYPE,
   toParentIdentifierType,
 } from "./core-relation-schema.ts";
 import { sampleLandingPage } from "./sample-landing-page.ts";
@@ -52,5 +53,11 @@ export function toCoreRelations(
     ...sample.parents.map(toSampleRelation(PARENT_RELATION_TYPE)),
     ...sample.children.map(toSampleRelation(CHILD_RELATION_TYPE)),
   );
+  const series = sample.series;
+  if (series?.igsn != null) {
+    relations.push(
+      toSampleRelation(SERIES_RELATION_TYPE)({ ...series, igsn: series.igsn }),
+    );
+  }
   return relations.length === 0 ? undefined : relations;
 }

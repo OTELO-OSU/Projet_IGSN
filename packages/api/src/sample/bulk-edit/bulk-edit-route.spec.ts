@@ -18,6 +18,7 @@ import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { provisionUser } from "../../tests/provision-user.ts";
 import { readSample } from "../../tests/read-sample.ts";
+import { seriesIdOf } from "../../tests/series-id-of.ts";
 import {
   STUB_DATACITE_CONFIG,
   stubDataCite,
@@ -381,6 +382,145 @@ describe("a series' children over bulk edit", () => {
       }).toEqual({ status: 200, children: [first.id, second.id] });
     },
     30_000,
+  );
+});
+
+const SERIES_HEADER = "Series IGSN";
+
+async function arrangeMember(db: Kysely<DB>) {
+  const caller = await provisionUser(db, "test-token");
+  const member = await insertOwned(db, caller.id, {
+    name: "Core 1",
+    type: "core",
+  });
+  const series = await insertOwned(db, caller.id, {
+    name: "Core series",
+    type: "serie_of_sample.core",
+    childIds: [member.id],
+  });
+  const other = await insertOwned(db, caller.id, {
+    name: "Other series",
+    type: "serie_of_sample.core",
+  });
+  return {
+    caller,
+    member: (await readSample(db, member.id))!,
+    series,
+    other,
+  };
+}
+
+describe("a member's series over bulk edit", () => {
+  pgTest.for([
+    { change: "join the series it names", cell: "other" },
+    { change: "leave its series on a blank cell", cell: "blank" },
+    { change: "keep its series when the column is absent", cell: "absent" },
+  ] as const)(
+    "should $change",
+    { timeout: 30_000 },
+    async ({ cell }, { db }) => {
+      const { member, series, other } = await arrangeMember(db);
+
+      const res = await upload(db, [member], (book) => {
+        if (cell === "absent") {
+          deleteColumn(book, SHEETS.samples, SERIES_HEADER);
+          setLocalId("EDITED")(book);
+        } else
+          fill(book, SHEETS.samples, ROW, {
+            [SERIES_HEADER]: cell === "blank" ? null : other.igsn,
+          });
+      });
+
+      expect({
+        status: res.status,
+        seriesId: await seriesIdOf(db, member.id),
+      }).toEqual({
+        status: 200,
+        seriesId: { other: other.id, blank: null, absent: series.id }[cell],
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse a parent on a row that keeps its series",
+    async ({ db }) => {
+      const { caller, member, series } = await arrangeMember(db);
+      const parent = await insertParent(db, caller.id, "published", "Parent");
+
+      const res = await upload(db, [member], (book) =>
+        fill(book, SHEETS.samples, ROW, { "Parent IGSN": parent.igsn }),
+      );
+
+      expect({
+        status: res.status,
+        body: await res.json(),
+        seriesId: await seriesIdOf(db, member.id),
+        parents: (await readSample(db, member.id))?.parents,
+      }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [
+            expect.objectContaining({
+              row: ROW,
+              column: SERIES_HEADER,
+              code: "series_not_eligible",
+            }),
+          ],
+        },
+        seriesId: series.id,
+        parents: [],
+      });
+    },
+    30_000,
+  );
+
+  pgTest.for<{
+    rule: string;
+    code: string;
+    igsnOf: (db: Kysely<DB>) => Promise<string | null>;
+  }>([
+    {
+      rule: "an unknown IGSN",
+      code: "series_not_found",
+      igsnOf: () => Promise.resolve("ABCDEFGHJKMNPQRSTVWXYZ0123"),
+    },
+    {
+      rule: "a series the caller cannot edit",
+      code: "series_not_eligible",
+      igsnOf: async (db) => {
+        const owner = await insertUser(db, "other@example.com");
+        return (
+          await insertOwned(db, owner.id, { type: "serie_of_sample.core" })
+        ).igsn;
+      },
+    },
+  ])(
+    "should refuse $rule as a series with $code",
+    { timeout: 30_000 },
+    async ({ code, igsnOf }, { db }) => {
+      const { member, series } = await arrangeMember(db);
+      const igsn = await igsnOf(db);
+
+      const res = await upload(db, [member], (book) =>
+        fill(book, SHEETS.samples, ROW, { [SERIES_HEADER]: igsn }),
+      );
+
+      expect({
+        status: res.status,
+        body: await res.json(),
+        seriesId: await seriesIdOf(db, member.id),
+      }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [
+            expect.objectContaining({ row: ROW, column: SERIES_HEADER, code }),
+          ],
+        },
+        seriesId: series.id,
+      });
+    },
   );
 });
 

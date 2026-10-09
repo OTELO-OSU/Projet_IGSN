@@ -11,7 +11,11 @@ import { insertOwned } from "../../tests/insert-owned.ts";
 import { insertParent } from "../../tests/insert-parent.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { provisionUser } from "../../tests/provision-user.ts";
-import { CHILDREN_IGSNS_HEADER, SHEETS } from "../import-template/columns.ts";
+import {
+  CHILDREN_IGSNS_HEADER,
+  SERIES_IGSN_HEADER,
+  SHEETS,
+} from "../import-template/columns.ts";
 
 const exportSamples = (
   db: Kysely<DB>,
@@ -58,35 +62,35 @@ describe("POST /admin/samples/export", () => {
     30_000,
   );
 
-  pgTest(
-    "should export a series' children IGSNs",
-    async ({ db }) => {
+  pgTest.for([
+    { header: CHILDREN_IGSNS_HEADER, exported: "series", named: "child" },
+    { header: SERIES_IGSN_HEADER, exported: "child", named: "series" },
+  ] as const)(
+    "should export the $named IGSN of a $exported under $header",
+    { timeout: 30_000 },
+    async ({ header, exported, named }, { db }) => {
       const caller = await provisionUser(db, "test-token");
       const child = await insertOwned(db, caller.id, { type: "core" });
       const series = await insertOwned(db, caller.id, {
         type: "serie_of_sample.core",
         childIds: [child.id],
       });
+      const linked = { child, series };
 
       const res = await exportSamples(db, {
         mode: "ids",
         moderated: false,
-        ids: [series.id],
+        ids: [linked[exported].id],
       });
       const book = new ExcelJS.Workbook();
       await book.xlsx.load(await res.arrayBuffer());
       const sheet = book.getWorksheet(SHEETS.samples)!;
       const column = [1, 2]
-        .map((row) =>
-          (sheet.getRow(row).values as unknown[]).indexOf(
-            CHILDREN_IGSNS_HEADER,
-          ),
-        )
+        .map((row) => (sheet.getRow(row).values as unknown[]).indexOf(header))
         .find((index) => index > 0)!;
 
-      expect(sheet.getRow(3).getCell(column).value).toBe(child.igsn);
+      expect(sheet.getRow(3).getCell(column).value).toBe(linked[named].igsn);
     },
-    30_000,
   );
 
   pgTest("should refuse an invalid body as 400", async ({ db }) => {

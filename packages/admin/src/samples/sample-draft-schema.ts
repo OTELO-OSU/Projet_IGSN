@@ -185,6 +185,7 @@ export type SampleDraft = {
   manualGroupIds: string[];
   parentIds: string[];
   childIds: string[];
+  seriesId: string | null;
 } & EconomicInterestDraft;
 
 export type SampleDraftSource = Partial<CreateSample> & {
@@ -263,6 +264,7 @@ export const toSampleDraft = (
   manualGroupIds: value?.manualGroupIds ?? [],
   parentIds: value?.parentIds ?? value?.parents?.map(({ id }) => id) ?? [],
   childIds: value?.childIds ?? [],
+  seriesId: value?.seriesId ?? null,
   ...toEconomicInterestDraft(value),
 });
 
@@ -382,7 +384,9 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(mineralClassifications.length > 0 ? { mineralClassifications } : {}),
     manualGroupIds: draft.manualGroupIds,
     ...(draft.parentIds.length > 0 ? { parentIds: draft.parentIds } : {}),
-    ...(isVirtualSample(type) ? { childIds: draft.childIds } : {}),
+    ...(isVirtualSample(type)
+      ? { childIds: draft.childIds }
+      : { seriesId: draft.seriesId }),
     ...economic,
   };
 };

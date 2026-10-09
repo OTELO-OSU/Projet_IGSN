@@ -270,6 +270,7 @@ type SampleRow = Selectable<DB["sample"]> & {
   owner?: Pick<Selectable<DB["user"]>, "name" | "firstname"> | null;
   parents?: RelatedSampleRow[];
   children?: RelatedSampleRow[];
+  series?: RelatedSampleRow | null;
   hasSubSamples: boolean;
 };
 
@@ -372,6 +373,7 @@ export function toSample(row: SampleRow): Sample {
       : null,
     parents: row.parents ?? [],
     children: row.children ?? [],
+    series: row.series ?? null,
     hasSubSamples: row.hasSubSamples,
     institutionalOrganization: row.institutional_organization,
     institutionalOsu: row.institutional_osu,

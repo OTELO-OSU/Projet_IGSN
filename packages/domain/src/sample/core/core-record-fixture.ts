@@ -29,6 +29,8 @@ const PARENT_ID = "44444444-4444-4444-8444-444444444444";
 
 const CHILD_ID = "55555555-5555-4555-8555-555555555555";
 
+const SERIES_ID = "66666666-6666-4666-8666-666666666666";
+
 const TECHNICAL = {
   id: "11111111-1111-4111-8111-111111111111",
   igsn: IGSN,
@@ -49,7 +51,7 @@ const TECHNICAL = {
 };
 
 export function hydrate(body: CoreSampleBody): Sample {
-  const { sample, parents, children } = fromCoreSample(body);
+  const { sample, parents, children, series } = fromCoreSample(body);
   const related =
     (id: string) =>
     ({ igsn, relationIndex }: { igsn: string; relationIndex: number }) => ({
@@ -67,6 +69,7 @@ export function hydrate(body: CoreSampleBody): Sample {
     })),
     parents: parents.map(related(PARENT_ID)),
     children: children.map(related(CHILD_ID)),
+    series: series[0] ? related(SERIES_ID)(series[0]) : null,
     manualGroups: body.manualGroups ?? [],
   });
 }

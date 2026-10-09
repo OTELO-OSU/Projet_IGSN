@@ -4,6 +4,7 @@ import {
   CHILD_SHEETS,
   CHILDREN_IGSNS_HEADER,
   SAMPLE_COLUMNS,
+  SERIES_IGSN_HEADER,
   SHEETS,
 } from "../import-template/columns.ts";
 
@@ -18,6 +19,11 @@ export const EXPORT_SAMPLE_COLUMNS: readonly Column[] = SAMPLE_COLUMNS.flatMap(
             header: CHILDREN_IGSNS_HEADER,
             group: column.group,
             path: "children.igsn",
+          },
+          {
+            header: SERIES_IGSN_HEADER,
+            group: column.group,
+            path: "series.igsn",
           },
         ]
       : [column];

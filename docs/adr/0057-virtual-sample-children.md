@@ -26,7 +26,7 @@ A series is not a parent: its members are not derived from it, and a member belo
 - Children are editable after publication through the form, `/service` and bulk edit.
 - `replaceSampleChildren` enforces the claim atomically: a child held by any series, draft included, cannot be taken (422).
 - Lineage walks `sample_parent` and the series link as one edge set, so a sub-sample reaches the series through its ancestors.
-- Core and DataCite carry `HasPart` per child on the series, accepted on input; a member carries no `IsPartOf`, the mirror relation being out of scope.
+- Core and DataCite carry `HasPart` per child on the series, accepted on input; a member's `IsPartOf` comes with ADR [0060](0060-series-membership-from-the-member.md).
 - Bulk edit sets children with a `Children IGSNs` column of its export; the import template has none, a series holding children only once published.
 - An imported series row fills both type levels, the template requiring no extra column.
 - Children are set on a published series only (`canSetSampleChildren`): admin POST, and PUT of an unpublished series, answer 422 `CHILDREN_NEED_PUBLICATION`.

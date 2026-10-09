@@ -59,11 +59,13 @@ const draft: SampleDraft = {
   manualGroupIds: [],
   parentIds: [],
   childIds: [],
+  seriesId: null,
   ...toEconomicInterestDraft(undefined),
 };
 
 const MANUAL_GROUP_ID = "3f2504e0-4f89-41d3-9a0c-0305000000a1";
 const CHILD_ID = "3f2504e0-4f89-41d3-9a0c-0305000000c1";
+const SERIES_ID = "3f2504e0-4f89-41d3-9a0c-0305000000c0";
 
 describe("sampleDraftSchema", () => {
   it("should compose the draft and validate it like the API does", () => {
@@ -92,6 +94,7 @@ describe("sampleDraftSchema", () => {
         additionalRoles: [],
       },
       manualGroupIds: [],
+      seriesId: null,
     });
   });
 
@@ -215,6 +218,7 @@ describe("sampleDraftSchema", () => {
         additionalRoles: [],
       },
       manualGroupIds: [],
+      seriesId: null,
       description: {
         oriented: false,
         collectionDate: {
@@ -476,6 +480,22 @@ describe("sampleDraftSchema", () => {
       });
 
       expect(result.childIds).toEqual(childIds);
+    },
+  );
+
+  it.each([
+    { type: "dredge", seriesId: SERIES_ID },
+    { type: "serie_of_sample.core", seriesId: undefined },
+  ])(
+    "should compose the series id of a sample that is not a series only: $type",
+    ({ type, seriesId }) => {
+      const result = sampleDraftSchema.parse({
+        ...draft,
+        typePath: toHierarchyPath(type),
+        seriesId: SERIES_ID,
+      });
+
+      expect(result.seriesId).toEqual(seriesId);
     },
   );
 

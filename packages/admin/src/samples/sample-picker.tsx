@@ -1,17 +1,18 @@
 import type { SampleParent } from "@projet-igsn/domain/sample/parent/model";
+import type { SampleSeries } from "@projet-igsn/domain/sample/series/model";
 
 import { m } from "#/paraglide/messages.js";
 import { useSearchEligibleParents } from "#/samples/use-search-eligible-parents.ts";
 import { SearchPicker } from "#/search-picker/search-picker.tsx";
 import { usePicker } from "#/search-picker/use-picker.ts";
 
-export const sampleLabel = (sample: SampleParent) =>
-  `${sample.name} (${sample.igsn})`;
+export const sampleLabel = (sample: SampleSeries) =>
+  sample.igsn === null ? sample.name : `${sample.name} (${sample.igsn})`;
 
 export const samplePickerLabels = () => ({
-  labelOf: (sample: SampleParent) => sample.name,
+  labelOf: (sample: SampleSeries) => sample.name,
   valueLabel: sampleLabel,
-  detailOf: (sample: SampleParent) => sample.igsn,
+  detailOf: (sample: SampleSeries) => sample.igsn ?? "",
   suggestionsLabel: m.second_parent_suggestions_label(),
 });
 

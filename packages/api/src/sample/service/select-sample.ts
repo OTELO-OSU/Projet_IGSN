@@ -11,6 +11,7 @@ import {
   sampleMineralClassificationsQuery,
   sampleOwnerQuery,
   sampleParentsQuery,
+  sampleSeriesQuery,
   samplePersonAccountsQuery,
   sampleProcessStepsQuery,
   sampleRelationsQuery,
@@ -29,6 +30,7 @@ export const selectSample = (db: Transactional<DB>) =>
     .select(sampleManualGroupsQuery)
     .select(sampleParentsQuery)
     .select(sampleChildrenQuery)
+    .select(sampleSeriesQuery)
     .select(sampleHasSubSamplesQuery)
     .select(sampleOwnerQuery)
     .select(samplePersonAccountsQuery);

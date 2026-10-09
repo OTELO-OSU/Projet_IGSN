@@ -92,7 +92,7 @@ A sample carries 0, 1 or 2 parents, capped in `createSampleSchema` and `coreSamp
 - `replaceSampleChildren` is the single claim guard: atomically, a child held by any series, draft included, cannot be taken (422).
 - Children are set on a published series only (`canSetSampleChildren`): admin POST, and PUT of an unpublished series, answer 422 `CHILDREN_NEED_PUBLICATION`.
 - Claiming never writes the child row, so another user's edit lock or the child's queue state does not block it, and a child's rights are editor rights on it with no status check.
-- A series' DataCite record carries a `HasPart` per child through its own `syncDoi`, and a member's record carries no `IsPartOf`.
+- A series' DataCite record carries a `HasPart` per child through its own `syncDoi`, and a member's record carries `IsPartOf` once the series has an IGSN, the member joining from its own side (`seriesId`, `Series IGSN`, Core `IsPartOf` on `/service` PUT) without re-syncing the series' `HasPart`; see ADR 0060.
 - A series has no parent and no sub-sample: `canDeclareSubSample` gates every parent pick, `canBecomeSeries` every type change; see ADR 0057.
 - Lineage walks `sample_parent` and the series link as one edge set; see ADR 0057.
 

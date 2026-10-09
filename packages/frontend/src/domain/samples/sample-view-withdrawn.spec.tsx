@@ -23,6 +23,7 @@ const sample = (overrides: Partial<WithdrawnSample> = {}): WithdrawnSample => ({
   collectorFirstname: "Claire",
   collectorLastname: "Martin",
   children: [],
+  series: null,
   ...overrides,
 });
 
