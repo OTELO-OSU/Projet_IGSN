@@ -23,24 +23,7 @@ if [ "$code" -ne 0 ]; then
 fi
 
 body="$(mktemp)"
-vpn_config="$(mktemp)"
-vpn_log="$(mktemp)"
-trap 'rm -f "$body" "$vpn_config" "$vpn_log"' EXIT
-
-sudo apt-get update -qq
-sudo apt-get install -y -qq openfortivpn
-printf '%s\n' "host = $VPN_HOST" "username = $VPN_USER" "password = $VPN_PASSWORD" \
-	${VPN_PORT:+"port = $VPN_PORT"} ${VPN_TRUSTED_CERT:+"trusted-cert = $VPN_TRUSTED_CERT"} >"$vpn_config"
-sudo openfortivpn -c "$vpn_config" >"$vpn_log" 2>&1 &
-for _ in $(seq 60); do
-	grep -q 'Tunnel is up' "$vpn_log" && break
-	sleep 1
-done
-if ! grep -q 'Tunnel is up' "$vpn_log"; then
-	echo "the VPN tunnel did not come up within 60 s:" >&2
-	cat "$vpn_log" >&2
-	exit 1
-fi
+trap 'rm -f "$body"' EXIT
 
 status="$(node infra/scripts/compose-env.ts payload | curl -sS -o "$body" -w '%{http_code} %{redirect_url}' --max-time 600 \
 	-X PUT \
