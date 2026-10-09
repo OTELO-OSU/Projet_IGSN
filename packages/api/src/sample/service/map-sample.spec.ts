@@ -108,13 +108,7 @@ describe("mapPublishedSamples", () => {
     "should leave every unpublished sample off the map",
     async ({ db }) => {
       // Arrange
-      const statuses = [
-        "draft",
-        "publishing",
-        "publish_failed",
-        "withdrawn",
-        "tombstone",
-      ] as const;
+      const statuses = ["draft", "withdrawn", "tombstone"] as const;
       for (const [index, status] of statuses.entries()) {
         const sample = await insertPublished(db, status, point(index * 20, 0));
         await db

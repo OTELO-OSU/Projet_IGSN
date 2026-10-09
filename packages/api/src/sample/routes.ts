@@ -1,15 +1,15 @@
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
-  ListSamplesResponse,
+  PublicListSamplesResponse,
   PublicSampleResponse,
   SampleFacetCountsResponse,
   SampleLineageResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 
+import { toPublicListedSample } from "@projet-igsn/domain/sample/publication/public-listed-sample";
 import { toPublicSample } from "@projet-igsn/domain/sample/publication/public-sample";
-import { redactPrivateContacts } from "@projet-igsn/domain/sample/publication/redact-private-contacts";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -37,8 +37,8 @@ export function createSampleRoutes(
       const { data, total } = await repository.listPublished(
         c.req.valid("query"),
       );
-      const body: ListSamplesResponse = {
-        data: data.map(redactPrivateContacts),
+      const body: PublicListSamplesResponse = {
+        data: data.map(toPublicListedSample),
         meta: { total },
       };
       return c.json(body);

@@ -511,6 +511,26 @@ describe("listSamples", () => {
     expect(data.map((s) => s.name)).toEqual(["Gone"]);
   });
 
+  pgTest("should filter by the synchronization status", async ({ db }) => {
+    // Arrange
+    await insertSample(db, { ...bare, name: "Never synchronized" });
+    const failed = await insertSample(db, { ...bare, name: "Failed" });
+    await db
+      .updateTable("sample")
+      .set({ synchronization_status: "failed" })
+      .where("id", "=", failed.id)
+      .execute();
+    // Act
+    const { data, total } = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+      synchronizationStatus: "failed",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Failed"]);
+  });
+
   pgTest("should filter by the availability status", async ({ db }) => {
     // Arrange
     await insertSample(db, {

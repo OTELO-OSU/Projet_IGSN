@@ -6,7 +6,7 @@ export type SeededSample = {
   name: string;
   nature: string;
   igsn: string | null;
-  status: "draft" | "publish_failed" | "published" | "withdrawn" | "tombstone";
+  status: "draft" | "published" | "withdrawn" | "tombstone";
   owner: string;
   collaborators: { researcher: string; role: "editor" | "contributor" }[];
 };

@@ -34,6 +34,7 @@ export const fakeSample = {
   internalNumber: null,
   status: "draft",
   createdAt: "2026-06-01T00:00:00.000Z",
-  publishingError: null,
+  synchronizationStatus: null,
+  synchronizationError: null,
   updatedAt: "2026-07-01T10:00:00.000Z",
 };

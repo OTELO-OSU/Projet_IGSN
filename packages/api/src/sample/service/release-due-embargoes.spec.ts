@@ -59,7 +59,7 @@ async function release(db: Kysely<DB>) {
 const statusesOf = (db: Kysely<DB>, ids: string[]) =>
   db
     .selectFrom("sample")
-    .select(["id", "status"])
+    .select(["id", "status", "synchronization_status"])
     .where("id", "in", ids)
     .orderBy("id")
     .execute();
@@ -81,8 +81,8 @@ describe("releaseDueEmbargoes", () => {
       const sendMail = await release(db);
       // Assert
       expect(await statusesOf(db, [due, future])).toEqual([
-        { id: due, status: "published" },
-        { id: future, status: "embargo" },
+        { id: due, status: "published", synchronization_status: "synced" },
+        { id: future, status: "embargo", synchronization_status: "synced" },
       ]);
       expect(dataCiteEventsOf(fetchMock)).toEqual(["publish"]);
       expect(sentMails(sendMail)).toEqual([

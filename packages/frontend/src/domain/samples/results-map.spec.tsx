@@ -204,13 +204,12 @@ describe("ResultsMap", () => {
   });
 
   it("should list ten of a cluster's samples and count the rest at max zoom", async () => {
-    const samples = Array.from({ length: 10 }, (_, index) => ({
-      ...publishedSample({
+    const samples = Array.from({ length: 10 }, (_, index) =>
+      publishedSample({
         igsn: `0123456789ABCDEFGHJKMNPQR${index}`,
         name: `Sample ${index}`,
       }),
-      publishingError: null,
-    }));
+    );
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(

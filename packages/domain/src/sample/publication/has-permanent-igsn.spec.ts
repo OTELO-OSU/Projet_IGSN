@@ -5,8 +5,6 @@ import { hasPermanentIgsn } from "./has-permanent-igsn.ts";
 describe("hasPermanentIgsn", () => {
   it.each([
     ["draft", false],
-    ["publishing", false],
-    ["publish_failed", false],
     ["published", true],
     ["withdrawn", true],
     ["embargo", true],

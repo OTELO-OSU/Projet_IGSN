@@ -313,7 +313,7 @@ export const createSampleBatchRoute = createRoute({
   responses: {
     202: json(
       sampleBatchSchema,
-      "The batch is queued for publication: each queued item reads publishing, each unchanged item keeps its published status and IGSN.",
+      "The batch is queued: each created item reads draft and each updated item published, both with synchronizationStatus pending, while each unchanged item keeps its state.",
     ),
     403: FORBIDDEN,
     409: json(

@@ -52,18 +52,6 @@ describe("canDeclareSubSample", () => {
     ],
     ["a draft sample can never have a sub-sample", "draft", null, true],
     [
-      "a publishing sample can never have a sub-sample",
-      "publishing",
-      "owner",
-      true,
-    ],
-    [
-      "a publish_failed sample can never have a sub-sample",
-      "publish_failed",
-      "owner",
-      true,
-    ],
-    [
       "a withdrawn sample needs a role on it or moderation reach",
       "withdrawn",
       null,

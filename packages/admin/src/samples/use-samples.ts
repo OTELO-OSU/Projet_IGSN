@@ -24,6 +24,7 @@ export type SampleListParams = Pick<
   | "status"
   | "existenceStatus"
   | "availabilityStatus"
+  | "synchronizationStatus"
 >;
 
 export function useSamples(params: SampleListParams, moderated = false) {

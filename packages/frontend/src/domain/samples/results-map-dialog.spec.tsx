@@ -10,7 +10,6 @@ const PARAMS = { page: 1, perPage: 10, search: "basalt", filters: {} };
 const BASALT = {
   ...publishedSample(),
   location: { position: { type: "point", latitude: 46, longitude: 2 } },
-  publishingError: null,
 };
 
 const MAP_RESPONSE = {

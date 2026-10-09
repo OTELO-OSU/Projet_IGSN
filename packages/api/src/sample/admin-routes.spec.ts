@@ -28,7 +28,7 @@ import {
   draft,
   publishableSample,
 } from "../tests/sample-fixtures.ts";
-import { stubDataCite } from "../tests/stub-datacite.ts";
+import { dataCiteEventsOf, stubDataCite } from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -1071,7 +1071,7 @@ describe("admin sample routes", () => {
   });
 
   pgTest(
-    "should re-send the edited metadata of a published sample to DataCite",
+    "should queue an edited published sample for synchronization without calling DataCite",
     async ({ db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
@@ -1094,11 +1094,14 @@ describe("admin sample routes", () => {
         { headers: authHeader },
       );
       // Assert
-      expect(res.status).toBe(200);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      const [, init] = fetchMock.mock.calls[0]!;
-      expect(JSON.parse(init.body).data.attributes).toMatchObject({
-        titles: [{ title: "Gres de Fontainebleau" }],
+      expect({
+        status: res.status,
+        body: await res.json(),
+        calls: fetchMock.mock.calls,
+      }).toMatchObject({
+        status: 200,
+        body: { data: { synchronizationStatus: "pending" } },
+        calls: [],
       });
     },
   );
@@ -1371,6 +1374,33 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
+      "should hide a withdrawn sample at DataCite at once and mark it synchronized",
+      async ({ db }) => {
+        // Arrange
+        const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+        onTestFinished(() => {
+          vi.unstubAllGlobals();
+        });
+        const { client, sample } = await arrangePublished(db);
+        fetchMock.mockClear();
+        // Act
+        const res = await setStatus(client, sample.id, "withdrawn");
+        // Assert
+        expect({
+          status: res.status,
+          body: await res.json(),
+          events: dataCiteEventsOf(fetchMock),
+        }).toMatchObject({
+          status: 200,
+          body: {
+            data: { status: "withdrawn", synchronizationStatus: "synced" },
+          },
+          events: ["hide"],
+        });
+      },
+    );
+
+    pgTest(
       "should answer 502 when DataCite refuses the status change",
       async ({ db }) => {
         // Arrange
@@ -1447,14 +1477,14 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
-      "should answer 409 when publishing a sample still publishing",
+      "should answer 409 when publishing a draft still queued for publication",
       async ({ db }) => {
         // Arrange
         const client = testClient(createApp(db).app);
         const data = await createSample(db, client, publishableSample);
         await db
           .updateTable("sample")
-          .set({ status: "publishing" })
+          .set({ synchronization_status: "pending" })
           .where("id", "=", data.id)
           .execute();
         // Act
@@ -1475,7 +1505,10 @@ describe("admin sample routes", () => {
         const data = await createSample(db, client, publishableSample);
         await db
           .updateTable("sample")
-          .set({ status: "publish_failed", publishing_error: "503 down" })
+          .set({
+            synchronization_status: "failed",
+            synchronization_error: "503 down",
+          })
           .where("id", "=", data.id)
           .execute();
         // Act
@@ -1488,10 +1521,18 @@ describe("admin sample routes", () => {
         await expect(
           db
             .selectFrom("sample")
-            .select(["status", "publishing_error"])
+            .select([
+              "status",
+              "synchronization_status",
+              "synchronization_error",
+            ])
             .where("id", "=", data.id)
             .executeTakeFirstOrThrow(),
-        ).resolves.toEqual({ status: "published", publishing_error: null });
+        ).resolves.toEqual({
+          status: "published",
+          synchronization_status: "synced",
+          synchronization_error: null,
+        });
       },
     );
   });

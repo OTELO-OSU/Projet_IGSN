@@ -41,6 +41,7 @@ import { duplicateCheckCriteria } from "@projet-igsn/domain/sample/publication/s
 import {
   type CreateSample,
   type SampleStatus,
+  type SynchronizationStatus,
 } from "@projet-igsn/domain/sample/sample";
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 import { canBecomeSeries } from "@projet-igsn/domain/sample/type/can-become-series";
@@ -241,6 +242,7 @@ export type SampleFormProps = {
   canAddParent?: boolean;
   fieldSuggestions?: FieldSuggestionRule;
   status?: SampleStatus;
+  synchronizationStatus?: SynchronizationStatus | null;
   primaryAction?: SampleFormAction;
   secondaryAction?: SampleFormAction;
   statusAction?: ReactNode;
@@ -265,6 +267,7 @@ export function SampleForm({
   canAddParent = false,
   fieldSuggestions = NO_FIELD_SUGGESTIONS,
   status = "draft",
+  synchronizationStatus = null,
   primaryAction,
   secondaryAction,
   statusAction,
@@ -551,6 +554,7 @@ export function SampleForm({
             disabled={disabled}
             sampleId={sampleId}
             status={status}
+            synchronizationStatus={synchronizationStatus}
             blockedReason={readOnlyReason}
           />
           {menu ? (

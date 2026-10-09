@@ -34,6 +34,7 @@ import {
 import { CustomizeTemplateDialog } from "#/samples/customize-template-dialog.tsx";
 import { SampleRowActionsMenu } from "#/samples/sample-row-actions-menu.tsx";
 import { SampleStatusBadge } from "#/samples/sample-status-badge.tsx";
+import { SynchronizationStatusBadge } from "#/samples/synchronization-status-badge.tsx";
 import { templateCustomizationOfSample } from "#/samples/template-customization-of-sample.ts";
 import { useSampleColumns } from "#/samples/use-sample-columns.ts";
 import { UserInitials } from "#/users/user-initials.tsx";
@@ -217,7 +218,12 @@ function sampleColumns(
           {{ asc: " ↑", desc: " ↓" }[column.getIsSorted() as string] ?? ""}
         </button>
       ),
-      cell: ({ row }) => <SampleStatusBadge status={row.original.status} />,
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-1">
+          <SampleStatusBadge status={row.original.status} />
+          <SynchronizationStatusBadge sample={row.original} />
+        </div>
+      ),
       meta: { className: "w-28" },
     },
     {

@@ -1,5 +1,8 @@
 import type { Button } from "@projet-igsn/design-system/components/ui/button";
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
+import type {
+  SampleStatus,
+  SynchronizationStatus,
+} from "@projet-igsn/domain/sample/sample";
 import type { ComponentProps } from "react";
 
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
@@ -20,6 +23,7 @@ type SampleSubmitButtonProps = {
   className?: string;
   sampleId?: string;
   status: SampleStatus;
+  synchronizationStatus: SynchronizationStatus | null;
   blockedReason?: string;
 };
 
@@ -30,13 +34,15 @@ export function SampleSubmitButton({
   className,
   sampleId,
   status,
+  synchronizationStatus,
   blockedReason,
 }: SampleSubmitButtonProps) {
   const form = useTypedAppFormContext({ defaultValues: {} });
   const roleOnSample = useUserRoleOnSample(sampleId);
   const reason =
     blockedReason ??
-    (roleOnSample !== null && !canUpdateSample(roleOnSample, { status })
+    (roleOnSample !== null &&
+    !canUpdateSample(roleOnSample, { status, synchronizationStatus })
       ? m.save_blocked_not_editor()
       : undefined);
   const button = (

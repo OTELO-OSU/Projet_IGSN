@@ -11,8 +11,8 @@ import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { startWebhookWorker } from "./sample-batch/webhook-worker.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { scheduleEmbargoRelease } from "./sample/service/embargo-release-schedule.ts";
-import { startPublishingWorker } from "./sample/service/publishing-worker.ts";
 import { releaseDueEmbargoes } from "./sample/service/release-due-embargoes.ts";
+import { startSynchronizationWorker } from "./sample/service/synchronization-worker.ts";
 import { scheduleStagedUploadCleanup } from "./staged-upload/cleanup-schedule.ts";
 import { createStagedUploads } from "./staged-upload/staged-uploads.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
@@ -21,7 +21,7 @@ import { createUserRepository } from "./user/repository.ts";
 import { sendPendingUsersDigest } from "./user/send-pending-users-digest.ts";
 
 const db = createDb();
-startPublishingWorker(db, dataCiteConfig());
+startSynchronizationWorker(db, dataCiteConfig());
 startWebhookWorker(db);
 const sendMail = createSendMail();
 const adminUrl = appUrl("ADMIN_URL");

@@ -77,7 +77,8 @@ const base: Sample = {
   institutionalOsu: null,
   institutionalLaboratory: null,
   status: "draft",
-  publishingError: null,
+  synchronizationStatus: null,
+  synchronizationError: null,
   createdAt: new Date("2026-01-01T00:00:00Z"),
   updatedAt: new Date("2026-01-01T00:00:00Z"),
 };

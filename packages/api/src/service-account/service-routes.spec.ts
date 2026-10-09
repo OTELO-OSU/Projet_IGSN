@@ -56,6 +56,7 @@ import { createApp } from "../app.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
 import { setSampleStatus } from "../sample/service/set-sample-status.ts";
+import { drainSynchronizationQueue } from "../sample/service/synchronization-worker.ts";
 import { insertServiceAccount } from "../tests/insert-service-account.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
@@ -66,6 +67,7 @@ import {
   doiUrlOf,
   hasPartPutsOf,
   registerDois,
+  STUB_DATACITE_CONFIG,
   stubDataCite,
 } from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
@@ -2535,7 +2537,7 @@ describe("a series of samples over /service", () => {
       });
       await db
         .updateTable("sample")
-        .set({ status: "publishing" })
+        .set({ synchronization_status: "pending" })
         .where("id", "=", member.id)
         .execute();
       // Act
@@ -2551,7 +2553,7 @@ describe("a series of samples over /service", () => {
   );
 
   pgTest(
-    "should replace a series' children on update, sending its HasPart alone to DataCite",
+    "should replace a series' children on update, its HasPart reaching DataCite once the queue drains",
     async ({ db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 200 }));
@@ -2570,14 +2572,18 @@ describe("a series of samples over /service", () => {
         series.igsn!,
         core({ ...series, children: relatedOf(second) }),
       );
+      const duringRequest = hasPartPutsOf(fetchMock);
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, []);
       // Assert
       expect({
         status: res.status,
         children: await storedChildIds(db, series.id),
+        duringRequest,
         puts: hasPartPutsOf(fetchMock),
       }).toEqual({
         status: 200,
         children: [second.id],
+        duringRequest: [],
         puts: [{ url: doiUrlOf(series.igsn), hasPart: [second.igsn] }],
       });
     },

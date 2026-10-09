@@ -10,8 +10,6 @@ export function canDeclareSubSample(
   if (isVirtualSample(sample.type)) return false;
   switch (sample.status) {
     case "draft":
-    case "publishing":
-    case "publish_failed":
       return false;
     case "published":
       return true;

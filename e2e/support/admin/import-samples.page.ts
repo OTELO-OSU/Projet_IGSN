@@ -106,12 +106,11 @@ export function importSamplesPage(page: Page) {
       await expectQueued();
       await expect(async () => {
         await page.reload();
-        await expect(
-          sampleRow(page, name).getByRole("cell", {
-            name: "Published",
-            exact: true,
-          }),
-        ).toBeVisible({ timeout: 2_000 });
+        for (const badge of ["Published", "Synchronized"]) {
+          await expect(
+            sampleRow(page, name).getByText(badge, { exact: true }),
+          ).toBeVisible({ timeout: 2_000 });
+        }
       }).toPass({ timeout: 30_000 });
     },
   };

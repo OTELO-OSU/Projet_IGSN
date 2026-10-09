@@ -1,4 +1,4 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { PublicListedSample } from "@projet-igsn/domain/sample/sample-validator";
 import type { ReactNode } from "react";
 
 import { FieldPicker } from "@projet-igsn/design-system/components/ui/field-picker";
@@ -63,7 +63,7 @@ export function SearchResultsView({
   onFieldsChange,
   actions,
 }: {
-  samples: Sample[];
+  samples: PublicListedSample[];
   total: number;
   query?: string;
   page: number;

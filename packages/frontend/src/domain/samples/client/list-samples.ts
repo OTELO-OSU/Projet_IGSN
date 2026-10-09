@@ -1,6 +1,6 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { PublicListedSample } from "@projet-igsn/domain/sample/sample-validator";
 
-import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
+import { publicListSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 
 import { apiFetch, baseApiUrl } from "#/api.ts";
 
@@ -17,7 +17,7 @@ export type ListSamplesParams = {
   bbox?: string;
   viewport?: string;
 };
-export type ListSamplesResult = { data: Sample[]; total: number };
+export type ListSamplesResult = { data: PublicListedSample[]; total: number };
 
 export type SearchFilters = Omit<ListSamplesParams, "page" | "perPage">;
 
@@ -52,6 +52,8 @@ export async function listSamples(
   if (!res.ok) {
     throw new Error(`Failed to load samples (${res.status})`);
   }
-  const { data, meta } = listSamplesResponseSchema.parse(await res.json());
+  const { data, meta } = publicListSamplesResponseSchema.parse(
+    await res.json(),
+  );
   return { data, total: meta.total };
 }

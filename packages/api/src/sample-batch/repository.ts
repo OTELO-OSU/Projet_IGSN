@@ -6,8 +6,8 @@ import { v7 as uuidv7 } from "uuid";
 import type { DB } from "../db.ts";
 
 import {
-  insertPublishingSample,
-  updatePublishingSample,
+  insertQueuedSample,
+  updateUnchangedSample,
 } from "../sample/service/queue-publication.ts";
 import { type Transactional, withTransaction } from "../transaction.ts";
 
@@ -16,7 +16,8 @@ export const BATCH_ITEM_COLUMNS = [
   "sample.id",
   "sample.status",
   "sample.igsn",
-  "sample.publishing_error as publishingError",
+  "sample.synchronization_status as synchronizationStatus",
+  "sample.synchronization_error as synchronizationError",
 ] as const;
 
 const readItems = (
@@ -44,7 +45,7 @@ export function createSampleBatchRepository(
         for (const [position, item] of items.entries()) {
           let sampleId: string;
           if ("create" in item) {
-            sampleId = await insertPublishingSample(
+            sampleId = await insertQueuedSample(
               trx,
               item.create,
               ownerId,
@@ -53,7 +54,7 @@ export function createSampleBatchRepository(
             );
           } else if ("update" in item) {
             sampleId = item.update.id;
-            await updatePublishingSample(
+            await updateUnchangedSample(
               trx,
               sampleId,
               item.update.input,

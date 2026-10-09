@@ -1684,21 +1684,21 @@ const FAILED_IMPORTS = [
     material: "rock_and_sediment.rock.igneous.volcanic.intermediate.andesite",
     position: point(2.75, 45.63),
     collectedOn: "2026-05-10",
-    publishingError: "DataCite registration failed (HTTP 500)",
+    synchronizationError: "DataCite registration failed (HTTP 500)",
   },
   {
     name: "Failed import rhyolite",
     material: "rock_and_sediment.rock.igneous.volcanic.felsic.rhyolite",
     position: point(2.97, 45.53),
     collectedOn: "2026-05-11",
-    publishingError: "DataCite registration timed out",
+    synchronizationError: "DataCite registration timed out",
   },
   {
     name: "Failed import basalt",
     material: "rock_and_sediment.rock.igneous.volcanic.mafic.basalt",
     position: point(2.84, 45.77),
     collectedOn: "2026-05-12",
-    publishingError: "DataCite registration failed (HTTP 502)",
+    synchronizationError: "DataCite registration failed (HTTP 502)",
   },
 ];
 
@@ -1745,8 +1745,8 @@ export const DEMO_SAMPLES: SampleRow[] = [
       availabilityStatus: "available",
       scientificContext: RESEARCH_PROJECT_SAMPLE_CONTEXT,
       repository: DEMO_REPOSITORY,
-      status: "publish_failed",
-      publishingError: failed.publishingError,
+      synchronizationStatus: "failed",
+      synchronizationError: failed.synchronizationError,
     }),
   ),
   {

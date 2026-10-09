@@ -1,0 +1,265 @@
+import type { SynchronizationStatus } from "@projet-igsn/domain/sample/sample";
+import type { Kysely } from "kysely";
+
+import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { afterEach, describe, expect, vi } from "vitest";
+
+import type { DB } from "../../db.ts";
+
+import { insertUser } from "../../tests/insert-user.ts";
+import { pgTest } from "../../tests/pg-test.ts";
+import { publishableSample } from "../../tests/sample-fixtures.ts";
+import { savepointTransactions } from "../../tests/savepoint-transactions.ts";
+import {
+  dataCiteEventsOf,
+  doiUrlOf,
+  STUB_DATACITE_CONFIG,
+  stubDataCite,
+} from "../../tests/stub-datacite.ts";
+import { insertSample } from "./insert-sample.ts";
+import { publishSample } from "./publish-sample.ts";
+import { insertQueuedSample } from "./queue-publication.ts";
+import { drainSynchronizationQueue } from "./synchronization-worker.ts";
+
+const NO_DELAYS = [0, 0, 0, 0, 0];
+
+const refusing = (status: number) => () =>
+  Promise.resolve(new Response("DataCite refused", { status }));
+
+const failing = refusing(500);
+
+const setSynchronizationStatus = (
+  db: Kysely<DB>,
+  id: string,
+  status: SynchronizationStatus,
+) =>
+  db
+    .updateTable("sample")
+    .set({ synchronization_status: status })
+    .where("id", "=", id)
+    .execute();
+
+async function insertPending(
+  db: Kysely<DB>,
+  name: string,
+  parentIds: string[] = [],
+) {
+  const { id } = await insertSample(db, {
+    ...publishableSample,
+    name,
+    parentIds,
+  });
+  await setSynchronizationStatus(db, id, "pending");
+  return id;
+}
+
+async function insertPublished(db: Kysely<DB>, name: string) {
+  const { id } = await insertSample(db, { ...publishableSample, name });
+  return (await publishSample(db, id, "published", STUB_DATACITE_CONFIG))!;
+}
+
+const rowsOf = (db: Kysely<DB>, ids: string[]) =>
+  db
+    .selectFrom("sample")
+    .select([
+      "id",
+      "status",
+      "igsn",
+      "synchronization_status",
+      "synchronization_error",
+    ])
+    .where("id", "in", ids)
+    .orderBy("id")
+    .execute();
+
+const drain = (db: Kysely<DB>, delays = NO_DELAYS) =>
+  drainSynchronizationQueue(
+    savepointTransactions(db),
+    STUB_DATACITE_CONFIG,
+    delays,
+  );
+
+describe("drainSynchronizationQueue", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  pgTest("should publish every pending draft, oldest first", async ({ db }) => {
+    // Arrange
+    const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+    const ids = [
+      await insertPending(db, "First"),
+      await insertPending(db, "Second"),
+      await insertPending(db, "Third"),
+    ];
+    // Act
+    await drain(db);
+    // Assert
+    expect(await rowsOf(db, ids)).toEqual(
+      ids.map((id) => ({
+        id,
+        status: "published",
+        igsn: generateIgsnSuffix(id),
+        synchronization_status: "synced",
+        synchronization_error: null,
+      })),
+    );
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(
+      ids.map((id) => doiUrlOf(generateIgsnSuffix(id))),
+    );
+  });
+
+  pgTest(
+    "should re-PUT a pending published sample with the publish event",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      const sample = await insertPublished(db, "Edited");
+      await setSynchronizationStatus(db, sample.id, "pending");
+      fetchMock.mockClear();
+      // Act
+      await drain(db);
+      // Assert
+      expect(await rowsOf(db, [sample.id])).toEqual([
+        {
+          id: sample.id,
+          status: "published",
+          igsn: sample.igsn,
+          synchronization_status: "synced",
+          synchronization_error: null,
+        },
+      ]);
+      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+        doiUrlOf(sample.igsn),
+      ]);
+      expect(dataCiteEventsOf(fetchMock)).toEqual(["publish"]);
+    },
+  );
+
+  pgTest.for([500, 429])(
+    "should retry a PUT refused with %i until it succeeds, the refusal leaving the row pending",
+    async (status, { db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      fetchMock
+        .mockImplementationOnce(refusing(status))
+        .mockImplementationOnce(refusing(status));
+      const id = await insertPending(db, "Retried");
+      // Act
+      await drain(db);
+      // Assert
+      expect(await rowsOf(db, [id])).toEqual([
+        {
+          id,
+          status: "published",
+          igsn: generateIgsnSuffix(id),
+          synchronization_status: "synced",
+          synchronization_error: null,
+        },
+      ]);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    },
+  );
+
+  pgTest(
+    "should fail the row alone once its retries run out, then synchronize the next pending one",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      const failingId = await insertPending(db, "Failing");
+      const nextId = await insertPending(db, "Next");
+      fetchMock.mockImplementation((url: string) =>
+        url === doiUrlOf(generateIgsnSuffix(failingId))
+          ? failing()
+          : Promise.resolve(new Response("{}", { status: 201 })),
+      );
+      // Act
+      await drain(db);
+      // Assert
+      expect(await rowsOf(db, [failingId, nextId])).toEqual([
+        {
+          id: failingId,
+          status: "draft",
+          igsn: null,
+          synchronization_status: "failed",
+          synchronization_error: "DataCite registration failed (HTTP 500)",
+        },
+        {
+          id: nextId,
+          status: "published",
+          igsn: generateIgsnSuffix(nextId),
+          synchronization_status: "synced",
+          synchronization_error: null,
+        },
+      ]);
+      expect(fetchMock).toHaveBeenCalledTimes(1 + NO_DELAYS.length + 1);
+    },
+  );
+
+  pgTest(
+    "should fail a row refused with a client error at once, without retrying",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      fetchMock.mockImplementationOnce(refusing(422));
+      const id = await insertPending(db, "Rejected");
+      // Act
+      await drain(db);
+      // Assert
+      expect(await rowsOf(db, [id])).toEqual([
+        {
+          id,
+          status: "draft",
+          igsn: null,
+          synchronization_status: "failed",
+          synchronization_error: "DataCite registration failed (HTTP 422)",
+        },
+      ]);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  pgTest(
+    "should publish a queued sub-sample before re-PUTting the parent its queueing marked, naming it IsSourceOf",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      const parent = await insertPublished(db, "Parent");
+      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const childId = await insertQueuedSample(
+        db,
+        { ...publishableSample, parentIds: [parent.id] },
+        owner.id,
+        {
+          institutionalOrganization: null,
+          institutionalOsu: null,
+          institutionalLaboratory: "UMR7358",
+        },
+        null,
+      );
+      const childIgsn = generateIgsnSuffix(childId);
+      fetchMock.mockClear();
+      // Act
+      await drain(db);
+      // Assert
+      expect(
+        fetchMock.mock.calls.map(([url, init]) => ({
+          url,
+          relatedIdentifiers: JSON.parse(init.body).data.attributes
+            .relatedIdentifiers,
+        })),
+      ).toEqual([
+        { url: doiUrlOf(childIgsn), relatedIdentifiers: expect.any(Array) },
+        {
+          url: doiUrlOf(parent.igsn),
+          relatedIdentifiers: [
+            expect.objectContaining({
+              relatedIdentifier: childIgsn,
+              relationType: "IsSourceOf",
+            }),
+          ],
+        },
+      ]);
+    },
+  );
+});

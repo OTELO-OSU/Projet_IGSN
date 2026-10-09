@@ -71,7 +71,7 @@ export function sampleListPage(page: Page) {
       expect(page.getByRole("cell", { name: "No results" })).toBeVisible(),
     expectSampleRowWithStatus: (name: string, status: string) =>
       expect(
-        sampleRow(page, name).getByRole("cell", { name: status, exact: true }),
+        sampleRow(page, name).getByText(status, { exact: true }),
       ).toBeVisible(),
   };
 }

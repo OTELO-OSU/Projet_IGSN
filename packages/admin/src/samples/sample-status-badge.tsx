@@ -9,14 +9,6 @@ export const SAMPLE_STATUS: Record<
   { className: string; label: () => string }
 > = {
   draft: { className: "", label: m.status_draft },
-  publishing: {
-    className: "bg-blue-100 text-blue-800",
-    label: m.status_publishing,
-  },
-  publish_failed: {
-    className: "bg-red-100 text-red-800",
-    label: m.status_publish_failed,
-  },
   embargo: {
     className: "bg-sky-100 text-sky-800",
     label: m.status_embargo,

@@ -7,7 +7,7 @@ import { request as httpsRequest } from "node:https";
 
 import type { DB } from "../db.ts";
 
-import { startPolling } from "../sample/service/publishing-worker.ts";
+import { startPolling } from "../sample/service/synchronization-worker.ts";
 import { webhookTarget } from "./public-host.ts";
 
 const WEBHOOK_RETRY_DELAYS_MS = [

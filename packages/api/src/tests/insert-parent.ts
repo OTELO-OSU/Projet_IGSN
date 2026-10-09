@@ -1,4 +1,7 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type {
+  Sample,
+  SynchronizationStatus,
+} from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import type { DB } from "../db.ts";
@@ -13,18 +16,20 @@ const EMBARGO_PUBLICATION_DATE = "2099-01-01";
 export async function insertParent(
   db: Kysely<DB>,
   ownerId: string,
-  status: Sample["status"] = "published",
+  status:
+    | Sample["status"]
+    | Exclude<SynchronizationStatus, "synced"> = "published",
   name: string = publishableSample.name,
 ): Promise<Sample> {
   const created = await insertOwned(db, ownerId, { name }, false);
   if (status === "draft") return created;
-  if (status === "publishing" || status === "publish_failed") {
+  if (status === "pending" || status === "failed") {
     await db
       .updateTable("sample")
-      .set({ status })
+      .set({ synchronization_status: status })
       .where("id", "=", created.id)
       .execute();
-    return { ...created, status };
+    return { ...created, synchronizationStatus: status };
   }
   const published = await publishSample(
     db,
