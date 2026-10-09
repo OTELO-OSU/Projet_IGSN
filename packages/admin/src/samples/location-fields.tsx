@@ -34,7 +34,12 @@ export function LocationFields() {
       <LocationRegionFields />
 
       <form.AppField name="location.localityName">
-        {(field) => <field.TextField label={m.field_locality_name()} />}
+        {(field) => (
+          <field.TextField
+            label={m.field_locality_name()}
+            placeholder={m.locality_name_placeholder()}
+          />
+        )}
       </form.AppField>
       <form.Subscribe
         selector={(state) =>

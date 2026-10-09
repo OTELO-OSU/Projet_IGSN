@@ -6,7 +6,12 @@ export function LocalIdFields() {
   return (
     <>
       <form.AppField name="localId">
-        {(field) => <field.TextField label={m.field_local_id()} />}
+        {(field) => (
+          <field.TextField
+            label={m.field_local_id()}
+            placeholder={m.local_id_placeholder()}
+          />
+        )}
       </form.AppField>
       <form.Subscribe selector={(state) => state.values.localId}>
         {(localId) =>

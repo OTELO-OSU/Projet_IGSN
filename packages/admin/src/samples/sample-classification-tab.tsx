@@ -32,6 +32,7 @@ export function SampleClassificationTab({
             {(field) => (
               <field.TextField
                 label={m.field_specific_name()}
+                placeholder={m.specific_name_placeholder()}
                 reveal={{ label: m.reveal_specific_name(), canReveal: true }}
               />
             )}

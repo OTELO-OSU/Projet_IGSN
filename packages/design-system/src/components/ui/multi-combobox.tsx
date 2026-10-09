@@ -82,7 +82,7 @@ export function MultiCombobox({
         <div
           className={cn(
             "flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-2 py-1",
-            disabled && "opacity-50",
+            disabled && "bg-input/20",
           )}
         >
           {selected.map((item) => {
@@ -94,6 +94,7 @@ export function MultiCombobox({
                 className={cn(
                   "max-w-full min-w-0 shrink",
                   !locked && "gap-1 pr-1",
+                  (locked || disabled) && "bg-background text-foreground/70",
                 )}
               >
                 <TruncatedText>{item.label}</TruncatedText>
@@ -103,7 +104,7 @@ export function MultiCombobox({
                     aria-label={removeLabel(item.label)}
                     disabled={disabled}
                     onClick={() => toggle(item.value)}
-                    className="hover:bg-foreground/10 shrink-0 rounded-full disabled:pointer-events-none"
+                    className="hover:bg-foreground/10 shrink-0 rounded-full disabled:pointer-events-none disabled:opacity-50"
                   >
                     <XIcon className="size-3" />
                   </button>
@@ -120,7 +121,7 @@ export function MultiCombobox({
               aria-expanded={open}
               disabled={disabled}
               onBlur={onBlur}
-              className="text-muted-foreground h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent"
+              className="text-muted-foreground h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent disabled:opacity-100"
               {...aria}
             >
               {selected.length === 0 ? placeholder : null}
