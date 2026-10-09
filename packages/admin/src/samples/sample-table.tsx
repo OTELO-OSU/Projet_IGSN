@@ -221,9 +221,7 @@ function sampleColumns(
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
           <SampleStatusBadge status={row.original.status} />
-          <SynchronizationStatusBadge
-            synchronizationStatus={row.original.synchronizationStatus}
-          />
+          <SynchronizationStatusBadge sample={row.original} />
         </div>
       ),
       meta: { className: "w-28" },

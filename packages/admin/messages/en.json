@@ -172,6 +172,7 @@
   "status_published": "Published",
   "status_withdrawn": "Withdrawn",
   "sync_status_pending": "Synchronization pending",
+  "sync_status_publishing": "Publishing",
   "sync_status_synced": "Synchronized",
   "sync_status_failed": "Synchronization failed",
   "sample_synchronization_failed_alert": "DataCite synchronization failed: {error}. Save the sample to queue it again.",

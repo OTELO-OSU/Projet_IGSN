@@ -257,9 +257,7 @@ function EditSamplePage() {
               {query.data.igsn}
             </p>
           ) : null}
-          <SynchronizationStatusBadge
-            synchronizationStatus={query.data.synchronizationStatus}
-          />
+          <SynchronizationStatusBadge sample={query.data} />
           {query.data.internalNumber === null ? null : (
             <p
               aria-label={m.field_internal_id()}

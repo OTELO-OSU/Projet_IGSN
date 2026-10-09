@@ -1,20 +1,24 @@
-import type { SynchronizationStatus } from "@projet-igsn/domain/sample/sample";
+import type {
+  SampleStatus,
+  SynchronizationStatus,
+} from "@projet-igsn/domain/sample/sample";
 
 import { render } from "vitest-browser-react";
 
 import { SynchronizationStatusBadge } from "./synchronization-status-badge.tsx";
 
 describe("SynchronizationStatusBadge", () => {
-  it.each<[SynchronizationStatus, string]>([
-    ["pending", "Synchronization pending"],
-    ["synced", "Synchronized"],
-    ["failed", "Synchronization failed"],
+  it.each<[SampleStatus, SynchronizationStatus, string]>([
+    ["published", "pending", "Synchronization pending"],
+    ["draft", "pending", "Publishing"],
+    ["published", "synced", "Synchronized"],
+    ["draft", "failed", "Synchronization failed"],
   ])(
-    "should label a %s synchronization %s",
-    async (synchronizationStatus, label) => {
+    "should label a %s sample with a %s synchronization %s",
+    async (status, synchronizationStatus, label) => {
       const screen = await render(
         <SynchronizationStatusBadge
-          synchronizationStatus={synchronizationStatus}
+          sample={{ status, synchronizationStatus }}
         />,
       );
 
@@ -26,7 +30,9 @@ describe("SynchronizationStatusBadge", () => {
 
   it("should render nothing for a sample DataCite does not know", async () => {
     const screen = await render(
-      <SynchronizationStatusBadge synchronizationStatus={null} />,
+      <SynchronizationStatusBadge
+        sample={{ status: "draft", synchronizationStatus: null }}
+      />,
     );
 
     expect(screen.container.textContent).toBe("");
