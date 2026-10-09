@@ -77,7 +77,19 @@ function RootLayout() {
             </ExternalLink>
             <span aria-hidden className="bg-border h-px flex-1" />
           </div>
-          <div className="mx-auto -mt-8 max-w-6xl ps-6 pe-8 text-right">
+          <div className="mx-auto mt-4 flex max-w-6xl flex-wrap justify-end gap-x-4 gap-y-2 ps-6 pe-8 md:-mt-8">
+            <Link
+              to="/legal-notice"
+              className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+            >
+              {m.footer_legal_notice()}
+            </Link>
+            <Link
+              to="/privacy-policy"
+              className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+            >
+              {m.footer_privacy_policy()}
+            </Link>
             <Link
               to="/terms-of-use"
               className="text-primary text-sm font-medium underline-offset-4 hover:underline"

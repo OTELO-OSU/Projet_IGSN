@@ -7,6 +7,7 @@ import {
 import { SearchInput } from "@projet-igsn/design-system/components/ui/search-input";
 import { useState } from "react";
 
+import { PageBanner } from "#/page-banner.tsx";
 import { m } from "#/paraglide/messages.js";
 
 import { type FaqItem, filterFaq } from "./filter-faq.ts";
@@ -54,9 +55,9 @@ export function Faq() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-primary text-4xl font-bold">{m.faq_title()}</h1>
-      <div className="mt-8">
+    <>
+      <PageBanner title={m.faq_title()} />
+      <div className="mx-auto max-w-3xl px-6 py-16">
         <SearchInput
           label={m.faq_filter_label()}
           placeholder={m.faq_filter_placeholder()}
@@ -64,41 +65,41 @@ export function Faq() {
           onChange={(event) => search(event.target.value)}
           className="h-12"
         />
+        {matches.length === 0 ? (
+          <p role="status" className="text-muted-foreground mt-8">
+            {m.faq_no_match()}
+          </p>
+        ) : (
+          <Accordion
+            type="multiple"
+            value={open}
+            onValueChange={setOpen}
+            className="mt-6"
+          >
+            {matches.map(({ value, title, ordered, entries }) => {
+              const List = ordered ? "ol" : "ul";
+              return (
+                <AccordionItem key={value} value={value}>
+                  <AccordionTrigger className="text-primary text-lg font-semibold">
+                    {title}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-base">
+                    <List
+                      className={`space-y-3 ps-6 ${ordered ? "list-decimal" : "list-disc"}`}
+                    >
+                      {entries.map(({ position, text }) => (
+                        <li key={text} value={ordered ? position : undefined}>
+                          {text}
+                        </li>
+                      ))}
+                    </List>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        )}
       </div>
-      {matches.length === 0 ? (
-        <p role="status" className="text-muted-foreground mt-8">
-          {m.faq_no_match()}
-        </p>
-      ) : (
-        <Accordion
-          type="multiple"
-          value={open}
-          onValueChange={setOpen}
-          className="mt-6"
-        >
-          {matches.map(({ value, title, ordered, entries }) => {
-            const List = ordered ? "ol" : "ul";
-            return (
-              <AccordionItem key={value} value={value}>
-                <AccordionTrigger className="text-primary text-lg font-semibold">
-                  {title}
-                </AccordionTrigger>
-                <AccordionContent className="text-base">
-                  <List
-                    className={`space-y-3 ps-6 ${ordered ? "list-decimal" : "list-disc"}`}
-                  >
-                    {entries.map(({ position, text }) => (
-                      <li key={text} value={ordered ? position : undefined}>
-                        {text}
-                      </li>
-                    ))}
-                  </List>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-      )}
-    </div>
+    </>
   );
 }
