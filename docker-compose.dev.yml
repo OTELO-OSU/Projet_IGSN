@@ -218,6 +218,10 @@ services:
       DATACITE_API_HOST: ${DATACITE_API_HOST:-http://datacite:8080}
       DATACITE_API_KEY: ${DATACITE_API_KEY:-dev}
       DATACITE_DOI_PREFIX: ${DATACITE_DOI_PREFIX:-10.70113}
+      DATA_GOUV_URL: ${DATA_GOUV_URL:-}
+      DATA_GOUV_NAME: ${DATA_GOUV_NAME:-}
+      DATA_GOUV_TOKEN: ${DATA_GOUV_TOKEN:-}
+      DATA_GOUV_CRON: "${DATA_GOUV_CRON:-0 3 1 * *}"
       WEBHOOK_DEV_HOSTS: webhook-sink
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3002/"]

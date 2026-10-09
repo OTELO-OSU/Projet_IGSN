@@ -75,6 +75,8 @@ jobs:
           OIDC_CLIENT_ID: ${{ vars.OIDC_CLIENT_ID }}
           UPLOAD_LIMIT: ${{ vars.UPLOAD_LIMIT }}
           SAMPLE_LOCK_POLL_SECONDS: ${{ vars.SAMPLE_LOCK_POLL_SECONDS }}
+          DATA_GOUV_URL: ${{ vars.DATA_GOUV_URL }}
+          DATA_GOUV_NAME: ${{ vars.DATA_GOUV_NAME }}
         run: |
           : "${DOMAIN:?set DOMAIN as a variable of this GitHub environment}"
           : "${OIDC_ISSUER:?set OIDC_ISSUER as a variable of this GitHub environment}"
@@ -94,6 +96,7 @@ jobs:
             --build-arg "VITE_FRONTEND_URL=https://igsn.$DOMAIN" \
             --build-arg "VITE_OIDC_AUTHORITY=$OIDC_ISSUER" \
             --build-arg "VITE_OIDC_CLIENT_ID=$OIDC_CLIENT_ID" \
+            ${DATA_GOUV_NAME:+--build-arg VITE_DATA_GOUV_DATASET_URL=$DATA_GOUV_URL/datasets/$DATA_GOUV_NAME} \
             .
           docker build -t "$IMAGE_PREFIX/caddy:$IMAGE_TAG" infra/stack
           for image in api admin frontend caddy; do docker push "$IMAGE_PREFIX/$image:$IMAGE_TAG"; done

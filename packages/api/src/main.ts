@@ -3,6 +3,11 @@ import { serve } from "@hono/node-server";
 import { appUrl } from "./app-url.ts";
 import { createApp } from "./app.ts";
 import { attachmentsDir } from "./attachments-dir.ts";
+import { dataGouvConfig } from "./data-gouv/config.ts";
+import { listAllPublishedSamples } from "./data-gouv/list-all-published-samples.ts";
+import { publishToDataGouv } from "./data-gouv/publish-to-data-gouv.ts";
+import { sampleCsvTables } from "./data-gouv/sample-csv-tables.ts";
+import { scheduleDataGouvExport } from "./data-gouv/schedule.ts";
 import { dataCiteConfig } from "./datacite/config.ts";
 import { createDb } from "./db.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
@@ -51,6 +56,15 @@ scheduleEmbargoRelease(() => {
     console.error,
   );
 });
+
+const dataGouv = dataGouvConfig();
+if (dataGouv) {
+  scheduleDataGouvExport(() => {
+    listAllPublishedSamples(embargoRepositories.samples)
+      .then((samples) => publishToDataGouv(dataGouv, sampleCsvTables(samples)))
+      .catch(console.error);
+  });
+}
 
 const stagedUploads = createStagedUploads(attachmentsDir);
 scheduleStagedUploadCleanup(() => {
