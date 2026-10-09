@@ -48,6 +48,7 @@ import { releaseEditLock } from "./service/release-edit-lock.ts";
 import { reserveInternalNumbers } from "./service/reserve-internal-numbers.ts";
 import { searchEligibleChildren } from "./service/search-eligible-children.ts";
 import { searchEligibleParents } from "./service/search-eligible-parents.ts";
+import { searchEligibleSeries } from "./service/search-eligible-series.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
 import { unavailableInternalNumbers } from "./service/unavailable-internal-numbers.ts";
 import { updateSample } from "./service/update-sample.ts";
@@ -64,6 +65,7 @@ export function createSampleRepository(
     listPublishedForService: tx(listPublishedSamplesForService),
     searchEligibleParents: tx(searchEligibleParents),
     searchEligibleChildren: tx(searchEligibleChildren),
+    searchEligibleSeries: tx(searchEligibleSeries),
     isModerated: tx(isSampleModerated),
     listPublished: tx(listPublishedSamples),
     mapPublished: tx(mapPublishedSamples),

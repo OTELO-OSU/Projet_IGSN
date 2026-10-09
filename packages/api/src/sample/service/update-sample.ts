@@ -23,6 +23,7 @@ import { replaceSampleMineralClassifications } from "./replace-sample-mineral-cl
 import { replaceSampleProcessSteps } from "./replace-sample-process-steps.ts";
 import { replaceSampleRelations } from "./replace-sample-relations.ts";
 import { sampleColumns } from "./sample-columns.ts";
+import { setSampleSeries } from "./set-sample-series.ts";
 import { writeSampleLocation } from "./write-sample-location.ts";
 
 export async function writeSample(
@@ -30,6 +31,9 @@ export async function writeSample(
   id: string,
   input: CreateSample,
 ): Promise<boolean> {
+  if (input.seriesId !== undefined) {
+    await setSampleSeries(db, id, input.seriesId);
+  }
   if (isVirtualSample(input.type)) {
     const membership = await db
       .selectFrom("sample_series_membership")

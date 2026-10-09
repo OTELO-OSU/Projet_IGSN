@@ -28,6 +28,7 @@ const reversed = (sample: Sample) => {
       igsn: child.igsn,
       relationIndex: sample.relations.length + sample.parents.length + index,
     })),
+    series: [],
   };
 };
 
@@ -130,6 +131,37 @@ describe("fromCoreSample", () => {
       ]);
     },
   );
+
+  it("should read an IsPartOf naming an IGSN as the series", () => {
+    const body: CoreSampleBody = {
+      ...RESEARCH_PROJECT_SAMPLE_RECORD,
+      relations: [
+        {
+          relationType: "IsPartOf",
+          targetIdentifier: {
+            value: "https://example.org/collection",
+            identifierType: "URL",
+          },
+          targetResourceType: "Collection",
+        },
+        {
+          relationType: "IsPartOf",
+          targetIdentifier: {
+            value: "0123456789ABCDEFGHJKMNPQRS",
+            identifierType: "DOI",
+          },
+          targetResourceType: "PhysicalObject",
+        },
+      ],
+    };
+
+    const { series, sample } = fromCoreSample(body);
+
+    expect({ series, relations: sample.relations }).toMatchObject({
+      series: [{ igsn: "0123456789ABCDEFGHJKMNPQRS", relationIndex: 1 }],
+      relations: [{ identifier: "https://example.org/collection" }],
+    });
+  });
 
   it.each([
     ["projects.0.name", "program", { name: "MD-218" }, {}],

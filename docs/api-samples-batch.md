@@ -102,18 +102,20 @@ The answer is the batch itself, the same body `GET /service/batches/{id}` return
 - An issue on the webhook has the path `webhook.url` or `webhook.secret`.
 - `code` is either a validation code (`invalid_type`, `too_small`, `invalid_format`...) or one of the registry's own:
 
-| Code                             | Meaning                                                                             |
-| -------------------------------- | ----------------------------------------------------------------------------------- |
-| `sample_not_found`               | No published sample carries this IGSN.                                              |
-| `sample_not_editable`            | The sample exists but is outside the service account's reach.                       |
-| `field_frozen`                   | The update changes a field a published sample can no longer change.                 |
-| `duplicate_sample_key`           | The same IGSN is on two items of the batch.                                         |
-| `sample_locked`                  | Someone is editing the sample in the registry right now; retry later.               |
-| `parent_not_found`               | A parent the item names is not a published sample, or is a series of samples.       |
-| `child_not_found`                | A child IGSN the item names is not a published, withdrawn or embargoed sample.      |
-| `child_not_eligible`             | A child has a parent, is a series, is in a series or is out of the account's reach. |
-| `manual_group_not_attachable`    | The owner cannot attach the sample to that manual group.                            |
-| `location_inherited_from_parent` | A sub-sample takes its parent's location and cannot set its own.                    |
+| Code                             | Meaning                                                                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `sample_not_found`               | No published sample carries this IGSN.                                                                                                |
+| `sample_not_editable`            | The sample exists but is outside the service account's reach.                                                                         |
+| `field_frozen`                   | The update changes a field a published sample can no longer change.                                                                   |
+| `duplicate_sample_key`           | The same IGSN is on two items of the batch.                                                                                           |
+| `sample_locked`                  | Someone is editing the sample in the registry right now; retry later.                                                                 |
+| `parent_not_found`               | A parent the item names is not a published sample, or is a series of samples.                                                         |
+| `child_not_found`                | A child IGSN the item names is not a published, withdrawn or embargoed sample.                                                        |
+| `child_not_eligible`             | A child has a parent, is a series, is in a series or is out of the account's reach.                                                   |
+| `series_not_found`               | The `IsPartOf` IGSN an update item names is not a published, withdrawn or embargoed sample.                                           |
+| `series_not_eligible`            | The series is not a virtual sample in the account's reach, the sample cannot join one, an item names two, or a create item names any. |
+| `manual_group_not_attachable`    | The owner cannot attach the sample to that manual group.                                                                              |
+| `location_inherited_from_parent` | A sub-sample takes its parent's location and cannot set its own.                                                                      |
 
 A sample missing something it needs to be published answers its own code too, at the path of the missing field.
 

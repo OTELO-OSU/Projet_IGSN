@@ -97,6 +97,7 @@ const stored: Sample = {
   ],
   parents: [],
   children: [],
+  series: null,
   hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,
@@ -187,6 +188,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     mineralClassifications: [],
     parentIds: [],
     childIds: [],
+    seriesId: null,
     ...overrides,
   };
 }

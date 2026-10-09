@@ -8,8 +8,8 @@ import { type ExpressionBuilder, expressionBuilder } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
+  editableSampleWhere,
   notVirtualSampleWhere,
   searchSamplePicker,
 } from "./search-sample-picker.ts";
@@ -29,17 +29,7 @@ export function searchEligibleChildren(
   const eb = expressionBuilder<DB, "sample">();
   return searchSamplePicker(db, search, [
     eb("status", "in", PUBLIC_SAMPLE_STATUSES),
-    eb.or([
-      eb.exists(
-        eb
-          .selectFrom("user_sample")
-          .select("user_sample.user_id")
-          .whereRef("user_sample.sample_id", "=", "sample.id")
-          .where("user_sample.user_id", "=", userId)
-          .where("user_sample.role", "in", ["owner", "editor"]),
-      ),
-      scope ? moderatedSampleWhere(scope) : eb.lit(false),
-    ]),
+    editableSampleWhere(userId, scope),
     eb("is_sub_sample", "=", false),
     notVirtualSampleWhere,
     eb.not(

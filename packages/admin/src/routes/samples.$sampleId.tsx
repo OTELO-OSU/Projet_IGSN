@@ -334,6 +334,7 @@ function EditSamplePage() {
         manualGroupOptions={query.data.manualGroupOptions}
         parents={query.data.parents}
         storedChildren={query.data.children}
+        storedSeries={query.data.series}
         hasSubSamples={query.data.hasSubSamples}
         canAddParent={canUpdate && !isVirtualSample(query.data.type)}
         fieldSuggestions={

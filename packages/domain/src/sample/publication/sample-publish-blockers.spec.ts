@@ -72,6 +72,7 @@ const base: Sample = {
   manualGroups: [],
   parents: [],
   children: [],
+  series: null,
   hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,

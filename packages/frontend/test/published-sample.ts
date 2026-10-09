@@ -57,6 +57,7 @@ export const publishedSample = (
   manualGroups: [],
   parents: [],
   children: [],
+  series: null,
   hasSubSamples: false,
   owner: null,
   status: "published" as const,

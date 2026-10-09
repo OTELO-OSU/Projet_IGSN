@@ -70,6 +70,7 @@ const withdrawn: Sample = {
   manualGroups: [],
   parents: [],
   children: [],
+  series: null,
   hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,
@@ -100,6 +101,7 @@ describe("toWithdrawnSample", () => {
         collectorFirstname: "Claire",
         collectorLastname: "Martin",
         children: [],
+        series: null,
       });
     },
   );
@@ -119,6 +121,13 @@ describe("toWithdrawnSample", () => {
         children: [MEMBER],
       }),
     ).toMatchObject({ children: [MEMBER] });
+  });
+
+  it("should keep the series of a withdrawn member", () => {
+    const series = { ...MEMBER, igsn: null };
+    expect(toWithdrawnSample({ ...withdrawn, series })).toMatchObject({
+      series,
+    });
   });
 
   it("should report no collector nor location when the sample has none", () => {

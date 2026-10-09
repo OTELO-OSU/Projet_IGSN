@@ -28,7 +28,10 @@ export const dataCiteEventsOf = (fetchMock: ReturnType<typeof vi.fn>) =>
 
 type RelatedIdentifier = { relationType: string; relatedIdentifier: string };
 
-export const hasPartPutsOf = (fetchMock: ReturnType<typeof vi.fn>) =>
+export const relationPutsOf = (
+  fetchMock: ReturnType<typeof vi.fn>,
+  relationType: string,
+) =>
   fetchMock.mock.calls.flatMap(([url, init]) => {
     if (init?.method !== "PUT") return [];
     const { relatedIdentifiers } = JSON.parse(init.body).data.attributes as {
@@ -37,8 +40,8 @@ export const hasPartPutsOf = (fetchMock: ReturnType<typeof vi.fn>) =>
     return [
       {
         url,
-        hasPart: relatedIdentifiers
-          .filter(({ relationType }) => relationType === "HasPart")
+        related: relatedIdentifiers
+          .filter((identifier) => identifier.relationType === relationType)
           .map(({ relatedIdentifier }) => relatedIdentifier),
       },
     ];

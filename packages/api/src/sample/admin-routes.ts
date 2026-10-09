@@ -25,6 +25,7 @@ import type { User } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
+import { canJoinSeries } from "@projet-igsn/domain/sample/publication/can-join-series";
 import { canSetSampleChildren } from "@projet-igsn/domain/sample/publication/can-set-sample-children";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { isPublicationQueued } from "@projet-igsn/domain/sample/publication/is-publication-queued";
@@ -74,6 +75,7 @@ import { resolvePublishedParents } from "./import-template/resolve-published-par
 import { validateImport } from "./import-template/validate-import.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
 import { isEligibleChild } from "./is-eligible-child.ts";
+import { isEligibleSeries } from "./is-eligible-series.ts";
 import { notifyEmbargo } from "./notify-embargo.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
@@ -106,6 +108,7 @@ import {
   validateStatusBody,
   validateUpdateSampleBody,
 } from "./validator.ts";
+import { withSeriesId } from "./with-series-id.ts";
 
 const NOT_ATTACHABLE = {
   error: "Manual group not attachable to this sample",
@@ -127,6 +130,12 @@ const CHILD_CLAIMED_IMPORT: InvalidImport = {
   error: "Invalid import",
   issues: [{ code: "child_not_eligible" }],
 };
+
+const SERIES_NEEDS_PUBLICATION = {
+  error: "A sample joins a series once published",
+} as const;
+
+const SERIES_NOT_ELIGIBLE = { error: "Series not eligible" } as const;
 
 const SERIES_IN_LINEAGE = {
   error: "A series of samples has no parent nor sub-sample",
@@ -196,6 +205,26 @@ export function createSampleAdminRoutes(
         !isEligibleChild(child, current.id)
       );
     });
+  };
+
+  const isJoinableSeries = async (
+    user: Pick<User, "id" | "superAdmin">,
+    seriesId: string,
+    member: Sample,
+  ): Promise<boolean> => {
+    const series = (
+      await repository.listSeriesLinkCandidates(
+        [seriesId],
+        user.id,
+        await getModerationScope(users, user),
+      )
+    ).get(seriesId);
+    return (
+      series !== undefined &&
+      canJoinSeries(member) &&
+      isEligibleSeries(series) &&
+      canEditCandidate(user, series)
+    );
   };
   const unlockedSample = requireEditLock(repository);
 
@@ -453,6 +482,9 @@ export function createSampleAdminRoutes(
         if ((input.childIds ?? []).length > 0) {
           return c.json(CHILDREN_NEED_PUBLICATION, 422);
         }
+        if (input.seriesId != null) {
+          return c.json(SERIES_NEEDS_PUBLICATION, 422);
+        }
         const sample = await repository.create(input, user);
         notifySubSampleDeclared({
           userSamples: userSampleRepository,
@@ -657,6 +689,13 @@ export function createSampleAdminRoutes(
         if (await hasInvalidSeriesLink(c.get("user"), toPersist, current)) {
           return c.json(CHILD_NOT_ELIGIBLE, 422);
         }
+        if (
+          toPersist.seriesId != null &&
+          toPersist.seriesId !== current.series?.id &&
+          !(await isJoinableSeries(c.get("user"), toPersist.seriesId, current))
+        ) {
+          return c.json(SERIES_NOT_ELIGIBLE, 422);
+        }
         const stored = current.manualGroups.map((group) => group.id);
         const submitted = toPersist.manualGroupIds ?? stored;
         if (!sameGroupIds(submitted, stored)) {
@@ -686,7 +725,7 @@ export function createSampleAdminRoutes(
           parents: addedParents,
         });
         if (mail && c.get("moderating")) {
-          const fields = changedSampleFields(current, toPersist);
+          const fields = changedSampleFields(withSeriesId(current), toPersist);
           if (fields.length > 0) {
             // ponytail: fire and forget; a retry queue if a lost notification ever matters.
             void notifySampleModerated({

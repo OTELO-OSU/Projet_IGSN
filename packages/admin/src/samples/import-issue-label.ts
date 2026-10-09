@@ -28,6 +28,8 @@ const IMPORT_ISSUE_LABELS: Record<ImportIssueCode, () => string> = {
   child_in_several_rows: m.import_issue_child_in_several_rows,
   series_in_lineage: m.import_issue_series_in_lineage,
   parent_cycle: m.import_issue_parent_cycle,
+  series_not_found: m.import_issue_series_not_found,
+  series_not_eligible: m.import_issue_series_not_eligible,
   location_inherited_from_parent: m.import_issue_location_inherited_from_parent,
   collection_date_inherited_from_parent:
     m.import_issue_collection_date_inherited_from_parent,
