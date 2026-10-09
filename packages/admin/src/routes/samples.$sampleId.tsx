@@ -315,7 +315,9 @@ function EditSamplePage() {
       query.data.synchronizationError ? (
         <Alert variant="destructive">
           <AlertDescription>
-            {m.sample_synchronization_failed_alert({
+            {(status === "draft"
+              ? m.sample_publication_failed_alert
+              : m.sample_synchronization_failed_alert)({
               error: query.data.synchronizationError,
             })}
           </AlertDescription>

@@ -184,7 +184,7 @@ describe("admin sample embargo", () => {
   );
 
   pgTest(
-    "should publish an embargoed sample now, queue its DataCite update and mail every collaborator but the actor",
+    "should publish an embargoed sample now, tell DataCite and mail every collaborator but the actor",
     async ({ db }) => {
       // Arrange
       const { app, sample, sendMail, fetchMock } = await arrangeSample(db, {
@@ -200,7 +200,7 @@ describe("admin sample embargo", () => {
       expect({
         events: dataCiteEventsOf(fetchMock),
         synchronizationStatus: data.synchronizationStatus,
-      }).toEqual({ events: [], synchronizationStatus: "pending" });
+      }).toEqual({ events: ["publish"], synchronizationStatus: "synced" });
       await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(2));
       expect(sentMails(sendMail)).toEqual(
         toEveryCollaboratorButTheActor(

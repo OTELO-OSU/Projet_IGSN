@@ -28,7 +28,7 @@ import {
   draft,
   publishableSample,
 } from "../tests/sample-fixtures.ts";
-import { stubDataCite } from "../tests/stub-datacite.ts";
+import { dataCiteEventsOf, stubDataCite } from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -1364,7 +1364,7 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
-      "should queue a withdrawn sample for synchronization without calling DataCite",
+      "should hide a withdrawn sample at DataCite at once and mark it synchronized",
       async ({ db }) => {
         // Arrange
         const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
@@ -1379,14 +1379,33 @@ describe("admin sample routes", () => {
         expect({
           status: res.status,
           body: await res.json(),
-          calls: fetchMock.mock.calls,
+          events: dataCiteEventsOf(fetchMock),
         }).toMatchObject({
           status: 200,
           body: {
-            data: { status: "withdrawn", synchronizationStatus: "pending" },
+            data: { status: "withdrawn", synchronizationStatus: "synced" },
           },
-          calls: [],
+          events: ["hide"],
         });
+      },
+    );
+
+    pgTest(
+      "should answer 502 when DataCite refuses the status change",
+      async ({ db }) => {
+        // Arrange
+        const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+        vi.spyOn(console, "error").mockImplementation(() => undefined);
+        onTestFinished(() => {
+          vi.unstubAllGlobals();
+        });
+        const { client, sample } = await arrangePublished(db);
+        fetchMock.mockResolvedValue(new Response("nope", { status: 500 }));
+        // Act
+        const res = await setStatus(client, sample.id, "withdrawn");
+        // Assert
+        expect(res.status).toBe(502);
+        expect(await res.json()).toEqual({ error: "DOI sync failed" });
       },
     );
 

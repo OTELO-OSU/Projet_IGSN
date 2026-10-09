@@ -23,7 +23,7 @@ The marker rule:
 
 - `markForSynchronization` sets `pending` on non-draft rows only.
 - `insertQueuedSample` (import, `/service` batch create) and `retryFailedSynchronizations` alone set it on a draft.
-- A direct write (admin and `/service` edits, status changes, embargo release) marks the row `pending` and calls DataCite no more.
+- An edit (admin and `/service`) marks the row `pending` and calls DataCite no more.
 - A parent added to a child holding an IGSN marks the parent `pending`, and publishing a sub-sample marks its parents, replacing the partial PUT (`sync-parent-relations.ts` is deleted).
 - `updateUnchangedSample` (bulk edit, batch update) guards `status = 'published'` and `updated_at` (409 "Sample changed, retry"), writes, then marks `pending`.
 
@@ -38,7 +38,9 @@ One permanent worker, `api/src/sample/service/synchronization-worker.ts`, is the
 
 A single sample's first registration (admin publish, `POST /service/samples`, the worker's draft branch) still PUTs synchronously inside `publishSample`, since the user needs the IGSN back.
 
-A pending draft is read-only and undeletable (`isPublicationQueued`, 409 on publish), a failed draft is undeletable, and `canDeleteSample` allows a draft with a null status only. A failed draft edited by hand stays `failed` and is published through Publish or "Retry synchronization".
+A status change (withdraw, tombstone, embargo date, embargo release) also PUTs synchronously inside `setSampleStatus` and sets `synced`, so a status the user picks is never live in the registry before DataCite has it; a refused PUT answers 502 and changes nothing.
+
+A pending draft is read-only and undeletable (`isPublicationQueued`, 409 on publish), a failed draft is undeletable, and `canDeleteSample` allows a draft with a null status only. Saving a draft clears its synchronization status, so an edited failed draft leaves the queue and goes back to the draft flow, published through Publish and its blocker check, never through "Retry synchronization".
 
 `GET /service/batches/{id}` and its webhook carry `{ partnerId, id, status, synchronizationStatus, igsn, synchronizationError }`, and the `sample_publishing` issue code is gone. The migration backfills the column and turns the two old statuses into `draft` (no IGSN) or `published` (IGSN).
 
@@ -52,5 +54,4 @@ A pending draft is read-only and undeletable (`isPublicationQueued`, 409 on publ
 
 - A DataCite outage costs each row its own retry ladder, about 30 minutes, before it fails.
 - A change reaches DataCite up to `POLL_MS` later.
-- A withdrawn or tombstoned sample's DataCite state lags the queue.
 - The admin shows a synchronization badge beside the status badge, and the lists filter on `synchronizationStatus`.

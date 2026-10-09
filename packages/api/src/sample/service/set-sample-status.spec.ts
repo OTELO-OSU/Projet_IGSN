@@ -25,10 +25,9 @@ describe("setSampleStatus", () => {
       });
       // Assert
       expect(published?.internalNumber).toEqual(expect.any(Number));
-      const queued = { ...published, synchronizationStatus: "pending" };
-      expect(withdrawn).toEqual({ ...queued, status: "withdrawn" });
-      expect(tombstoned).toEqual({ ...queued, status: "tombstone" });
-      expect(republished).toEqual(queued);
+      expect(withdrawn).toEqual({ ...published, status: "withdrawn" });
+      expect(tombstoned).toEqual({ ...published, status: "tombstone" });
+      expect(republished).toEqual(published);
     },
   );
 });

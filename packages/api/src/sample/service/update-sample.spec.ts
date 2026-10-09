@@ -136,7 +136,7 @@ describe("updateSample", () => {
 
   pgTest.for([
     { kind: "draft", failed: false, expected: null },
-    { kind: "draft", failed: true, expected: "failed" },
+    { kind: "draft", failed: true, expected: null },
     { kind: "published", failed: false, expected: "pending" },
     { kind: "published", failed: true, expected: "pending" },
   ] as const)(

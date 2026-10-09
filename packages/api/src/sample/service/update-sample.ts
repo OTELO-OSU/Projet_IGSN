@@ -40,7 +40,12 @@ export async function writeSample(
   }
   const row = await db
     .updateTable("sample")
-    .set({ ...sampleColumns(input), updated_at: sql`now()` })
+    .set({
+      ...sampleColumns(input),
+      updated_at: sql`now()`,
+      synchronization_status: sql`case when status = 'draft' then null else synchronization_status end`,
+      synchronization_error: sql`case when status = 'draft' then null else synchronization_error end`,
+    })
     .where("id", "=", id)
     .returning("id")
     .executeTakeFirst();

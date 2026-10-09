@@ -171,13 +171,15 @@ export const listSamplesResponseSchema = z.object({
 
 export type ListSamplesResponse = z.infer<typeof listSamplesResponseSchema>;
 
+export const publicListedSampleSchema = sampleSchema.omit({
+  synchronizationStatus: true,
+  synchronizationError: true,
+});
+
+export type PublicListedSample = z.infer<typeof publicListedSampleSchema>;
+
 export const publicListSamplesResponseSchema = z.object({
-  data: z.array(
-    sampleSchema.omit({
-      synchronizationStatus: true,
-      synchronizationError: true,
-    }),
-  ),
+  data: z.array(publicListedSampleSchema),
   meta: z.object({ total: z.number() }),
 });
 
@@ -225,12 +227,10 @@ export type EligibleParentsResponse = z.infer<
 
 export const publicSampleResponseSchema = z.object({
   data: z.discriminatedUnion("status", [
-    sampleSchema
-      .omit({ synchronizationStatus: true, synchronizationError: true })
-      .extend({
-        status: z.literal("published"),
-        canContactArchive: z.boolean(),
-      }),
+    publicListedSampleSchema.extend({
+      status: z.literal("published"),
+      canContactArchive: z.boolean(),
+    }),
     withdrawnSampleSchema,
   ]),
 });

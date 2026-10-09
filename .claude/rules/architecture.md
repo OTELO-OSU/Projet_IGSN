@@ -65,14 +65,14 @@ A sample's `status` (`draft | embargo | published | withdrawn | tombstone`) driv
 `sample.synchronization_status` (`pending | synced | failed`, null for a sample DataCite does not know) is the single DataCite queue, with the error in `sample.synchronization_error`; see ADR 0059.
 
 - `markForSynchronization` sets `pending` on non-draft rows only; `insertQueuedSample` (import, `/service` batch create) and `retryFailedSynchronizations` alone set it on a draft.
-- Every direct write (admin and `/service` edits, status changes, embargo release, a parent added to a child holding an IGSN, a sub-sample's publication marking its parents) marks the row `pending` and calls DataCite no more.
+- Every edit (admin and `/service` edits, a parent added to a child holding an IGSN, a sub-sample's publication marking its parents) marks the row `pending` and calls DataCite no more.
 - The permanent worker `api/src/sample/service/synchronization-worker.ts` (started once in `main.ts`, the only consumer) picks pending rows by id, one transaction per row marking `synced` before the DataCite call so a refused PUT rolls the mark back.
 - A pending draft goes through `publishSample`, any other row through `syncDoi`; each retries (a DataCite 4xx other than 429 not at all), then fails only that row into `failed` with its error, and the drain continues.
 - A successful re-PUT queues the batch webhook as a publication does.
 - A pending draft is read-only and undeletable (`isPublicationQueued` in `domain/sample/publication/is-publication-queued.ts`, read by `canUpdateSample` and the admin publish guard, 409); a failed draft is undeletable too, `canDeleteSample` allowing a draft with a null synchronization status only.
-- A failed draft edited by hand stays `failed` and is published through Publish or "Retry synchronization" (`POST /admin/samples/retry-synchronization`); any later successful publish keeps an existing IGSN (`coalesce`).
+- Saving a draft clears its synchronization status and error (`writeSample`), so an edited failed draft leaves the queue and is published through Publish alone; an unedited one through Publish or "Retry synchronization" (`POST /admin/samples/retry-synchronization`); any later successful publish keeps an existing IGSN (`coalesce`).
 - Bulk edit and a `/service` batch update go through `updateUnchangedSample`, which guards `status = 'published'` and `updated_at` and marks `pending`, so the sample stays `published` and visible while queued.
-- Only a single sample's first registration (admin publish, `POST /service/samples`, the worker's draft branch) still PUTs synchronously inside `publishSample`.
+- A single sample's first registration (admin publish, `POST /service/samples`, the worker's draft branch) still PUTs synchronously inside `publishSample`, and a status change (the status route, embargo release) inside `setSampleStatus`, both setting `synced`, a refused PUT answering 502.
 
 `embargo` is a permanent-IGSN status whose `published_at` holds a future planned date, released to `published` by the daily `api/src/sample/service/release-due-embargoes.ts`, never moving to `withdrawn`; see ADR 0056.
 
@@ -80,7 +80,7 @@ A sample's `status` (`draft | embargo | published | withdrawn | tombstone`) driv
 
 `domain/sample/publication/withdrawn-sample.ts` (`toWithdrawnSample`) is the only place that redacts a withdrawn sample, a field-by-field whitelist so a new `Sample` field stays private by default, and `public-sample.ts` (`toPublicSample`) picks it by status for the public `GET /samples/:igsn`; see ADR 0032.
 
-A published sample is public whole but for the fields `domain/sample/publication/redact-private-contacts.ts` drops: the current archive contact email and every person's `*UserId` account link, called by `toPublicSample`, by the public list route and by `/service` reads with no api key. A person's resolved name and ORCID stay public, the current archive contact's included; the account link they came from does not.
+A published sample is public whole but for the fields `domain/sample/publication/redact-private-contacts.ts` drops: the current archive contact email and every person's `*UserId` account link, called by `toPublicListedSample` (`public-listed-sample.ts`, which also drops the synchronization status and error, read by `toPublicSample` and the public list route) and by `/service` reads with no api key. A person's resolved name and ORCID stay public, the current archive contact's included; the account link they came from does not.
 The archive contact email reaches no public read, a keyed `/service` read included since Core has no slot for it: `toPublicSample` sets `canContactArchive` instead, and `POST /samples/:igsn/contact/archive` relays a visitor's message to it (409 when none is stored).
 
 `GET /samples/:igsn/lineage` walks both directions under one rule: a relative appears if it has a permanent IGSN (`hasPermanentIgsn`, the constant inline in SQL), carrying ADR 0033's parent exception onto the whole graph, a relative without one being absent and stopping traversal past it. The root resolves for `published` and `withdrawn` alike, the pair `GET /samples/:igsn` answers, and a tombstoned root 404s; a tombstoned node carries a `tombstone` flag so the graph names it without linking to its 404; see ADR 0043.

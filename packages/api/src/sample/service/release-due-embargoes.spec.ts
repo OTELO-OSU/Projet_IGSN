@@ -9,6 +9,7 @@ import { pgTest } from "../../tests/pg-test.ts";
 import { publishableSample } from "../../tests/sample-fixtures.ts";
 import { sentMails } from "../../tests/sent-mails.ts";
 import {
+  dataCiteEventsOf,
   STUB_DATACITE_CONFIG,
   stubDataCite,
 } from "../../tests/stub-datacite.ts";
@@ -69,7 +70,7 @@ describe("releaseDueEmbargoes", () => {
   });
 
   pgTest(
-    "should publish every due embargo, queue its DataCite update, mail its collaborators and leave a future one embargoed",
+    "should publish every due embargo, mail its collaborators and leave a future one embargoed",
     async ({ db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
@@ -80,10 +81,10 @@ describe("releaseDueEmbargoes", () => {
       const sendMail = await release(db);
       // Assert
       expect(await statusesOf(db, [due, future])).toEqual([
-        { id: due, status: "published", synchronization_status: "pending" },
+        { id: due, status: "published", synchronization_status: "synced" },
         { id: future, status: "embargo", synchronization_status: "synced" },
       ]);
-      expect(fetchMock).not.toHaveBeenCalled();
+      expect(dataCiteEventsOf(fetchMock)).toEqual(["publish"]);
       expect(sentMails(sendMail)).toEqual([
         {
           to: ["contributor-due@univ-lorraine.fr"],
@@ -94,6 +95,30 @@ describe("releaseDueEmbargoes", () => {
           subject: 'The sample "due" is now published',
         },
       ]);
+    },
+  );
+
+  pgTest(
+    "should still release the next due embargo when DataCite refuses one",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const refused = await insertEmbargoed(db, "refused", "2030-05-30");
+      const next = await insertEmbargoed(db, "next", "2030-05-31");
+      fetchMock.mockResolvedValueOnce(new Response("nope", { status: 502 }));
+      // Act
+      const sendMail = await release(db);
+      // Assert
+      expect((await statusesOf(db, [next]))[0]?.status).toBe("published");
+      expect(sentMails(sendMail).map(({ to }) => to)).toEqual([
+        ["contributor-next@univ-lorraine.fr"],
+        ["owner-next@univ-lorraine.fr"],
+      ]);
+      expect(console.error).toHaveBeenCalledWith(
+        "Could not release the embargo",
+        expect.objectContaining({ id: refused }),
+      );
     },
   );
 });

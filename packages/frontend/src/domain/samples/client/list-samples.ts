@@ -1,4 +1,4 @@
-import type { PublicListSamplesResponse } from "@projet-igsn/domain/sample/sample-validator";
+import type { PublicListedSample } from "@projet-igsn/domain/sample/sample-validator";
 
 import { publicListSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 
@@ -17,10 +17,7 @@ export type ListSamplesParams = {
   bbox?: string;
   viewport?: string;
 };
-export type ListSamplesResult = {
-  data: PublicListSamplesResponse["data"];
-  total: number;
-};
+export type ListSamplesResult = { data: PublicListedSample[]; total: number };
 
 export type SearchFilters = Omit<ListSamplesParams, "page" | "perPage">;
 

@@ -155,7 +155,8 @@ export function createSampleRepository(
       withTransaction(db, (trx) =>
         publishSample(trx, id, status, dataCite, publishedAt),
       ),
-    setStatus: tx(setSampleStatus),
+    setStatus: (id, body) =>
+      withTransaction(db, (trx) => setSampleStatus(trx, id, body, dataCite)),
     listDueEmbargoes: tx(async (trx, now: Date) => {
       const rows = await trx
         .selectFrom("sample")

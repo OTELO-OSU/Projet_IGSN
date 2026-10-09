@@ -8,8 +8,8 @@ import type {
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 
+import { toPublicListedSample } from "@projet-igsn/domain/sample/publication/public-listed-sample";
 import { toPublicSample } from "@projet-igsn/domain/sample/publication/public-sample";
-import { redactPrivateContacts } from "@projet-igsn/domain/sample/publication/redact-private-contacts";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -38,14 +38,7 @@ export function createSampleRoutes(
         c.req.valid("query"),
       );
       const body: PublicListSamplesResponse = {
-        data: data.map((sample) => {
-          const {
-            synchronizationStatus: _status,
-            synchronizationError: _error,
-            ...listed
-          } = redactPrivateContacts(sample);
-          return listed;
-        }),
+        data: data.map(toPublicListedSample),
         meta: { total },
       };
       return c.json(body);
