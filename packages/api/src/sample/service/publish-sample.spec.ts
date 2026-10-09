@@ -326,7 +326,7 @@ describe("publishSample with DataCite configured", () => {
   });
 
   pgTest(
-    "should PUT the sub-sample's DOI alone and queue its published parent",
+    "should PUT the sub-sample's DOI alone, leaving its published parent untouched",
     async ({ db }) => {
       // Arrange
       const { id: parentId } = await insertSample(db, publishableSample);
@@ -347,7 +347,7 @@ describe("publishSample with DataCite configured", () => {
       expect({
         urls: fetchMock.mock.calls.map(([url]) => url),
         parent: (await readSample(db, parentId))?.synchronizationStatus,
-      }).toEqual({ urls: [doiUrlOf(child!.igsn)], parent: "pending" });
+      }).toEqual({ urls: [doiUrlOf(child!.igsn)], parent: "synced" });
     },
   );
 });

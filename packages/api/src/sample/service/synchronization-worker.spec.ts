@@ -6,6 +6,7 @@ import { afterEach, describe, expect, vi } from "vitest";
 
 import type { DB } from "../../db.ts";
 
+import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { publishableSample } from "../../tests/sample-fixtures.ts";
 import { savepointTransactions } from "../../tests/savepoint-transactions.ts";
@@ -17,6 +18,7 @@ import {
 } from "../../tests/stub-datacite.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
+import { insertQueuedSample } from "./queue-publication.ts";
 import { drainSynchronizationQueue } from "./synchronization-worker.ts";
 
 const NO_DELAYS = [0, 0, 0, 0, 0];
@@ -218,21 +220,24 @@ describe("drainSynchronizationQueue", () => {
   );
 
   pgTest(
-    "should PUT a pending parent's record carrying its published child as IsSourceOf",
+    "should publish a queued sub-sample before re-PUTting the parent its queueing marked, naming it IsSourceOf",
     async ({ db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
       const parent = await insertPublished(db, "Parent");
-      const { id: childId } = await insertSample(db, {
-        ...publishableSample,
-        parentIds: [parent.id],
-      });
-      const child = (await publishSample(
+      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const childId = await insertQueuedSample(
         db,
-        childId,
-        "published",
-        STUB_DATACITE_CONFIG,
-      ))!;
+        { ...publishableSample, parentIds: [parent.id] },
+        owner.id,
+        {
+          institutionalOrganization: null,
+          institutionalOsu: null,
+          institutionalLaboratory: "UMR7358",
+        },
+        null,
+      );
+      const childIgsn = generateIgsnSuffix(childId);
       fetchMock.mockClear();
       // Act
       await drain(db);
@@ -244,11 +249,12 @@ describe("drainSynchronizationQueue", () => {
             .relatedIdentifiers,
         })),
       ).toEqual([
+        { url: doiUrlOf(childIgsn), relatedIdentifiers: expect.any(Array) },
         {
           url: doiUrlOf(parent.igsn),
           relatedIdentifiers: [
             expect.objectContaining({
-              relatedIdentifier: child.igsn,
+              relatedIdentifier: childIgsn,
               relationType: "IsSourceOf",
             }),
           ],

@@ -1,5 +1,4 @@
-import type { Kysely } from "kysely";
-
+import { type Kysely, sql } from "kysely";
 import { setTimeout } from "node:timers/promises";
 
 import type { DataCiteConfig } from "../../datacite/config.ts";
@@ -85,6 +84,7 @@ export async function drainSynchronizationQueue(
       .selectFrom("sample")
       .select("id")
       .where("synchronization_status", "=", "pending")
+      .orderBy(sql`status <> 'draft'`)
       .orderBy("id")
       .limit(1)
       .executeTakeFirst();

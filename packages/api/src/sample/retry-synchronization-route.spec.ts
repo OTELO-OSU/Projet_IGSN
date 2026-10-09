@@ -5,6 +5,7 @@ import { describe, expect } from "vitest";
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
+import { insertOwned } from "../tests/insert-owned.ts";
 import { insertParent } from "../tests/insert-parent.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
@@ -92,4 +93,29 @@ describe("POST /admin/samples/retry-synchronization", () => {
 
     expect(res.status).toBe(401);
   });
+
+  pgTest(
+    "should queue the published parent of a requeued failed draft",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const parent = await insertParent(db, caller.id, "published", "Parent");
+      const child = await insertOwned(
+        db,
+        caller.id,
+        { name: "Child", parentIds: [parent.id] },
+        false,
+      );
+      await db
+        .updateTable("sample")
+        .set({ synchronization_status: "failed" })
+        .where("id", "=", child.id)
+        .execute();
+
+      await retrySynchronization(db);
+
+      expect(await statusesOf(db, [parent.id])).toEqual([
+        { id: parent.id, synchronization_status: "pending" },
+      ]);
+    },
+  );
 });

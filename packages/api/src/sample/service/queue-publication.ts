@@ -8,6 +8,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import { insertOwnedSample } from "./insert-owned-sample.ts";
+import { markParentsForSynchronization } from "./mark-parents-for-synchronization.ts";
 import { writeSample } from "./update-sample.ts";
 
 export async function insertQueuedSample(
@@ -23,6 +24,7 @@ export async function insertQueuedSample(
     .set({ synchronization_status: "pending", internal_number: internalNumber })
     .where("id", "=", id)
     .execute();
+  await markParentsForSynchronization(trx, [id]);
   return id;
 }
 

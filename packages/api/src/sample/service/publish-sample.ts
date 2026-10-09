@@ -11,7 +11,6 @@ import { syncDoi } from "../../datacite/sync-doi.ts";
 import { queueBatchWebhooks } from "../../sample-batch/queue-batch-webhooks.ts";
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
-import { markForSynchronization } from "./mark-for-synchronization.ts";
 
 export async function publishSample(
   db: Transactional<DB>,
@@ -41,10 +40,6 @@ export async function publishSample(
   const sample = await getSampleById(db, id);
   // ponytail: the row stays locked for the DataCite round trip, and a commit failing after a successful PUT leaves a DOI the next publish re-registers, PUT being idempotent.
   await syncDoi(config, db, sample, { firstRegistration: true });
-  await markForSynchronization(
-    db,
-    sample.parents.map(({ id }) => id),
-  );
   await queueBatchWebhooks(db, [id]);
   return sample;
 }

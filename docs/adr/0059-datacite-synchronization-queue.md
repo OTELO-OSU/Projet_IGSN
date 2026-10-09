@@ -24,12 +24,13 @@ The marker rule:
 - `markForSynchronization` sets `pending` on non-draft rows only.
 - `insertQueuedSample` (import, `/service` batch create) and `retryFailedSynchronizations` alone set it on a draft.
 - An edit (admin and `/service`) marks the row `pending` and calls DataCite no more.
-- A parent added to a child holding an IGSN marks the parent `pending`, and publishing a sub-sample marks its parents, replacing the partial PUT (`sync-parent-relations.ts` is deleted).
+- A parent added to a child holding an IGSN marks the parent `pending`, replacing the partial PUT (`sync-parent-relations.ts` is deleted).
+- Whatever queues or publishes a sub-sample (`insertQueuedSample`, the retry of a failed draft, admin publish, `POST /service/samples`) marks its parents `pending` in the same transaction (`markParentsForSynchronization`), so a worker job sends its own sample and never marks another.
 - `updateUnchangedSample` (bulk edit, batch update) guards `status = 'published'` and `updated_at` (409 "Sample changed, retry"), writes, then marks `pending`.
 
 One permanent worker, `api/src/sample/service/synchronization-worker.ts`, is the only consumer:
 
-- It picks pending rows by id and runs one transaction per row.
+- It picks pending drafts first, then by id, so a sub-sample holds its IGSN before its marked parent's record names it, and runs one transaction per row.
 - The transaction marks `synced` before the DataCite call, so a refused PUT rolls the mark back.
 - A draft goes through `publishSample`, any other row through `syncDoi`, with ADR 0052's retry ladder.
 - A DataCite 4xx other than 429 fails the row at once, since retrying a refused record only stalls the queue.

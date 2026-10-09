@@ -396,6 +396,36 @@ describe("a sample's parents", () => {
   );
 
   pgTest(
+    "should queue the published parent when its sub-sample is published",
+    async ({ db }) => {
+      // Arrange
+      stubDataCite(new Response("{}", { status: 201 }));
+      onTestFinished(() => {
+        vi.unstubAllGlobals();
+      });
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const parent = await insertParent(db, caller.id);
+      const child = await insertSample(db, {
+        ...publishableSample,
+        parentIds: [parent.id],
+      });
+      await insertSampleOwner(db, child.id, caller.id);
+      // Act
+      const res = await createApp(db).app.request(
+        `/admin/samples/${child.id}/publish`,
+        { method: "POST", headers: authHeader },
+      );
+      // Assert
+      expect({
+        status: res.status,
+        parent: (await readSample(db, parent.id)).data.synchronizationStatus,
+      }).toEqual({ status: 200, parent: "pending" });
+    },
+  );
+
+  pgTest(
     "should mail the parent owner when a parent is added to a sample",
     async ({ db }) => {
       // Arrange

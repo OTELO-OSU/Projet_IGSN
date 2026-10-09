@@ -38,6 +38,7 @@ import {
   listSeriesLinkCandidates,
 } from "./service/list-series-link-candidates.ts";
 import { mapPublishedSamples } from "./service/map-sample.ts";
+import { markParentsForSynchronization } from "./service/mark-parents-for-synchronization.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import {
   insertQueuedSample,
@@ -126,7 +127,7 @@ export function createSampleRepository(
       }),
     retryFailedSynchronizations: (userId) =>
       withTransaction(db, async (trx) => {
-        const { numUpdatedRows } = await trx
+        const retried = await trx
           .updateTable("sample")
           .set({ synchronization_status: "pending" })
           .where("synchronization_status", "=", "failed")
@@ -140,21 +141,37 @@ export function createSampleRepository(
                 .where("user_sample.role", "in", ["owner", "editor"]),
             ),
           )
-          .executeTakeFirst();
-        return Number(numUpdatedRows);
+          .returning(["id", "status"])
+          .execute();
+        await markParentsForSynchronization(
+          trx,
+          retried
+            .filter(({ status }) => status === "draft")
+            .map(({ id }) => id),
+        );
+        return retried.length;
       }),
     createPublished: (input, ownerId, groups) =>
       withTransaction(db, async (trx) => {
         const id = await insertOwnedSample(trx, input, ownerId, groups);
         const published = await publishSample(trx, id, "published", dataCite);
         if (!published) throw new Error("Sample vanished before publish");
+        await markParentsForSynchronization(trx, [id]);
         return published;
       }),
     update: tx(updateSample),
     publish: (id, status, publishedAt) =>
-      withTransaction(db, (trx) =>
-        publishSample(trx, id, status, dataCite, publishedAt),
-      ),
+      withTransaction(db, async (trx) => {
+        const published = await publishSample(
+          trx,
+          id,
+          status,
+          dataCite,
+          publishedAt,
+        );
+        await markParentsForSynchronization(trx, [id]);
+        return published;
+      }),
     setStatus: (id, body) =>
       withTransaction(db, (trx) => setSampleStatus(trx, id, body, dataCite)),
     listDueEmbargoes: tx(async (trx, now: Date) => {

@@ -65,8 +65,9 @@ A sample's `status` (`draft | embargo | published | withdrawn | tombstone`) driv
 `sample.synchronization_status` (`pending | synced | failed`, null for a sample DataCite does not know) is the single DataCite queue, with the error in `sample.synchronization_error`; see ADR 0059.
 
 - `markForSynchronization` sets `pending` on non-draft rows only; `insertQueuedSample` (import, `/service` batch create) and `retryFailedSynchronizations` alone set it on a draft.
-- Every edit (admin and `/service` edits, a parent added to a child holding an IGSN, a sub-sample's publication marking its parents) marks the row `pending` and calls DataCite no more.
-- The permanent worker `api/src/sample/service/synchronization-worker.ts` (started once in `main.ts`, the only consumer) picks pending rows by id, one transaction per row marking `synced` before the DataCite call so a refused PUT rolls the mark back.
+- Every edit (admin and `/service` edits, a parent added to a child holding an IGSN) marks the row `pending` and calls DataCite no more.
+- Whatever queues or publishes a sub-sample (`insertQueuedSample`, the retry of a failed draft, admin publish, `createPublished`) marks its parents in the same transaction (`markParentsForSynchronization`); a worker job sends its own sample and never marks another.
+- The permanent worker `api/src/sample/service/synchronization-worker.ts` (started once in `main.ts`, the only consumer) picks pending drafts first, then by id, so a sub-sample holds its IGSN before its parent's record names it, one transaction per row marking `synced` before the DataCite call so a refused PUT rolls the mark back.
 - A pending draft goes through `publishSample`, any other row through `syncDoi`; each retries (a DataCite 4xx other than 429 not at all), then fails only that row into `failed` with its error, and the drain continues.
 - A successful re-PUT queues the batch webhook as a publication does.
 - A pending draft is read-only and undeletable (`isPublicationQueued` in `domain/sample/publication/is-publication-queued.ts`, read by `canUpdateSample` and the admin publish guard, 409); a failed draft is undeletable too, `canDeleteSample` allowing a draft with a null synchronization status only.
