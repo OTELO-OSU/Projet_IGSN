@@ -12,6 +12,7 @@ import { afterEach, describe, expect, vi } from "vitest";
 import type { DB } from "../../db.ts";
 
 import { createApp } from "../../app.ts";
+import { insertOwned } from "../../tests/insert-owned.ts";
 import { insertParent } from "../../tests/insert-parent.ts";
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
@@ -22,7 +23,7 @@ import {
   stubDataCite,
 } from "../../tests/stub-datacite.ts";
 import { SHEETS } from "../import-template/columns.ts";
-import { fill } from "../import-template/import-fixture.ts";
+import { deleteColumn, fill } from "../import-template/import-fixture.ts";
 import { acquireEditLock } from "../service/acquire-edit-lock.ts";
 import { drainPublishingQueue } from "../service/publishing-worker.ts";
 import { exportWorkbook } from "./export-workbook.ts";
@@ -162,6 +163,275 @@ const ROW_ISSUES: [
     },
   ],
 ];
+
+const CHILDREN_HEADER = "Children IGSNs";
+
+const childIdsOf = async (db: Kysely<DB>, id: string) =>
+  (await readSample(db, id))!.children.map((child) => child.id);
+
+async function arrangeSeries(db: Kysely<DB>) {
+  const caller = await provisionUser(db, "test-token");
+  const [first, second, third] = await Promise.all(
+    ["Core 1", "Core 2", "Core 3"].map((name) =>
+      insertOwned(db, caller.id, { name, type: "core" }),
+    ),
+  );
+  const series = await insertOwned(db, caller.id, {
+    name: "Core series",
+    type: "serie_of_sample.core",
+    childIds: [first!.id, second!.id],
+  });
+  return { caller, series, first: first!, second: second!, third: third! };
+}
+
+describe("a series' children over bulk edit", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete process.env.DATACITE_API_HOST;
+  });
+
+  pgTest(
+    "should rewrite the members from an edited children column",
+    async ({ db }) => {
+      stubDataCite(new Response("{}", { status: 200 }));
+      const { series, first, second, third } = await arrangeSeries(db);
+
+      const res = await upload(db, [series], (book) =>
+        fill(book, SHEETS.samples, ROW, {
+          [CHILDREN_HEADER]: `${second.igsn}, ${third.igsn}`,
+        }),
+      );
+
+      expect({
+        status: res.status,
+        children: await childIdsOf(db, series.id),
+        statuses: (await statusAndLocalId(db, [first.id, third.id])).map(
+          ({ status }) => status,
+        ),
+      }).toEqual({
+        status: 200,
+        children: [second.id, third.id],
+        statuses: ["published", "published"],
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should accept a withdrawn sample as a child",
+    async ({ db }) => {
+      const { series, second, third } = await arrangeSeries(db);
+      await db
+        .updateTable("sample")
+        .set({ status: "withdrawn" })
+        .where("id", "=", third.id)
+        .execute();
+
+      const res = await upload(db, [series], (book) =>
+        fill(book, SHEETS.samples, ROW, {
+          [CHILDREN_HEADER]: `${second.igsn}, ${third.igsn}`,
+        }),
+      );
+
+      expect({
+        status: res.status,
+        children: await childIdsOf(db, series.id),
+      }).toEqual({ status: 200, children: [second.id, third.id] });
+    },
+    30_000,
+  );
+
+  pgTest.for<{
+    rule: string;
+    code: string;
+    igsnOf: (db: Kysely<DB>, callerId: string) => Promise<string | null>;
+  }>([
+    {
+      rule: "an unknown IGSN",
+      code: "child_not_found",
+      igsnOf: () => Promise.resolve("ABCDEFGHJKMNPQRSTVWXYZ0123"),
+    },
+    {
+      rule: "a series of samples",
+      code: "child_not_eligible",
+      igsnOf: async (db, callerId) =>
+        (await insertOwned(db, callerId, { type: "serie_of_sample.core" }))
+          .igsn,
+    },
+    {
+      rule: "a sample the caller cannot edit",
+      code: "child_not_eligible",
+      igsnOf: async (db) => {
+        const other = await insertUser(db, "other@example.com");
+        return (await insertOwned(db, other.id, { type: "core" })).igsn;
+      },
+    },
+  ])(
+    "should refuse $rule as a child with $code",
+    { timeout: 30_000 },
+    async ({ code, igsnOf }, { db }) => {
+      const { caller, series } = await arrangeSeries(db);
+      const igsn = await igsnOf(db, caller.id);
+
+      const res = await upload(db, [series], (book) =>
+        fill(book, SHEETS.samples, ROW, { [CHILDREN_HEADER]: igsn }),
+      );
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [
+            expect.objectContaining({
+              row: ROW,
+              column: CHILDREN_HEADER,
+              code,
+            }),
+          ],
+        },
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse a child two series rows name",
+    async ({ db }) => {
+      const { caller, series, third } = await arrangeSeries(db);
+      const other = await insertOwned(db, caller.id, {
+        name: "Other core series",
+        type: "serie_of_sample.core",
+      });
+
+      const res = await upload(db, [series, other], (book) => {
+        for (const row of [ROW, ROW + 1])
+          fill(book, SHEETS.samples, row, { [CHILDREN_HEADER]: third.igsn });
+      });
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [ROW, ROW + 1].map((row) =>
+            expect.objectContaining({
+              row,
+              column: CHILDREN_HEADER,
+              code: "child_in_several_rows",
+            }),
+          ),
+        },
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should keep a member another bulk edit queued for publication",
+    async ({ db }) => {
+      const { series, first, second } = await arrangeSeries(db);
+      await db
+        .updateTable("sample")
+        .set({ status: "publishing" })
+        .where("id", "=", first.id)
+        .execute();
+
+      const res = await upload(db, [series], (book) => {
+        deleteColumn(book, SHEETS.samples, CHILDREN_HEADER);
+        setLocalId("EDITED")(book);
+      });
+
+      expect({
+        status: res.status,
+        children: await childIdsOf(db, series.id),
+      }).toEqual({ status: 200, children: [first.id, second.id] });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should refuse the series type on a parent and on its sub-sample",
+    async ({ db }) => {
+      stubDataCite(new Response("{}", { status: 200 }));
+      const caller = await provisionUser(db, "test-token");
+      const parent = await insertOwned(db, caller.id, { type: "core" });
+      const subSample = await insertOwned(db, caller.id, {
+        type: "core",
+        parentIds: [parent.id],
+        location: undefined,
+      });
+      const toSeries = {
+        "Sample type (level 1)": "Series of samples",
+        "Sample type (level 2)": "Core",
+      };
+
+      const res = await upload(
+        db,
+        [(await readSample(db, parent.id))!, subSample],
+        (book) => {
+          fill(book, SHEETS.samples, ROW, toSeries);
+          fill(book, SHEETS.samples, ROW + 1, toSeries);
+        },
+      );
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid import",
+          issues: [ROW, ROW + 1].map((row) =>
+            expect.objectContaining({
+              row,
+              column: "Sample type (level 1)",
+              code: "series_in_lineage",
+            }),
+          ),
+        },
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should keep a current child across a sub-type change",
+    async ({ db }) => {
+      const { series, first } = await arrangeSeries(db);
+
+      const res = await upload(db, [series], (book) =>
+        fill(book, SHEETS.samples, ROW, {
+          "Sample type (level 2)": "Dredge",
+          [CHILDREN_HEADER]: first.igsn,
+        }),
+      );
+
+      expect({
+        status: res.status,
+        type: (await readSample(db, series.id))!.type,
+        children: await childIdsOf(db, series.id),
+      }).toEqual({
+        status: 200,
+        type: "serie_of_sample.dredge",
+        children: [first.id],
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should keep the members when the children column is absent",
+    async ({ db }) => {
+      const { series, first, second } = await arrangeSeries(db);
+
+      const res = await upload(db, [series], (book) => {
+        deleteColumn(book, SHEETS.samples, CHILDREN_HEADER);
+        setLocalId("EDITED")(book);
+      });
+
+      expect({
+        status: res.status,
+        children: await childIdsOf(db, series.id),
+      }).toEqual({ status: 200, children: [first.id, second.id] });
+    },
+    30_000,
+  );
+});
 
 describe("POST /admin/samples/bulk-edit", () => {
   afterEach(() => {

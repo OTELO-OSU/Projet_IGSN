@@ -11,6 +11,10 @@ import { insertParent } from "../tests/insert-parent.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
+import { publishableSample } from "../tests/sample-fixtures.ts";
+import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
+import { insertSample } from "./service/insert-sample.ts";
+import { publishSample } from "./service/publish-sample.ts";
 
 type Db = Kysely<DB>;
 
@@ -98,6 +102,24 @@ describe("the eligible parent search", () => {
       expect(data.map((parent) => parent.id)).toEqual([sample.id]);
     },
   );
+
+  pgTest("should not offer a series of samples", async ({ db }) => {
+    // Arrange
+    const caller = await provisionUser(db, "test-token", {
+      status: "accepted",
+    });
+    const series = await insertSample(db, {
+      ...publishableSample,
+      name: "Gabbro des Vosges",
+      type: "serie_of_sample.core",
+    });
+    await insertSampleOwner(db, series.id, caller.id);
+    await publishSample(db, series.id);
+    // Act
+    const data = await search(db, { search: "Gabbro" });
+    // Assert
+    expect(data).toEqual([]);
+  });
 
   pgTest("should drop the excluded sample", async ({ db }) => {
     // Arrange

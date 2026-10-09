@@ -1,7 +1,12 @@
 import { changedPaths } from "./changed-paths.ts";
 import { createSampleSchema, type CreateSample } from "./sample.ts";
 
-const NOT_MAILED = ["attachments", "manualGroupIds", "parentIds"] as const;
+const NOT_MAILED = [
+  "attachments",
+  "manualGroupIds",
+  "parentIds",
+  "childIds",
+] as const;
 
 export type SampleMailField = Exclude<
   keyof CreateSample,

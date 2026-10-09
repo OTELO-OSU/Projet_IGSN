@@ -39,6 +39,13 @@ export type ImportedSample = {
   attachments: { input: CreateSampleAttachment; stagedId: string }[];
 };
 
+export type SeriesLinkCandidate = Pick<Sample, "id" | "type" | "status"> & {
+  isSubSample: boolean;
+  seriesId: string | null;
+  role: UserSampleRole | null;
+  moderated: boolean;
+};
+
 export type SampleRepository = {
   listAssignedTo(
     params: ListSamplesQuery,
@@ -59,6 +66,11 @@ export type SampleRepository = {
     userId: string,
     scope: ModerationScope | null,
   ): Promise<SampleParent[]>;
+  searchEligibleChildren(
+    params: SearchEligibleParentsQuery,
+    userId: string,
+    scope: ModerationScope | null,
+  ): Promise<SampleParent[]>;
   listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
   mapPublished(query: SampleMapQuery): Promise<SampleMapResponse>;
   countPublishedFacets(params: ListSamplesQuery): Promise<SampleFacetCounts>;
@@ -72,6 +84,17 @@ export type SampleRepository = {
     userId: string,
   ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublicByIgsn(igsn: string): Promise<Sample | null>;
+  listPublishedByIgsns(igsns: string[]): Promise<ReadonlyMap<string, Sample>>;
+  listSeriesLinkCandidates(
+    ids: string[],
+    userId: string | null,
+    scope: ModerationScope | null,
+  ): Promise<ReadonlyMap<string, SeriesLinkCandidate>>;
+  listPublicSeriesLinkCandidatesByIgsns(
+    igsns: string[],
+    userId: string | null,
+    scope: ModerationScope | null,
+  ): Promise<ReadonlyMap<string, SeriesLinkCandidate>>;
   findDuplicates(
     criteria: DuplicateCriteria,
     exclude?: string,

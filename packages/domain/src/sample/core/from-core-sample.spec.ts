@@ -24,6 +24,10 @@ const reversed = (sample: Sample) => {
       igsn: parent.igsn,
       relationIndex: sample.relations.length + index,
     })),
+    children: sample.children.map((child, index) => ({
+      igsn: child.igsn,
+      relationIndex: sample.relations.length + sample.parents.length + index,
+    })),
   };
 };
 

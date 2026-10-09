@@ -63,6 +63,8 @@ const sample: AdminSampleListItem = {
   internalNumber: null,
   manualGroups: [],
   parents: [],
+  children: [],
+  hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,

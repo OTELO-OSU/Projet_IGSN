@@ -15,6 +15,8 @@ const DEFERRED_FIELDS = ["syntheticDetails", "mineralClassifications"];
 
 const ATTACHMENT_ID_FIELD = "attachments.id";
 
+const BULK_EDIT_ONLY_FIELDS = ["childIds"];
+
 const ATTACHMENT_FILE_NAME_FIELD = "attachments.name";
 
 // TODO(phase 3): these carry a uuid a researcher cannot type; drop them from this list once the importer resolves people by name.
@@ -29,6 +31,7 @@ const COVERED_BY_REGION_LEVEL_2 = ["location.region.oceanSea"];
 const EXCLUDED = [
   ...DEFERRED_FIELDS,
   ...IDENTIFIER_ONLY_FIELDS,
+  ...BULK_EDIT_ONLY_FIELDS,
   ATTACHMENT_ID_FIELD,
 ];
 

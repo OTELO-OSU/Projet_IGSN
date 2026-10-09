@@ -30,6 +30,7 @@ import { getSample } from "./service/get-sample.ts";
 import { insertOwnedSample } from "./service/insert-owned-sample.ts";
 import { insertSampleAttachment } from "./service/insert-sample-attachment.ts";
 import { isSampleModerated } from "./service/is-sample-moderated.ts";
+import { listPublishedSamplesByIgsns } from "./service/list-published-samples-by-igsns.ts";
 import {
   listExportableSamples,
   listModeratedSamples,
@@ -38,6 +39,10 @@ import {
   listSamplesAssignedTo,
 } from "./service/list-sample.ts";
 import { listSamplesByInternalNumbers } from "./service/list-samples-by-internal-numbers.ts";
+import {
+  listPublicSeriesLinkCandidatesByIgsns,
+  listSeriesLinkCandidates,
+} from "./service/list-series-link-candidates.ts";
 import { mapPublishedSamples } from "./service/map-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import {
@@ -46,6 +51,7 @@ import {
 } from "./service/queue-publication.ts";
 import { releaseEditLock } from "./service/release-edit-lock.ts";
 import { reserveInternalNumbers } from "./service/reserve-internal-numbers.ts";
+import { searchEligibleChildren } from "./service/search-eligible-children.ts";
 import { searchEligibleParents } from "./service/search-eligible-parents.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
 import { unavailableInternalNumbers } from "./service/unavailable-internal-numbers.ts";
@@ -72,6 +78,7 @@ export function createSampleRepository(
     listModerated: tx(listModeratedSamples),
     listPublishedForService: tx(listPublishedSamplesForService),
     searchEligibleParents: tx(searchEligibleParents),
+    searchEligibleChildren: tx(searchEligibleChildren),
     isModerated: tx(isSampleModerated),
     listPublished: tx(listPublishedSamples),
     mapPublished: tx(mapPublishedSamples),
@@ -79,6 +86,11 @@ export function createSampleRepository(
     listExportable: tx(listExportableSamples),
     get: tx(getSample),
     getPublicByIgsn: tx(getPublicSampleByIgsn),
+    listPublishedByIgsns: tx(listPublishedSamplesByIgsns),
+    listSeriesLinkCandidates: tx(listSeriesLinkCandidates),
+    listPublicSeriesLinkCandidatesByIgsns: tx(
+      listPublicSeriesLinkCandidatesByIgsns,
+    ),
     findDuplicates: tx(findDuplicateSamples),
     findDuplicatesOfEach: tx(findDuplicateSamplesOfEach),
     findBatchDuplicates: tx(findBatchDuplicateSamples),

@@ -27,6 +27,8 @@ const RELATION_ID = "99999999-9999-4999-8999-999999999999";
 
 const PARENT_ID = "44444444-4444-4444-8444-444444444444";
 
+const CHILD_ID = "55555555-5555-4555-8555-555555555555";
+
 const TECHNICAL = {
   id: "11111111-1111-4111-8111-111111111111",
   igsn: IGSN,
@@ -46,7 +48,15 @@ const TECHNICAL = {
 };
 
 export function hydrate(body: CoreSampleBody): Sample {
-  const { sample, parents } = fromCoreSample(body);
+  const { sample, parents, children } = fromCoreSample(body);
+  const related =
+    (id: string) =>
+    ({ igsn, relationIndex }: { igsn: string; relationIndex: number }) => ({
+      id,
+      igsn,
+      name: body.relations?.[relationIndex]?.targetTitles?.[0]?.value ?? "",
+      material: null,
+    });
   return sampleSchema.parse({
     ...sample,
     ...TECHNICAL,
@@ -54,12 +64,8 @@ export function hydrate(body: CoreSampleBody): Sample {
       ...relation,
       id: RELATION_ID,
     })),
-    parents: parents.map(({ igsn, relationIndex }) => ({
-      id: PARENT_ID,
-      igsn,
-      name: body.relations?.[relationIndex]?.targetTitles?.[0]?.value ?? "",
-      material: null,
-    })),
+    parents: parents.map(related(PARENT_ID)),
+    children: children.map(related(CHILD_ID)),
     manualGroups: body.manualGroups ?? [],
   });
 }

@@ -7,10 +7,11 @@ import { describe, expect } from "vitest";
 import type { DB } from "../../db.ts";
 
 import { createApp } from "../../app.ts";
+import { insertOwned } from "../../tests/insert-owned.ts";
 import { insertParent } from "../../tests/insert-parent.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { provisionUser } from "../../tests/provision-user.ts";
-import { SHEETS } from "../import-template/columns.ts";
+import { CHILDREN_IGSNS_HEADER, SHEETS } from "../import-template/columns.ts";
 
 const exportSamples = (
   db: Kysely<DB>,
@@ -53,6 +54,37 @@ describe("POST /admin/samples/export", () => {
         sniff: "nosniff",
         key: `sample-${sample.internalNumber}`,
       });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should export a series' children IGSNs",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const child = await insertOwned(db, caller.id, { type: "core" });
+      const series = await insertOwned(db, caller.id, {
+        type: "serie_of_sample.core",
+        childIds: [child.id],
+      });
+
+      const res = await exportSamples(db, {
+        mode: "ids",
+        moderated: false,
+        ids: [series.id],
+      });
+      const book = new ExcelJS.Workbook();
+      await book.xlsx.load(await res.arrayBuffer());
+      const sheet = book.getWorksheet(SHEETS.samples)!;
+      const column = [1, 2]
+        .map((row) =>
+          (sheet.getRow(row).values as unknown[]).indexOf(
+            CHILDREN_IGSNS_HEADER,
+          ),
+        )
+        .find((index) => index > 0)!;
+
+      expect(sheet.getRow(3).getCell(column).value).toBe(child.igsn);
     },
     30_000,
   );

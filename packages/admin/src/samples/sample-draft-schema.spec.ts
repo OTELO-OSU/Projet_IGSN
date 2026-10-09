@@ -58,10 +58,12 @@ const draft: SampleDraft = {
   mineralClassifications: [],
   manualGroupIds: [],
   parentIds: [],
+  childIds: [],
   ...toEconomicInterestDraft(undefined),
 };
 
 const MANUAL_GROUP_ID = "3f2504e0-4f89-41d3-9a0c-0305000000a1";
+const CHILD_ID = "3f2504e0-4f89-41d3-9a0c-0305000000c1";
 
 describe("sampleDraftSchema", () => {
   it("should compose the draft and validate it like the API does", () => {
@@ -459,6 +461,23 @@ describe("sampleDraftSchema", () => {
       }).manualGroupIds,
     ).toEqual([MANUAL_GROUP_ID]);
   });
+
+  it.each([
+    { type: "serie_of_sample.core", childIds: [CHILD_ID] },
+    { type: "serie_of_sample", childIds: [CHILD_ID] },
+    { type: "dredge", childIds: undefined },
+  ])(
+    "should compose the child ids of a series only: $type",
+    ({ type, childIds }) => {
+      const result = sampleDraftSchema.parse({
+        ...draft,
+        typePath: toHierarchyPath(type),
+        childIds: [CHILD_ID],
+      });
+
+      expect(result.childIds).toEqual(childIds);
+    },
+  );
 
   const mineralClassifications = [
     { strunzId: "9", mindatId: null, abundance: undefined },

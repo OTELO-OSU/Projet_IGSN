@@ -375,4 +375,43 @@ describe("the public sample lineage", () => {
       childId: second.id,
     });
   });
+
+  pgTest.for([
+    {
+      from: "Sub-sample",
+      expected: { Series: -2, Member: -1, "Sub-sample": 0 },
+    },
+    { from: "Series", expected: { Series: 0, Member: 1, "Sub-sample": 2 } },
+  ])(
+    "should place a series one generation above its member from the $from",
+    async ({ from, expected }, { db }) => {
+      // Arrange
+      const ownerId = await owner(db);
+      const series = await insertLineageSample(db, ownerId, "Series");
+      const member = await insertLineageSample(db, ownerId, "Member");
+      await db
+        .insertInto("sample_series_membership")
+        .values({ sample_id: member.id, series_id: series.id })
+        .execute();
+      const subSample = await insertLineageSample(db, ownerId, "Sub-sample", [
+        member.id,
+      ]);
+      const root = from === "Series" ? series : subSample;
+      // Act
+      const lineage = await getLineage(db, root.igsn!);
+      // Assert
+      expect({
+        generations: Object.fromEntries(
+          lineage.nodes.map((node) => [node.name, node.generation]),
+        ),
+        edges: lineage.edges,
+      }).toEqual({
+        generations: expected,
+        edges: expect.arrayContaining([
+          { parentId: series.id, childId: member.id },
+          { parentId: member.id, childId: subSample.id },
+        ]),
+      });
+    },
+  );
 });

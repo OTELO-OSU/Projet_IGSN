@@ -56,6 +56,8 @@ export const publishedSample = (
   economicDepositDescription: null,
   manualGroups: [],
   parents: [],
+  children: [],
+  hasSubSamples: false,
   owner: null,
   status: "published" as const,
   canContactArchive: false,

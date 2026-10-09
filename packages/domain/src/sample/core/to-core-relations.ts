@@ -1,8 +1,10 @@
+import type { SampleParent } from "../parent/model.ts";
 import type { Sample } from "../sample.ts";
 import type { CoreRelation } from "./core-relation-schema.ts";
 
 import { relationTargetHref } from "../relation/relation-target-href.ts";
 import {
+  CHILD_RELATION_TYPE,
   coreIdentifierType,
   coreRelationType,
   coreTargetResourceType,
@@ -34,17 +36,21 @@ export function toCoreRelations(
     schemeType: relation.schemeType ?? undefined,
     description: relation.description ?? undefined,
   }));
-  for (const parent of sample.parents) {
-    relations.push({
-      relationType: PARENT_RELATION_TYPE,
+  const toSampleRelation =
+    (relationType: string) =>
+    (related: SampleParent): CoreRelation => ({
+      relationType,
       targetIdentifier: {
-        value: parent.igsn,
-        identifierType: toParentIdentifierType(parent.igsn),
+        value: related.igsn,
+        identifierType: toParentIdentifierType(related.igsn),
       },
-      targetURI: sampleLandingPage(parent.igsn, frontendUrl),
-      targetTitles: [{ value: parent.name, titleType: "Main" }],
+      targetURI: sampleLandingPage(related.igsn, frontendUrl),
+      targetTitles: [{ value: related.name, titleType: "Main" }],
       targetResourceType: coreTargetResourceType.toCore("physical_object"),
     });
-  }
+  relations.push(
+    ...sample.parents.map(toSampleRelation(PARENT_RELATION_TYPE)),
+    ...sample.children.map(toSampleRelation(CHILD_RELATION_TYPE)),
+  );
   return relations.length === 0 ? undefined : relations;
 }

@@ -132,6 +132,7 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
 
   relations: "relations",
   parentIds: "relations",
+  childIds: "relations",
   manualGroupIds: "manualGroups",
 };
 

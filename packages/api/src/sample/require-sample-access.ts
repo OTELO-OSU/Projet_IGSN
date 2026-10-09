@@ -59,8 +59,17 @@ export async function sampleAccess(
     managed,
     moderating,
     shareRole,
-    role: moderating && !isSampleOwner(shareRole) ? "editor" : shareRole,
+    role: effectiveRole(user, found.role, managed),
   };
+}
+
+export function effectiveRole(
+  user: Pick<User, "superAdmin">,
+  role: UserSampleRole | null,
+  managed: boolean,
+): UserSampleRole | null {
+  const shareRole = user.superAdmin ? "owner" : role;
+  return managed && !isSampleOwner(shareRole) ? "editor" : shareRole;
 }
 
 export function requireSampleAccess(

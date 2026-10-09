@@ -96,6 +96,8 @@ const stored: Sample = {
     { id: "22222222-2222-4222-8222-222222222222", name: "Stored group" },
   ],
   parents: [],
+  children: [],
+  hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,
@@ -183,6 +185,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     economicDepositDescription: null,
     mineralClassifications: [],
     parentIds: [],
+    childIds: [],
     ...overrides,
   };
 }

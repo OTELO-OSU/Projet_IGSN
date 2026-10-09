@@ -29,6 +29,7 @@ import {
   type CreateSample,
   createSampleSchema,
 } from "@projet-igsn/domain/sample/sample";
+import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
 import { z } from "zod";
 
 import {
@@ -181,6 +182,7 @@ export type SampleDraft = {
   mineralClassifications: MineralClassificationDraft[];
   manualGroupIds: string[];
   parentIds: string[];
+  childIds: string[];
 } & EconomicInterestDraft;
 
 export const toSampleDraft = (
@@ -254,6 +256,7 @@ export const toSampleDraft = (
     : [{ key: crypto.randomUUID(), path: [], abundance: undefined }],
   manualGroupIds: value?.manualGroupIds ?? [],
   parentIds: value?.parentIds ?? [],
+  childIds: value?.childIds ?? [],
   ...toEconomicInterestDraft(value),
 });
 
@@ -325,6 +328,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     material,
   );
   const localId = draft.localId?.trim() || null;
+  const type = composeHierarchyValue(draft.typePath);
   return {
     name: draft.name,
     localId,
@@ -332,7 +336,7 @@ const composeCreateSample = (draft: SampleDraft) => {
       ? { localIdDescription: draft.localIdDescription?.trim() || null }
       : {}),
     nature: draft.nature ?? null,
-    type: composeHierarchyValue(draft.typePath),
+    type,
     material,
     ...(draft.texture ? { texture: draft.texture } : {}),
     ...(draft.metamorphicFacies
@@ -372,6 +376,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(mineralClassifications.length > 0 ? { mineralClassifications } : {}),
     manualGroupIds: draft.manualGroupIds,
     ...(draft.parentIds.length > 0 ? { parentIds: draft.parentIds } : {}),
+    ...(isVirtualSample(type) ? { childIds: draft.childIds } : {}),
     ...economic,
   };
 };

@@ -21,8 +21,8 @@ type LineageRow = {
 
 const lineageColumns = (generation: RawBuilder<unknown>) =>
   [
-    "sample_parent.parent_id",
-    "sample_parent.sample_id as child_id",
+    "edge.parent_id",
+    "edge.child_id",
     generation.as("generation"),
     "sample.igsn",
     "sample.name",
@@ -44,28 +44,36 @@ export async function getSampleLineage(
   // ADR 0033: a published sample names its relatives whatever their status, one without a permanent IGSN excepted.
   const rows = (await db
     .withRecursive(
-      "ancestor(parent_id, child_id, generation, igsn, name, tombstone)",
+      (cte) => cte("edge(parent_id, child_id)").notMaterialized(),
       (qb) =>
         qb
           .selectFrom("sample_parent")
+          .select(["parent_id", "sample_id as child_id"])
+          .unionAll(
+            qb
+              .selectFrom("sample_series_membership")
+              .select(["series_id as parent_id", "sample_id as child_id"]),
+          ),
+    )
+    .withRecursive(
+      "ancestor(parent_id, child_id, generation, igsn, name, tombstone)",
+      (qb) =>
+        qb
+          .selectFrom("edge")
           .innerJoin("sample", (join) =>
             join
-              .onRef("sample.id", "=", "sample_parent.parent_id")
+              .onRef("sample.id", "=", "edge.parent_id")
               .on("sample.status", "in", PERMANENT_IGSN_STATUSES),
           )
           .select(lineageColumns(sql`-1`))
-          .where("sample_parent.sample_id", "=", root.id)
+          .where("edge.child_id", "=", root.id)
           .union(
             qb
               .selectFrom("ancestor")
-              .innerJoin(
-                "sample_parent",
-                "sample_parent.sample_id",
-                "ancestor.parent_id",
-              )
+              .innerJoin("edge", "edge.child_id", "ancestor.parent_id")
               .innerJoin("sample", (join) =>
                 join
-                  .onRef("sample.id", "=", "sample_parent.parent_id")
+                  .onRef("sample.id", "=", "edge.parent_id")
                   .on("sample.status", "in", PERMANENT_IGSN_STATUSES),
               )
               .select(lineageColumns(sql`ancestor.generation - 1`)),
@@ -75,25 +83,21 @@ export async function getSampleLineage(
       "descendant(parent_id, child_id, generation, igsn, name, tombstone)",
       (qb) =>
         qb
-          .selectFrom("sample_parent")
+          .selectFrom("edge")
           .innerJoin("sample", (join) =>
             join
-              .onRef("sample.id", "=", "sample_parent.sample_id")
+              .onRef("sample.id", "=", "edge.child_id")
               .on("sample.status", "in", PERMANENT_IGSN_STATUSES),
           )
           .select(lineageColumns(sql`1`))
-          .where("sample_parent.parent_id", "=", root.id)
+          .where("edge.parent_id", "=", root.id)
           .union(
             qb
               .selectFrom("descendant")
-              .innerJoin(
-                "sample_parent",
-                "sample_parent.parent_id",
-                "descendant.child_id",
-              )
+              .innerJoin("edge", "edge.parent_id", "descendant.child_id")
               .innerJoin("sample", (join) =>
                 join
-                  .onRef("sample.id", "=", "sample_parent.sample_id")
+                  .onRef("sample.id", "=", "edge.child_id")
                   .on("sample.status", "in", PERMANENT_IGSN_STATUSES),
               )
               .select(lineageColumns(sql`descendant.generation + 1`)),

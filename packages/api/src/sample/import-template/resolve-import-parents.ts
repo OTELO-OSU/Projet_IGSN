@@ -30,10 +30,15 @@ export const INHERITED_PATHS = INHERITED.map(({ path }) => path.join("."));
 const isParented = (sample: SampleCandidate) =>
   sample.input.parentIds !== undefined;
 
+export const igsnsInCell = (cell: unknown): string[] =>
+  typeof cell === "string" || typeof cell === "number"
+    ? String(cell)
+        .split(/[\s,;]+/)
+        .filter((igsn) => igsn !== "")
+    : [];
+
 const igsnsOf = (sample: SampleCandidate) =>
-  String(sample.input.parentIds)
-    .trim()
-    .split(/[\s,;]+/);
+  igsnsInCell(sample.input.parentIds);
 
 const without = (value: unknown, key: string): Json =>
   Object.fromEntries(

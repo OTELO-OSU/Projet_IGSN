@@ -37,6 +37,7 @@ export async function parseSampleResponse(res: Response) {
       a.name.localeCompare(b.name),
     ),
     manualGroupIds: data.manualGroups.map((group) => group.id),
+    childIds: data.children.map((child) => child.id),
   };
 }
 

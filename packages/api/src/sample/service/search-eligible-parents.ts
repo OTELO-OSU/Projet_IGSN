@@ -3,18 +3,17 @@ import type { SearchEligibleParentsQuery } from "@projet-igsn/domain/sample/samp
 import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 import type { Expression, SqlBool } from "kysely";
 
-import { sampleParentSchema } from "@projet-igsn/domain/sample/parent/model";
 import { REDACTED_SAMPLE_STATUSES } from "@projet-igsn/domain/sample/publication/public-sample-statuses";
 import { expressionBuilder } from "kysely";
-import { z } from "zod";
 
 import type { DB } from "../../db.ts";
 
-import { type Transactional, withTransaction } from "../../transaction.ts";
+import { type Transactional } from "../../transaction.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
-import { forceCustomPlan, searchFilters } from "./search-filter.ts";
-
-const PARENT_SEARCH_LIMIT = 20;
+import {
+  notVirtualSampleWhere,
+  searchSamplePicker,
+} from "./search-sample-picker.ts";
 
 function declarableWhere(
   userId: string,
@@ -22,7 +21,7 @@ function declarableWhere(
 ): Expression<SqlBool> {
   const eb = expressionBuilder<DB, "sample">();
   const moderated = scope ? moderatedSampleWhere(scope) : eb.lit(false);
-  return eb.or([
+  const statusWhere = eb.or([
     eb("sample.status", "=", "published"),
     eb.and([
       eb("sample.status", "in", REDACTED_SAMPLE_STATUSES),
@@ -39,29 +38,18 @@ function declarableWhere(
     ]),
     eb.and([eb("sample.status", "=", "tombstone"), moderated]),
   ]);
+  return eb.and([statusWhere, notVirtualSampleWhere]);
 }
 
-export async function searchEligibleParents(
+export function searchEligibleParents(
   db: Transactional<DB>,
   { search, exclude }: SearchEligibleParentsQuery,
   userId: string,
   scope: ModerationScope | null,
 ): Promise<SampleParent[]> {
-  const rows = await withTransaction(db, async (trx) => {
-    if (search !== undefined) await forceCustomPlan(trx);
-    return trx
-      .selectFrom("sample")
-      .select(["id", "igsn", "name", "material"])
-      .where((eb) =>
-        eb.and([
-          declarableWhere(userId, scope),
-          ...(search === undefined ? [] : searchFilters(search)),
-          ...(exclude === undefined ? [] : [eb("id", "<>", exclude)]),
-        ]),
-      )
-      .orderBy("name")
-      .limit(PARENT_SEARCH_LIMIT)
-      .execute();
-  });
-  return z.array(sampleParentSchema).parse(rows);
+  const eb = expressionBuilder<DB, "sample">();
+  return searchSamplePicker(db, search, [
+    declarableWhere(userId, scope),
+    ...(exclude === undefined ? [] : [eb("id", "<>", exclude)]),
+  ]);
 }

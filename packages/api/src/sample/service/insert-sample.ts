@@ -15,6 +15,7 @@ import {
   additionalRolesOf,
   replaceSampleAdditionalRoles,
 } from "./replace-sample-additional-roles.ts";
+import { replaceSampleChildren } from "./replace-sample-children.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
 import { replaceSampleMineralClassifications } from "./replace-sample-mineral-classifications.ts";
 import { replaceSampleProcessSteps } from "./replace-sample-process-steps.ts";
@@ -64,5 +65,6 @@ export async function insertSampleRows(
   );
   await replaceSampleAdditionalRoles(db, row.id, additionalRolesOf(input));
   await replaceSampleManualGroups(db, row.id, input.manualGroupIds ?? []);
+  await replaceSampleChildren(db, row.id, input.childIds ?? []);
   return row.id;
 }

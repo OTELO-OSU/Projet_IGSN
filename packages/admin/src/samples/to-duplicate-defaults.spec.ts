@@ -104,6 +104,8 @@ const source: Sample = {
       material: null,
     },
   ],
+  children: [],
+  hasSubSamples: false,
   institutionalOrganization: "02feahw73",
   institutionalOsu: null,
   institutionalLaboratory: null,

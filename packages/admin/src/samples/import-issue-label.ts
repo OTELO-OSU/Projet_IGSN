@@ -23,6 +23,10 @@ const IMPORT_ISSUE_LABELS: Record<ImportIssueCode, () => string> = {
   unavailable_internal_id: m.import_issue_unavailable_internal_id,
   unknown_manual_group: m.import_issue_unknown_manual_group,
   multiple_parent_igsns: m.import_issue_multiple_parent_igsns,
+  child_not_found: m.import_issue_child_not_found,
+  child_not_eligible: m.import_issue_child_not_eligible,
+  child_in_several_rows: m.import_issue_child_in_several_rows,
+  series_in_lineage: m.import_issue_series_in_lineage,
   location_inherited_from_parent: m.import_issue_location_inherited_from_parent,
   collection_date_inherited_from_parent:
     m.import_issue_collection_date_inherited_from_parent,

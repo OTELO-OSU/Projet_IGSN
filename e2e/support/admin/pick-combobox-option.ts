@@ -5,9 +5,14 @@ export async function pickComboboxOption(
   {
     field,
     option,
-    query = option,
+    query = String(option),
     chipLabel,
-  }: { field: string; option: string; query?: string; chipLabel: string },
+  }: {
+    field: string;
+    option: string | RegExp;
+    query?: string;
+    chipLabel: string;
+  },
 ) {
   const chip = page.getByRole("button", { name: chipLabel });
   await expect(async () => {

@@ -9,7 +9,7 @@ import {
   coreExistenceStatus,
 } from "./core-curation-schema.ts";
 import { orNull } from "./core-optional.ts";
-import { parentIgsnOf } from "./core-relation-schema.ts";
+import { childIgsnOf, parentIgsnOf } from "./core-relation-schema.ts";
 import { localIdTitleOf, mainTitleOf } from "./core-sample-schema.ts";
 import { contextCategoryFinders } from "./from-core-context-category.ts";
 import { fromCoreCondition, fromCoreRepository } from "./from-core-curation.ts";
@@ -22,26 +22,31 @@ import { fromCoreScientificContext } from "./from-core-scientific-context.ts";
 import { fromCoreSyntheticDetails } from "./from-core-synthetic-details.ts";
 import { fromQuantity } from "./quantity.ts";
 
-type CoreSampleParent = { igsn: Igsn; relationIndex: number };
+type CoreRelatedSample = { igsn: Igsn; relationIndex: number };
 
 type ReversedCoreSample = {
   sample: Omit<z.input<typeof createSampleSchema>, "relations"> & {
     relations: ReturnType<typeof fromCoreRelation>[];
   };
-  parents: CoreSampleParent[];
+  parents: CoreRelatedSample[];
+  children: CoreRelatedSample[];
 };
 
 export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
   const production = body.production;
-  const parents: CoreSampleParent[] = [];
+  const parents: CoreRelatedSample[] = [];
+  const children: CoreRelatedSample[] = [];
   const relations = [];
   for (const [index, relation] of (body.relations ?? []).entries()) {
-    const igsn = parentIgsnOf(relation);
-    if (igsn == null) {
+    const parentIgsn = parentIgsnOf(relation);
+    const childIgsn = childIgsnOf(relation);
+    if (parentIgsn != null) {
+      parents.push({ igsn: parentIgsn, relationIndex: index });
+    } else if (childIgsn != null) {
+      children.push({ igsn: childIgsn, relationIndex: index });
+    } else {
       relations.push(fromCoreRelation(relation));
-      continue;
     }
-    parents.push({ igsn, relationIndex: index });
   }
 
   const { bySchemeName } = contextCategoryFinders(
@@ -53,6 +58,7 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
 
   return {
     parents,
+    children,
     sample: {
       name: mainTitleOf(body.identification.titles)?.value ?? "",
       nature: body.classification.natureOfSample.id,

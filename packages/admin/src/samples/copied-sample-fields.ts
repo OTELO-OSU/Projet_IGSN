@@ -11,6 +11,7 @@ const NOT_COPIED = [
   "attachments",
   "manualGroupIds",
   "parentIds",
+  "childIds",
 ] as const;
 
 type CopiedField = Exclude<keyof CreateSample, (typeof NOT_COPIED)[number]>;

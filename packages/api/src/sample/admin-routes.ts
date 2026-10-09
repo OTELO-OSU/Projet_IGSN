@@ -11,7 +11,8 @@ import type {
   InvalidImport,
 } from "@projet-igsn/domain/sample/import/import-report";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { SeriesLinkCandidate } from "@projet-igsn/domain/sample/repository";
+import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type {
   AdminListSamplesResponse,
   AdminSampleResponse,
@@ -20,14 +21,19 @@ import type {
 import type { StagedUploadRepository } from "@projet-igsn/domain/staged-upload/repository";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { User } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
+import { canSetSampleChildren } from "@projet-igsn/domain/sample/publication/can-set-sample-children";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { publishQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
+import { canBecomeSeries } from "@projet-igsn/domain/sample/type/can-become-series";
+import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
+import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
@@ -65,14 +71,20 @@ import { findImportDuplicates } from "./import-template/find-import-duplicates.t
 import { internalIdRequestMail } from "./import-template/internal-id-request-mail.ts";
 import { validateImport } from "./import-template/validate-import.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
+import { isEligibleChild } from "./is-eligible-child.ts";
 import { notifyEmbargo } from "./notify-embargo.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { notifySubSampleDeclared } from "./notify-sub-sample-declared.ts";
 import { notifySubSamplesImported } from "./notify-sub-samples-imported.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
-import { requireSampleAccess } from "./require-sample-access.ts";
+import { effectiveRole, requireSampleAccess } from "./require-sample-access.ts";
 import { sampleDeletionRequestMail } from "./sample-deletion-request-mail.ts";
+import {
+  catchChildNotEligible,
+  CHILD_NOT_ELIGIBLE_MESSAGE,
+  ChildNotEligibleError,
+} from "./service/replace-sample-children.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
   validateAddCollaboratorBody,
@@ -99,6 +111,23 @@ const NOT_ATTACHABLE = {
 
 const PARENT_NOT_ELIGIBLE = {
   error: "Parent sample not eligible",
+} as const;
+
+const CHILD_NOT_ELIGIBLE = {
+  error: CHILD_NOT_ELIGIBLE_MESSAGE,
+} as const;
+
+const CHILDREN_NEED_PUBLICATION = {
+  error: "Children need a published series",
+} as const;
+
+const CHILD_CLAIMED_IMPORT: InvalidImport = {
+  error: "Invalid import",
+  issues: [{ code: "child_not_eligible" }],
+};
+
+const SERIES_IN_LINEAGE = {
+  error: "A series of samples has no parent nor sub-sample",
 } as const;
 
 function sameGroupIds(submitted: string[], stored: string[]) {
@@ -136,6 +165,36 @@ export function createSampleAdminRoutes(
   mail?: { sendMail: SendMail; adminUrl: string },
 ) {
   const accessibleSample = requireSampleAccess(repository, users);
+
+  const canEditCandidate = (
+    user: Pick<User, "superAdmin">,
+    candidate: SeriesLinkCandidate,
+  ) => isSampleEditor(effectiveRole(user, candidate.role, candidate.moderated));
+
+  const hasInvalidSeriesLink = async (
+    user: Pick<User, "id" | "superAdmin">,
+    { childIds = [], type }: Pick<CreateSample, "childIds" | "type">,
+    current: Pick<Sample, "id" | "children">,
+  ): Promise<boolean> => {
+    const stored = current.children.map(({ id }) => id);
+    const added = childIds.filter((id) => !stored.includes(id));
+    const toSeries = isVirtualSample(type);
+    if (!toSeries && added.length === 0) return false;
+    const candidates = await repository.listSeriesLinkCandidates(
+      [current.id, ...added],
+      user.id,
+      added.length > 0 ? await getModerationScope(users, user) : null,
+    );
+    if (toSeries && candidates.get(current.id)?.seriesId) return true;
+    return added.some((childId) => {
+      const child = candidates.get(childId);
+      return (
+        child === undefined ||
+        !canEditCandidate(user, child) ||
+        !isEligibleChild(child, current.id)
+      );
+    });
+  };
   const unlockedSample = requireEditLock(repository);
 
   const templateManualGroups = async (
@@ -226,10 +285,11 @@ export function createSampleAdminRoutes(
         (numbers) => repository.unavailableInternalNumbers(numbers),
         () => manualGroups.listAttachableForUser(c.get("user").id),
         async (igsns) => {
-          for (const igsn of igsns) {
-            const parent = await repository.getPublicByIgsn(igsn);
-            if (parent?.status === "published") parents.set(igsn, parent);
-          }
+          for (const [igsn, parent] of await repository.listPublishedByIgsns(
+            igsns,
+          ))
+            if (canDeclareSubSample(parent, { role: null, managed: false }))
+              parents.set(igsn, parent);
           return parents;
         },
       );
@@ -275,6 +335,15 @@ export function createSampleAdminRoutes(
       const { issues, samples } = await validateBulkEdit(
         await c.req.valid("form").file.arrayBuffer(),
         (numbers) => bulkEditTargets(repository, users, user, numbers),
+        {
+          resolve: async (igsns) =>
+            repository.listPublicSeriesLinkCandidatesByIgsns(
+              igsns,
+              user.id,
+              await getModerationScope(users, user),
+            ),
+          canEdit: (candidate) => canEditCandidate(user, candidate),
+        },
       );
       if (issues.length > 0) {
         const body: InvalidImport = { error: "Invalid import", issues };
@@ -283,7 +352,12 @@ export function createSampleAdminRoutes(
       if (!(await checkDataCite(dataCiteConfig()))) {
         return c.json({ error: "DataCite unavailable" }, 503);
       }
-      const count = await repository.updatePublishing(samples);
+      const count = await catchChildNotEligible(
+        repository.updatePublishing(samples),
+      );
+      if (count instanceof ChildNotEligibleError) {
+        return c.json(CHILD_CLAIMED_IMPORT, 422);
+      }
       return c.json({ count } satisfies ImportAccepted, 200);
     })
     .post(
@@ -367,6 +441,9 @@ export function createSampleAdminRoutes(
       );
       if (parents.includes(null)) {
         return c.json(PARENT_NOT_ELIGIBLE, 422);
+      }
+      if ((input.childIds ?? []).length > 0) {
+        return c.json(CHILDREN_NEED_PUBLICATION, 422);
       }
       const sample = await repository.create(input, user);
       notifySubSampleDeclared({
@@ -545,6 +622,18 @@ export function createSampleAdminRoutes(
             },
             409,
           );
+        }
+        if (isVirtualSample(toPersist.type) && !canBecomeSeries(current)) {
+          return c.json(SERIES_IN_LINEAGE, 422);
+        }
+        if (
+          (toPersist.childIds ?? []).length > 0 &&
+          !canSetSampleChildren(current)
+        ) {
+          return c.json(CHILDREN_NEED_PUBLICATION, 422);
+        }
+        if (await hasInvalidSeriesLink(c.get("user"), toPersist, current)) {
+          return c.json(CHILD_NOT_ELIGIBLE, 422);
         }
         const stored = current.manualGroups.map((group) => group.id);
         const submitted = toPersist.manualGroupIds ?? stored;

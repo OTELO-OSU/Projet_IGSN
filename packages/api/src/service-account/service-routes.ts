@@ -41,6 +41,10 @@ import {
 } from "../auth/require-service-account.ts";
 import { notifySampleModerated } from "../sample/notify-sample-moderated.ts";
 import { notifySubSampleDeclared } from "../sample/notify-sub-sample-declared.ts";
+import {
+  catchChildNotEligible,
+  ChildNotEligibleError,
+} from "../sample/service/replace-sample-children.ts";
 import { registerSampleBatchRoutes } from "./sample-batch-routes.ts";
 import {
   SERVED_MEDIA_TYPES,
@@ -57,7 +61,7 @@ import {
   findPublished,
   updateDuplicates,
 } from "./service-sample-checks.ts";
-import { invalidSample } from "./service-sample-issue.ts";
+import { invalidSample, serviceSampleIssue } from "./service-sample-issue.ts";
 import { serviceValidationHook } from "./service-validation-hook.ts";
 import { registerVocabularyRoutes } from "./vocabulary-routes.ts";
 
@@ -240,7 +244,7 @@ export function createServiceRoutes(
       const account = keyedServiceAccount(c);
       const checked = await checkServiceCreate(
         checks,
-        account.sampleOwner.id,
+        account,
         c.req.valid("json"),
       );
       if ("issues" in checked) {
@@ -254,11 +258,16 @@ export function createServiceRoutes(
       if (duplicates.length > 0) {
         return conflicting(c, duplicates);
       }
-      const created = await samples.createPublished(
-        checked.value.input,
-        account.sampleOwner.id,
-        account,
+      const created = await catchChildNotEligible(
+        samples.createPublished(
+          checked.value.input,
+          account.sampleOwner.id,
+          account,
+        ),
       );
+      if (created instanceof ChildNotEligibleError) {
+        return invalidSample(c, [serviceSampleIssue("child_not_eligible", [])]);
+      }
       notifySubSampleDeclared({
         userSamples,
         mail,
@@ -297,7 +306,12 @@ export function createServiceRoutes(
       if (duplicates.length > 0) {
         return conflicting(c, duplicates);
       }
-      const updated = await samples.update(current.id, merged);
+      const updated = await catchChildNotEligible(
+        samples.update(current.id, merged),
+      );
+      if (updated instanceof ChildNotEligibleError) {
+        return invalidSample(c, [serviceSampleIssue("child_not_eligible", [])]);
+      }
       if (!updated) {
         return c.json({ error: "Not found" }, 404);
       }

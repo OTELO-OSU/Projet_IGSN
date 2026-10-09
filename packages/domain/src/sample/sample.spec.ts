@@ -90,6 +90,8 @@ describe("sampleSchema", () => {
       owner: null,
       manualGroups: [],
       parents: [],
+      children: [],
+      hasSubSamples: false,
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,
@@ -480,6 +482,38 @@ describe("createSampleSchema", () => {
     expect(result.error?.issues).toMatchObject([{ path: ["parentIds"] }]);
   });
 
+  it("should reject the same child listed twice", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Core series 1",
+      type: "serie_of_sample.core",
+      childIds: [PARENT_ID, PARENT_ID],
+    });
+    expect(result.error?.issues).toMatchObject([{ path: ["childIds"] }]);
+  });
+
+  it.each([null, "core"])(
+    "should reject children on the type %s, not a series of samples",
+    (type) => {
+      const result = createSampleSchema.safeParse({
+        name: "Core series 1",
+        type,
+        childIds: [PARENT_ID],
+      });
+      expect(result.error?.issues).toMatchObject([{ path: ["childIds"] }]);
+    },
+  );
+
+  it("should reject a parent on a series of samples", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Core series 1",
+      type: "serie_of_sample.core",
+      parentIds: [PARENT_ID],
+    });
+    expect(result.error?.issues).toMatchObject([
+      { path: ["type"], message: "a series of samples has no parent" },
+    ]);
+  });
+
   it.each([
     ["rock_and_sediment.mineral", [{ strunzId: "9.E", mindatId: 2815 }]],
     ["rock_and_sediment.rock", []],
@@ -581,6 +615,20 @@ describe("the write schemas", () => {
       expect(result.error?.issues).toMatchObject([{ path: ["specificName"] }]);
     },
   );
+
+  it.each([
+    ["createSampleSchema", createSampleSchema],
+    ["updateSampleSchema", updateSampleSchema],
+  ])("should accept on %s children on a series of samples", (_name, schema) => {
+    const result = schema.safeParse({
+      name: "Core series 1",
+      type: "serie_of_sample.core",
+      childIds: [PARENT_ID, OTHER_PARENT_ID],
+    });
+    expect(result.data).toMatchObject({
+      childIds: [PARENT_ID, OTHER_PARENT_ID],
+    });
+  });
 
   it("should reject a linked synthesis operator carrying a typed name", () => {
     // Arrange / Act

@@ -1,4 +1,5 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
+import type { SeriesLinkCandidate } from "@projet-igsn/domain/sample/repository";
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { ServiceSampleIssue } from "@projet-igsn/domain/service-account/service-sample-validator";
 
@@ -6,6 +7,7 @@ import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 
 import { unattachableIndexes } from "../manual-group/has-unattachable.ts";
+import { isEligibleChild } from "../sample/is-eligible-child.ts";
 import { PROCESS_STEPS_NEED_PARENT } from "../sample/service/replace-sample-process-steps.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
 import {
@@ -14,10 +16,34 @@ import {
   serviceSampleIssue,
 } from "./service-sample-issue.ts";
 
-export type ResolvedParent = {
-  sample: Sample | null;
+export type ResolvedRelated<T> = {
+  sample: T | null;
   relationIndex: number;
 };
+
+export type ResolvedParent = ResolvedRelated<Sample>;
+
+const relationTargetPath = (relationIndex: number) => [
+  "relations",
+  relationIndex,
+  "targetIdentifier",
+  "value",
+];
+
+export const childIssues = (
+  children: readonly ResolvedRelated<SeriesLinkCandidate>[],
+  seriesId?: string,
+): ServiceSampleIssue[] =>
+  children.flatMap(({ sample: child, relationIndex }) =>
+    child !== null && child.moderated && isEligibleChild(child, seriesId)
+      ? []
+      : [
+          serviceSampleIssue(
+            child === null ? "child_not_found" : "child_not_eligible",
+            relationTargetPath(relationIndex),
+          ),
+        ],
+  );
 
 type Deps = {
   manualGroups: Pick<ManualGroupRepository, "listAttachableForUser">;
@@ -36,12 +62,10 @@ export async function createServiceSampleIssues(
   for (const { sample, relationIndex } of parents) {
     if (sample === null) {
       issues.push(
-        serviceSampleIssue("parent_not_found", [
-          "relations",
-          relationIndex,
-          "targetIdentifier",
-          "value",
-        ]),
+        serviceSampleIssue(
+          "parent_not_found",
+          relationTargetPath(relationIndex),
+        ),
       );
     }
   }

@@ -36,7 +36,9 @@ describe("canDeclareSubSample", () => {
   ] as [string, SampleStatus, UserSampleRole | null, boolean][])(
     "should allow the sub-sample because %s",
     (_rule, status, role, managed) => {
-      expect(canDeclareSubSample({ status }, { role, managed })).toBe(true);
+      expect(
+        canDeclareSubSample({ status, type: null }, { role, managed }),
+      ).toBe(true);
     },
   );
 
@@ -83,7 +85,18 @@ describe("canDeclareSubSample", () => {
   ] as [string, SampleStatus, UserSampleRole | null, boolean][])(
     "should refuse the sub-sample because %s",
     (_rule, status, role, managed) => {
-      expect(canDeclareSubSample({ status }, { role, managed })).toBe(false);
+      expect(
+        canDeclareSubSample({ status, type: null }, { role, managed }),
+      ).toBe(false);
     },
   );
+
+  it("should refuse the sub-sample because a series of samples has none", () => {
+    expect(
+      canDeclareSubSample(
+        { status: "published", type: "serie_of_sample.core" },
+        { role: "owner", managed: true },
+      ),
+    ).toBe(false);
+  });
 });

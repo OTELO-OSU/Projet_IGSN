@@ -77,6 +77,8 @@ const bare: Sample = {
   owner: null,
   manualGroups: [],
   parents: [],
+  children: [],
+  hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,

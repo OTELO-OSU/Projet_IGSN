@@ -62,8 +62,13 @@ function cellOf(column: Column, value: unknown): Cell {
   return labelOf(blockId, key) ?? key;
 }
 
+const joined = (values: unknown[]): unknown =>
+  values.length > 1 ? values.join(", ") : values[0];
+
 export const sampleRow = (sample: Sample, columns: readonly Column[]): Cell[] =>
-  columns.map((column) => cellOf(column, valuesOf(sample, column.path)[0]));
+  columns.map((column) =>
+    cellOf(column, joined(valuesOf(sample, column.path))),
+  );
 
 export function childRows(
   sample: Sample,

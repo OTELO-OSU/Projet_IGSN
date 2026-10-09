@@ -23,6 +23,7 @@ import {
   stagedUploadPathOf,
   stagingDirOf,
 } from "../../staged-upload/staged-path.ts";
+import { insertOwned } from "../../tests/insert-owned.ts";
 import { insertParent } from "../../tests/insert-parent.ts";
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
@@ -937,13 +938,29 @@ describe("import upload route", () => {
     },
   );
 
-  pgTest.for(["withdrawn", "tombstone"] as const)(
-    "should refuse a sub-sample of a %s parent as parent_not_found",
+  pgTest.for([
+    {
+      kind: "withdrawn",
+      arrange: (db: Kysely<DB>, ownerId: string) =>
+        insertParent(db, ownerId, "withdrawn"),
+    },
+    {
+      kind: "tombstone",
+      arrange: (db: Kysely<DB>, ownerId: string) =>
+        insertParent(db, ownerId, "tombstone"),
+    },
+    {
+      kind: "series of samples",
+      arrange: (db: Kysely<DB>, ownerId: string) =>
+        insertOwned(db, ownerId, { type: "serie_of_sample.core" }),
+    },
+  ])(
+    "should refuse a sub-sample of a $kind parent as parent_not_found",
     { timeout: 30_000 },
-    async (status, { db }) => {
+    async ({ arrange }, { db }) => {
       await provisionUser(db, "test-token");
       const owner = await insertUser(db, "parent.owner@univ-lorraine.fr");
-      const parent = await insertParent(db, owner.id, status);
+      const parent = await arrange(db, owner.id);
       const igsn = parent.igsn!;
 
       const res = await upload(db, await fileOf(await parentedBook(igsn)));

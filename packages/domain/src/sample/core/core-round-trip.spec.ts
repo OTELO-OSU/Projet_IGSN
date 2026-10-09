@@ -7,7 +7,10 @@ import {
   FRONTEND_URL,
   hydrate,
 } from "./core-record-fixture.ts";
-import { CORE_SAMPLE_FIXTURES } from "./core-sample-variant-fixture.ts";
+import {
+  CORE_SAMPLE_FIXTURES,
+  SERIES_SAMPLE,
+} from "./core-sample-variant-fixture.ts";
 import { toCoreSample } from "./to-core-sample.ts";
 
 const UNMAPPED_SAMPLE_FIELDS = [
@@ -43,6 +46,7 @@ const mapped = (sample: Sample) => ({
     omit(relation, UNMAPPED_RELATION_FIELDS),
   ),
   parents: sample.parents.map((parent) => omit(parent, UNMAPPED_PARENT_FIELDS)),
+  children: sample.children.map((child) => omit(child, UNMAPPED_PARENT_FIELDS)),
 });
 
 describe("a sample mapped to Core and back", () => {
@@ -63,4 +67,14 @@ describe("a Core record mapped to a sample and back", () => {
       expect(toCoreSample(hydrate(record), FRONTEND_URL)).toEqual(record);
     },
   );
+});
+
+describe("a series of samples mapped to Core", () => {
+  it("should emit a HasPart relation per child", () => {
+    expect(
+      toCoreSample(SERIES_SAMPLE, FRONTEND_URL)
+        .relations?.filter((relation) => relation.relationType === "HasPart")
+        .map((relation) => relation.targetIdentifier.value),
+    ).toEqual(["0123456789ABCDEFGHJKMNPQRT", "CNRS1234567893"]);
+  });
 });

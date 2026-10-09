@@ -436,7 +436,7 @@ const PUBLISHED: DemoRow[] = [
   {
     name: "Welsh Slate Series",
     nature: "thick_section",
-    type: "serie_of_sample",
+    type: "serie_of_sample.individual_sample",
     material: "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.slate",
     metamorphicFacies: "greenschist",
     collectionMethod: "blasting",
@@ -597,6 +597,18 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2025-02-09"),
+  },
+  {
+    name: "North-West Europe Core Series",
+    nature: "multiple_sample",
+    type: "serie_of_sample.core",
+    material: "rock_and_sediment.rock.sedimentary",
+    collectionMethod: "coring.drill_corer",
+    location: {
+      position: point(4.6, 54.2),
+      region: { kind: "ocean", oceanSea: "north_sea" },
+    },
+    description: on("2025-02-10"),
   },
   {
     name: "TAG Sulfide Chimney",
@@ -1434,6 +1446,13 @@ export const DEMO_PARENTS: Record<string, string[]> = {
   ],
 };
 
+export const DEMO_CHILDREN: Record<string, string[]> = {
+  "North-West Europe Core Series": [
+    "Ruhr Coal Core",
+    "North Sea Mudstone Core",
+  ],
+};
+
 export const DEMO_PROCESS_STEPS: Record<string, SampleProcessStep[]> = {
   "Mont-Dore MD-01 S3 Half-Core A": [
     {
@@ -1599,7 +1618,7 @@ const DRAFTS: DemoRow[] = [
   {
     name: "Sample series draft",
     nature: "multiple_sample",
-    type: "serie_of_sample",
+    type: "serie_of_sample.dredge",
   },
   {
     name: "Meteorite draft (chondrite?)",

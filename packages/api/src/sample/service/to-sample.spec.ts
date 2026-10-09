@@ -5,6 +5,7 @@ import { toSample } from "./to-sample.ts";
 
 const row = {
   id: "018f4d3a-1f2b-7c00-8000-000000000000",
+  hasSubSamples: false,
   name: "Grès de Fontainebleau",
   local_id: "NCY-2024-017",
   local_id_description: "Number in the quarry collection catalogue",
@@ -200,6 +201,8 @@ describe("toSample", () => {
       internalNumber: null,
       manualGroups: [],
       parents: [],
+      children: [],
+      hasSubSamples: false,
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,

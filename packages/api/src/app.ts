@@ -29,6 +29,7 @@ import { type RateLimitEnv, rateLimit } from "./rate-limit/middleware.ts";
 import { createSampleBatchRepository } from "./sample-batch/repository.ts";
 import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
+import { createSampleChildRoutes } from "./sample/child-routes.ts";
 import { createSampleParentRoutes } from "./sample/parent-routes.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
@@ -211,6 +212,10 @@ export function createApp(
     .route(
       "/samples/parents",
       createSampleParentRoutes(sampleRepository, userRepository),
+    )
+    .route(
+      "/samples/children",
+      createSampleChildRoutes(sampleRepository, userRepository),
     )
     .route(
       "/samples",

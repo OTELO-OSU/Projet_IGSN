@@ -48,7 +48,7 @@ import {
   frozenServiceSampleSchema,
   iSamplesListSamplesResponseSchema,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
-import { describe, expect, vi } from "vitest";
+import { afterEach, describe, expect, vi } from "vitest";
 
 import type { DB } from "../db.ts";
 
@@ -61,6 +61,13 @@ import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { readSample } from "../tests/read-sample.ts";
 import { publishableSample } from "../tests/sample-fixtures.ts";
+import { seriesIdOf } from "../tests/series-id-of.ts";
+import {
+  doiUrlOf,
+  hasPartPutsOf,
+  registerDois,
+  stubDataCite,
+} from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { hashApiKey } from "./api-key.ts";
 
@@ -1198,6 +1205,17 @@ describe("POST /service/samples", () => {
         return published.igsn!;
       },
     },
+    {
+      rule: "a series of samples' IGSN",
+      igsnOf: async (db: Kysely<DB>) => {
+        const series = await inLaboratory(
+          db,
+          { ...publishableSample, type: "serie_of_sample.core" },
+          IN_REACH,
+        );
+        return (await publishSample(db, series.id))!.igsn!;
+      },
+    },
   ])(
     "should report a parent relation that does not resolve, $rule",
     async ({ igsnOf }, { db }) => {
@@ -2300,6 +2318,365 @@ describe("a suspected duplicate over /service", () => {
       // Assert
       expect(res.status).toBe(200);
       expect((await readSample(db, subject.id))?.name).toBe(existing.name);
+    },
+  );
+});
+
+describe("a series of samples over /service", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete process.env.DATACITE_API_HOST;
+  });
+
+  const CORE_SERIES = "serie_of_sample.core";
+
+  const relatedOf = (...samples: Sample[]) =>
+    samples.map(({ id, igsn, name, material }) => ({
+      id,
+      igsn: igsn!,
+      name,
+      material,
+    }));
+
+  const seriesBody = (...children: Sample[]) =>
+    core({
+      ...COLLECTION_SPECIMEN,
+      type: CORE_SERIES,
+      children: relatedOf(...children),
+    });
+
+  const coreInReach = (db: Kysely<DB>, name: string) =>
+    publishedInReach(db, { ...publishableSample, type: "core", name });
+
+  const relatedIgsns = (body: unknown, relationType: string) =>
+    (coreSampleSchema.parse(body).relations ?? [])
+      .filter((relation) => relation.relationType === relationType)
+      .map((relation) => relation.targetIdentifier.value);
+
+  const storedChildIds = async (db: Kysely<DB>, id: string) =>
+    (await readSample(db, id))!.children.map((child) => child.id);
+
+  pgTest(
+    "should store the children named by HasPart and emit them back",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const first = await coreInReach(db, "Core 1");
+      const second = await coreInReach(db, "Core 2");
+      // Act
+      const res = await postSample(app, seriesBody(first, second));
+      // Assert
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(relatedIgsns(body, "HasPart")).toEqual([first.igsn, second.igsn]);
+    },
+  );
+
+  pgTest(
+    "should accept a withdrawn sample in reach as a child on create",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const withdrawn = await coreInReach(db, "Core 1");
+      await db
+        .updateTable("sample")
+        .set({ status: "withdrawn" })
+        .where("id", "=", withdrawn.id)
+        .execute();
+      // Act
+      const res = await postSample(app, seriesBody(withdrawn));
+      // Assert
+      expect(res.status).toBe(201);
+      expect(relatedIgsns(await res.json(), "HasPart")).toEqual([
+        withdrawn.igsn,
+      ]);
+    },
+  );
+
+  pgTest(
+    "should keep a member another bulk edit queued for publication on update",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const member = await coreInReach(db, "Core 1");
+      const series = await publishedInReach(db, {
+        ...publishableSample,
+        type: CORE_SERIES,
+        childIds: [member.id],
+      });
+      await db
+        .updateTable("sample")
+        .set({ status: "publishing" })
+        .where("id", "=", member.id)
+        .execute();
+      // Act
+      const res = await putSample(
+        app,
+        series.igsn!,
+        core({ ...series, children: relatedOf(member) }),
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await storedChildIds(db, series.id)).toEqual([member.id]);
+    },
+  );
+
+  pgTest(
+    "should keep the current children across a sub-type change",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const member = await coreInReach(db, "Core 1");
+      const series = await publishedInReach(db, {
+        ...publishableSample,
+        type: CORE_SERIES,
+        childIds: [member.id],
+      });
+      // Act
+      const res = await putSample(
+        app,
+        series.igsn!,
+        core({
+          ...series,
+          type: "serie_of_sample.dredge",
+          children: relatedOf(member),
+        }),
+      );
+      // Assert
+      expect({
+        status: res.status,
+        type: (await readSample(db, series.id))!.type,
+        children: await storedChildIds(db, series.id),
+      }).toEqual({
+        status: 200,
+        type: "serie_of_sample.dredge",
+        children: [member.id],
+      });
+    },
+  );
+
+  pgTest(
+    "should replace a series' children on update, sending its HasPart alone to DataCite",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 200 }));
+      const { app } = await arrangeAccount(db);
+      const first = await coreInReach(db, "Core 1");
+      const second = await coreInReach(db, "Core 2");
+      const series = await publishedInReach(db, {
+        ...publishableSample,
+        type: CORE_SERIES,
+        childIds: [first.id],
+      });
+      await registerDois(db, [first.id, second.id, series.id]);
+      // Act
+      const res = await putSample(
+        app,
+        series.igsn!,
+        core({ ...series, children: relatedOf(second) }),
+      );
+      // Assert
+      expect({
+        status: res.status,
+        children: await storedChildIds(db, series.id),
+        puts: hasPartPutsOf(fetchMock),
+      }).toEqual({
+        status: 200,
+        children: [second.id],
+        puts: [{ url: doiUrlOf(series.igsn), hasPart: [second.igsn] }],
+      });
+    },
+  );
+
+  pgTest(
+    "should send a series created with members its HasPart alone to DataCite",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 200 }));
+      const { app } = await arrangeAccount(db);
+      const member = await coreInReach(db, "Core 1");
+      await registerDois(db, [member.id]);
+      // Act
+      const res = await postSample(app, seriesBody(member));
+      // Assert
+      const series = (await readSample(
+        db,
+        (await seriesIdOf(db, member.id))!,
+      ))!;
+      expect({
+        status: res.status,
+        puts: hasPartPutsOf(fetchMock),
+      }).toEqual({
+        status: 201,
+        puts: [{ url: doiUrlOf(series.igsn), hasPart: [member.igsn] }],
+      });
+    },
+  );
+
+  pgTest.for([
+    {
+      code: "child_not_found",
+      child: async (db: Kysely<DB>) => ({
+        ...(await coreInReach(db, "Core 2")),
+        igsn: "ABCDEFGHJKMNPQRSTVWXYZ0123",
+      }),
+    },
+    {
+      code: "child_not_eligible",
+      child: (db: Kysely<DB>) =>
+        publishedInReach(db, { ...publishableSample, type: CORE_SERIES }),
+    },
+  ])("should refuse a child with $code", async ({ code, child }, { db }) => {
+    // Arrange
+    const { app } = await arrangeAccount(db);
+    const eligible = await coreInReach(db, "Core 1");
+    // Act
+    const res = await postSample(app, seriesBody(eligible, await child(db)));
+    // Assert
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({
+      error: "Invalid sample",
+      issues: [{ path: "relations.1.targetIdentifier.value", code }],
+    });
+  });
+
+  pgTest.for(["create", "update"])(
+    "should refuse on %s a child out of the account's reach",
+    async (operation, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const eligible = await coreInReach(db, "Core 1");
+      const outOfReach = (await publishSample(
+        db,
+        (
+          await inLaboratory(
+            db,
+            { ...publishableSample, type: "core", name: "Core 2" },
+            OUT_OF_REACH,
+          )
+        ).id,
+      ))!;
+      const series =
+        operation === "update"
+          ? await publishedInReach(db, {
+              ...publishableSample,
+              type: CORE_SERIES,
+            })
+          : null;
+      // Act
+      const res =
+        series === null
+          ? await postSample(app, seriesBody(eligible, outOfReach))
+          : await putSample(
+              app,
+              series.igsn!,
+              core({ ...series, children: relatedOf(eligible, outOfReach) }),
+            );
+      // Assert
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid sample",
+          issues: [
+            {
+              path: "relations.1.targetIdentifier.value",
+              code: "child_not_eligible",
+            },
+          ],
+        },
+      });
+    },
+  );
+
+  pgTest("should refuse a child a draft series holds", async ({ db }) => {
+    // Arrange
+    const { app } = await arrangeAccount(db);
+    const child = await coreInReach(db, "Core 1");
+    const holder = await insertSample(db, {
+      ...publishableSample,
+      type: CORE_SERIES,
+      childIds: [child.id],
+    });
+    // Act
+    const res = await postSample(app, seriesBody(child));
+    // Assert
+    expect({
+      status: res.status,
+      body: await res.json(),
+      seriesId: await seriesIdOf(db, child.id),
+    }).toEqual({
+      status: 422,
+      body: {
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "relations.0.targetIdentifier.value",
+            code: "child_not_eligible",
+          },
+        ],
+      },
+      seriesId: holder.id,
+    });
+  });
+
+  pgTest.for(["sub-sample", "parent"] as const)(
+    "should refuse the series type on a published %s",
+    async (relative, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const parent = await coreInReach(db, "Core 1");
+      const subSample = await publishedInReach(db, {
+        ...publishableSample,
+        parentIds: [parent.id],
+      });
+      const target = relative === "parent" ? parent : subSample;
+      // Act
+      const res = await putSample(
+        app,
+        target.igsn!,
+        core({ ...target, type: CORE_SERIES }),
+      );
+      // Assert
+      expect({
+        status: res.status,
+        body: await res.json(),
+        type: (await readSample(db, target.id))!.type,
+      }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid sample",
+          issues: [
+            {
+              path: "classification.sampleObjectTypes.0",
+              code: "custom",
+              message: "a series of samples has no parent nor sub-sample",
+            },
+          ],
+        },
+        type: target.type,
+      });
+    },
+  );
+
+  pgTest(
+    "should keep a member's series when its record comes back",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const member = await coreInReach(db, "Core 1");
+      const series = await publishedInReach(db, {
+        ...publishableSample,
+        type: CORE_SERIES,
+        childIds: [member.id],
+      });
+      const read = await getSample(app, member.igsn!);
+      // Act
+      const res = await putSample(app, member.igsn!, await read.json());
+      // Assert
+      expect({
+        status: res.status,
+        seriesId: await seriesIdOf(db, member.id),
+      }).toEqual({ status: 200, seriesId: series.id });
     },
   );
 });

@@ -607,6 +607,7 @@ describe("public sample routes", () => {
           location: { region: null, localityName: null },
           collectorFirstname: null,
           collectorLastname: null,
+          children: [],
         },
       });
     },

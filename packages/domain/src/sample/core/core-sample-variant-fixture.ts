@@ -262,6 +262,27 @@ const TWO_PARENT_SAMPLE: Sample = {
   ],
 };
 
+export const SERIES_SAMPLE: Sample = {
+  ...RESEARCH_PROJECT_SAMPLE,
+  name: "Core series of the Nancy quarry",
+  type: "serie_of_sample.core",
+  parents: [],
+  children: [
+    {
+      id: "aaaaaaaa-7777-4777-8777-aaaaaaaaaaaa",
+      igsn: "0123456789ABCDEFGHJKMNPQRT",
+      name: "First core of the series",
+      material: null,
+    },
+    {
+      id: "bbbbbbbb-8888-4888-8888-bbbbbbbbbbbb",
+      igsn: "CNRS1234567893",
+      name: "Second core of the series",
+      material: null,
+    },
+  ],
+};
+
 const withAdditionalRoles = (
   sample: Sample,
   name: string,
@@ -344,6 +365,7 @@ export const CORE_SAMPLE_FIXTURES: readonly Sample[] = [
   SYNTHETIC_SAMPLE,
   HOUR_SYNTHESIS_SAMPLE,
   TWO_PARENT_SAMPLE,
+  SERIES_SAMPLE,
   VOLCANIC_SAMPLE,
   METAMORPHIC_SAMPLE,
   OTHER_MATERIAL_SAMPLE,

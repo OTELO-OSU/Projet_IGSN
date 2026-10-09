@@ -249,6 +249,11 @@ type ContactAccount = {
   orcid: string | null;
 };
 
+type RelatedSampleRow = Pick<
+  Selectable<DB["sample"]>,
+  "id" | "igsn" | "name" | "material"
+>;
+
 type SampleRow = Selectable<DB["sample"]> & {
   chiefScientistAccount?: ContactAccount | null;
   collectorAccount?: ContactAccount | null;
@@ -263,10 +268,9 @@ type SampleRow = Selectable<DB["sample"]> & {
   attachments?: Selectable<DB["sample_attachment"]>[];
   manualGroups?: ManualGroup[];
   owner?: Pick<Selectable<DB["user"]>, "name" | "firstname"> | null;
-  parents?: Pick<
-    Selectable<DB["sample"]>,
-    "id" | "igsn" | "name" | "material"
-  >[];
+  parents?: RelatedSampleRow[];
+  children?: RelatedSampleRow[];
+  hasSubSamples: boolean;
 };
 
 export function toSample(row: SampleRow): Sample {
@@ -367,6 +371,8 @@ export function toSample(row: SampleRow): Sample {
       ? { name: row.owner.name, firstname: row.owner.firstname }
       : null,
     parents: row.parents ?? [],
+    children: row.children ?? [],
+    hasSubSamples: row.hasSubSamples,
     institutionalOrganization: row.institutional_organization,
     institutionalOsu: row.institutional_osu,
     institutionalLaboratory: row.institutional_laboratory,

@@ -33,6 +33,7 @@ import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-locat
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
+import { canSetSampleChildren } from "@projet-igsn/domain/sample/publication/can-set-sample-children";
 import { embargoPublicationDateSchema } from "@projet-igsn/domain/sample/publication/embargo-publication-date";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
@@ -42,6 +43,7 @@ import {
   type SampleStatus,
 } from "@projet-igsn/domain/sample/sample";
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
+import { canBecomeSeries } from "@projet-igsn/domain/sample/type/can-become-series";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
@@ -72,6 +74,7 @@ import { publishBlockerLines } from "#/samples/publish-blocker-field-label.ts";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "#/samples/sample-attachments.tsx";
+import { SampleChildrenField } from "#/samples/sample-children-field.tsx";
 import { SampleClassificationTab } from "#/samples/sample-classification-tab.tsx";
 import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
@@ -231,6 +234,8 @@ export type SampleFormProps = {
   defaultValues?: Partial<CreateSample>;
   defaultContactUserId?: string;
   parents?: SampleFormParent[];
+  storedChildren?: SampleParent[];
+  hasSubSamples?: boolean;
   fieldSuggestions?: FieldSuggestionRule;
   status?: SampleStatus;
   primaryAction?: SampleFormAction;
@@ -252,6 +257,8 @@ export function SampleForm({
   defaultValues,
   defaultContactUserId,
   parents = [],
+  storedChildren,
+  hasSubSamples = false,
   fieldSuggestions = NO_FIELD_SUGGESTIONS,
   status = "draft",
   primaryAction,
@@ -634,7 +641,12 @@ export function SampleForm({
 
                           <LocalIdFields />
 
-                          <SampleTypeFields />
+                          <SampleTypeFields
+                            canBeSeries={canBecomeSeries({
+                              parents,
+                              hasSubSamples,
+                            })}
+                          />
 
                           <form.AppField name="nature">
                             {(field) => (
@@ -662,6 +674,12 @@ export function SampleForm({
                         ) : null}
 
                         <SampleManualGroupsField options={manualGroupOptions} />
+
+                        <SampleChildrenField
+                          sampleId={sampleId}
+                          storedChildren={storedChildren}
+                          canSetChildren={canSetSampleChildren({ status })}
+                        />
                       </TabsContent>
 
                       <TabsContent
