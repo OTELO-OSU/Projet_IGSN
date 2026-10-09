@@ -1,0 +1,29 @@
+name: Drop tag images
+
+on: delete
+
+permissions: {}
+
+jobs:
+  drop:
+    if: github.event.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Delete the images of the deleted tag
+        env:
+          GITLAB_TOKEN: ${{ secrets.REGISTRY_PASSWORD }}
+          TAG: ${{ github.event.ref }}
+        run: |
+          # Only a release tag has images, and its name needs no URL encoding.
+          [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 0
+          api=https://gitlab.osupytheas.fr/api/v4/projects/insu%2FProjet_IGSN/registry/repositories
+          ids="$(curl -fsS -H "PRIVATE-TOKEN: $GITLAB_TOKEN" "$api?per_page=100" | jq '.[].id')"
+          for id in $ids; do
+            code="$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE -H "PRIVATE-TOKEN: $GITLAB_TOKEN" "$api/$id/tags/$TAG")"
+            # 404: that repository never had the tag.
+            if [ "$code" != 200 ] && [ "$code" != 404 ]; then
+              echo "GitLab answered $code deleting $TAG from repository $id" >&2
+              exit 1
+            fi
+          done

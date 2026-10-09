@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   deploy:
@@ -22,6 +21,8 @@ jobs:
     concurrency:
       group: ${{ github.ref_type == 'tag' && 'production' || 'preproduction' }}
       cancel-in-progress: false
+    env:
+      IMAGE_PREFIX: registry.osupytheas.fr/insu/projet_igsn
 
     steps:
       - name: Checkout repository
@@ -34,21 +35,40 @@ jobs:
         with:
           node-version-file: ".nvmrc"
 
-      - name: Name the images
+      - name: Tag the images
         run: |
-          echo "IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
           if [ "$GITHUB_REF_TYPE" = tag ]; then
             echo "IMAGE_TAG=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
           else
             echo "IMAGE_TAG=preprod-${GITHUB_SHA::8}" >> "$GITHUB_ENV"
           fi
 
-      - name: Log in to GHCR
+      # The registry, like Portainer, is reachable through the infra team's VPN only.
+      - name: Connect the VPN
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          VPN_HOST: ${{ vars.VPN_HOST }}
+          VPN_PORT: ${{ vars.VPN_PORT }}
+          VPN_USER: ${{ vars.VPN_USER }}
+          VPN_PASSWORD: ${{ secrets.VPN_PASSWORD }}
+          VPN_TRUSTED_CERT: ${{ vars.VPN_TRUSTED_CERT }}
+        run: infra/scripts/connect-vpn.sh
+
+      - name: Log in to the registry
+        env:
+          REGISTRY_USER: ${{ vars.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: printf '%s' "$REGISTRY_PASSWORD" | docker login "${IMAGE_PREFIX%%/*}" -u "$REGISTRY_USER" --password-stdin
+
+      - name: Check for images already pushed
+        id: pushed
+        run: |
+          for image in api admin frontend caddy; do
+            docker manifest inspect "$IMAGE_PREFIX/$image:$IMAGE_TAG" >/dev/null 2>&1 || exit 0
+          done
+          echo "all=true" >> "$GITHUB_OUTPUT"
 
       - name: Build and push the images
+        if: steps.pushed.outputs.all != 'true'
         env:
           DOMAIN: ${{ vars.DOMAIN }}
           OIDC_ISSUER: ${{ vars.OIDC_ISSUER }}

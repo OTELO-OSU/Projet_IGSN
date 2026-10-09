@@ -3,8 +3,9 @@
 ## Overview
 
 - One stack definition, `infra/stack/`, is deployed twice on one shared Portainer, as the stacks of the GitHub environments `preproduction` and `production`.
-- GitHub Actions (`.github/workflows/deploy.yml`) builds the api, admin, frontend and caddy images and pushes them to GHCR.
-- It then connects to the infra team's VPN with openfortivpn and updates the Portainer stack through its API (`infra/scripts/deploy-portainer.sh`).
+- GitHub Actions (`.github/workflows/deploy.yml`) first connects to the infra team's VPN with openfortivpn (`infra/scripts/connect-vpn.sh`), the only way to reach the registry and Portainer.
+- It builds the api, admin, frontend and caddy images and pushes them to `registry.osupytheas.fr/insu/projet_igsn`, the registry of the `insu/Projet_IGSN` GitLab project.
+- It then updates the Portainer stack through its API (`infra/scripts/deploy-portainer.sh`).
 - Postgres runs in the stack on the `paradedb/paradedb` image, its data in the `paradedb-data` volume, never exposed off the host.
 - Attachments live in the `attachments` volume.
 - Auth uses the GaiaData SSO, the test SSO for preprod.
@@ -41,7 +42,8 @@
 - Leave `preproduction` unrestricted, or a manual run from a branch is refused.
 - Add a tag ruleset on `v*` (**Settings > Rules > Rulesets**) restricting creations, updates and deletions to maintainers, or any writer can deploy to production by pushing a tag.
 - Define the variables as the next section says.
-- After the first run, make the four `api`, `admin`, `frontend` and `caddy` packages public (package page > **Package settings** > **Change visibility**), so Portainer pulls them anonymously.
+- On `gitlab.osupytheas.fr`, create a project access token on `insu/Projet_IGSN` (**Settings > Access tokens**), role Maintainer, scopes `api` and `write_registry`, and record its expiry.
+- Set its bot username as `REGISTRY_USER` and the token as `REGISTRY_PASSWORD` at repository level (**Settings > Secrets and variables > Actions**), since the tag-deletion workflow runs outside any environment.
 - Delete the now unused `PYTHEAS_GITLAB_TOKEN` repository secret.
 
 ## Defining the variables in GitHub
@@ -52,11 +54,12 @@
 - Select **Add environment secret** for a row whose kind is `secret`, **Add environment variable** for a row whose kind is `variable`.
 - **Name**: the name from the list, exactly.
 - **Value**: the value for that environment, on one line.
-- Set every value in each environment, none at repository level.
+- Set every value in each environment, but `REGISTRY_USER` and `REGISTRY_PASSWORD` at repository level.
 - A variable is never masked and this public repo's run logs are public, so a `secret` row is never a variable.
 - Skip the `pipeline` rows: the workflow sets them.
 - An optional variable left out takes the default shown in the list.
-- Every run rebuilds the bundles, so a changed value needs a new run only.
+- A changed value needs a new run only, unless it is baked into a bundle (`DOMAIN`, `OIDC_*`, `UPLOAD_LIMIT`, `SAMPLE_LOCK_POLL_SECONDS`).
+- A run reuses the images already pushed under its tag, so a changed bundle value needs a new commit, or that tag's four images deleted from the registry first (GitLab project > **Deploy > Container registry**).
 
 ## Portainer setup
 
@@ -67,12 +70,14 @@ Once per environment:
 - An access token of the deploy user is `PORTAINER_API_KEY`.
 - Give each stack its own `HTTP_PORT`.
 - Never edit the stack's env in Portainer: each deploy replaces the whole list from GitHub.
-- The deploy reaches Portainer through the infra team's Fortinet VPN, so ask them for an account without OTP, set in the `VPN_*` variables.
+- The deploy reaches the registry and Portainer through the infra team's Fortinet VPN, so ask them for an account without OTP, set in the `VPN_*` variables.
 - `PORTAINER_URL` must be reachable through that tunnel.
+- Portainer pulls the images from `registry.osupytheas.fr`, which allows anonymous reads.
 
 ## Deploying
 
-- The job checks the variables, connects the VPN, then PUTs the compose file and env to the stack with `pullImage` and `prune`.
+- The job connects the VPN, then skips the build when the registry already holds the four images of its tag, a re-run included.
+- It then checks the variables and PUTs the compose file and env to the stack with `pullImage` and `prune`.
 - Portainer runs `migrate`, then the apps.
 - The job then smoke-tests `/`, `/api/` and `/admin/`.
 - A branch carrying a migration leaves preprod's schema ahead of `main`.
@@ -98,12 +103,25 @@ Once per environment:
 
 ## Storage
 
-Every preproduction deploy pushes four new `preprod-<short sha>` images, which pile up in GHCR and on the Portainer host until something removes them.
+Every preproduction deploy pushes four new `preprod-<short sha>` images, which pile up in the registry and on the Portainer host until something removes them.
 
-### GHCR
+### Release tags
 
-- GHCR keeps every `preprod-<short sha>` tag, free for public packages.
-- Delete old ones from the package page if needed.
+- Deleting a `vX.Y.Z` git tag deletes its four images through the GitLab API (`.github/workflows/drop-tag-images.yml`).
+- That workflow runs from `main`, like every `delete` event.
+
+### GitLab registry cleanup policy
+
+- Open the project, then **Settings > Packages and registries**, expand **Container registry**, and under **Container registry cleanup policies** select **Set cleanup rules**.
+- **Toggle**: on.
+- **Run cleanup**: every day.
+- **Keep the most recent**: 5 tags per image.
+- **Keep tags matching**: `v\d+\.\d+\.\d+`, so release images are never removed.
+- **Remove tags older than**: 14 days.
+- **Remove tags matching**: `preprod-.*`.
+- Select **Save**.
+- A tag is removed only when it matches the remove pattern, not the keep pattern, is not among the 5 most recent, and is older than 14 days.
+- The policy removes tags only: the GitLab instance admin frees the disk with the registry garbage collection, unless the registry runs online garbage collection.
 
 ### Portainer host
 

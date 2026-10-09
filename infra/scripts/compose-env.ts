@@ -20,9 +20,9 @@ type Pair = { name: string; value: string };
 const VARS: EnvVar[] = [
   {
     name: "IMAGE_PREFIX",
-    purpose: "`ghcr.io/<owner>/<repo>` lowercased, set by the workflow.",
+    purpose: "Registry path of the images, set by the workflow.",
     required: true,
-    placeholder: "ghcr.io/otelo-osu/projet_igsn",
+    placeholder: "registry.osupytheas.fr/insu/projet_igsn",
     fromPipeline: true,
   },
   {
@@ -190,8 +190,24 @@ const VARS: EnvVar[] = [
     deployOnly: true,
   },
   {
+    name: "REGISTRY_USER",
+    purpose:
+      "Bot username of the `insu/Projet_IGSN` GitLab project access token, at repository level.",
+    required: true,
+    deployOnly: true,
+  },
+  {
+    name: "REGISTRY_PASSWORD",
+    purpose:
+      "That token (Maintainer, `api` and `write_registry`), at repository level: it pushes the images and deletes a deleted tag's.",
+    required: true,
+    secret: true,
+    deployOnly: true,
+  },
+  {
     name: "VPN_HOST",
-    purpose: "Fortinet VPN gateway host the deploy connects through.",
+    purpose:
+      "Fortinet VPN gateway host the deploy reaches the registry and Portainer through.",
     required: true,
     deployOnly: true,
   },

@@ -11,15 +11,16 @@ Accepted
 - AWS and OpenTofu are no longer needed.
 - The hosting is a shared Portainer run by the infra team.
 - GitHub stays the development home.
-- The infra team runs neither GitLab CI nor its registry.
-- Portainer sits behind their Fortinet VPN.
+- The infra team runs no GitLab CI for us.
+- Portainer, and the `registry.osupytheas.fr` registry it pulls from, sit behind their Fortinet VPN.
 
 ## Decision
 
 - **Containers are the unit**, as before.
 - **One [`infra/stack/`](../../infra/stack/docker-compose.yml)** defines both environments, each a Portainer stack.
-- **GitHub Actions builds and pushes** the images to GHCR as public packages, joins the VPN with openfortivpn, then calls the Portainer CE API with the compose content and env.
-- Rejected: GitLab CI and its registry, unused by the infra team.
+- **GitHub Actions joins the VPN** with openfortivpn, pushes the images to `registry.osupytheas.fr` with a GitLab project access token, then calls the Portainer CE API with the compose content and env.
+- Rejected: GitLab CI, unused by the infra team.
+- Rejected: GHCR, which Portainer cannot pull from.
 - Rejected: the infra team's registry watchdog pulling new tags, since it would not re-run the one-off `migrate` nor report a failed deploy back to CI.
 - Rejected: Portainer Git stacks, whose webhook and relative-path volumes are Business Edition only and whose env lives in the Portainer UI.
 - **GitHub environment variables and secrets** are the single source of the env.
@@ -37,3 +38,4 @@ Accepted
 - Env edits made in Portainer are overwritten by the next deploy.
 - A migration blocks a rollback.
 - The deploy depends on a VPN account without OTP.
+- It also depends on a GitLab project access token, renewed before it expires.
