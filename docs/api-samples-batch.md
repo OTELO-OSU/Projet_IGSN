@@ -78,7 +78,7 @@ The answer is the batch itself, the same body `GET /service/batches/{id}` return
 
 - Keep the batch `id` to poll the batch later.
 - Items come back in the order you sent them.
-- A created or changed item reads `publishing`: it is queued and published in the background.
+- A created or changed item reads `publishing`: it is queued and published in the background, an update item adding only a parent included.
 - An unchanged item reads `published` with its IGSN: nothing more will happen to it.
 
 ### `422`: an item or the webhook is invalid

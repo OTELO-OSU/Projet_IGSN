@@ -6,6 +6,8 @@ Date: 2026-09-15
 
 Accepted. Carries the sub-sample lineage exception in [ADR 0033](0033-sample-tombstone-status.md)'s 2026-09-08 amendment forward onto the lineage graph.
 
+Amended 2026-10-08: a parent may now be added after creation, so a cycle is no longer unreachable; the write refuses the sample itself and its descendants as a parent, see ADR [0058](0058-parents-added-after-creation.md).
+
 ## Context
 
 `GET /samples/:igsn/lineage` walks a sample's ancestors and descendants for the public graph, the lineage itself coming from [ADR 0039](0039-two-parent-sub-samples.md). It replaces the flat parent list the public sample page used to render.

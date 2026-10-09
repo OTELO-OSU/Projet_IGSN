@@ -13,6 +13,7 @@ import type { ServiceSampleIssue } from "@projet-igsn/domain/service-account/ser
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { keepContactLinks } from "@projet-igsn/domain/sample/contact-link";
 import { fromCoreSample } from "@projet-igsn/domain/sample/core/from-core-sample";
+import { canAddParent } from "@projet-igsn/domain/sample/parent/can-add-parent";
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
@@ -26,11 +27,18 @@ import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-samp
 import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 
+import {
+  PARENT_CYCLE,
+  SECOND_PARENT_REFUSED,
+} from "../sample/service/add-sample-parents.ts";
+import { findCyclicParentLinks } from "../sample/service/find-cyclic-parent-links.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
 import {
   childIssues,
+  type ResolvedParent,
   type ResolvedRelated,
   createServiceSampleIssues,
+  parentNotFoundIssues,
   processStepsOnRootIssue,
 } from "./create-service-sample-issues.ts";
 import {
@@ -48,6 +56,7 @@ export type ServiceSampleChecksDeps = {
     | "listPublicSeriesLinkCandidatesByIgsns"
     | "isModerated"
     | "findDuplicates"
+    | "listDescendantIds"
   >;
   manualGroups: Pick<ManualGroupRepository, "listAttachableForUser">;
 };
@@ -56,7 +65,11 @@ export type Checked<T> = { value: T } | { issues: ServiceSampleIssue[] };
 
 export type CheckedCreate = { input: CreateSample; parents: Sample[] };
 
-export type CheckedUpdate = { current: Sample; merged: CreateSample };
+export type CheckedUpdate = {
+  current: Sample;
+  merged: CreateSample;
+  parents: Sample[];
+};
 
 export type UpdateRefusal = "not_found" | "forbidden" | "frozen" | "invalid";
 
@@ -113,6 +126,15 @@ const resolvedIds = (
   resolved: readonly ResolvedRelated<{ id: string }>[],
 ): string[] =>
   resolved.flatMap(({ sample }) => (sample === null ? [] : [sample.id]));
+
+const normalizedIgsn = (igsn: string) =>
+  igsnSchema.safeParse(igsn).data ?? igsn;
+
+const resolveParents = (
+  samples: ServiceSampleChecksDeps["samples"],
+  parents: readonly { igsn: string; relationIndex: number }[],
+): Promise<ResolvedParent[]> =>
+  resolveRelated(listDeclarableParents(samples), parents);
 
 export async function checkServiceCreate(
   { samples, manualGroups }: ServiceSampleChecksDeps,
@@ -177,16 +199,10 @@ export async function checkServiceUpdate(
     ]);
   }
   const { sample, parents, children } = fromCoreSample(body);
-  const stored = new Set(current.parents.map(({ igsn }) => igsn));
-  const changed = parents.findIndex(
-    ({ igsn }) => !stored.has(igsnSchema.parse(igsn)),
-  );
-  if (changed !== -1 || parents.length !== stored.size) {
+  const submitted = new Set(parents.map(({ igsn }) => normalizedIgsn(igsn)));
+  if (current.parents.some(({ igsn }) => !submitted.has(igsn))) {
     return refusedUpdate("frozen", [
-      serviceSampleIssue("field_frozen", [
-        "relations",
-        parents[changed]?.relationIndex ?? 0,
-      ]),
+      serviceSampleIssue("field_frozen", ["relations"]),
     ]);
   }
   const held = new Map(current.children.map(({ id, igsn }) => [igsn, id]));
@@ -196,8 +212,49 @@ export async function checkServiceUpdate(
     accountChildCandidates(samples, account),
     children.filter((child) => heldIdOf(child) === undefined),
   );
+  const stored = new Set(current.parents.map(({ igsn }) => igsn));
+  const resolved = await resolveParents(
+    samples,
+    parents.filter(({ igsn }) => !stored.has(normalizedIgsn(igsn))),
+  );
+  const links = resolved.flatMap(({ sample: parent, relationIndex }) =>
+    parent === null
+      ? []
+      : [{ childId: current.id, parentIds: [parent.id], relationIndex }],
+  );
+  const cyclic = findCyclicParentLinks(
+    links,
+    await samples.listDescendantIds([current.id]),
+  );
+  const isSecondParent = !canAddParent(current.parents) || resolved.length > 1;
+  const parentIssues = [
+    ...(isSecondParent
+      ? resolved.map(({ relationIndex }) =>
+          serviceSampleIssue(
+            "custom",
+            ["relations", relationIndex],
+            SECOND_PARENT_REFUSED,
+          ),
+        )
+      : []),
+    ...parentNotFoundIssues(resolved),
+    ...cyclic.map((at) =>
+      serviceSampleIssue(
+        "custom",
+        ["relations", links[at]!.relationIndex, "targetIdentifier", "value"],
+        PARENT_CYCLE,
+      ),
+    ),
+  ];
+  if (parentIssues.length > 0) {
+    return refusedUpdate("invalid", parentIssues);
+  }
+  const added = resolved
+    .map(({ sample: parent }) => parent)
+    .filter((parent) => parent !== null);
   const parsed = updateSampleSchema.safeParse({
     ...keepContactLinks(sample, current),
+    parentIds: [...current.parents, ...added].map(({ id }) => id),
     childIds: [
       ...children.flatMap((child) => heldIdOf(child) ?? []),
       ...resolvedIds(resolvedChildren),
@@ -223,7 +280,10 @@ export async function checkServiceUpdate(
   if (ineligible.length > 0) {
     return refusedUpdate("invalid", ineligible);
   }
-  if (isVirtualSample(merged.type) && !canBecomeSeries(current)) {
+  if (
+    isVirtualSample(merged.type) &&
+    (!canBecomeSeries(current) || added.length > 0)
+  ) {
     return refusedUpdate("invalid", [
       coreSampleIssue(
         "custom",
@@ -236,10 +296,13 @@ export async function checkServiceUpdate(
   if (blockers.length > 0) {
     return refusedUpdate("invalid", publishBlockerIssues(blockers));
   }
-  if ((merged.processSteps?.length ?? 0) > 0 && current.parents.length === 0) {
+  if (
+    (merged.processSteps?.length ?? 0) > 0 &&
+    (parsed.data.parentIds?.length ?? 0) === 0
+  ) {
     return refusedUpdate("invalid", [processStepsOnRootIssue()]);
   }
-  return { value: { current, merged } };
+  return { value: { current, merged, parents: added } };
 }
 
 const suspectedDuplicates = (

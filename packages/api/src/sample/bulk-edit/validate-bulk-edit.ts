@@ -2,12 +2,16 @@ import type {
   ImportIssue,
   ImportIssueCode,
 } from "@projet-igsn/domain/sample/import/import-report";
+import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { canAddParent } from "@projet-igsn/domain/sample/parent/can-add-parent";
+import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { canBecomeSeries } from "@projet-igsn/domain/sample/type/can-become-series";
 import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
+import { z } from "zod";
 
 import type { ParsedRows } from "../import-template/read-rows.ts";
 import type { TemplateLayout } from "../import-template/template-layout.ts";
@@ -16,6 +20,7 @@ import { queueBuild } from "../import-template/build-queue.ts";
 import {
   CHILDREN_IGSNS_HEADER,
   type Column,
+  PARENT_IGSN_HEADER,
   plainHeader,
   SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
@@ -26,6 +31,10 @@ import { readRows, textOf } from "../import-template/read-rows.ts";
 import { reportProcessStepsWithoutParent } from "../import-template/report-process-steps-without-parent.ts";
 import { type SeriesChildCandidates } from "../import-template/resolve-import-children.ts";
 import { igsnsInCell } from "../import-template/resolve-import-parents.ts";
+import {
+  INHERITED_PATHS,
+  type ResolveParentsByIgsn,
+} from "../import-template/resolve-import-parents.ts";
 import { templateLayout } from "../import-template/template-layout.ts";
 import {
   byPosition,
@@ -34,6 +43,7 @@ import {
   validateRows,
   withValue,
 } from "../import-template/validate-import.ts";
+import { findCyclicParentLinks } from "../service/find-cyclic-parent-links.ts";
 import { uploadLimit } from "../upload-limit.ts";
 import {
   EXPORT_CHILD_SHEETS,
@@ -58,13 +68,18 @@ const BULK_EDIT_SHEETS = [
   ...EXPORT_CHILD_SHEETS,
 ];
 
-const IDENTIFIER_HEADERS = new Set(
-  EXPORT_SAMPLE_COLUMNS.filter(
-    ({ path }) => path === "igsn" || path === "parents.igsn",
+const IGSN_HEADERS = new Set(
+  EXPORT_SAMPLE_COLUMNS.filter(({ path }) => path === "igsn").map(plainHeader),
+);
+
+const INHERITED_HEADERS = new Set(
+  EXPORT_SAMPLE_COLUMNS.filter(({ path }) =>
+    INHERITED_PATHS.some((inherited) => isPathAtOrUnder(path, inherited)),
   ).map(plainHeader),
 );
 
-const NO_PARENTS = () => Promise.resolve(new Map<string, Sample>());
+const namesNewParent = ({ row, sample }: Matched) =>
+  canAddParent(sample.parents) && row.cells[PARENT_IGSN_HEADER] !== undefined;
 
 const isMandatory = (sheet: string, column: Column) =>
   column.header === SAMPLE_KEY_HEADER ||
@@ -150,15 +165,41 @@ function withStoredCells(
     })),
   );
   const cells = { ...cellsOf(absent, sampleRow(sample, absent)), ...row.cells };
+  const inheriting = namesNewParent({ row, sample });
+  const isDropped = (header: string) =>
+    IGSN_HEADERS.has(header) ||
+    (header === PARENT_IGSN_HEADER && !canAddParent(sample.parents)) ||
+    (inheriting && INHERITED_HEADERS.has(header));
   return {
     ...row,
     cells: Object.fromEntries(
-      Object.entries(cells).filter(
-        ([header]) => !IDENTIFIER_HEADERS.has(header),
-      ),
+      Object.entries(cells).filter(([header]) => !isDropped(header)),
     ),
     children: [...row.children, ...storedChildren],
   };
+}
+
+async function cycleIssues(
+  matched: readonly Matched[],
+  addedParentIds: ReadonlyMap<number, readonly string[]>,
+  listDescendantIds: SampleRepository["listDescendantIds"],
+): Promise<ImportIssue[]> {
+  const links = [...addedParentIds].map(([index, parentIds]) => ({
+    index,
+    childId: matched[index]!.sample.id,
+    parentIds,
+  }));
+  const cyclic = findCyclicParentLinks(
+    links,
+    await listDescendantIds(links.map(({ childId }) => childId)),
+  );
+  return cyclic.map((at) =>
+    rowIssue(
+      matched[links[at]!.index]!.row,
+      "parent_cycle",
+      PARENT_IGSN_HEADER,
+    ),
+  );
 }
 
 async function validateMatched(
@@ -166,24 +207,33 @@ async function validateMatched(
   matched: readonly Matched[],
   layout: TemplateLayout,
   childCandidates: SeriesChildCandidates,
+  resolveParents: ResolveParentsByIgsn,
+  listDescendantIds: SampleRepository["listDescendantIds"],
 ) {
   const present = new Set(layout[0]?.columns.map(plainHeader));
   const presentSheets = new Set(layout.map(({ name }) => name));
   const frozen = matched.flatMap((match) => frozenIssues(match, present));
   const parentless = matched
-    .filter(({ sample }) => sample.parents.length === 0)
+    .filter(
+      (match) => match.sample.parents.length === 0 && !namesNewParent(match),
+    )
     .flatMap(({ row }) => reportProcessStepsWithoutParent(row));
   const rows = matched.map((match) =>
     withStoredCells(match, present, presentSheets),
   );
+  const addedParentIds = new Map<number, readonly string[]>();
   const validated = await validateRows(
     { samples: rows, orphans: parsed.orphans },
     {},
     [],
-    NO_PARENTS,
+    resolveParents,
     new Set(),
     (candidate, index) => {
       const { sample } = matched[index]!;
+      const parentIds = z
+        .array(z.string())
+        .safeParse(candidate.input.parentIds);
+      if (parentIds.success) addedParentIds.set(index, parentIds.data);
       return {
         ...candidate,
         input: mergeStoredSample(sample, candidate.input),
@@ -206,13 +256,21 @@ async function validateMatched(
   const seriesInLineage = isEveryRowValid
     ? validated.samples.flatMap(({ input }, index) => {
         const { row, sample } = matched[index]!;
-        return isVirtualSample(input.type) && !canBecomeSeries(sample)
+        return isVirtualSample(input.type) &&
+          (!canBecomeSeries(sample) || (input.parentIds?.length ?? 0) > 0)
           ? [rowIssue(row, "series_in_lineage", SAMPLE_TYPE_HEADER)]
           : [];
       })
     : [];
+  const cycles = await cycleIssues(matched, addedParentIds, listDescendantIds);
   return {
-    issues: [...frozen, ...parentless, ...seriesInLineage, ...validated.issues],
+    issues: [
+      ...frozen,
+      ...parentless,
+      ...seriesInLineage,
+      ...cycles,
+      ...validated.issues,
+    ],
     samples: validated.samples.map(({ input }, index) => ({
       id: matched[index]!.sample.id,
       input,
@@ -225,6 +283,8 @@ export function validateBulkEdit(
   bytes: ArrayBuffer,
   targets: Targets,
   childCandidates: SeriesChildCandidates,
+  resolveParents: ResolveParentsByIgsn,
+  listDescendantIds: SampleRepository["listDescendantIds"],
 ): Promise<{
   issues: ImportIssue[];
   samples: { id: string; input: CreateSample; updatedAt: Date }[];
@@ -249,6 +309,8 @@ export function validateBulkEdit(
       matching.matched,
       layout,
       childCandidates,
+      resolveParents,
+      listDescendantIds,
     );
     const found = [...matching.issues, ...validated.issues];
     return found.length > 0

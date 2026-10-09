@@ -2,6 +2,11 @@ import type { CoreSample } from "../core/core-sample-schema.ts";
 import type { DataCiteSample } from "./datacite-schema.ts";
 
 import {
+  coreRelationType,
+  coreTargetResourceType,
+  toParentIdentifierType,
+} from "../core/core-relation-schema.ts";
+import {
   CORE_LICENCE_URI,
   mainTitleOf,
   OTELO_ROR_URI,
@@ -50,7 +55,10 @@ const toDescription = (
 ): DataCiteSample["descriptions"] =>
   description == null ? [] : [{ description, descriptionType }];
 
-export function toDataCiteSample(core: CoreSample): DataCiteSample {
+export function toDataCiteSample(
+  core: CoreSample,
+  children: readonly { igsn: string }[] = [],
+): DataCiteSample {
   const { classification, identification, physicalDescription, production } =
     core;
   return {
@@ -97,16 +105,24 @@ export function toDataCiteSample(core: CoreSample): DataCiteSample {
         alternateIdentifierType: "UUID",
       },
     ],
-    relatedIdentifiers: (core.relations ?? []).map((relation) => ({
-      relatedIdentifier: relation.targetIdentifier.value,
-      relatedIdentifierType: relation.targetIdentifier.identifierType,
-      relationType: relation.relationType,
-      resourceTypeGeneral: OUTSIDE_DATACITE_RESOURCE_TYPES.has(
-        relation.targetResourceType,
-      )
-        ? "Other"
-        : relation.targetResourceType,
-    })),
+    relatedIdentifiers: [
+      ...(core.relations ?? []).map((relation) => ({
+        relatedIdentifier: relation.targetIdentifier.value,
+        relatedIdentifierType: relation.targetIdentifier.identifierType,
+        relationType: relation.relationType,
+        resourceTypeGeneral: OUTSIDE_DATACITE_RESOURCE_TYPES.has(
+          relation.targetResourceType,
+        )
+          ? "Other"
+          : relation.targetResourceType,
+      })),
+      ...children.map(({ igsn }) => ({
+        relatedIdentifier: igsn,
+        relatedIdentifierType: toParentIdentifierType(igsn),
+        relationType: coreRelationType.toCore("is_source_of"),
+        resourceTypeGeneral: coreTargetResourceType.toCore("physical_object"),
+      })),
+    ],
     sizes: [
       ...toSize(physicalDescription?.mass),
       ...toSize(physicalDescription?.volume),

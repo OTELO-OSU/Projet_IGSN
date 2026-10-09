@@ -12,6 +12,8 @@ Amended 2026-09-14: a chip fills only its own field, no gate cascade, after a PO
 
 Amended 2026-09-29: a sub-sample inherits its parent's location pointer and has no location requirement of its own, see ADR [0053](0053-ancestor-location-inheritance.md).
 
+Amended 2026-10-08: parents are append-only, no longer write-once, a parentless sample gaining a single parent later while two parents stay creation-only, see ADR [0058](0058-parents-added-after-creation.md).
+
 ## Context
 
 A sub-sample could declare at most one parent, so a sample made by combining two existing samples had nowhere to record its second origin.

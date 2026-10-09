@@ -23,10 +23,12 @@ const edgeFade = (canScrollStart: boolean, canScrollEnd: boolean) =>
 
 export function SampleFormTabList({
   parentCount,
+  hasParentTab,
   completeness,
   isTabDisabled,
 }: {
   parentCount: number;
+  hasParentTab: boolean;
   completeness: SampleFormCompleteness;
   isTabDisabled: (tab: SampleFormTab) => boolean;
 }) {
@@ -58,7 +60,7 @@ export function SampleFormTabList({
         className="h-auto min-w-0 flex-1 [scrollbar-width:none] justify-start gap-2 overflow-x-auto rounded-none p-0 group-data-[orientation=horizontal]/tabs:h-auto"
       >
         {SAMPLE_FORM_TABS.filter(
-          ({ value }) => value !== "parent" || parentCount > 0,
+          ({ value }) => value !== "parent" || hasParentTab,
         ).map(({ value, label, icon: Icon }) => {
           const count = completeness[value];
           return (

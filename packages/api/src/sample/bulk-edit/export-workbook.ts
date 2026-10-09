@@ -2,6 +2,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { canAddParent } from "@projet-igsn/domain/sample/parent/can-add-parent";
 import {
   FROZEN_FORM_FIELDS,
   FROZEN_FORM_FIELDS_BY_PROVENANCE,
@@ -34,17 +35,19 @@ type ExportRow = { sample: Sample; cells: readonly Cell[] };
 
 const KEY_COLUMNS = 2;
 
-const FROZEN_PATHS = new Set(["igsn", "parents.igsn", ...FROZEN_FORM_FIELDS]);
+const FROZEN_PATHS = new Set(["igsn", ...FROZEN_FORM_FIELDS]);
 
 const READ_ME_LINES = [
   `One published sample per row on the "${SHEETS.samples}" sheet, from row ${FIRST_DATA_ROW}, identified by its "${SAMPLE_KEY_HEADER}", its internal ID, so do not edit it.`,
   `A row on ${EXPORT_CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} belongs to the sample whose "${SAMPLE_KEY_HEADER}" it picks, one value per row, and a value is added on an empty row picking that "${SAMPLE_KEY_HEADER}".`,
   `A greyed cell holds an identifier or a value frozen since publication, so the server will refuse to change it.`,
+  `A sample with no parent may name one published parent IGSN, its location and collection date then inherited from that parent.`,
   `The "${SHEETS.vocabularies}" sheet lists every value the dropdowns offer, with the code the registry stores.`,
 ];
 
 export function isFrozen(column: Column, sample: Sample): boolean {
   if (column.path === undefined || FROZEN_PATHS.has(column.path)) return true;
+  if (column.path === "parents.igsn") return !canAddParent(sample.parents);
   const provenance = sample.scientificContext?.provenanceStatus;
   if (
     provenance !== undefined &&

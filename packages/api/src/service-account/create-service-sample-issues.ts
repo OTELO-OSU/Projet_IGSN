@@ -52,23 +52,27 @@ type Deps = {
 export const processStepsOnRootIssue = () =>
   coreSampleIssue("custom", "processSteps", PROCESS_STEPS_NEED_PARENT);
 
+export const parentNotFoundIssues = (
+  parents: readonly ResolvedParent[],
+): ServiceSampleIssue[] =>
+  parents.flatMap(({ sample, relationIndex }) =>
+    sample === null
+      ? [
+          serviceSampleIssue(
+            "parent_not_found",
+            relationTargetPath(relationIndex),
+          ),
+        ]
+      : [],
+  );
+
 export async function createServiceSampleIssues(
   { manualGroups }: Deps,
   ownerId: string,
   input: CreateSample,
   parents: readonly ResolvedParent[],
 ): Promise<ServiceSampleIssue[]> {
-  const issues: ServiceSampleIssue[] = [];
-  for (const { sample, relationIndex } of parents) {
-    if (sample === null) {
-      issues.push(
-        serviceSampleIssue(
-          "parent_not_found",
-          relationTargetPath(relationIndex),
-        ),
-      );
-    }
-  }
+  const issues: ServiceSampleIssue[] = parentNotFoundIssues(parents);
   if ((input.processSteps?.length ?? 0) > 0 && parents.length === 0) {
     issues.push(processStepsOnRootIssue());
   }

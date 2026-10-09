@@ -102,6 +102,28 @@ const SECOND_PARENT: SampleParent = {
   material: "rock_and_sediment.mineral",
 };
 
+const NEW_PARENT: SampleParent = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3303",
+  igsn: "01K072TVWVFK5A1RRZ5MY4PPKB",
+  name: "Granite 2026",
+  material: "rock_and_sediment.mineral",
+};
+
+function fakeParentSearch() {
+  const searches: string[] = [];
+  const puts: unknown[] = [];
+  worker.use(
+    http.get("*/admin/samples/parents", ({ request }) => {
+      searches.push(new URL(request.url).search);
+      return HttpResponse.json({ data: [NEW_PARENT] });
+    }),
+    http.put("*/samples/:id", async ({ request }) => {
+      puts.push(await request.clone().json());
+    }),
+  );
+  return { searches, puts };
+}
+
 beforeEach(() => {
   callerStatus = "accepted";
   callerUnknown = false;
@@ -406,6 +428,7 @@ async function renderEditPage(
     </StrictMode>,
   );
   return {
+    id,
     screen,
     calls,
     lockCalls,
@@ -548,7 +571,7 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("tab", { name: "Parent sample" }))
       .toBeVisible();
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Location", exact: true }).click();
 
     await expect
       .element(screen.getByRole("link", { name: PARENT.name }))
@@ -570,6 +593,84 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("link", { name: SECOND_PARENT.name }))
       .toBeVisible();
+  });
+
+  it("should send the parent picked in the parent tab, and no location, with the next save", async () => {
+    const { screen, id } = await renderEditPage();
+    const { searches, puts } = fakeParentSearch();
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+    await screen.getByRole("combobox", { name: "Parent" }).click();
+    await screen.getByPlaceholder("Search by name or IGSN").fill("Granite");
+    await expect
+      .poll(() => searches)
+      .toContain(`?search=Granite&childId=${id}`);
+    await screen.getByRole("option", { name: /Granite 2026/ }).click();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await vi.waitFor(() =>
+      expect(puts).toEqual([
+        expect.objectContaining({
+          name: "Basalte du Massif Central",
+          parentIds: [NEW_PARENT.id],
+          location: null,
+        }),
+      ]),
+    );
+  });
+
+  it("should disable the location tab while a parent is picked and restore the location once the pick is cleared", async () => {
+    const { screen } = await renderEditPage();
+    const { puts } = fakeParentSearch();
+    const parentPicker = screen.getByRole("combobox", { name: "Parent" });
+    const locationTab = screen.getByRole("tab", { name: "Location" });
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+    await parentPicker.click();
+    await screen.getByRole("option", { name: /Granite 2026/ }).click();
+    await expect.element(locationTab).toBeDisabled();
+    await parentPicker.click();
+    await screen.getByRole("option", { name: "No parent" }).click();
+    await expect.element(locationTab).toBeEnabled();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await vi.waitFor(() =>
+      expect(puts).toEqual([
+        expect.objectContaining({
+          location: expect.objectContaining({
+            position: { type: "point", longitude: 3, latitude: 45 },
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("should show a stored parent read-only in the parent tab, with no picker", async () => {
+    sampleParents = [PARENT];
+    const { screen } = await renderEditPage();
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+
+    await expect
+      .element(screen.getByRole("textbox", { name: "Parent" }))
+      .toHaveValue(PARENT.name);
+    await expect
+      .element(screen.getByRole("textbox", { name: "Parent" }))
+      .toBeDisabled();
+    expect(
+      screen.getByRole("combobox", { name: "Parent" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should tell a caller who cannot update a parentless sample that it has no parent", async () => {
+    const { screen } = await renderEditPageAsContributor("published");
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+
+    await expect.element(screen.getByText("No parent")).toBeVisible();
+    expect(
+      screen.getByRole("combobox", { name: "Parent" }).elements(),
+    ).toHaveLength(0);
   });
 
   it("should offer each parent's value under its short label on a saved two-parent sample", async () => {
@@ -1213,7 +1314,7 @@ describe("EditSamplePage", () => {
   it.each([
     ["?tab=age", "rock_and_sediment.mineral", "Age"],
     ["?tab=location", "rock_and_sediment.synthetic_rock_mineral", "Identity"],
-    ["?tab=parent", "rock_and_sediment.mineral", "Identity"],
+    ["?tab=parent", "rock_and_sediment.mineral", "Parent sample"],
   ])(
     "should open %s of a %s sample on the %s tab",
     async (search, material, tab) => {
@@ -1487,6 +1588,16 @@ describe("EditSamplePage", () => {
       await expect
         .element(screen.getByRole("tooltip"))
         .toHaveTextContent("Pierre Martin");
+    });
+
+    it("should disable the parent picker while another user holds the lock", async () => {
+      const { screen } = await renderEditPageLockedBy(PIERRE);
+
+      await screen.getByRole("tab", { name: "Parent sample" }).click();
+
+      await expect
+        .element(screen.getByRole("combobox", { name: "Parent" }))
+        .toBeDisabled();
     });
 
     it("should hold the form read-only when the lock holder has no name at all", async () => {

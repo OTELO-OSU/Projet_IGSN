@@ -53,6 +53,7 @@ import { flushSync } from "react-dom";
 
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
+import { AddParentField } from "#/samples/add-parent-field.tsx";
 import { AgeFields } from "#/samples/age-fields.tsx";
 import { CollectionDateField } from "#/samples/collection-date-field.tsx";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
@@ -83,6 +84,7 @@ import {
   publishedEditDraftSchema,
   type SampleDraft,
   sampleDraftSchema,
+  type SampleDraftSource,
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
 import { SampleFormTabList } from "#/samples/sample-form-tab-list.tsx";
@@ -231,11 +233,12 @@ type SubmitMeta = {
 export type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
-  defaultValues?: Partial<CreateSample>;
+  defaultValues?: SampleDraftSource;
   defaultContactUserId?: string;
   parents?: SampleFormParent[];
   storedChildren?: SampleParent[];
   hasSubSamples?: boolean;
+  canAddParent?: boolean;
   fieldSuggestions?: FieldSuggestionRule;
   status?: SampleStatus;
   primaryAction?: SampleFormAction;
@@ -259,6 +262,7 @@ export function SampleForm({
   parents = [],
   storedChildren,
   hasSubSamples = false,
+  canAddParent = false,
   fieldSuggestions = NO_FIELD_SUGGESTIONS,
   status = "draft",
   primaryAction,
@@ -307,6 +311,8 @@ export function SampleForm({
   const isMaterialFrozenByParent =
     onlyParent !== undefined && isSyntheticMaterial(onlyParent.material);
   const hasTwoParents = parents.length > 1;
+  const hasParentTab = parents.length > 0 || sampleId !== undefined;
+  const offersParentPicker = parents.length === 0 && canAddParent;
   const isFieldFrozen = isReadOnly
     ? () => true
     : (name: string) =>
@@ -589,8 +595,11 @@ export function SampleForm({
                 values.scientificContext.provenanceStatus;
               const required = sampleRequiredFields(values, keptAttachments);
               const isTabDisabled = (value: SampleFormTab) =>
-                (value === "parent" && parents.length === 0) ||
-                (value === "location" && !allowsLocation(material)) ||
+                (value === "parent" && !hasParentTab) ||
+                (value === "location" &&
+                  (!allowsLocation(material) ||
+                    (onlyParent === undefined &&
+                      values.parentIds.length > 0))) ||
                 (value === "scientific-context" && !provenanceStatus);
               return (
                 // ponytail: a new rule per change re-renders every mounted kit field; pass a joined-names string as its dependency if typing lags.
@@ -607,26 +616,50 @@ export function SampleForm({
                     >
                       <SampleFormTabList
                         parentCount={parents.length}
+                        hasParentTab={hasParentTab}
                         completeness={tabCompleteness(required)}
                         isTabDisabled={isTabDisabled}
                       />
 
-                      {parents.length > 0 ? (
+                      {hasParentTab ? (
                         <TabsContent value="parent" className="grid gap-4">
-                          <FormSection title={parentTabLabel(parents.length)}>
-                            {parents.map((each, index) => (
-                              <ParentSampleField
-                                key={each.igsn}
-                                parent={each}
-                                label={
-                                  parents.length > 1
-                                    ? m.field_parent_numbered({
-                                        index: index + 1,
-                                      })
-                                    : m.field_parent()
-                                }
-                              />
-                            ))}
+                          <FormSection
+                            title={parentTabLabel(parents.length)}
+                            description={
+                              offersParentPicker
+                                ? m.add_parent_description()
+                                : undefined
+                            }
+                          >
+                            {parents.length > 0 ? (
+                              parents.map((each, index) => (
+                                <ParentSampleField
+                                  key={each.igsn}
+                                  parent={each}
+                                  label={
+                                    parents.length > 1
+                                      ? m.field_parent_numbered({
+                                          index: index + 1,
+                                        })
+                                      : m.field_parent()
+                                  }
+                                />
+                              ))
+                            ) : offersParentPicker ? (
+                              <form.AppField name="parentIds">
+                                {(field) => (
+                                  <AddParentField
+                                    childId={sampleId}
+                                    parentIds={field.state.value}
+                                    onChange={field.handleChange}
+                                  />
+                                )}
+                              </form.AppField>
+                            ) : (
+                              <p className="text-muted-foreground text-sm">
+                                {m.no_parent()}
+                              </p>
+                            )}
                           </FormSection>
                         </TabsContent>
                       ) : null}

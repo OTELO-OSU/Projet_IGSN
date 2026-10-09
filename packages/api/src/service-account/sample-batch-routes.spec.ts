@@ -16,6 +16,7 @@ import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
 import { acquireEditLock } from "../sample/service/acquire-edit-lock.ts";
+import { PARENT_CYCLE } from "../sample/service/add-sample-parents.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
 import { drainPublishingQueue } from "../sample/service/publishing-worker.ts";
@@ -735,6 +736,86 @@ describe("POST /service/samples/batch", () => {
           .where("id", "=", existing.id)
           .executeTakeFirstOrThrow(),
       ).toEqual({ updated_at: existing.updatedAt });
+    },
+  );
+
+  pgTest(
+    "should queue an update adding only a parent relation",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const parent = await publishedIn(db);
+      const existing = await publishedIn(db);
+      // Act
+      const posted = await postBatch(app, [
+        {
+          partnerId: "parented",
+          sample: {
+            ...core(existing),
+            relations: subSampleBody(parent.igsn!).relations,
+          },
+        },
+      ]);
+      // Assert
+      expect(posted.status).toBe(202);
+      expect({
+        items: ((await posted.json()) as { items: { status: string }[] }).items,
+        parents: await db
+          .selectFrom("sample_parent")
+          .select("parent_id")
+          .where("sample_id", "=", existing.id)
+          .execute(),
+      }).toEqual({
+        items: [expect.objectContaining({ status: "publishing" })],
+        parents: [{ parent_id: parent.id }],
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse two items naming each other as parent and write nothing",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const first = await publishedIn(db);
+      const second = await publishedIn(db);
+      // Act
+      const res = await postBatch(app, [
+        {
+          partnerId: "first",
+          sample: {
+            ...core(first),
+            relations: subSampleBody(second.igsn!).relations,
+          },
+        },
+        {
+          partnerId: "second",
+          sample: {
+            ...core(second),
+            relations: subSampleBody(first.igsn!).relations,
+          },
+        },
+      ]);
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "items.0.sample.relations",
+            code: "custom",
+            message: PARENT_CYCLE,
+          },
+          {
+            path: "items.1.sample.relations",
+            code: "custom",
+            message: PARENT_CYCLE,
+          },
+        ],
+      });
+      expect(
+        await db.selectFrom("sample_parent").select("sample_id").execute(),
+      ).toEqual([]);
     },
   );
 

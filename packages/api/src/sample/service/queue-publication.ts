@@ -43,5 +43,5 @@ export async function updatePublishingSample(
   if (!row) {
     throw new HTTPException(409, { message: "Sample changed, retry" });
   }
-  await writeSample(trx, id, input);
+  await writeSample(trx, id, input, null);
 }

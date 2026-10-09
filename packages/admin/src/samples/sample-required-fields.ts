@@ -2,7 +2,6 @@ import type { PublishRequirement } from "@projet-igsn/domain/sample/publication/
 
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { isReadingControlled } from "@projet-igsn/domain/sample/condition/controlled-reading";
-import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { allowsMineralClassifications } from "@projet-igsn/domain/sample/mineral/allows-mineral-classifications";
 import { samplePublishRequirements } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { identifierTypeLabel } from "@projet-igsn/domain/sample/relation/identifier-type";
@@ -15,6 +14,7 @@ import { m } from "#/paraglide/messages.js";
 import { hasReadingType } from "#/samples/compose-condition.ts";
 import { isTypedPerson } from "#/samples/compose-contact.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
+import { isLocated } from "#/samples/is-located.ts";
 import { ROWS } from "#/samples/location-position-fields.tsx";
 import { MEASUREMENTS } from "#/samples/measurement-fields.tsx";
 import { READINGS } from "#/samples/sample-condition-fields.tsx";
@@ -40,10 +40,6 @@ const filled = (values: SampleDraft, name: string): RequiredField => ({
 
 const isSubSample = (values: SampleDraft): boolean =>
   values.parentIds.length > 0;
-
-const isLocated = (values: SampleDraft): boolean =>
-  !isSubSample(values) &&
-  allowsLocation(composeHierarchyValue(values.materialPath));
 
 const ageRangeFields = (
   values: SampleDraft,

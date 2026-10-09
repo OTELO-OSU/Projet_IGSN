@@ -8,6 +8,7 @@ import {
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { embargoPublicationDateSchema } from "@projet-igsn/domain/sample/publication/embargo-publication-date";
+import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
 import { canCreateImportTemplate } from "@projet-igsn/domain/user-sample/can-create-import-template";
 import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
@@ -78,10 +79,9 @@ function EditSamplePage() {
   const setStatus = useSetSampleStatus(sampleId);
   const deleteSample = useDeleteSample(sampleId);
   const [publicationDate, setPublicationDate] = useState("");
-  const { heldByOther } = useSampleEditLock(
-    sampleId,
-    query.data != null && canUpdateSample(query.data.role, query.data),
-  );
+  const canUpdate =
+    query.data != null && canUpdateSample(query.data.role, query.data);
+  const { heldByOther } = useSampleEditLock(sampleId, canUpdate);
   const attachmentChanges = useAttachmentChanges(sampleId);
   const apiFetch = useApiClient();
   const sampleParents = query.data?.parents ?? [];
@@ -330,6 +330,7 @@ function EditSamplePage() {
         parents={query.data.parents}
         storedChildren={query.data.children}
         hasSubSamples={query.data.hasSubSamples}
+        canAddParent={canUpdate && !isVirtualSample(query.data.type)}
         fieldSuggestions={
           parents.length > 1 ? parentFieldSuggestions(parents) : undefined
         }

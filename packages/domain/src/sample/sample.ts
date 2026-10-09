@@ -174,12 +174,10 @@ const createSampleFieldsSchema = z.strictObject({
   childIds: z.array(z.uuid()).optional(),
 });
 
-type SampleCheck = Omit<
-  z.infer<typeof createSampleFieldsSchema>,
-  "parentIds"
-> & { parentIds?: string[] };
-
-const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
+const checkSample = (
+  value: z.infer<typeof createSampleFieldsSchema>,
+  ctx: z.RefinementCtx,
+) => {
   if (
     value.texture != null &&
     !texturesFor(value.material ?? null).includes(value.texture)
@@ -292,7 +290,7 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
     ctx.addIssue({
       code: "custom",
       path: ["type"],
-      message: "a series of samples has no parent",
+      message: "a series of samples has no parent nor sub-sample",
     });
   }
   const rows = value.mineralClassifications ?? [];
@@ -330,6 +328,4 @@ export const createSampleSchema =
 
 export type CreateSample = z.infer<typeof createSampleSchema>;
 
-export const updateSampleSchema = createSampleFieldsSchema
-  .omit({ parentIds: true })
-  .superRefine(checkSample);
+export const updateSampleSchema = createSampleSchema;

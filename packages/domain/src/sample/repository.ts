@@ -108,6 +108,9 @@ export type SampleRepository = {
   ): Promise<BatchSuspectedDuplicate[]>;
   findStatusByIgsn(igsn: string): Promise<SampleStatus | null>;
   getPublicLineage(igsn: string): Promise<SampleLineage | null>;
+  listDescendantIds(
+    sampleIds: readonly string[],
+  ): Promise<ReadonlyMap<string, string[]>>;
   create(input: CreateSample, owner: User): Promise<Sample>;
   createPublishing(samples: ImportedSample[], owner: User): Promise<number>;
   listByInternalNumbers(

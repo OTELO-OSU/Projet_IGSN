@@ -191,6 +191,14 @@ export function sampleEditPage(page: Page) {
       ).toBeVisible();
       await page.keyboard.press("Escape");
     },
+    addParent: async (name: string) => {
+      await openTab("Parent sample");
+      await page.getByRole("combobox", { name: "Parent", exact: true }).click();
+      await page.getByPlaceholder("Search by name or IGSN").fill(name);
+      await page.getByRole("option", { name: new RegExp(name) }).click();
+      await clickSave();
+      await expect(savedToast).toBeVisible();
+    },
     restoreAsWithdrawn: async () => {
       await openActionsMenu();
       await page

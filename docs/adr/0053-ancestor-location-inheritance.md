@@ -6,6 +6,8 @@ Date: 2026-09-29
 
 Accepted.
 
+Amended 2026-10-08: inheritance also runs when a sole parent is added later, replacing the sample's own location and cascading to the descendants still sharing it, see ADR [0058](0058-parents-added-after-creation.md).
+
 Amends the location sentence of ADR [0039](0039-two-parent-sub-samples.md), which had a sub-sample inherit location from a sole parent only. ADR [0045](0045-sub-sample-collection-date-and-public-list-default.md) (collection date) is untouched.
 
 ## Context

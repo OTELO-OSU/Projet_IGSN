@@ -2,8 +2,9 @@
 type: domain-model
 title: Sample parentage and sub-samples
 description: >-
-  A sample may have one parent, set at creation and never editable; it inherits
-  the parent's location and, for a synthetic parent, its material branch.
+  A sample may have up to two parents, set at creation, a parentless one
+  gaining a single parent later, never removed; it inherits the parent's location and, for a synthetic parent,
+  its material branch.
 resource: packages/domain/src/sample/parent
 tags:
   - domain
@@ -23,7 +24,7 @@ status: stable
 
 A sample may have 0, 1 or 2 parents, the sample(s) it was sub-sampled from (broken, powdered, cut into a thin section...) or, with two, combined from. Stored as a many-to-many `sample_parent` table (`sample_id`, `parent_id`, both cascade FKs, a composite PK, a check that a sample is never its own parent); the write schema caps `parentIds` at `MAX_SAMPLE_PARENTS = 2` (ADR 0039). Two parents force a synthetic material with no location; see ADR 0039.
 
-- **Set at creation, never editable.** `parentIds` is accepted only by `createSampleSchema`; `updateSampleBodySchema` omits it entirely, so a parent in an update body is a 400. `insertSampleParents` runs from `insertSample` only, never from `updateSample`.
+- **Set at creation, appended later, never removed.** `updateSampleSchema` keeps `parentIds`, a parentless sample gaining exactly one, never a second: a removed stored parent is 422 `PARENTS_FROZEN`, the sample itself or a descendant 422 `PARENT_CYCLE`, an ineligible one 422 `PARENT_NOT_ELIGIBLE`. A newly sole-parented sample inherits the parent's location, cascaded to descendants; see ADR 0058 and ADR 0053.
 - **Who may declare a sub-sample of what is one domain predicate**, `canDeclareSubSample(sample, { role, managed })`: a `draft` never; a `published` sample, anyone, same as reading it on the front; a `withdrawn` sample, only a caller with a role on it or moderation reach; a `tombstone`, only moderation reach (covers a super admin). `find-eligible-parent.ts` (`findEligibleParent`) is the single eligibility read, shared by the creation-time `PARENT_NOT_ELIGIBLE` 422 in `admin-routes.ts` and `GET /admin/samples/parents/:id`; not a publish blocker, a sample with an ineligible parent is simply never created.
 - **The public sample page offers "Add a sub sample" beside Edit**, to any signed-in visitor on a published sample, linking to `${ADMIN_URL}/samples/create?parent=<id>`. Not shown on the withdrawn view.
 - **The admin create form prefills from that parent id** through `GET /admin/samples/parents/:id`, one 404 for every refusal (ineligible, tombstoned out of reach, unknown id), the sample whole since the archive contacts are hidden on the public site only; a 404 falls back to the plain create form.

@@ -460,16 +460,22 @@ describe("createSampleSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should reject two parents on a material that is not synthetic", () => {
-    // Arrange / Act
-    const result = createSampleSchema.safeParse({
-      name: "Sub-sample of Basalt 42",
-      material: "rock_and_sediment.rock",
-      parentIds: [PARENT_ID, OTHER_PARENT_ID],
-    });
-    // Assert
-    expect(result.error?.issues).toMatchObject([{ path: ["material"] }]);
-  });
+  it.each([
+    ["createSampleSchema", createSampleSchema],
+    ["updateSampleSchema", updateSampleSchema],
+  ])(
+    "should reject on %s two parents on a material that is not synthetic",
+    (_name, schema) => {
+      // Arrange / Act
+      const result = schema.safeParse({
+        name: "Sub-sample of Basalt 42",
+        material: "rock_and_sediment.rock",
+        parentIds: [PARENT_ID, OTHER_PARENT_ID],
+      });
+      // Assert
+      expect(result.error?.issues).toMatchObject([{ path: ["material"] }]);
+    },
+  );
 
   it("should reject the same parent listed twice", () => {
     // Arrange / Act
@@ -510,7 +516,10 @@ describe("createSampleSchema", () => {
       parentIds: [PARENT_ID],
     });
     expect(result.error?.issues).toMatchObject([
-      { path: ["type"], message: "a series of samples has no parent" },
+      {
+        path: ["type"],
+        message: "a series of samples has no parent nor sub-sample",
+      },
     ]);
   });
 

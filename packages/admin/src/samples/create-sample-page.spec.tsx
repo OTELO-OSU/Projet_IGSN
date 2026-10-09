@@ -447,7 +447,7 @@ describe("CreateSamplePage", () => {
       .not.toBeInTheDocument();
   });
 
-  it("should create a sub sample carrying the parent id and the location it inherits", async () => {
+  it("should create a sub sample carrying the parent id and leaving its location to the parent", async () => {
     const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
     await continueWithOneParent(screen);
 
@@ -472,7 +472,7 @@ describe("CreateSamplePage", () => {
       nature: "hand_sample",
       parentIds: [PARENT_ID],
       specificName: "MC-2026-007",
-      location: { position: { type: "point", longitude: 3, latitude: 45 } },
+      location: null,
     });
   });
 

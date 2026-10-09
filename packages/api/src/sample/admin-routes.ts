@@ -33,7 +33,6 @@ import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sa
 import { publishQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { canBecomeSeries } from "@projet-igsn/domain/sample/type/can-become-series";
 import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
-import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
@@ -66,9 +65,10 @@ import { attachmentDownload } from "./attachment-download.ts";
 import { bulkEditTargets } from "./bulk-edit/bulk-edit-targets.ts";
 import { samplesExportResponse } from "./bulk-edit/export-workbook.ts";
 import { validateBulkEdit } from "./bulk-edit/validate-bulk-edit.ts";
-import { findEligibleParent } from "./find-eligible-parent.ts";
+import { findEligibleAddedParents } from "./find-eligible-added-parents.ts";
 import { findImportDuplicates } from "./import-template/find-import-duplicates.ts";
 import { internalIdRequestMail } from "./import-template/internal-id-request-mail.ts";
+import { resolvePublishedParents } from "./import-template/resolve-published-parents.ts";
 import { validateImport } from "./import-template/validate-import.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
 import { isEligibleChild } from "./is-eligible-child.ts";
@@ -268,7 +268,7 @@ export function createSampleAdminRoutes(
       },
     )
     .post("/import", validateImportUpload, async (c) => {
-      const parents = new Map<string, Sample>();
+      let parents: ReadonlyMap<string, Sample> = new Map();
       const form = c.req.valid("form");
       const ids = form["stagedUploadIds[]"] ?? [];
       const staged = new Map(
@@ -284,14 +284,8 @@ export function createSampleAdminRoutes(
         new Set(staged.keys()),
         (numbers) => repository.unavailableInternalNumbers(numbers),
         () => manualGroups.listAttachableForUser(c.get("user").id),
-        async (igsns) => {
-          for (const [igsn, parent] of await repository.listPublishedByIgsns(
-            igsns,
-          ))
-            if (canDeclareSubSample(parent, { role: null, managed: false }))
-              parents.set(igsn, parent);
-          return parents;
-        },
+        async (igsns) =>
+          (parents = await resolvePublishedParents(repository, igsns)),
       );
       if (issues.length > 0) {
         const body: InvalidImport = { error: "Invalid import", issues };
@@ -344,6 +338,8 @@ export function createSampleAdminRoutes(
             ),
           canEdit: (candidate) => canEditCandidate(user, candidate),
         },
+        (igsns) => resolvePublishedParents(repository, igsns),
+        (ids) => repository.listDescendantIds(ids),
       );
       if (issues.length > 0) {
         const body: InvalidImport = { error: "Invalid import", issues };
@@ -433,13 +429,14 @@ export function createSampleAdminRoutes(
           return c.json(NOT_ATTACHABLE, 422);
         }
       }
-      const parentIds = input.parentIds ?? [];
-      const parents = await Promise.all(
-        parentIds.map((parentId) =>
-          findEligibleParent(repository, users, user, parentId),
-        ),
+      const parents = await findEligibleAddedParents(
+        repository,
+        users,
+        user,
+        { parents: [] },
+        input.parentIds,
       );
-      if (parents.includes(null)) {
+      if (!parents) {
         return c.json(PARENT_NOT_ELIGIBLE, 422);
       }
       if ((input.childIds ?? []).length > 0) {
@@ -451,7 +448,7 @@ export function createSampleAdminRoutes(
         mail,
         declarer: user,
         subSample: sample,
-        parents: parents.filter((parent) => parent !== null),
+        parents,
       });
       return c.json({ data: sample }, 201);
     })
@@ -606,6 +603,16 @@ export function createSampleAdminRoutes(
             409,
           );
         }
+        const addedParents = await findEligibleAddedParents(
+          repository,
+          users,
+          c.get("user"),
+          current,
+          input.parentIds,
+        );
+        if (!addedParents) {
+          return c.json(PARENT_NOT_ELIGIBLE, 422);
+        }
         const wasPublished = hasPermanentIgsn(current);
         const toPersist =
           wasPublished && !canEditFrozenSampleFields(c.get("user"))
@@ -623,7 +630,10 @@ export function createSampleAdminRoutes(
             409,
           );
         }
-        if (isVirtualSample(toPersist.type) && !canBecomeSeries(current)) {
+        if (
+          isVirtualSample(toPersist.type) &&
+          (!canBecomeSeries(current) || addedParents.length > 0)
+        ) {
           return c.json(SERIES_IN_LINEAGE, 422);
         }
         if (
@@ -656,6 +666,13 @@ export function createSampleAdminRoutes(
         if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }
+        notifySubSampleDeclared({
+          userSamples: userSampleRepository,
+          mail,
+          declarer: c.get("user"),
+          subSample: sample,
+          parents: addedParents,
+        });
         if (mail && c.get("moderating")) {
           const fields = changedSampleFields(current, toPersist);
           if (fields.length > 0) {

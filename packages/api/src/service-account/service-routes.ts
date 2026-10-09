@@ -198,9 +198,13 @@ export function createServiceRoutes(
       const meta = { total };
       switch (format) {
         case DATACITE_MEDIA_TYPE:
-          return c.json({ data: records.map(toDataCiteSample), meta }, 200, {
-            "content-type": format,
-          });
+          return c.json(
+            { data: records.map((record) => toDataCiteSample(record)), meta },
+            200,
+            {
+              "content-type": format,
+            },
+          );
         case ISAMPLES_MEDIA_TYPE:
           return c.json({ data: records.map(toISamplesSample), meta }, 200, {
             "content-type": format,
@@ -315,6 +319,13 @@ export function createServiceRoutes(
       if (!updated) {
         return c.json({ error: "Not found" }, 404);
       }
+      notifySubSampleDeclared({
+        userSamples,
+        mail,
+        declarer: account.sampleOwner,
+        subSample: updated,
+        parents: checked.value.parents,
+      });
       const fields = changedSampleFields(current, merged);
       if (mail && fields.length > 0) {
         // ponytail: fire and forget; a retry queue if a lost notification ever matters.

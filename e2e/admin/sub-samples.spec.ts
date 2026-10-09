@@ -247,6 +247,41 @@ test.describe("sub samples", () => {
     await detail.expectParent(second.name, second.igsn);
   });
 
+  test("a researcher adds a parent to a published sample", async ({ page }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    const create = sampleCreatePage(page);
+    const edit = sampleEditPage(page);
+
+    const publishSample = async (name: string) => {
+      await list.goToCreate();
+      await create.expectVisible();
+      await create.fillName(name);
+      await create.selectNature("Thin section");
+      await create.fillPublishableFields({ material: "Mineral" });
+      await create.addStrunzClass(["Silicates"]);
+      await create.publish();
+      await list.expectVisible();
+      await list.openSample(name);
+      await edit.expectVisible();
+      return { name, igsn: await edit.publicPageIgsn() };
+    };
+
+    const stamp = Date.now();
+    const parent = await publishSample(`Later parent ${stamp}`);
+    await edit.goToList();
+    const child = await publishSample(`Later child ${stamp}`);
+
+    await edit.addParent(parent.name);
+    await edit.expectParentTab([parent]);
+    await edit.expectInheritedLocation(parent.name);
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(child.igsn);
+    await detail.expectParent(parent.name, parent.igsn);
+    await detail.expectLineageGraph(2);
+  });
+
   test("the edit page of a published sample offers to add a sub sample", async ({
     page,
     samples,
