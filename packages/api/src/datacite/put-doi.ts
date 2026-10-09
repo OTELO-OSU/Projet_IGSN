@@ -4,6 +4,15 @@ import type { DataCiteConfig } from "./config.ts";
 
 const SYNC_TIMEOUT_MS = 10_000;
 
+export class DataCiteRefusal extends Error {
+  readonly status: number;
+
+  constructor(status: number, body: string) {
+    super(`DataCite registration failed (HTTP ${status})`, { cause: body });
+    this.status = status;
+  }
+}
+
 export async function putDoi(
   config: DataCiteConfig,
   doi: string,
@@ -20,12 +29,7 @@ export async function putDoi(
       signal: AbortSignal.timeout(SYNC_TIMEOUT_MS),
     });
     if (!response.ok)
-      throw new Error(
-        `DataCite registration failed (HTTP ${response.status})`,
-        {
-          cause: await response.text(),
-        },
-      );
+      throw new DataCiteRefusal(response.status, await response.text());
   } catch (error) {
     console.error("DOI sync failed", { doi, error });
     throw new HTTPException(502, { message: "DOI sync failed", cause: error });

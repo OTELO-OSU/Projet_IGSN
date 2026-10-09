@@ -21,8 +21,10 @@ import { drainSynchronizationQueue } from "./synchronization-worker.ts";
 
 const NO_DELAYS = [0, 0, 0, 0, 0];
 
-const failing = () =>
-  Promise.resolve(new Response("DataCite is down", { status: 500 }));
+const refusing = (status: number) => () =>
+  Promise.resolve(new Response("DataCite refused", { status }));
+
+const failing = refusing(500);
 
 const setSynchronizationStatus = (
   db: Kysely<DB>,
@@ -132,12 +134,14 @@ describe("drainSynchronizationQueue", () => {
     },
   );
 
-  pgTest(
-    "should retry a refused PUT until it succeeds, the refusal leaving the row pending",
-    async ({ db }) => {
+  pgTest.for([500, 429])(
+    "should retry a PUT refused with %i until it succeeds, the refusal leaving the row pending",
+    async (status, { db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
-      fetchMock.mockImplementationOnce(failing).mockImplementationOnce(failing);
+      fetchMock
+        .mockImplementationOnce(refusing(status))
+        .mockImplementationOnce(refusing(status));
       const id = await insertPending(db, "Retried");
       // Act
       await drain(db);
@@ -187,6 +191,29 @@ describe("drainSynchronizationQueue", () => {
         },
       ]);
       expect(fetchMock).toHaveBeenCalledTimes(1 + NO_DELAYS.length + 1);
+    },
+  );
+
+  pgTest(
+    "should fail a row refused with a client error at once, without retrying",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      fetchMock.mockImplementationOnce(refusing(422));
+      const id = await insertPending(db, "Rejected");
+      // Act
+      await drain(db);
+      // Assert
+      expect(await rowsOf(db, [id])).toEqual([
+        {
+          id,
+          status: "draft",
+          igsn: null,
+          synchronization_status: "failed",
+          synchronization_error: "DataCite registration failed (HTTP 422)",
+        },
+      ]);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     },
   );
 

@@ -33,11 +33,12 @@ export async function updateUnchangedSample(
   updatedAt: Date,
 ): Promise<void> {
   const row = await trx
-    .selectFrom("sample")
-    .select("id")
+    .updateTable("sample")
+    .set({ synchronization_status: "pending" })
     .where("id", "=", id)
     .where("status", "=", "published")
     .where(sql<Date>`date_trunc('milliseconds', updated_at)`, "=", updatedAt)
+    .returning("id")
     .executeTakeFirst();
   if (!row) {
     throw new HTTPException(409, { message: "Sample changed, retry" });

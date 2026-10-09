@@ -32,6 +32,7 @@ One permanent worker, `api/src/sample/service/synchronization-worker.ts`, is the
 - It picks pending rows by id and runs one transaction per row.
 - The transaction marks `synced` before the DataCite call, so a refused PUT rolls the mark back.
 - A draft goes through `publishSample`, any other row through `syncDoi`, with ADR 0052's retry ladder.
+- A DataCite 4xx other than 429 fails the row at once, since retrying a refused record only stalls the queue.
 - On exhaustion only that row becomes `failed` with its error, its batch webhook is queued and the drain continues, with no sweep.
 - A successful re-PUT also queues the batch webhook, so a partner's batch update is notified, and a later admin edit of that sample notifies it again.
 

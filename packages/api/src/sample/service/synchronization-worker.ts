@@ -5,6 +5,7 @@ import { setTimeout } from "node:timers/promises";
 import type { DataCiteConfig } from "../../datacite/config.ts";
 import type { DB } from "../../db.ts";
 
+import { DataCiteRefusal } from "../../datacite/put-doi.ts";
 import { syncDoi } from "../../datacite/sync-doi.ts";
 import { queueBatchWebhooks } from "../../sample-batch/queue-batch-webhooks.ts";
 import { withTransaction } from "../../transaction.ts";
@@ -19,6 +20,16 @@ function messageOf(error: unknown): string {
   const cause = error instanceof Error ? error.cause : undefined;
   if (cause instanceof Error) return cause.message;
   return error instanceof Error ? error.message : String(error);
+}
+
+function isPermanentRefusal(error: unknown): boolean {
+  const cause = error instanceof Error ? error.cause : undefined;
+  return (
+    cause instanceof DataCiteRefusal &&
+    cause.status >= 400 &&
+    cause.status < 500 &&
+    cause.status !== 429
+  );
 }
 
 function synchronize(
@@ -55,7 +66,9 @@ async function synchronizeWithRetry(
       await synchronize(db, id, dataCite);
       return null;
     } catch (error) {
-      if (attempt >= delays.length) return messageOf(error);
+      if (attempt >= delays.length || isPermanentRefusal(error)) {
+        return messageOf(error);
+      }
       await setTimeout(delays[attempt]);
     }
   }

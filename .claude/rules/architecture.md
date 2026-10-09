@@ -67,7 +67,7 @@ A sample's `status` (`draft | embargo | published | withdrawn | tombstone`) driv
 - `markForSynchronization` sets `pending` on non-draft rows only; `insertQueuedSample` (import, `/service` batch create) and `retryFailedSynchronizations` alone set it on a draft.
 - Every direct write (admin and `/service` edits, status changes, embargo release, a parent added to a child holding an IGSN, a sub-sample's publication marking its parents) marks the row `pending` and calls DataCite no more.
 - The permanent worker `api/src/sample/service/synchronization-worker.ts` (started once in `main.ts`, the only consumer) picks pending rows by id, one transaction per row marking `synced` before the DataCite call so a refused PUT rolls the mark back.
-- A pending draft goes through `publishSample`, any other row through `syncDoi`; each retries, then fails only that row into `failed` with its error, and the drain continues.
+- A pending draft goes through `publishSample`, any other row through `syncDoi`; each retries (a DataCite 4xx other than 429 not at all), then fails only that row into `failed` with its error, and the drain continues.
 - A successful re-PUT queues the batch webhook as a publication does.
 - A pending draft is read-only and undeletable (`isPublicationQueued` in `domain/sample/publication/is-publication-queued.ts`, read by `canUpdateSample` and the admin publish guard, 409); a failed draft is undeletable too, `canDeleteSample` allowing a draft with a null synchronization status only.
 - A failed draft edited by hand stays `failed` and is published through Publish or "Retry synchronization" (`POST /admin/samples/retry-synchronization`); any later successful publish keeps an existing IGSN (`coalesce`).
