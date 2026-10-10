@@ -1,0 +1,59 @@
+# TEMPORAIRE : diagnostic de la connexion VPN depuis un runner GitHub.
+# À supprimer une fois le diagnostic fait.
+name: VPN probe
+
+on:
+  push:
+    branches:
+      - debug/vpn-probe
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    environment: preproduction
+    timeout-minutes: 10
+    env:
+      VPN_HOST: ${{ vars.VPN_HOST }}
+      VPN_PORT: ${{ vars.VPN_PORT || '443' }}
+      VPN_USER: ${{ vars.VPN_USER }}
+      VPN_PASSWORD: ${{ secrets.VPN_PASSWORD }}
+      VPN_TRUSTED_CERT: ${{ vars.VPN_TRUSTED_CERT }}
+
+    steps:
+      - name: 1. IP publique du runner
+        run: curl -sS -m 10 https://ifconfig.me; echo
+
+      - name: 2. Résolution DNS de la passerelle
+        run: getent hosts "$VPN_HOST" || echo "DNS KO"
+
+      - name: 3. Connexion TCP
+        run: |
+          if timeout 15 bash -c "</dev/tcp/$VPN_HOST/$VPN_PORT"; then
+            echo "TCP $VPN_HOST:$VPN_PORT OK"
+          else
+            echo "TCP $VPN_HOST:$VPN_PORT BLOQUÉ (timeout ou refus)"
+          fi
+
+      - name: 4. Poignée de main TLS et empreinte du certificat
+        run: |
+          timeout 20 openssl s_client -connect "$VPN_HOST:$VPN_PORT" -servername "$VPN_HOST" </dev/null 2>&1 \
+            | sed -n '1,/^---$/p' | head -20 || true
+          echo "--- empreinte SHA-256 vue par le runner :"
+          timeout 20 openssl s_client -connect "$VPN_HOST:$VPN_PORT" -servername "$VPN_HOST" </dev/null 2>/dev/null \
+            | openssl x509 -noout -fingerprint -sha256 2>/dev/null | tr -d ':' | tr 'A-F' 'a-f' || echo "pas de certificat reçu"
+          echo "--- empreinte attendue (VPN_TRUSTED_CERT) : $VPN_TRUSTED_CERT"
+
+      - name: 5. Tentative openfortivpn verbeuse
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq openfortivpn >/dev/null
+          config="$(mktemp)"
+          printf '%s\n' "host = $VPN_HOST" "port = $VPN_PORT" "username = $VPN_USER" "password = $VPN_PASSWORD" \
+            ${VPN_TRUSTED_CERT:+"trusted-cert = $VPN_TRUSTED_CERT"} > "$config"
+          # Sortie non mise en tampon, arrêt au bout de 90 s ; le mot de passe n'est jamais affiché.
+          sudo timeout 90 stdbuf -oL -eL openfortivpn -c "$config" -v 2>&1 || echo "openfortivpn terminé avec le code $?"
+          rm -f "$config"
