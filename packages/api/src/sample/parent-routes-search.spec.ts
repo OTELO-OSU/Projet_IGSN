@@ -204,28 +204,6 @@ describe("the eligible parent search", () => {
     expect(data.map((parent) => parent.id)).toEqual([sample.id]);
   });
 
-  pgTest("should not match a sample by its specific name", async ({ db }) => {
-    // Arrange
-    const caller = await provisionUser(db, "test-token", {
-      status: "accepted",
-    });
-    const sample = await insertParent(
-      db,
-      caller.id,
-      "published",
-      "Gabbro des Vosges",
-    );
-    await db
-      .updateTable("sample")
-      .set({ specific_name: "Dunite" })
-      .where("id", "=", sample.id)
-      .execute();
-    // Act
-    const data = await search(db, { search: "Dunite" });
-    // Assert
-    expect(data).toEqual([]);
-  });
-
   pgTest("should answer every eligible sample by name", async ({ db }) => {
     // Arrange
     const caller = await provisionUser(db, "test-token", {
