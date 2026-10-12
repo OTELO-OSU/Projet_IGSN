@@ -61,6 +61,18 @@
 - A changed value needs a new run only, unless it is baked into a bundle (`DOMAIN`, `OIDC_*`, `UPLOAD_LIMIT`, `SAMPLE_LOCK_POLL_SECONDS`).
 - A run reuses the images already pushed under its tag, so a changed bundle value needs a new commit, or that tag's four images deleted from the registry first (GitLab project > **Deploy > Container registry**).
 
+## data.gouv.fr export
+
+Optional, once per environment:
+
+- Create the dataset on data.gouv.fr (demo for `preproduction`) and note its id, the value of `DATA_GOUV_DATASET_ID`.
+- Generate an API key on the account that owns the dataset, the value of `DATA_GOUV_TOKEN`.
+- Set `DATA_GOUV_URL`, `DATA_GOUV_DATASET_ID` and `DATA_GOUV_TOKEN` together: the `data-gouv-export` service refuses to boot when the URL is set without the other two.
+- Leave all unset to run no export and hide the search page's download link, the service then exiting at once.
+- On `DATA_GOUV_CRON` (default the 1st of each month at 03:00 Paris time), that service replaces the dataset's resource titled `samples.csv`, and one per child sheet, with every published sample, plus a `README.txt`.
+- Each run also overwrites the dataset description, so edit it in `packages/api/src/data-gouv/readme.ts`, never on data.gouv.fr.
+- A dataset kept private on data.gouv.fr stays private: the run sends its `private` flag back.
+
 ## Portainer setup
 
 Once per environment:

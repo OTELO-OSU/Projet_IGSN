@@ -77,6 +77,21 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  data-gouv-export:
+    image: ${IMAGE_PREFIX:?IMAGE_PREFIX is required}/api:${IMAGE_TAG:?IMAGE_TAG is required}
+    command: ["node", "src/data-gouv/main.ts"]
+    restart: on-failure
+    environment:
+      <<: *database
+      FRONTEND_URL: "https://igsn.${DOMAIN}"
+      DATA_GOUV_URL: "${DATA_GOUV_URL}"
+      DATA_GOUV_DATASET_ID: "${DATA_GOUV_DATASET_ID}"
+      DATA_GOUV_TOKEN: "${DATA_GOUV_TOKEN}"
+      DATA_GOUV_CRON: "${DATA_GOUV_CRON:-0 3 1 * *}"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
   admin:
     image: ${IMAGE_PREFIX:?IMAGE_PREFIX is required}/admin:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped

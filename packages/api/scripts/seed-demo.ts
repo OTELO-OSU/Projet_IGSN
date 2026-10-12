@@ -12,12 +12,15 @@ import { replaceSampleAdditionalRoles } from "../src/sample/service/replace-samp
 import { replaceSampleChildren } from "../src/sample/service/replace-sample-children.ts";
 import { replaceSampleMineralClassifications } from "../src/sample/service/replace-sample-mineral-classifications.ts";
 import { replaceSampleProcessSteps } from "../src/sample/service/replace-sample-process-steps.ts";
+import { replaceSampleRelations } from "../src/sample/service/replace-sample-relations.ts";
 import {
   DEMO_ADDITIONAL_ROLES,
   DEMO_CHILDREN,
+  DEMO_CONDITIONS,
   DEMO_MINERAL_CLASSIFICATIONS,
   DEMO_PARENTS,
   DEMO_PROCESS_STEPS,
+  DEMO_RELATIONS,
   DEMO_SAMPLES,
 } from "./seed-demo-samples.ts";
 import { insertSamples, seedMockUsers } from "./seed.ts";
@@ -61,6 +64,7 @@ const created = await insertSamples(
   db,
   DEMO_SAMPLES.map((row, index) => ({
     ...row,
+    condition: DEMO_CONDITIONS[row.name],
     mineralClassifications: DEMO_MINERAL_CLASSIFICATIONS[row.name],
     owner: owners[index % owners.length]!,
   })),
@@ -95,6 +99,9 @@ for (const [child, parents] of Object.entries(DEMO_PARENTS)) {
 await deleteOrphanLocations(db);
 for (const [name, steps] of Object.entries(DEMO_PROCESS_STEPS)) {
   await replaceSampleProcessSteps(db, sampleId(name), steps);
+}
+for (const [name, relations] of Object.entries(DEMO_RELATIONS)) {
+  await replaceSampleRelations(db, sampleId(name), relations);
 }
 for (const [name, roles] of Object.entries(DEMO_ADDITIONAL_ROLES)) {
   await replaceSampleAdditionalRoles(db, sampleId(name), roles);

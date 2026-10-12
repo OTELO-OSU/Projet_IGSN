@@ -16,6 +16,7 @@ import {
   listSamplesQueryOptions,
   useListSamples,
 } from "#/domain/samples/hook/list-samples.ts";
+import { OpenDataLink } from "#/domain/samples/open-data-link.tsx";
 import {
   ResultsMapButton,
   ResultsMapDialog,
@@ -122,7 +123,12 @@ function SearchPage() {
           {params && !search.map ? (
             <Results
               params={params}
-              actions={<ResultsMapButton onClick={() => setMap(true)} />}
+              actions={
+                <>
+                  <OpenDataLink />
+                  <ResultsMapButton onClick={() => setMap(true)} />
+                </>
+              }
             />
           ) : null}
           {params ? (

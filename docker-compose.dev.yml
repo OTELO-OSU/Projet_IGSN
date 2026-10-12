@@ -258,6 +258,32 @@ services:
         - action: rebuild
           path: ./pnpm-lock.yaml
 
+  data-gouv-export:
+    build:
+      context: .
+      dockerfile: ./packages/api/Dockerfile
+      target: dev
+    command: ["node", "src/data-gouv/main.ts"]
+    restart: on-failure
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: igsn
+      DATABASE_USER: igsn
+      DATABASE_PASSWORD: igsn
+      FRONTEND_URL: "http://localhost:3000"
+      DATA_GOUV_URL: ${DATA_GOUV_URL:-}
+      DATA_GOUV_DATASET_ID: ${DATA_GOUV_DATASET_ID:-}
+      DATA_GOUV_TOKEN: ${DATA_GOUV_TOKEN:-}
+      DATA_GOUV_CRON: "${DATA_GOUV_CRON:-0 3 1 * *}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./packages/api/src:/app/packages/api/src:ro
+      - ./packages/api/scripts:/app/packages/api/scripts:ro
+      - ./packages/domain/src:/app/packages/domain/src:ro
+
 volumes:
   paradedb-data:
   attachments:
