@@ -9,6 +9,7 @@ import {
 } from "./core-record-fixture.ts";
 import {
   CORE_SAMPLE_FIXTURES,
+  SERIES_MEMBER_SAMPLE,
   SERIES_SAMPLE,
 } from "./core-sample-variant-fixture.ts";
 import { toCoreSample } from "./to-core-sample.ts";
@@ -47,6 +48,7 @@ const mapped = (sample: Sample) => ({
   ),
   parents: sample.parents.map((parent) => omit(parent, UNMAPPED_PARENT_FIELDS)),
   children: sample.children.map((child) => omit(child, UNMAPPED_PARENT_FIELDS)),
+  series: sample.series && omit(sample.series, UNMAPPED_PARENT_FIELDS),
 });
 
 describe("a sample mapped to Core and back", () => {
@@ -76,5 +78,30 @@ describe("a series of samples mapped to Core", () => {
         .relations?.filter((relation) => relation.relationType === "HasPart")
         .map((relation) => relation.targetIdentifier.value),
     ).toEqual(["0123456789ABCDEFGHJKMNPQRT", "CNRS1234567893"]);
+  });
+});
+
+describe("a series member mapped to Core", () => {
+  const isPartOf = (sample: Sample) =>
+    toCoreSample(sample, FRONTEND_URL).relations?.filter(
+      (relation) => relation.relationType === "IsPartOf",
+    );
+
+  it("should emit an IsPartOf relation naming its series", () => {
+    expect(isPartOf(SERIES_MEMBER_SAMPLE)).toMatchObject([
+      {
+        targetIdentifier: { value: "0123456789ABCDEFGHJKMNPQRV" },
+        targetTitles: [{ value: "Core series of the Nancy quarry" }],
+      },
+    ]);
+  });
+
+  it("should emit no IsPartOf relation while its series has no IGSN", () => {
+    expect(
+      isPartOf({
+        ...SERIES_MEMBER_SAMPLE,
+        series: { ...SERIES_MEMBER_SAMPLE.series!, igsn: null },
+      }),
+    ).toEqual([]);
   });
 });

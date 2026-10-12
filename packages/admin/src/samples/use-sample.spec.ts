@@ -84,3 +84,23 @@ it("should open a series on the ids of its stored children", async () => {
 
   expect(parsed?.childIds).toEqual([child.id]);
 });
+
+it("should open a member on the id of its stored series", async () => {
+  const series = {
+    id: "3f2504e0-4f89-41d3-9a0c-0305e82c3322",
+    igsn: null,
+    name: "Core series",
+    material: null,
+  };
+
+  const parsed = await parseSampleResponse(
+    Response.json({
+      data: { ...sample, series },
+      role: "owner",
+      managed: false,
+      manualGroupOptions: [],
+    }),
+  );
+
+  expect(parsed?.seriesId).toEqual(series.id);
+});

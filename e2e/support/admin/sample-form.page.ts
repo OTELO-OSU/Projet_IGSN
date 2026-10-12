@@ -138,6 +138,22 @@ export function sampleFormPage(page: Page) {
         query: name,
         chipLabel: `Detach ${name} (${igsn})`,
       }),
+    pickSeries: async ({ name, igsn }: { name: string; igsn: string }) => {
+      const combobox = fieldCombobox("Series");
+      const label = `${name} (${igsn})`;
+      await expect(async () => {
+        if ((await combobox.innerText()).trim() !== label) {
+          const search = page.getByPlaceholder("Search by name or IGSN");
+          if (await search.isVisible()) await page.keyboard.press("Escape");
+          await combobox.click();
+          await search.fill(name);
+          await page
+            .getByRole("option", { name: new RegExp(`^${name}`) })
+            .click({ timeout: 5_000 });
+        }
+        await expect(combobox).toHaveText(label, { timeout: 2_000 });
+      }).toPass({ timeout: 30_000 });
+    },
     expectCompleteTypeWithoutRepeatedLevel: async (label: string) => {
       await expect(
         page.getByRole("option", { name: "Stop here", exact: true }),

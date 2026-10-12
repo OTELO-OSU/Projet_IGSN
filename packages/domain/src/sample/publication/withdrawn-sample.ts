@@ -14,6 +14,7 @@ export const withdrawnSampleSchema = sampleSchema
     material: true,
     specificName: true,
     children: true,
+    series: true,
   })
   .extend({
     status: z.enum(REDACTED_SAMPLE_STATUSES),
@@ -49,5 +50,6 @@ export function toWithdrawnSample(sample: Sample): WithdrawnSample {
     collectorFirstname: context?.collectorFirstname ?? null,
     collectorLastname: context?.collectorLastname ?? null,
     children: sample.children,
+    series: sample.series,
   };
 }

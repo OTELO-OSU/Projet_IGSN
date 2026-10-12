@@ -45,6 +45,7 @@ import {
   catchChildNotEligible,
   ChildNotEligibleError,
 } from "../sample/service/replace-sample-children.ts";
+import { withSeriesId } from "../sample/with-series-id.ts";
 import { registerSampleBatchRoutes } from "./sample-batch-routes.ts";
 import {
   SERVED_MEDIA_TYPES,
@@ -326,7 +327,7 @@ export function createServiceRoutes(
         subSample: updated,
         parents: checked.value.parents,
       });
-      const fields = changedSampleFields(current, merged);
+      const fields = changedSampleFields(withSeriesId(current), merged);
       if (mail && fields.length > 0) {
         // ponytail: fire and forget; a retry queue if a lost notification ever matters.
         void notifySampleModerated({

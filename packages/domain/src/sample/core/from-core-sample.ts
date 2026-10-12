@@ -9,7 +9,11 @@ import {
   coreExistenceStatus,
 } from "./core-curation-schema.ts";
 import { orNull } from "./core-optional.ts";
-import { childIgsnOf, parentIgsnOf } from "./core-relation-schema.ts";
+import {
+  childIgsnOf,
+  parentIgsnOf,
+  seriesIgsnOf,
+} from "./core-relation-schema.ts";
 import { localIdTitleOf, mainTitleOf } from "./core-sample-schema.ts";
 import { contextCategoryFinders } from "./from-core-context-category.ts";
 import { fromCoreCondition, fromCoreRepository } from "./from-core-curation.ts";
@@ -30,20 +34,25 @@ type ReversedCoreSample = {
   };
   parents: CoreRelatedSample[];
   children: CoreRelatedSample[];
+  series: CoreRelatedSample[];
 };
 
 export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
   const production = body.production;
   const parents: CoreRelatedSample[] = [];
   const children: CoreRelatedSample[] = [];
+  const series: CoreRelatedSample[] = [];
   const relations = [];
   for (const [index, relation] of (body.relations ?? []).entries()) {
     const parentIgsn = parentIgsnOf(relation);
     const childIgsn = childIgsnOf(relation);
+    const seriesIgsn = seriesIgsnOf(relation);
     if (parentIgsn != null) {
       parents.push({ igsn: parentIgsn, relationIndex: index });
     } else if (childIgsn != null) {
       children.push({ igsn: childIgsn, relationIndex: index });
+    } else if (seriesIgsn != null) {
+      series.push({ igsn: seriesIgsn, relationIndex: index });
     } else {
       relations.push(fromCoreRelation(relation));
     }
@@ -59,6 +68,7 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
   return {
     parents,
     children,
+    series,
     sample: {
       name: mainTitleOf(body.identification.titles)?.value ?? "",
       nature: body.classification.natureOfSample.id,

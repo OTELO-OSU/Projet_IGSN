@@ -4,10 +4,12 @@ import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { ServiceSampleIssue } from "@projet-igsn/domain/service-account/service-sample-validator";
 
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
+import { canJoinSeries } from "@projet-igsn/domain/sample/publication/can-join-series";
 import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 
 import { unattachableIndexes } from "../manual-group/has-unattachable.ts";
 import { isEligibleChild } from "../sample/is-eligible-child.ts";
+import { isEligibleSeries } from "../sample/is-eligible-series.ts";
 import { PROCESS_STEPS_NEED_PARENT } from "../sample/service/replace-sample-process-steps.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
 import {
@@ -40,6 +42,34 @@ export const childIssues = (
       : [
           serviceSampleIssue(
             child === null ? "child_not_found" : "child_not_eligible",
+            relationTargetPath(relationIndex),
+          ),
+        ],
+  );
+
+export const refusedSeriesIssues = (
+  series: readonly { relationIndex: number }[],
+): ServiceSampleIssue[] =>
+  series.map(({ relationIndex }) =>
+    serviceSampleIssue(
+      "series_not_eligible",
+      relationTargetPath(relationIndex),
+    ),
+  );
+
+export const seriesIssues = (
+  series: readonly ResolvedRelated<SeriesLinkCandidate>[],
+  member: Sample,
+): ServiceSampleIssue[] =>
+  series.flatMap(({ sample: target, relationIndex }) =>
+    target !== null &&
+    target.moderated &&
+    isEligibleSeries(target) &&
+    canJoinSeries(member)
+      ? []
+      : [
+          serviceSampleIssue(
+            target === null ? "series_not_found" : "series_not_eligible",
             relationTargetPath(relationIndex),
           ),
         ],

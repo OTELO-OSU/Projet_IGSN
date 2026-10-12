@@ -192,7 +192,7 @@ const RELATED_SAMPLE: Sample = {
     },
     {
       id: "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb",
-      relationType: "is_part_of",
+      relationType: "references",
       identifierType: "igsn",
       identifier: "0123456789ABCDEFGHJKMNPQRS",
       targetTitle: "Lorraine collection",
@@ -283,6 +283,19 @@ export const SERIES_SAMPLE: Sample = {
   ],
 };
 
+export const SERIES_MEMBER_SAMPLE: Sample = {
+  ...RESEARCH_PROJECT_SAMPLE,
+  name: "Core of the Nancy quarry series",
+  type: "core",
+  parents: [],
+  series: {
+    id: "cccccccc-9999-4999-8999-cccccccccccc",
+    igsn: "0123456789ABCDEFGHJKMNPQRV",
+    name: "Core series of the Nancy quarry",
+    material: null,
+  },
+};
+
 const withAdditionalRoles = (
   sample: Sample,
   name: string,
@@ -366,6 +379,7 @@ export const CORE_SAMPLE_FIXTURES: readonly Sample[] = [
   HOUR_SYNTHESIS_SAMPLE,
   TWO_PARENT_SAMPLE,
   SERIES_SAMPLE,
+  SERIES_MEMBER_SAMPLE,
   VOLCANIC_SAMPLE,
   METAMORPHIC_SAMPLE,
   OTHER_MATERIAL_SAMPLE,

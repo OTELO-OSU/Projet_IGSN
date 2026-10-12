@@ -625,6 +625,7 @@ describe("public sample routes", () => {
           collectorFirstname: null,
           collectorLastname: null,
           children: [],
+          series: null,
         },
       });
     },

@@ -32,6 +32,7 @@ import {
   catchChildNotEligible,
   ChildNotEligibleError,
 } from "../sample/service/replace-sample-children.ts";
+import { withSeriesId } from "../sample/with-series-id.ts";
 import {
   createSampleBatchRoute,
   getSampleBatchRoute,
@@ -134,7 +135,7 @@ async function checkItem(
     return { issues: [serviceSampleIssue("sample_locked", SAMPLE_KEY_PATH)] };
   }
   if (
-    changedSampleFields(current, merged).length === 0 &&
+    changedSampleFields(withSeriesId(current), merged).length === 0 &&
     checked.value.parents.length === 0
   ) {
     return {

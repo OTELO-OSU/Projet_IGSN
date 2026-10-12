@@ -50,6 +50,7 @@ const sample = (overrides: Partial<Sample>): Sample => ({
   manualGroups: [],
   parents: [],
   children: [],
+  series: null,
   hasSubSamples: false,
   institutionalOrganization: null,
   institutionalOsu: null,

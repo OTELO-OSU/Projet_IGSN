@@ -38,6 +38,7 @@ export async function parseSampleResponse(res: Response) {
     ),
     manualGroupIds: data.manualGroups.map((group) => group.id),
     childIds: data.children.map((child) => child.id),
+    seriesId: data.series?.id ?? null,
   };
 }
 

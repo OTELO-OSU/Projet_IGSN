@@ -292,6 +292,7 @@ export function sampleEditPage(page: Page) {
     },
 
     save: async () => {
+      await expect(savedToast).toHaveCount(0);
       await clickSave();
       await expect(savedToast).toBeVisible();
     },
