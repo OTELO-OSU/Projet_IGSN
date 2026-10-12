@@ -466,13 +466,13 @@ export function SampleForm({
       })}
     >
       {({ canSubmit, values }) => {
+        const publishInput = samplePublishInput(values, keptAttachments);
         const reasons = publishBlockerLines(
-          samplePublishBlockers(
-            samplePublishInput(values, keptAttachments),
-            UPLOAD_LIMIT,
-            currentUser,
-          ).filter((blocker) => !existingBlockers.includes(blocker)),
+          samplePublishBlockers(publishInput, UPLOAD_LIMIT, currentUser).filter(
+            (blocker) => !existingBlockers.includes(blocker),
+          ),
           saveRequiredFields(values).filter(({ isMet }) => !isMet),
+          publishInput,
         );
         const button = renderButton(
           isReadOnly || isPending || !canSubmit || reasons.length > 0,

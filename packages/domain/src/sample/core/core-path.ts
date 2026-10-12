@@ -32,7 +32,7 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
 
   location: "production.location",
   "location.position": "production.location.geometry",
-  "location.position.vertical": "production.location.verticalExtent",
+  "location.verticalPositions": "production.location.verticalExtent",
   "location.region": "production.location",
   "location.navigationType": "production.location.navigationMethod",
   "location.localityName": "production.location.placeNames.0",

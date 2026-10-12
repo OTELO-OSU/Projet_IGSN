@@ -5,26 +5,19 @@ import { countrySchema } from "./country.ts";
 import { navigationTypeSchema } from "./navigation-type.ts";
 import { oceanSeaSchema } from "./ocean-sea.ts";
 import { verticalReferenceSystemSchema } from "./vertical-reference-system.ts";
-import { verticalReferenceSchema } from "./vertical-reference.ts";
+import {
+  VERTICAL_REFERENCES,
+  verticalReferenceSchema,
+} from "./vertical-reference.ts";
 
 const longitudeSchema = z.number().min(-180).max(180);
 const latitudeSchema = z.number().min(-90).max(90);
-
-// The vertical reference carries the direction, so the position is a distance.
-const verticalPositionSchema = z.number().min(0).nullish();
-const verticalMetaShape = {
-  reference: verticalReferenceSchema.nullish(),
-  system: verticalReferenceSystemSchema.nullish(),
-};
 
 export const positionSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("point"),
     longitude: longitudeSchema,
     latitude: latitudeSchema,
-    vertical: z
-      .object({ position: verticalPositionSchema, ...verticalMetaShape })
-      .nullish(),
   }),
   z.object({
     type: z.literal("area"),
@@ -32,13 +25,6 @@ export const positionSchema = z.discriminatedUnion("type", [
     eastLongitude: longitudeSchema,
     southLatitude: latitudeSchema,
     northLatitude: latitudeSchema,
-    vertical: z
-      .object({
-        min: verticalPositionSchema,
-        max: verticalPositionSchema,
-        ...verticalMetaShape,
-      })
-      .nullish(),
   }),
   z.object({
     type: z.literal("line"),
@@ -46,15 +32,20 @@ export const positionSchema = z.discriminatedUnion("type", [
     startLatitude: latitudeSchema,
     endLongitude: longitudeSchema,
     endLatitude: latitudeSchema,
-    vertical: z
-      .object({
-        start: verticalPositionSchema,
-        end: verticalPositionSchema,
-        ...verticalMetaShape,
-      })
-      .nullish(),
   }),
 ]);
+
+// The vertical reference carries the direction, so a value is a distance.
+const verticalValueSchema = z.number().min(0).nullish();
+
+export const verticalPositionSchema = z.object({
+  reference: verticalReferenceSchema.nullish(),
+  system: verticalReferenceSystemSchema.nullish(),
+  start: verticalValueSchema,
+  end: verticalValueSchema,
+});
+
+export type VerticalPosition = z.infer<typeof verticalPositionSchema>;
 
 const regionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("country"), country: countrySchema.nullish() }),
@@ -68,6 +59,10 @@ export const locationSchema = z
     navigationType: navigationTypeSchema.nullish(),
     localityName: freeTextSchema.nullish(),
     localityDescription: freeTextSchema.nullish(),
+    verticalPositions: z
+      .array(verticalPositionSchema)
+      .max(VERTICAL_REFERENCES.length, { abort: true })
+      .optional(),
   })
   // West > east is a valid dateline-crossing area (ADR 0014).
   .superRefine((location, ctx) => {
@@ -79,28 +74,48 @@ export const locationSchema = z
         message: "navigationType requires a position",
       });
     }
-    if (!position) return;
-    if (position.type === "area") {
-      if (position.northLatitude < position.southLatitude) {
+    location.verticalPositions?.forEach((entry, index, entries) => {
+      if (!position) {
         ctx.addIssue({
           code: "custom",
-          path: ["position", "northLatitude"],
-          message:
-            "northLatitude must be greater than or equal to southLatitude",
+          path: ["verticalPositions", index],
+          message: "a vertical position requires a position",
         });
       }
-      const vertical = position.vertical;
       if (
-        vertical?.min != null &&
-        vertical.max != null &&
-        vertical.min > vertical.max
+        entry.reference != null &&
+        entries
+          .slice(0, index)
+          .some(({ reference }) => reference === entry.reference)
       ) {
         ctx.addIssue({
           code: "custom",
-          path: ["position", "vertical", "min"],
-          message: "vertical min must be less than or equal to max",
+          path: ["verticalPositions", index, "reference"],
+          message: "a vertical reference appears at most once",
         });
       }
+      if (
+        (position?.type === "point" || position?.type === "area") &&
+        entry.start != null &&
+        entry.end != null &&
+        entry.start > entry.end
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["verticalPositions", index, "start"],
+          message: "vertical start must be less than or equal to end",
+        });
+      }
+    });
+    if (
+      position?.type === "area" &&
+      position.northLatitude < position.southLatitude
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["position", "northLatitude"],
+        message: "northLatitude must be greater than or equal to southLatitude",
+      });
     }
   });
 

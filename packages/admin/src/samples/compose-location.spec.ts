@@ -18,26 +18,56 @@ describe("composeLocation", () => {
     expect(composeLocation(draft({}))).toBeNull();
   });
 
-  it("should compose a point position with its vertical position", () => {
+  it("should compose every vertical position one-to-one alongside a position", () => {
     expect(
       composeLocation(
         draft({
           type: "point",
           longitude: 3.5,
           latitude: -45,
-          verticalPosition: 1200,
-          verticalReference: "bathymetry",
-          verticalReferenceSystem: "msl",
+          verticalPositions: [
+            {
+              key: "a",
+              reference: "bathymetry",
+              system: "msl",
+              start: 1200,
+              end: 1200,
+            },
+            {
+              key: "b",
+              reference: undefined,
+              system: undefined,
+              start: undefined,
+              end: undefined,
+            },
+          ],
         }),
       ),
     ).toEqual({
-      position: {
-        type: "point",
-        longitude: 3.5,
-        latitude: -45,
-        vertical: { position: 1200, reference: "bathymetry", system: "msl" },
-      },
+      position: { type: "point", longitude: 3.5, latitude: -45 },
+      verticalPositions: [
+        { reference: "bathymetry", system: "msl", start: 1200, end: 1200 },
+        {},
+      ],
     });
+  });
+
+  it("should drop the vertical positions when there is no position", () => {
+    expect(
+      composeLocation(
+        draft({
+          verticalPositions: [
+            {
+              key: "a",
+              reference: "bathymetry",
+              system: "msl",
+              start: 1200,
+              end: 1200,
+            },
+          ],
+        }),
+      ),
+    ).toBeNull();
   });
 
   it("should compose an area position", () => {
@@ -115,47 +145,6 @@ describe("composeLocation", () => {
       navigationType: "GPS",
     });
   });
-
-  it("should keep a vertical position missing its reference and system for the schema to reject", () => {
-    expect(
-      composeLocation(
-        draft({
-          type: "point",
-          longitude: 0,
-          latitude: 0,
-          verticalPosition: 100,
-        }),
-      ),
-    ).toEqual({
-      position: {
-        type: "point",
-        longitude: 0,
-        latitude: 0,
-        vertical: { position: 100 },
-      },
-    });
-  });
-
-  it("should keep a reference and system entered without a value", () => {
-    expect(
-      composeLocation(
-        draft({
-          type: "point",
-          longitude: 0,
-          latitude: 0,
-          verticalReference: "depth_below_ground",
-          verticalReferenceSystem: "msl",
-        }),
-      ),
-    ).toEqual({
-      position: {
-        type: "point",
-        longitude: 0,
-        latitude: 0,
-        vertical: { reference: "depth_below_ground", system: "msl" },
-      },
-    });
-  });
 });
 
 describe("toLocationDraft", () => {
@@ -163,7 +152,10 @@ describe("toLocationDraft", () => {
     const set = Object.entries(toLocationDraft(null)).filter(
       ([, value]) => value !== undefined,
     );
-    expect(set).toEqual([["regionPath", []]]);
+    expect(set).toEqual([
+      ["verticalPositions", []],
+      ["regionPath", []],
+    ]);
   });
 
   it.each<Location>([
@@ -172,8 +164,10 @@ describe("toLocationDraft", () => {
         type: "point",
         longitude: 3.5,
         latitude: -45,
-        vertical: { position: 1200, reference: "bathymetry", system: "msl" },
       },
+      verticalPositions: [
+        { reference: "bathymetry", system: "msl", start: 1200, end: 1200 },
+      ],
       region: { kind: "country", country: "FR" },
       navigationType: "GPS",
       localityName: "Vent field",
@@ -185,13 +179,15 @@ describe("toLocationDraft", () => {
         eastLongitude: 2,
         southLatitude: 3,
         northLatitude: 4,
-        vertical: {
-          min: 100,
-          max: 800,
+      },
+      verticalPositions: [
+        {
           reference: "depth_below_ground",
           system: "evrf2019",
+          start: 100,
+          end: 800,
         },
-      },
+      ],
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
     },
     { region: { kind: "country" } },
@@ -202,13 +198,10 @@ describe("toLocationDraft", () => {
         startLatitude: 2,
         endLongitude: 3,
         endLatitude: 4,
-        vertical: {
-          start: 10,
-          end: 90,
-          reference: "core_depth",
-          system: "local",
-        },
       },
+      verticalPositions: [
+        { reference: "core_depth", system: "local", start: 90, end: 10 },
+      ],
     },
   ])("should round-trip through the draft", (location) => {
     expect(composeLocation(toLocationDraft(location))).toEqual(location);

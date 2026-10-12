@@ -13,6 +13,20 @@ type Draft = ReturnType<typeof toSampleDraft>;
 
 const ROCK = "rock_and_sediment.rock";
 
+const EMPTY_VERTICAL = {
+  reference: undefined,
+  system: undefined,
+  start: undefined,
+  end: undefined,
+};
+
+const COMPLETE_VERTICAL = {
+  reference: "bathymetry",
+  system: "msl",
+  start: 10,
+  end: 90,
+} as const;
+
 const byName = (a: RequiredField, b: RequiredField) =>
   a.name.localeCompare(b.name);
 
@@ -107,18 +121,42 @@ describe("sampleRequiredFields", () => {
       ],
     ],
     [
-      "a vertical reference alone requires the vertical position",
+      "each vertical position requires its reference, start and end, on its own index",
       draftOf({ material: ROCK }, (draft) => ({
         location: {
           ...draft.location,
-          type: "point",
-          verticalReference: "bathymetry",
+          type: "line",
+          verticalPositions: [
+            { ...COMPLETE_VERTICAL, key: "a" },
+            { ...EMPTY_VERTICAL, key: "b", start: 10 },
+          ],
         },
       })),
       ["location.vertical"],
       [
-        { name: "location.verticalPosition", isMet: false },
-        { name: "location.verticalReference", isMet: true },
+        { name: "location.verticalPositions[0].end", isMet: true },
+        { name: "location.verticalPositions[0].reference", isMet: true },
+        { name: "location.verticalPositions[0].start", isMet: true },
+        { name: "location.verticalPositions[1].end", isMet: false },
+        { name: "location.verticalPositions[1].reference", isMet: false },
+        { name: "location.verticalPositions[1].start", isMet: true },
+      ],
+    ],
+    [
+      "a point's single vertical value requires no end",
+      draftOf({ material: ROCK }, (draft) => ({
+        location: {
+          ...draft.location,
+          type: "point",
+          verticalPositions: [
+            { ...EMPTY_VERTICAL, key: "a", start: 10, end: 10 },
+          ],
+        },
+      })),
+      ["location.vertical"],
+      [
+        { name: "location.verticalPositions[0].reference", isMet: false },
+        { name: "location.verticalPositions[0].start", isMet: true },
       ],
     ],
     [
@@ -255,7 +293,7 @@ describe("sampleRequiredFields", () => {
         location: {
           ...draft.location,
           type: "point",
-          verticalReference: "bathymetry",
+          verticalPositions: [{ ...EMPTY_VERTICAL, key: "a", start: 10 }],
         },
       })),
       ["description.collectionDate", "location."],

@@ -410,82 +410,56 @@ describe("samplePublishBlockers", () => {
     ).toEqual([]);
   });
 
-  type Position = NonNullable<
-    NonNullable<NonNullable<Sample["location"]>["position"]>
-  >;
+  type VerticalPosition = NonNullable<
+    NonNullable<Sample["location"]>["verticalPositions"]
+  >[number];
 
-  const withPosition = (position: Position): Sample => ({
+  const withVerticalPositions = (
+    verticalPositions: VerticalPosition[],
+  ): Sample => ({
     ...base,
-    location: { position },
+    location: {
+      position: { type: "point", longitude: 0, latitude: 0 },
+      verticalPositions,
+    },
   });
-
-  const areaPosition = {
-    type: "area",
-    westLongitude: 5,
-    eastLongitude: 8,
-    southLatitude: 44,
-    northLatitude: 46,
+  const completeEntry = {
+    reference: "bathymetry",
+    system: "msl",
+    start: 0,
+    end: 100,
   } as const;
-  const linePosition = {
-    type: "line",
-    startLongitude: 5,
-    startLatitude: 44,
-    endLongitude: 8,
-    endLatitude: 46,
-  } as const;
-  const pointPosition = { type: "point", longitude: 0, latitude: 0 } as const;
-  const meta = { reference: "bathymetry", system: "msl" } as const;
+  const otherEntry = { ...completeEntry, reference: "elevation" } as const;
 
-  it.each<[string, Position]>([
-    ["a point", { ...pointPosition, vertical: { position: 2500, ...meta } }],
-    ["an area", { ...areaPosition, vertical: { min: 0, max: 100, ...meta } }],
-    ["a line", { ...linePosition, vertical: { start: 0, end: 100, ...meta } }],
+  it.each<[string, VerticalPosition[]]>([
+    ["no entry", []],
+    ["complete entries", [completeEntry, otherEntry]],
+    ["an entry without a reference system", [{ ...otherEntry, system: null }]],
   ])(
-    "should not report a blocker for a complete vertical position on %s",
-    (_label, position) => {
-      expect(samplePublishBlockers(withPosition(position))).toEqual([]);
+    "should not report vertical_position_incomplete for %s",
+    (_label, verticalPositions) => {
+      expect(
+        samplePublishBlockers(withVerticalPositions(verticalPositions)),
+      ).toEqual([]);
     },
   );
 
-  it.each<[string, Position]>([
-    [
-      "a point without its position",
-      { ...pointPosition, vertical: { position: null, ...meta } },
-    ],
-    [
-      "an area missing a bound",
-      { ...areaPosition, vertical: { min: 100, max: null, ...meta } },
-    ],
-    [
-      "a line missing an endpoint",
-      { ...linePosition, vertical: { start: null, end: 100, ...meta } },
-    ],
-    [
-      "a missing reference",
-      {
-        ...pointPosition,
-        vertical: { position: 100, reference: null, system: "msl" },
-      },
-    ],
+  it.each<[string, VerticalPosition]>([
+    ["a missing reference", { ...otherEntry, reference: null }],
+    ["a missing start", { ...otherEntry, start: null }],
+    ["a missing end", { ...otherEntry, end: null }],
   ])(
-    "should report vertical_position_incomplete for %s",
-    (_label, position) => {
-      expect(samplePublishBlockers(withPosition(position))).toEqual([
-        "vertical_position_incomplete",
+    "should report vertical_position_incomplete once, on the index of an entry with %s",
+    (_label, incomplete) => {
+      expect(
+        samplePublishRequirements(
+          withVerticalPositions([completeEntry, incomplete]),
+        ).filter(({ isMet }) => !isMet),
+      ).toEqual([
+        { blocker: "vertical_position_incomplete", isMet: false, index: 1 },
       ]);
     },
   );
-
-  it("should not require a vertical reference system to publish", () => {
-    expect(
-      samplePublishBlockers(
-        withPosition({
-          ...pointPosition,
-          vertical: { position: 100, reference: "bathymetry", system: null },
-        }),
-      ),
-    ).toEqual([]);
-  });
 
   it("should report scientific_context_missing when there is no context", () => {
     expect(samplePublishBlockers({ ...base, scientificContext: null })).toEqual(

@@ -4,7 +4,7 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
 
 import type { DB } from "../../db.ts";
 
-import { LOCATION_COLUMNS } from "./to-location.ts";
+import { LOCATION_COLUMNS, VERTICAL_POSITION_COLUMNS } from "./to-location.ts";
 
 const ACCOUNT_COLUMNS = ["user.firstname", "user.name", "user.orcid"] as const;
 
@@ -13,6 +13,19 @@ export function sampleLocationQuery(eb: ExpressionBuilder<DB, "sample">) {
     eb
       .selectFrom("location")
       .select(LOCATION_COLUMNS)
+      .select((location) =>
+        jsonArrayFrom(
+          location
+            .selectFrom("location_vertical_position")
+            .select(VERTICAL_POSITION_COLUMNS)
+            .whereRef(
+              "location_vertical_position.location_id",
+              "=",
+              "location.id",
+            )
+            .orderBy("location_vertical_position.id"),
+        ).as("vertical_positions"),
+      )
       .whereRef("location.id", "=", "sample.location_id"),
   ).as("location");
 }

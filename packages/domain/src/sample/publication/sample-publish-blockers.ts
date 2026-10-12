@@ -12,7 +12,6 @@ import { canPublishSamples } from "../../user/can-publish-samples.ts";
 import { DEFAULT_UPLOAD_LIMIT } from "../attachment/attachment-validator.ts";
 import { allowsLocation } from "../location/allows-location.ts";
 import { requiresLocation } from "../location/requires-location.ts";
-import { verticalValues } from "../location/vertical-values.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
 import { allowsMineralClassifications } from "../mineral/allows-mineral-classifications.ts";
@@ -219,15 +218,14 @@ const fieldRequirements = (
     });
   }
 
-  const position = sample.location?.position ?? null;
-  if (position?.vertical != null) {
-    requirements.push({
-      blocker: "vertical_position_incomplete",
+  requirements.push(
+    ...(sample.location?.verticalPositions ?? []).map((entry, index) => ({
+      blocker: "vertical_position_incomplete" as const,
       isMet:
-        position.vertical.reference != null &&
-        verticalValues(position).every((value) => value != null),
-    });
-  }
+        entry.reference != null && entry.start != null && entry.end != null,
+      index,
+    })),
+  );
 
   requirements.push(
     {

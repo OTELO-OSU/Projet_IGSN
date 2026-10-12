@@ -41,6 +41,7 @@ const IMPORT_ISSUE_LABELS: Record<ImportIssueCode, () => string> = {
   sample_locked: m.import_issue_sample_locked,
   frozen_field: m.import_issue_frozen_field,
   missing_attachment_file: m.import_issue_missing_attachment_file,
+  vertical_columns_moved: m.import_issue_vertical_columns_moved,
 };
 
 export function importIssueLabel({ code, message }: ImportIssue): string {

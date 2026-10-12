@@ -1,5 +1,5 @@
 import type { SampleAdditionalRole } from "../additional-role/model.ts";
-import type { Location } from "../location/model.ts";
+import type { VerticalPosition } from "../location/model.ts";
 import type { Sample } from "../sample.ts";
 
 import {
@@ -10,19 +10,16 @@ import {
   SYNTHETIC_SAMPLE,
 } from "./core-sample-fixture.ts";
 
-type PointVertical = NonNullable<
-  Extract<NonNullable<Location["position"]>, { type: "point" }>["vertical"]
->;
-
-const pointSample = (name: string, vertical: PointVertical): Sample => ({
+const pointSample = (name: string, vertical: VerticalPosition): Sample => ({
   ...RESEARCH_PROJECT_SAMPLE,
   name,
   location: {
-    position: { type: "point", longitude: 6.18, latitude: 48.69, vertical },
+    position: { type: "point", longitude: 6.18, latitude: 48.69 },
     region: { kind: "country", country: "FR" },
     navigationType: "DGPS",
     localityName: "Nancy quarry",
     localityDescription: "Northern face of the quarry",
+    verticalPositions: [vertical],
   },
 });
 
@@ -70,25 +67,29 @@ export const MINERAL_RESOURCE_SAMPLE: Sample = {
 };
 
 const ELEVATION_SAMPLE = pointSample("Summit outcrop", {
-  position: 1200,
+  start: 1200,
+  end: 1200,
   reference: "elevation",
   system: "egm2008",
 });
 
 const SEA_FLOOR_SAMPLE = pointSample("Sub sea floor core", {
-  position: 35,
+  start: 35,
+  end: 35,
   reference: "depth_below_sea_floor",
   system: "local",
 });
 
 const CORE_DEPTH_SAMPLE = pointSample("Core depth slice", {
-  position: 8,
+  start: 8,
+  end: 8,
   reference: "core_depth",
   system: "unknown",
 });
 
 const OTHER_REFERENCE_SAMPLE = pointSample("Unreferenced depth", {
-  position: 15,
+  start: 15,
+  end: 15,
   reference: "other",
   system: null,
 });

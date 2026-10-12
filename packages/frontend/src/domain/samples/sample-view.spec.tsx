@@ -1,4 +1,5 @@
 import type { SampleLineage } from "@projet-igsn/domain/sample/lineage/model";
+import type { VerticalPosition } from "@projet-igsn/domain/sample/location/model";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import {
@@ -377,12 +378,11 @@ describe("SampleView", () => {
             type: "point",
             longitude: -149.83,
             latitude: -17.53,
-            vertical: {
-              position: 2500,
-              reference: "bathymetry",
-              system: "msl",
-            },
           },
+          verticalPositions: [
+            { reference: "bathymetry", start: 2500, end: 2500 },
+            { reference: "depth_below_sea_floor", start: 1, end: 3 },
+          ],
           navigationType: "GPS",
           region: { kind: "country", country: "FR" },
           localityName: "Reef flat",
@@ -393,9 +393,8 @@ describe("SampleView", () => {
       [
         "Longitude",
         "Latitude",
-        "Vertical position",
-        "Vertical reference",
-        "Vertical reference system",
+        "Bathymetry",
+        "Depth below sea floor",
         "Navigation type",
         "Region",
         "Locality name",
@@ -809,29 +808,14 @@ describe("SampleView", () => {
         .not.toBeInTheDocument();
     },
   );
-
   it.each<[string, NonNullable<Sample["location"]>, string[]]>([
     [
       "point",
       {
-        position: {
-          type: "point",
-          longitude: -149.83,
-          latitude: -17.53,
-          vertical: { position: 2500, reference: "bathymetry", system: "msl" },
-        },
+        position: { type: "point", longitude: -149.83, latitude: -17.53 },
         navigationType: "GPS",
       },
-      [
-        "Latitude",
-        "-17.53",
-        "Longitude",
-        "-149.83",
-        "2500 m",
-        "Bathymetry",
-        "MSL height (EPSG:5714) - Mean sea level",
-        "GPS",
-      ],
+      ["Latitude", "-17.53", "Longitude", "-149.83", "GPS"],
     ],
     [
       "area",
@@ -842,12 +826,6 @@ describe("SampleView", () => {
           eastLongitude: 10.25,
           southLatitude: 41.5,
           northLatitude: 51.5,
-          vertical: {
-            min: 100,
-            max: 200,
-            reference: "elevation",
-            system: "ngf_ign69",
-          },
         },
       },
       [
@@ -859,9 +837,6 @@ describe("SampleView", () => {
         "41.5",
         "North latitude",
         "51.5",
-        "100 - 200 m",
-        "Elevation",
-        "NGF-IGN69 height (EPSG:5720) - Metropolitan France",
       ],
     ],
     [
@@ -873,12 +848,6 @@ describe("SampleView", () => {
           startLatitude: 48.85,
           endLongitude: 4.83,
           endLatitude: 45.76,
-          vertical: {
-            start: 10,
-            end: 40,
-            reference: "core_depth",
-            system: "local",
-          },
         },
       },
       [
@@ -890,13 +859,10 @@ describe("SampleView", () => {
         "4.83",
         "End latitude",
         "45.76",
-        "10 -> 40 m",
-        "Core depth",
-        "Local or user-defined vertical datum",
       ],
     ],
   ])(
-    "should show a %s location with its coordinates and vertical position",
+    "should show a %s location with its coordinates",
     async (_type, location, texts) => {
       const screen = await render(<SampleView sample={sample({ location })} />);
 
@@ -909,28 +875,113 @@ describe("SampleView", () => {
     },
   );
 
-  it("should show the filled endpoint alone when a line carries a single vertical value", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          location: {
-            position: {
-              type: "line",
-              startLongitude: 2.35,
-              startLatitude: 48.85,
-              endLongitude: 4.83,
-              endLatitude: 45.76,
-              vertical: { start: null, end: 40 },
-            },
-          },
-        })}
-      />,
-    );
+  const point = {
+    type: "point",
+    longitude: -149.83,
+    latitude: -17.53,
+  } as const;
+  const area = {
+    type: "area",
+    westLongitude: -5.5,
+    eastLongitude: 10.25,
+    southLatitude: 41.5,
+    northLatitude: 51.5,
+  } as const;
+  const line = {
+    type: "line",
+    startLongitude: 2.35,
+    startLatitude: 48.85,
+    endLongitude: 4.83,
+    endLatitude: 45.76,
+  } as const;
 
-    await expect.element(screen.getByText("40 m")).toBeInTheDocument();
-  });
+  it.each<
+    [
+      string,
+      NonNullable<NonNullable<Sample["location"]>["position"]>,
+      VerticalPosition,
+      string,
+      string,
+    ]
+  >([
+    [
+      "a point single value",
+      point,
+      { reference: "bathymetry", start: 2500, end: 2500 },
+      "Bathymetry",
+      "2500 m",
+    ],
+    [
+      "a zero point value",
+      point,
+      { reference: "elevation", start: 0, end: 0 },
+      "Elevation",
+      "0 m",
+    ],
+    [
+      "a point interval",
+      point,
+      { reference: "depth_below_sea_floor", start: 1, end: 3 },
+      "Depth below sea floor",
+      "1 - 3 m",
+    ],
+    [
+      "an area interval",
+      area,
+      { reference: "elevation", start: 100, end: 200 },
+      "Elevation",
+      "100 - 200 m",
+    ],
+    [
+      "a line start and end",
+      line,
+      { reference: "core_depth", start: 40, end: 10 },
+      "Core depth",
+      "40 -> 10 m",
+    ],
+    [
+      "a line single endpoint",
+      line,
+      { reference: "core_depth", start: null, end: 40 },
+      "Core depth",
+      "40 m",
+    ],
+    [
+      "a system",
+      point,
+      { reference: "bathymetry", system: "msl", start: 2500, end: 2500 },
+      "Bathymetry",
+      "2500 m (MSL height (EPSG:5714) - Mean sea level)",
+    ],
+    [
+      "a reference-less entry",
+      area,
+      { start: 100, end: 200 },
+      "Vertical position",
+      "100 - 200 m",
+    ],
+  ])(
+    "should show %s as one vertical row",
+    async (_case, position, entry, label, value) => {
+      const screen = await render(
+        <SampleView
+          sample={sample({
+            location: { position, verticalPositions: [entry] },
+          })}
+        />,
+      );
 
-  it("should show no vertical row when the location carries no vertical data", async () => {
+      const rows = region(screen, "Location");
+      await expect
+        .element(rows.getByText(label, { exact: true }))
+        .toBeInTheDocument();
+      await expect
+        .element(rows.getByText(value, { exact: true }))
+        .toBeInTheDocument();
+    },
+  );
+
+  it("should show no vertical row when the location carries no vertical position", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
@@ -941,9 +992,14 @@ describe("SampleView", () => {
       />,
     );
 
-    await expect
-      .element(screen.getByText("Vertical position"))
-      .not.toBeInTheDocument();
+    const rows = region(screen, "Location");
+    await expect.element(rows).toBeInTheDocument();
+    expect(
+      rows
+        .getByRole("term")
+        .elements()
+        .map((term) => term.textContent),
+    ).toEqual(["Longitude", "Latitude"]);
   });
 
   it.each<[string, NonNullable<Sample["location"]>["region"], string]>([

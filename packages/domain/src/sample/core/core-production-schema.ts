@@ -111,13 +111,13 @@ export const coreVerticalExtentSchema = z
     minimum: coreVerticalCoordinateSchema
       .meta({
         description:
-          "Lower vertical coordinate of the collection, and the only one a point carries.",
+          "Lower vertical coordinate of the collection, the only one a point carries for a single value.",
       })
       .optional(),
     maximum: coreVerticalCoordinateSchema
       .meta({
         description:
-          "Upper vertical coordinate of the collection, refused on a point.",
+          "Upper vertical coordinate of the collection, absent on a point carrying a single value.",
       })
       .optional(),
   })
@@ -138,7 +138,13 @@ const coreLocationSchema = z
           "Coordinate reference system of the geometry, always CRS84.",
       })
       .optional(),
-    verticalExtent: coreVerticalExtentSchema.optional(),
+    verticalExtent: z
+      .array(coreVerticalExtentSchema)
+      .meta({
+        description:
+          "Vertical extents the sample was collected over, at most one per vertical reference.",
+      })
+      .optional(),
     placeNames: z
       .array(freeTextSchema)
       .length(1)
@@ -176,16 +182,6 @@ const coreLocationSchema = z
         code: "custom",
         path: ["oceanOrSea"],
         message: "a sample sits on land or at sea, never both",
-      });
-    }
-    if (
-      location.geometry?.type === "Point" &&
-      location.verticalExtent?.maximum != null
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["verticalExtent", "maximum"],
-        message: "a point carries a single vertical coordinate",
       });
     }
   });

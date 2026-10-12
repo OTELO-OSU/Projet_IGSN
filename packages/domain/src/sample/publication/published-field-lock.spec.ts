@@ -32,12 +32,14 @@ const stored: Sample = {
       type: "point",
       longitude: 1,
       latitude: 2,
-      vertical: { position: 10, reference: "elevation", system: "ngf_ign69" },
     },
     region: { kind: "country", country: "FR" },
     navigationType: "GPS",
     localityName: "stored locality",
     localityDescription: "stored locality detail",
+    verticalPositions: [
+      { reference: "elevation", system: "ngf_ign69", start: 10, end: 10 },
+    ],
   },
   description: {
     collectionDate: {
@@ -128,16 +130,14 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
         type: "point",
         longitude: 50,
         latitude: 60,
-        vertical: {
-          position: 99,
-          reference: "elevation",
-          system: "ngf_ign69",
-        },
       },
       region: { kind: "ocean", oceanSea: null },
       navigationType: "LBL",
       localityName: "edited locality",
       localityDescription: "edited locality detail",
+      verticalPositions: [
+        { reference: "elevation", system: "ngf_ign69", start: 99, end: 99 },
+      ],
     },
     description: {
       collectionDate: {

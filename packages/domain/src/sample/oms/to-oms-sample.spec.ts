@@ -142,15 +142,17 @@ const FIELD_FEATURE = {
     ],
     placeName: "Nancy quarry",
     locationDescription: "Northern face of the quarry",
-    verticalExtent: {
-      minimum: {
-        value: 120,
-        unitCode: "m",
-        reference: "depthBelowGround",
-        verticalDatum: "EPSG:5720",
-        positiveDirection: "down",
+    verticalExtent: [
+      {
+        minimum: {
+          value: 120,
+          unitCode: "m",
+          reference: "depthBelowGround",
+          verticalDatum: "EPSG:5720",
+          positiveDirection: "down",
+        },
       },
-    },
+    ],
     countryCode: "FR",
     navigationMethod: toConcept("navigation-type", "GPS"),
     isResultOf: {

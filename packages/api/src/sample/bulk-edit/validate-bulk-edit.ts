@@ -74,10 +74,17 @@ const IGSN_HEADERS = new Set(
   EXPORT_SAMPLE_COLUMNS.filter(({ path }) => path === "igsn").map(plainHeader),
 );
 
+const isInherited = ({ path }: Column) =>
+  INHERITED_PATHS.some((inherited) => isPathAtOrUnder(path, inherited));
+
 const INHERITED_HEADERS = new Set(
-  EXPORT_SAMPLE_COLUMNS.filter(({ path }) =>
-    INHERITED_PATHS.some((inherited) => isPathAtOrUnder(path, inherited)),
-  ).map(plainHeader),
+  EXPORT_SAMPLE_COLUMNS.filter(isInherited).map(plainHeader),
+);
+
+const INHERITED_SHEETS = new Set(
+  EXPORT_CHILD_SHEETS.filter(({ columns }) => columns.some(isInherited)).map(
+    ({ name }) => name,
+  ),
 );
 
 const namesNewParent = ({ row, sample }: Matched) =>
@@ -177,7 +184,9 @@ function withStoredCells(
     cells: Object.fromEntries(
       Object.entries(cells).filter(([header]) => !isDropped(header)),
     ),
-    children: [...row.children, ...storedChildren],
+    children: [...row.children, ...storedChildren].filter(
+      ({ sheet }) => !(inheriting && INHERITED_SHEETS.has(sheet)),
+    ),
   };
 }
 

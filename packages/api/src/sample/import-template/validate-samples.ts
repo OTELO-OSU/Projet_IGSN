@@ -101,6 +101,7 @@ const INDEXED_BLOCKER_FIELD: Partial<Record<PublishBlocker, string>> = {
   process_step_date_missing: "date",
   additional_role_firstname_missing: "personFirstname",
   additional_role_lastname_missing: "personLastname",
+  vertical_position_incomplete: "reference",
 };
 
 function blockerIssuesOf(

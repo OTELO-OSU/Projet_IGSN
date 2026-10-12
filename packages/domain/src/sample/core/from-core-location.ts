@@ -1,6 +1,4 @@
-import type { Location } from "../location/model.ts";
-import type { VerticalReferenceSystem } from "../location/vertical-reference-system.ts";
-import type { VerticalReference } from "../location/vertical-reference.ts";
+import type { Location, VerticalPosition } from "../location/model.ts";
 import type { CoreLocation } from "./core-production-schema.ts";
 
 import { orNull } from "./core-optional.ts";
@@ -9,36 +7,29 @@ import { fromVerticalDatum } from "./vertical-datum.ts";
 
 type Position = NonNullable<Location["position"]>;
 
-type Vertical = {
-  values: [number | null, number | null];
-  reference: VerticalReference;
-  system: VerticalReferenceSystem | null;
-};
+type CoreVerticalExtent = NonNullable<CoreLocation["verticalExtent"]>[number];
 
 function fromVerticalExtent(
-  extent: CoreLocation["verticalExtent"],
-): Vertical | null {
-  const coordinate = extent?.minimum ?? extent?.maximum;
-  if (extent == null || coordinate == null) return null;
+  { minimum, maximum }: CoreVerticalExtent,
+  isPoint: boolean,
+): VerticalPosition {
+  const coordinate = minimum ?? maximum;
   return {
-    values: [extent.minimum?.value ?? null, extent.maximum?.value ?? null],
-    reference: coreVerticalReference.fromCore(coordinate.reference),
-    system: orNull(coordinate.verticalDatum, fromVerticalDatum),
+    reference: orNull(coordinate?.reference, coreVerticalReference.fromCore),
+    system: orNull(coordinate?.verticalDatum, fromVerticalDatum),
+    start: minimum?.value ?? null,
+    end: (isPoint && maximum == null ? minimum : maximum)?.value ?? null,
   };
 }
 
 function fromCoreGeometry(location: CoreLocation): Position | null {
   const geometry = location.geometry;
   if (geometry == null) return null;
-  const vertical = fromVerticalExtent(location.verticalExtent);
-  const meta = { reference: vertical?.reference, system: vertical?.system };
   if (geometry.type === "Point") {
     return {
       type: "point",
       longitude: geometry.coordinates[0],
       latitude: geometry.coordinates[1],
-      vertical:
-        vertical == null ? null : { position: vertical.values[0], ...meta },
     };
   }
   if (geometry.type === "LineString") {
@@ -50,14 +41,6 @@ function fromCoreGeometry(location: CoreLocation): Position | null {
       startLatitude: start[1],
       endLongitude: end[0],
       endLatitude: end[1],
-      vertical:
-        vertical == null
-          ? null
-          : {
-              start: vertical.values[0],
-              end: vertical.values[1],
-              ...meta,
-            },
     };
   }
   const ring = geometry.coordinates[0];
@@ -70,10 +53,6 @@ function fromCoreGeometry(location: CoreLocation): Position | null {
     southLatitude: southWest[1],
     eastLongitude: northEast[0],
     northLatitude: northEast[1],
-    vertical:
-      vertical == null
-        ? null
-        : { min: vertical.values[0], max: vertical.values[1], ...meta },
   };
 }
 
@@ -93,5 +72,8 @@ export function fromCoreLocation(
     navigationType: location.navigationMethod?.id ?? null,
     localityName: location.placeNames?.[0] ?? null,
     localityDescription: location.locationDescription ?? null,
+    verticalPositions: (location.verticalExtent ?? []).map((extent) =>
+      fromVerticalExtent(extent, location.geometry?.type === "Point"),
+    ),
   };
 }

@@ -1,7 +1,9 @@
-import type { Location } from "@projet-igsn/domain/sample/location/model";
+import type {
+  Location,
+  VerticalPosition,
+} from "@projet-igsn/domain/sample/location/model";
 
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
-import { verticalValues } from "@projet-igsn/domain/sample/location/vertical-values";
 
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import {
@@ -14,13 +16,16 @@ import { getLocale } from "#/paraglide/runtime.js";
 
 type Position = NonNullable<Location["position"]>;
 
-const VERTICAL_SEPARATORS = { point: "", area: " - ", line: " -> " };
-
-const verticalText = (position: Position): string | undefined => {
-  const present = verticalValues(position).filter((value) => value != null);
-  return present.length > 0
-    ? `${present.join(VERTICAL_SEPARATORS[position.type])} m`
-    : undefined;
+const verticalText = (
+  { start, end, system }: VerticalPosition,
+  position: Position,
+): string | undefined => {
+  const values = [...new Set([start, end].filter((value) => value != null))];
+  if (values.length === 0) return undefined;
+  const range = values.join(position.type === "line" ? " -> " : " - ");
+  return system
+    ? `${range} m (${verticalReferenceSystemLabel(system)})`
+    : `${range} m`;
 };
 
 const coordinates = (
@@ -56,6 +61,7 @@ export function LocationView({ location }: { location: Location }) {
     navigationType,
     localityName,
     localityDescription,
+    verticalPositions,
   } = location;
   return (
     <FieldRows>
@@ -63,24 +69,18 @@ export function LocationView({ location }: { location: Location }) {
         coordinates(position).map(([label, value]) => (
           <FieldRow key={label} label={label} value={String(value)} />
         ))}
-      <FieldRow
-        label={m.sample_field_vertical_position()}
-        value={position && verticalText(position)}
-      />
-      <FieldRow
-        label={m.sample_field_vertical_reference()}
-        value={
-          position?.vertical?.reference &&
-          verticalReferenceLabel(position.vertical.reference)
-        }
-      />
-      <FieldRow
-        label={m.sample_field_vertical_reference_system()}
-        value={
-          position?.vertical?.system &&
-          verticalReferenceSystemLabel(position.vertical.system)
-        }
-      />
+      {position &&
+        verticalPositions?.map((entry, index) => (
+          <FieldRow
+            key={entry.reference ?? index}
+            label={
+              entry.reference
+                ? verticalReferenceLabel(entry.reference)
+                : m.sample_field_vertical_position()
+            }
+            value={verticalText(entry, position)}
+          />
+        ))}
       <FieldRow
         label={m.sample_field_navigation_type()}
         value={navigationType}

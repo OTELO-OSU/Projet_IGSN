@@ -1,4 +1,8 @@
-import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import {
+  type PublishableFields,
+  type PublishBlocker,
+  samplePublishRequirements,
+} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
 import { m } from "#/paraglide/messages.js";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
@@ -8,6 +12,7 @@ import {
   sampleFieldTab,
   type SampleFormTab,
 } from "#/samples/sample-form-tabs.ts";
+import { verticalPositionLegend } from "#/samples/vertical-position-legend.ts";
 
 const PUBLISH_BLOCKER_FIELD_LABELS: Record<
   PublishBlocker,
@@ -24,7 +29,7 @@ const PUBLISH_BLOCKER_FIELD_LABELS: Record<
   numeric_age_reference_missing: m.field_numeric_years_unit,
   numeric_age_range_incomplete: m.field_numeric_age,
   geological_age_range_incomplete: m.field_geological_age,
-  vertical_position_incomplete: m.field_vertical_position,
+  vertical_position_incomplete: m.legend_vertical_positions,
   existence_status_missing: m.field_existence_status,
   availability_status_missing: m.field_availability_status,
   scientific_context_missing: m.field_provenance_status,
@@ -75,14 +80,37 @@ const blockerLine = (
     : publishBlockerLabel(blocker);
 };
 
+const incompleteVerticalPositionLegends = (
+  sample: PublishableFields,
+): string[] =>
+  samplePublishRequirements(sample)
+    .filter(
+      ({ blocker, isMet }) =>
+        blocker === "vertical_position_incomplete" && !isMet,
+    )
+    .map(({ index = 0 }) =>
+      verticalPositionLegend(
+        index,
+        sample.location?.verticalPositions?.[index]?.reference,
+      ),
+    );
+
 export function publishBlockerLines(
   blockers: readonly PublishBlocker[],
   fields: readonly { name: string; label: () => string }[],
+  sample: PublishableFields,
 ): { key: string; line: string }[] {
   return [
-    ...blockers.map((blocker) => {
+    ...blockers.flatMap((blocker) => {
       const tab = blockerTab(blocker);
-      return { key: blocker, tab, line: blockerLine(blocker, tab) };
+      const line = blockerLine(blocker, tab);
+      return blocker === "vertical_position_incomplete"
+        ? incompleteVerticalPositionLegends(sample).map((legend) => ({
+            key: `${blocker} ${legend}`,
+            tab,
+            line: `${line} > ${legend}`,
+          }))
+        : [{ key: blocker, tab, line }];
     }),
     ...fields.map(({ name, label }) => {
       const tab = sampleFieldTab(name);

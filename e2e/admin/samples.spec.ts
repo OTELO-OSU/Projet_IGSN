@@ -317,6 +317,38 @@ test.describe("samples", () => {
     await search.expectSampleLink(name, igsn);
   });
 
+  test("a researcher publishes a marine core with two vertical positions that readers see", async ({
+    page,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    await list.goToCreate();
+
+    const create = sampleCreatePage(page);
+    const name = `Marine core ${Date.now()}`;
+    await create.fillName(name);
+    await create.fillPublishableFields({
+      type: ["Core", "Core Piece"],
+      material: "Mineral",
+    });
+    await create.addStrunzClass(["Silicates"]);
+    await create.setPointLocation("-25.5", "37.8");
+    await create.addVerticalPosition("Bathymetry", ["3200"]);
+    await create.addVerticalPosition("Depth below sea floor", ["2.1", "2.35"]);
+    await create.publish();
+    await list.expectVisible();
+
+    await list.openSample(name);
+    const igsn = await sampleEditPage(page).publicPageIgsn();
+    const detail = sampleDetailPage(page);
+    await detail.goto(igsn);
+    await detail.expectVerticalPosition("Bathymetry", "3200 m");
+    await detail.expectVerticalPosition(
+      "Depth below sea floor",
+      "2.1 - 2.35 m",
+    );
+  });
+
   test("a researcher sees a measurement unit counted once its value is entered", async ({
     page,
   }) => {

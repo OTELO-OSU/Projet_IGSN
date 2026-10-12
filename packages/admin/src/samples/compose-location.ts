@@ -13,6 +13,14 @@ import {
 import { countrySchema } from "@projet-igsn/domain/sample/location/country";
 import { oceanSeaSchema } from "@projet-igsn/domain/sample/location/ocean-sea";
 
+export type VerticalPositionDraft = {
+  key: string;
+  reference: VerticalReference | null | undefined;
+  system: VerticalReferenceSystem | null | undefined;
+  start: number | undefined;
+  end: number | undefined;
+};
+
 export type LocationDraft = {
   type: LocationType | null | undefined;
   longitude: number | undefined;
@@ -25,22 +33,11 @@ export type LocationDraft = {
   startLatitude: number | undefined;
   endLongitude: number | undefined;
   endLatitude: number | undefined;
-  verticalPosition: number | undefined;
-  verticalPositionMin: number | undefined;
-  verticalPositionMax: number | undefined;
-  startVerticalPosition: number | undefined;
-  endVerticalPosition: number | undefined;
-  verticalReference: VerticalReference | null | undefined;
-  verticalReferenceSystem: VerticalReferenceSystem | null | undefined;
+  verticalPositions: VerticalPositionDraft[];
   regionPath: string[];
   navigationType: NavigationType | null | undefined;
   localityName: string | null | undefined;
   localityDescription: string | null | undefined;
-};
-
-type VerticalMeta = {
-  reference: VerticalReference | undefined;
-  system: VerticalReferenceSystem | undefined;
 };
 
 type LocationCandidate = {
@@ -49,7 +46,6 @@ type LocationCandidate = {
         type: "point";
         longitude: number | undefined;
         latitude: number | undefined;
-        vertical: ({ position: number | undefined } & VerticalMeta) | undefined;
       }
     | {
         type: "area";
@@ -57,12 +53,6 @@ type LocationCandidate = {
         eastLongitude: number | undefined;
         southLatitude: number | undefined;
         northLatitude: number | undefined;
-        vertical:
-          | ({
-              min: number | undefined;
-              max: number | undefined;
-            } & VerticalMeta)
-          | undefined;
       }
     | {
         type: "line";
@@ -70,12 +60,6 @@ type LocationCandidate = {
         startLatitude: number | undefined;
         endLongitude: number | undefined;
         endLatitude: number | undefined;
-        vertical:
-          | ({
-              start: number | undefined;
-              end: number | undefined;
-            } & VerticalMeta)
-          | undefined;
       }
     | undefined;
   region:
@@ -85,37 +69,15 @@ type LocationCandidate = {
   navigationType: NavigationType | undefined;
   localityName: string | undefined;
   localityDescription: string | undefined;
+  verticalPositions:
+    | {
+        reference: VerticalReference | undefined;
+        system: VerticalReferenceSystem | undefined;
+        start: number | undefined;
+        end: number | undefined;
+      }[]
+    | undefined;
 };
-
-const verticalValues = (location: LocationDraft): (number | undefined)[] => {
-  switch (location.type) {
-    case "point":
-      return [location.verticalPosition];
-    case "area":
-      return [location.verticalPositionMin, location.verticalPositionMax];
-    case "line":
-      return [location.startVerticalPosition, location.endVerticalPosition];
-    default:
-      return [];
-  }
-};
-
-export const isVerticalEntered = (location: LocationDraft): boolean =>
-  verticalValues(location).some((value) => value !== undefined) ||
-  location.verticalReference != null ||
-  location.verticalReferenceSystem != null;
-
-function composeVertical<T extends object>(
-  draft: LocationDraft,
-  values: T,
-): (T & VerticalMeta) | undefined {
-  if (!isVerticalEntered(draft)) return undefined;
-  return {
-    ...values,
-    reference: draft.verticalReference || undefined,
-    system: draft.verticalReferenceSystem || undefined,
-  };
-}
 
 function composePosition(draft: LocationDraft): LocationCandidate["position"] {
   if (draft.type === "point") {
@@ -123,7 +85,6 @@ function composePosition(draft: LocationDraft): LocationCandidate["position"] {
       type: "point",
       longitude: draft.longitude,
       latitude: draft.latitude,
-      vertical: composeVertical(draft, { position: draft.verticalPosition }),
     };
   }
   if (draft.type === "area") {
@@ -133,10 +94,6 @@ function composePosition(draft: LocationDraft): LocationCandidate["position"] {
       eastLongitude: draft.eastLongitude,
       southLatitude: draft.southLatitude,
       northLatitude: draft.northLatitude,
-      vertical: composeVertical(draft, {
-        min: draft.verticalPositionMin,
-        max: draft.verticalPositionMax,
-      }),
     };
   }
   if (draft.type === "line") {
@@ -146,10 +103,6 @@ function composePosition(draft: LocationDraft): LocationCandidate["position"] {
       startLatitude: draft.startLatitude,
       endLongitude: draft.endLongitude,
       endLatitude: draft.endLatitude,
-      vertical: composeVertical(draft, {
-        start: draft.startVerticalPosition,
-        end: draft.endVerticalPosition,
-      }),
     };
   }
   return undefined;
@@ -175,12 +128,22 @@ export function composeLocation(
     : undefined;
   const localityName = draft.localityName?.trim() || undefined;
   const localityDescription = draft.localityDescription?.trim() || undefined;
+  const verticalPositions =
+    position && draft.verticalPositions.length > 0
+      ? draft.verticalPositions.map(({ reference, system, start, end }) => ({
+          reference: reference || undefined,
+          system: system || undefined,
+          start,
+          end,
+        }))
+      : undefined;
   const location = {
     position,
     region,
     navigationType,
     localityName,
     localityDescription,
+    verticalPositions,
   };
   return Object.values(location).some((part) => part !== undefined)
     ? location
@@ -213,13 +176,13 @@ export function toLocationDraft(
     startLatitude: line?.startLatitude,
     endLongitude: line?.endLongitude,
     endLatitude: line?.endLatitude,
-    verticalPosition: point?.vertical?.position ?? undefined,
-    verticalPositionMin: area?.vertical?.min ?? undefined,
-    verticalPositionMax: area?.vertical?.max ?? undefined,
-    startVerticalPosition: line?.vertical?.start ?? undefined,
-    endVerticalPosition: line?.vertical?.end ?? undefined,
-    verticalReference: position?.vertical?.reference,
-    verticalReferenceSystem: position?.vertical?.system,
+    verticalPositions: (location?.verticalPositions ?? []).map((entry) => ({
+      key: crypto.randomUUID(),
+      reference: entry.reference,
+      system: entry.system,
+      start: entry.start ?? undefined,
+      end: entry.end ?? undefined,
+    })),
     regionPath: toHierarchyPath(regionValue(region)),
     navigationType: location?.navigationType,
     localityName: location?.localityName,

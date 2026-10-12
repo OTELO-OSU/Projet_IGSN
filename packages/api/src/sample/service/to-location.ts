@@ -9,7 +9,21 @@ import type { DB } from "../../db.ts";
 
 type LocationColumn = keyof ReturnType<typeof locationColumns>;
 
-export type LocationRow = Pick<Selectable<DB["location"]>, LocationColumn>;
+export const VERTICAL_POSITION_COLUMNS = [
+  "reference",
+  "system",
+  "start_value",
+  "end_value",
+] as const;
+
+type VerticalPositionRow = Pick<
+  Selectable<DB["location_vertical_position"]>,
+  (typeof VERTICAL_POSITION_COLUMNS)[number]
+>;
+
+export type LocationRow = Pick<Selectable<DB["location"]>, LocationColumn> & {
+  vertical_positions: VerticalPositionRow[];
+};
 
 export function toLocation(row: LocationRow | null): Location | null {
   if (row === null) return null;
@@ -25,23 +39,21 @@ export function toLocation(row: LocationRow | null): Location | null {
     ...(row.locality_description !== null
       ? { localityDescription: row.locality_description }
       : {}),
+    ...(row.vertical_positions.length > 0
+      ? {
+          verticalPositions: row.vertical_positions.map(
+            ({ reference, system, start_value, end_value }) => ({
+              reference,
+              system,
+              start: start_value,
+              end: end_value,
+            }),
+          ),
+        }
+      : {}),
   };
   if (Object.keys(location).length === 0) return null;
   return locationSchema.parse(location);
-}
-
-function toVertical<T extends object>(row: LocationRow, values: T) {
-  if (
-    row.vertical_reference === null &&
-    row.vertical_reference_system === null &&
-    Object.values(values).every((value) => value === null)
-  )
-    return undefined;
-  return {
-    ...values,
-    reference: row.vertical_reference,
-    system: row.vertical_reference_system,
-  };
 }
 
 function toPosition(row: LocationRow) {
@@ -50,7 +62,6 @@ function toPosition(row: LocationRow) {
       type: "point",
       longitude: row.point_longitude,
       latitude: row.point_latitude,
-      vertical: toVertical(row, { position: row.vertical_position }),
     };
   }
   if (row.location_type === "area") {
@@ -60,10 +71,6 @@ function toPosition(row: LocationRow) {
       eastLongitude: row.area_east_longitude,
       southLatitude: row.area_south_latitude,
       northLatitude: row.area_north_latitude,
-      vertical: toVertical(row, {
-        min: row.vertical_position_min,
-        max: row.vertical_position_max,
-      }),
     };
   }
   if (row.location_type === "line") {
@@ -73,10 +80,6 @@ function toPosition(row: LocationRow) {
       startLatitude: row.line_start_latitude,
       endLongitude: row.line_end_longitude,
       endLatitude: row.line_end_latitude,
-      vertical: toVertical(row, {
-        start: row.line_start_vertical_position,
-        end: row.line_end_vertical_position,
-      }),
     };
   }
   return null;
@@ -97,7 +100,6 @@ export function locationColumns(location: Location | null | undefined) {
   const point = position?.type === "point" ? position : null;
   const area = position?.type === "area" ? position : null;
   const line = position?.type === "line" ? position : null;
-  const vertical = position?.vertical ?? null;
   const region = location?.region ?? null;
   return {
     location_type: position?.type ?? null,
@@ -111,13 +113,6 @@ export function locationColumns(location: Location | null | undefined) {
     line_start_latitude: line?.startLatitude ?? null,
     line_end_longitude: line?.endLongitude ?? null,
     line_end_latitude: line?.endLatitude ?? null,
-    vertical_position: point?.vertical?.position ?? null,
-    vertical_position_min: area?.vertical?.min ?? null,
-    vertical_position_max: area?.vertical?.max ?? null,
-    line_start_vertical_position: line?.vertical?.start ?? null,
-    line_end_vertical_position: line?.vertical?.end ?? null,
-    vertical_reference: vertical?.reference ?? null,
-    vertical_reference_system: vertical?.system ?? null,
     navigation_type: location?.navigationType ?? null,
     region_kind: region?.kind ?? null,
     country: (region?.kind === "country" ? region.country : null) ?? null,

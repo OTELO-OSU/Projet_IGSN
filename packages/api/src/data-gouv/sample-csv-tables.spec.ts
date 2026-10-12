@@ -78,6 +78,7 @@ describe("sampleCsvTables", () => {
         "elements-of-interest.csv",
         "storage-conditions.csv",
         "process-steps.csv",
+        "vertical-positions.csv",
       ].map((fileName) => ({ fileName, rows: 1 })),
     );
   });
@@ -159,6 +160,36 @@ describe("sampleCsvTables", () => {
         "Institut national de physique nucléaire et de physique des particules (CNRS - IN2P3)",
       ],
       [IGSN, "02cte4b68", "Institut national de chimie (CNRS - INC)"],
+    ]);
+  });
+
+  it("should write each vertical position of a sample as its own row", () => {
+    const sample: Sample = {
+      ...SAMPLE,
+      location: {
+        ...SAMPLE.location!,
+        verticalPositions: [
+          { reference: "bathymetry", system: "msl", start: 3200, end: 3200 },
+          {
+            reference: "depth_below_sea_floor",
+            system: null,
+            start: 2.1,
+            end: 2.35,
+          },
+        ],
+      },
+    };
+
+    expect(tablesOf([sample])["vertical-positions.csv"]).toEqual([
+      [
+        "igsn",
+        "location_vertical_positions_reference",
+        "location_vertical_positions_system",
+        "location_vertical_positions_start",
+        "location_vertical_positions_end",
+      ],
+      [IGSN, "bathymetry", "msl", "3200", "3200"],
+      [IGSN, "depth_below_sea_floor", "", "2.1", "2.35"],
     ]);
   });
 

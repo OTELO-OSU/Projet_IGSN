@@ -1,3 +1,5 @@
+import type { Location } from "@projet-igsn/domain/sample/location/model";
+
 import { sql } from "kysely";
 import { describe, expect } from "vitest";
 
@@ -43,22 +45,36 @@ describe("sample location persistence", () => {
       { position: { type: "point", longitude: 2.35, latitude: 48.85 } },
     ],
     [
-      "point with a decimal vertical position",
+      "point with a single decimal vertical value",
       {
-        position: {
-          type: "point",
-          longitude: 2.35,
-          latitude: 48.85,
-          vertical: {
-            position: 1200.5,
+        position: { type: "point", longitude: 2.35, latitude: 48.85 },
+        verticalPositions: [
+          {
             reference: "bathymetry",
             system: "msl",
+            start: 1200.5,
+            end: 1200.5,
           },
-        },
+        ],
       },
     ],
     [
-      "line with a vertical position per endpoint",
+      "area with a vertical range",
+      {
+        position: {
+          type: "area",
+          westLongitude: 5,
+          eastLongitude: 8,
+          southLatitude: 44,
+          northLatitude: 46,
+        },
+        verticalPositions: [
+          { reference: "elevation", system: "msl", start: 200, end: 1500 },
+        ],
+      },
+    ],
+    [
+      "line with a vertical value per endpoint",
       {
         position: {
           type: "line",
@@ -66,16 +82,18 @@ describe("sample location persistence", () => {
           startLatitude: 44,
           endLongitude: 8,
           endLatitude: 46,
-          vertical: {
-            start: 120,
-            end: 340.5,
+        },
+        verticalPositions: [
+          {
             reference: "elevation",
             system: "ngf_ign69",
+            start: 340.5,
+            end: 120,
           },
-        },
+        ],
       },
     ],
-  ] as const)(
+  ] satisfies [string, Location][])(
     "should round-trip a %s location",
     async ([, location], { db }) => {
       const created = await insertSample(db, { ...base, location });
@@ -85,63 +103,74 @@ describe("sample location persistence", () => {
   );
 
   pgTest(
-    "should round-trip a partial vertical position (a draft with a lone bound)",
+    "should keep several vertical positions in order, an incomplete one included",
+    async ({ db }) => {
+      const location = {
+        position: { type: "point" as const, longitude: 2.35, latitude: 48.85 },
+        verticalPositions: [
+          { reference: "core_depth" as const, system: null, start: 3, end: 3 },
+          { reference: null, system: null, start: 10, end: null },
+          {
+            reference: "elevation" as const,
+            system: "msl" as const,
+            start: 0,
+            end: 5,
+          },
+        ],
+      };
+      const created = await insertSample(db, { ...base, location });
+      expect((await readSample(db, created.id))?.location).toEqual(location);
+    },
+  );
+
+  pgTest("should replace the vertical positions on update", async ({ db }) => {
+    const position = { type: "point" as const, longitude: 1, latitude: 1 };
+    const created = await insertSample(db, {
+      ...base,
+      location: {
+        position,
+        verticalPositions: [
+          { reference: "core_depth", system: null, start: 3, end: 3 },
+          { reference: "elevation", system: null, start: 1, end: 1 },
+        ],
+      },
+    });
+    const replaced = [
+      {
+        reference: "bathymetry" as const,
+        system: "msl" as const,
+        start: 7,
+        end: 9,
+      },
+    ];
+    await updateSample(db, created.id, {
+      ...base,
+      location: { position, verticalPositions: replaced },
+    });
+    expect((await readSample(db, created.id))?.location).toEqual({
+      position,
+      verticalPositions: replaced,
+    });
+  });
+
+  pgTest(
+    "should drop the vertical positions with the location",
     async ({ db }) => {
       const created = await insertSample(db, {
         ...base,
         location: {
-          position: {
-            type: "area",
-            westLongitude: 5,
-            eastLongitude: 8,
-            southLatitude: 44,
-            northLatitude: 46,
-            vertical: { min: 200 },
-          },
+          position: { type: "point", longitude: 1, latitude: 1 },
+          verticalPositions: [
+            { reference: "core_depth", system: null, start: 3, end: 3 },
+          ],
         },
       });
-      expect(created.location).toEqual({
-        position: {
-          type: "area",
-          westLongitude: 5,
-          eastLongitude: 8,
-          southLatitude: 44,
-          northLatitude: 46,
-          vertical: { min: 200, max: null, reference: null, system: null },
-        },
-      });
-      expect(await readSample(db, created.id)).toEqual(created);
-    },
-  );
-
-  pgTest(
-    "should round-trip an area with a vertical range, region and nav",
-    async ({ db }) => {
-      const location = {
-        position: {
-          type: "area" as const,
-          westLongitude: 5,
-          eastLongitude: 8,
-          southLatitude: 44,
-          northLatitude: 46,
-          vertical: {
-            min: 200,
-            max: 1500,
-            reference: "elevation" as const,
-            system: "msl" as const,
-          },
-        },
-        region: {
-          kind: "ocean" as const,
-          oceanSea: "mediterranean_sea" as const,
-        },
-        navigationType: "GPS" as const,
-        localityName: "Test locality",
-      };
-      const created = await insertSample(db, { ...base, location });
-      expect((await readSample(db, created.id))?.location).toMatchObject(
-        location,
-      );
+      await updateSample(db, created.id, { ...base, location: null });
+      const { count } = await db
+        .selectFrom("location_vertical_position")
+        .select((eb) => eb.fn.countAll<number>().as("count"))
+        .executeTakeFirstOrThrow();
+      expect(Number(count)).toBe(0);
     },
   );
 
@@ -426,7 +455,7 @@ describe("a child sample's location", () => {
   );
 
   pgTest(
-    "should show a locality edit made on the parent to its grandchild",
+    "should show a locality and vertical position edit made on the parent to its grandchild",
     async ({ db }) => {
       const grandParent = await insertParent(db, { ...base, location: paris });
       const parent = await insertParent(db, {
@@ -436,11 +465,21 @@ describe("a child sample's location", () => {
       const child = await insertSample(db, { ...base, parentIds: [parent.id] });
       await updateSample(db, grandParent.id, {
         ...base,
-        location: { ...paris, localityName: "Paris 5e" },
+        location: {
+          ...paris,
+          localityName: "Paris 5e",
+          verticalPositions: [
+            { reference: "core_depth", system: null, start: 2, end: 2 },
+          ],
+        },
       });
-      expect((await readSample(db, child.id))?.location?.localityName).toBe(
-        "Paris 5e",
-      );
+      expect((await readSample(db, child.id))?.location).toEqual({
+        ...paris,
+        localityName: "Paris 5e",
+        verticalPositions: [
+          { reference: "core_depth", system: null, start: 2, end: 2 },
+        ],
+      });
       expect(await locationIdOf(db, child.id)).toBe(
         await locationIdOf(db, grandParent.id),
       );
