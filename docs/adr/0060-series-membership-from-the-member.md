@@ -31,6 +31,7 @@ A researcher editing a member needs to join, move or leave a series from its own
 - Bulk edit and `/service` PUT reach published samples only, so a withdrawn or embargoed member moves through the form.
 - The member's DataCite record and every Core read carry `IsPartOf`, once the series has an IGSN.
 - A membership change marks the series joined and the series left `pending` (`setSampleSeries`), so the synchronization worker re-syncs their `HasPart`; a save keeping the same series marks neither.
+- A series claiming or releasing a member from its own side marks that member `pending` (`replaceSampleChildren`), so its `IsPartOf` follows.
 - `seriesId` is a mailable field, the moderation mail showing a "Series of samples" line.
 
 ### Rejected

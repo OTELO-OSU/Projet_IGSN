@@ -2579,7 +2579,9 @@ describe("a series of samples over /service", () => {
         status: res.status,
         children: await storedChildIds(db, series.id),
         duringRequest,
-        puts: relationPutsOf(fetchMock, "HasPart"),
+        puts: relationPutsOf(fetchMock, "HasPart").filter(
+          ({ related }) => related.length > 0,
+        ),
       }).toEqual({
         status: 200,
         children: [second.id],

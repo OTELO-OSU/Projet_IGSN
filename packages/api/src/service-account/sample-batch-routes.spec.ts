@@ -701,12 +701,18 @@ describe("POST /service/samples/batch", () => {
       // Arrange
       const { app } = await arrangeAccount(db);
       const published = await publishedIn(db);
-      if (isMember)
+      if (isMember) {
         await publishedIn(db, {
           ...publishableSample,
           type: "serie_of_sample.core",
           childIds: [published.id],
         });
+        await db
+          .updateTable("sample")
+          .set({ synchronization_status: "synced" })
+          .where("id", "=", published.id)
+          .execute();
+      }
       const existing = (await readSample(db, published.id))!;
       // Act
       const posted = await postBatch(app, [

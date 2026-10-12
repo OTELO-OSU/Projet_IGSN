@@ -17,7 +17,7 @@ A series is not a parent: its members are not derived from it, and a member belo
 - A virtual sample is a sample typed `serie_of_sample.<core|dredge|individual_sample>` that groups children.
 - The sub-type is mandatory for publication and describes the series alone: a child may be of any type.
 - A child points to its series through the `sample_series_membership` table: `sample_id` is its primary key (one series per member), `series_id` and `sample_id` both cascade, and a check refuses a self link.
-- Claiming a child never writes the child row, so another user's edit lock or the child's queue state does not block it.
+- Claiming a child writes no child column but its synchronization status (ADR [0060](0060-series-membership-from-the-member.md)), so another user's edit lock or the child's queue state does not block it.
 - No nesting: a series cannot be a child.
 - A sample joins a series only if the user adding it can edit it (owner, editor, moderation reach or super admin, read for every added child in one `listSeriesLinkCandidates` query), and over `/service` only within the account's `managerScope`, editor rights on the child sufficing whatever its status (`isSampleEditor(effectiveRole(...))`).
 - A held member cannot become a series: `writeSample` refuses the change (422 `child_not_eligible`) for the form, `/service` and bulk edit alike.

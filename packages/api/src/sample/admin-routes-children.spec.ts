@@ -518,7 +518,7 @@ describe("a series at DataCite", () => {
   };
 
   pgTest(
-    "should send the series' HasPart alone once the queue drains, leaving its members' DOIs and statuses alone",
+    "should re-send the series' HasPart and the IsPartOf of the members it claims or releases once the queue drains, leaving their statuses alone",
     async ({ db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 200 }));
@@ -531,6 +531,8 @@ describe("a series at DataCite", () => {
         kept.id,
       ]);
       await registerDois(db, [added.id]);
+      await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, []);
+      fetchMock.mockClear();
       // Act
       const res = await putSample(db, series, {
         ...input,
@@ -540,20 +542,30 @@ describe("a series at DataCite", () => {
       // Assert
       expect({
         status: res.status,
-        puts: relationPutsOf(fetchMock, "HasPart"),
+        hasPart: relationPutsOf(fetchMock, "HasPart").filter(
+          ({ related }) => related.length > 0,
+        ),
+        isPartOf: relationPutsOf(fetchMock, "IsPartOf").sort((a, b) =>
+          a.url.localeCompare(b.url),
+        ),
         statuses: await statusesOf(db, [dropped, kept, added]),
       }).toEqual({
         status: 200,
-        puts: [
+        hasPart: [
           { url: doiUrlOf(series.igsn), related: [kept.igsn, added.igsn] },
         ],
+        isPartOf: [
+          { url: doiUrlOf(series.igsn), related: [] },
+          { url: doiUrlOf(dropped.igsn), related: [] },
+          { url: doiUrlOf(added.igsn), related: [series.igsn] },
+        ].sort((a, b) => a.url.localeCompare(b.url)),
         statuses: ["published", "published", "published"],
       });
     },
   );
 
   pgTest.for(["withdrawn", "embargo"] as const)(
-    "should claim a %s child without touching its row or its DOI, even once the queue drains",
+    "should claim a %s child without touching its status or dates, its DOI gaining IsPartOf once the queue drains",
     async (status, { db }) => {
       // Arrange
       const fetchMock = stubDataCite(new Response("{}", { status: 200 }));
@@ -584,11 +596,16 @@ describe("a series at DataCite", () => {
       expect({
         status: res.status,
         child: await rowOf(db, child.id),
-        puts: relationPutsOf(fetchMock, "HasPart"),
+        isPartOf: relationPutsOf(fetchMock, "IsPartOf").sort((a, b) =>
+          a.url.localeCompare(b.url),
+        ),
       }).toEqual({
         status: 200,
         child: before,
-        puts: [{ url: doiUrlOf(series.igsn), related: [child.igsn] }],
+        isPartOf: [
+          { url: doiUrlOf(series.igsn), related: [] },
+          { url: doiUrlOf(child.igsn), related: [series.igsn] },
+        ].sort((a, b) => a.url.localeCompare(b.url)),
       });
     },
   );
