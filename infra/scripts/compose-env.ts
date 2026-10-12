@@ -136,7 +136,7 @@ const VARS: EnvVar[] = [
   {
     name: "OIDC_ALLOWED_IDENTITY_PROVIDERS",
     purpose: "Accepted identity-provider aliases, comma separated.",
-    default: "satosa,orcid",
+    default: "renater,orcid",
   },
   {
     name: "DATACITE_API_HOST",

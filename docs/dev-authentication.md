@@ -23,19 +23,19 @@
 - Users don't self-register: one sign-in button lands on Keycloak's login page, the user picks a brokered identity provider, and Keycloak provisions the account on first login (first-broker-login).
 - The SSO owns that provider list, so the app sends no `kc_idp_hint`, and GaiaData offers different providers than the mock realm.
 
-| Provider    | Keycloak broker | Dev IdP                                | Prod IdP                     |
-| ----------- | --------------- | -------------------------------------- | ---------------------------- |
-| Institution | SAML (`satosa`) | SimpleSAMLphp at http://localhost:8081 | RENATER / eduGAIN Shibboleth |
-| ORCID       | OIDC (`orcid`)  | Mock `mock-orcid` Keycloak realm       | ORCID production             |
+| Provider    | Keycloak broker  | Dev IdP                                | Prod IdP                     |
+| ----------- | ---------------- | -------------------------------------- | ---------------------------- |
+| Institution | SAML (`renater`) | SimpleSAMLphp at http://localhost:8081 | RENATER / eduGAIN Shibboleth |
+| ORCID       | OIDC (`orcid`)   | Mock `mock-orcid` Keycloak realm       | ORCID production             |
 
 - `make dev` brings both dev IdPs up, `make auth` starts just Keycloak and the SAML IdP.
 - Both dev IdPs are faked locally, so dev and CI need no external account.
 - The app only ever talks to Keycloak, so the same build runs everywhere and only each broker's target IdP changes, via env vars (prod overrides them, dev falls back to the mocks).
 - The broker alias reaches the app in the `identity_provider` claim, whose case differs per environment (`orcid` on the mock realm, `ORCID` on GaiaData), so the admin gate and the api both match it case-insensitively.
 - The api's match keeps an ORCID session off the email upsert (ADR 0020), which a case-sensitive comparison would break by handing over the account matching the token's email.
-- The institution alias was renamed `shibboleth` -> `satosa` to match GaiaData, so a dev account imported before the rename keeps the old federated link until you re-import.
+- The institution alias was renamed `satosa` -> `renater` to match GaiaData, so a dev account imported before the rename keeps the old federated link until you re-import.
 - `currentUser` refuses a login whose `identity_provider` claim is missing or outside `OIDC_ALLOWED_IDENTITY_PROVIDERS`, before any lookup or write.
-- That list is comma-separated and case-insensitive, defaulting to `satosa,orcid` (also the fallback when it is empty or whitespace-only), so GaiaData's own MyAccessID broker and self-registration are refused.
+- That list is comma-separated and case-insensitive, defaulting to `renater,orcid` (also the fallback when it is empty or whitespace-only), so GaiaData's own MyAccessID broker and self-registration are refused.
 - A Keycloak-local account like `test` / `test` carries no such claim at all, so it is the fixture for the two refusal scenarios in [`e2e/admin/auth.spec.ts`](../e2e/admin/auth.spec.ts).
 - **SAML** users live in [`saml-idp/authsources.php`](../saml-idp/authsources.php) and release a French researcher profile (eduPersonPrincipalName, email, name), so login completes without prompts.
 - The SAML broker skips signature validation in dev, and only the IdP metadata/SSO URL changes for prod.
@@ -94,4 +94,4 @@
 - The frontend build takes the same two vars plus `VITE_ADMIN_URL` (see [`oidc-config.ts`](../packages/frontend/src/auth/oidc-config.ts) and [`admin-url.ts`](../packages/frontend/src/admin-url.ts)).
 - Both apps build their `UserManager` from [`oidc-settings.ts`](../packages/domain/src/auth/oidc-settings.ts), the one home of the client id, scope and revocation policy.
 - The realm files, the `test` user and the mock IdPs are **dev/e2e only and never shipped**, so the insecure-by-design bits (`sslRequired: none`, unsigned SAML, a local admin password) stay in that throwaway setup.
-- Standing up the prod Keycloak is an ops task: register its SP metadata (`.../realms/igsn/broker/satosa/endpoint`) with RENATER, opt into eduGAIN, and point the ORCID broker at production ORCID.
+- Standing up the prod Keycloak is an ops task: register its SP metadata (`.../realms/igsn/broker/renater/endpoint`) with RENATER, opt into eduGAIN, and point the ORCID broker at production ORCID.

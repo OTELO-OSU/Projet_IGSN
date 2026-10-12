@@ -26,7 +26,7 @@ const claims: KeycloakClaims = {
   email: "jean.martin-b85@univ-lorraine.fr",
   given_name: "Jean",
   family_name: "Martin",
-  identity_provider: "satosa",
+  identity_provider: "renater",
 };
 
 describe("currentUser", () => {
@@ -249,7 +249,7 @@ describe("currentUser", () => {
     "should refuse a provider the operator left out of the allow-list",
     async ({ db }) => {
       // Arrange
-      process.env.OIDC_ALLOWED_IDENTITY_PROVIDERS = "satosa";
+      process.env.OIDC_ALLOWED_IDENTITY_PROVIDERS = "renater";
       // Act
       const res = await appWithClaims(db, orcidClaims).request("/probe");
       // Assert

@@ -80,7 +80,7 @@ const validClaims = () => ({
   preferred_username: "marie",
   name: "Marie Dupont",
   email: "marie.dupont-b5c@univ-lorraine.fr",
-  identity_provider: "satosa",
+  identity_provider: "renater",
 });
 
 const appByAudience = new Map<

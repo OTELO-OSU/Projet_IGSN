@@ -86,7 +86,7 @@
   ],
   "identityProviders": [
     {
-      "alias": "satosa",
+      "alias": "renater",
       "displayName": "eduGAIN",
       "providerId": "saml",
       "enabled": true,
@@ -130,8 +130,8 @@
   ],
   "identityProviderMappers": [
     {
-      "name": "satosa-email",
-      "identityProviderAlias": "satosa",
+      "name": "renater-email",
+      "identityProviderAlias": "renater",
       "identityProviderMapper": "saml-user-attribute-idp-mapper",
       "config": {
         "syncMode": "INHERIT",
@@ -140,8 +140,8 @@
       }
     },
     {
-      "name": "satosa-first-name",
-      "identityProviderAlias": "satosa",
+      "name": "renater-first-name",
+      "identityProviderAlias": "renater",
       "identityProviderMapper": "saml-user-attribute-idp-mapper",
       "config": {
         "syncMode": "INHERIT",
@@ -150,8 +150,8 @@
       }
     },
     {
-      "name": "satosa-last-name",
-      "identityProviderAlias": "satosa",
+      "name": "renater-last-name",
+      "identityProviderAlias": "renater",
       "identityProviderMapper": "saml-user-attribute-idp-mapper",
       "config": {
         "syncMode": "INHERIT",

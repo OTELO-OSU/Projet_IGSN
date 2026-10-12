@@ -14,7 +14,7 @@ vi.mock("react-oidc-context", () => ({
     isAuthenticated: true,
     user: {
       access_token: "tok",
-      profile: { identity_provider: "satosa", name: "Marie Dupont" },
+      profile: { identity_provider: "renater", name: "Marie Dupont" },
     },
   }),
 }));

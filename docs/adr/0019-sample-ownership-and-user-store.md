@@ -33,7 +33,7 @@ Public routes are untouched: the frontend keeps serving published samples to ano
 
 ## Amendment 2026-08-12: email keys only an allow-listed login
 
-"Email is the identity key" now holds only once the login has passed an identity-provider allow-list. A token from any provider outside it, or with no `identity_provider` claim at all, provisions no row and is refused 403 with a `reason` code (`unsupported_identity_provider`), the email upsert never running for it. eduGAIN (brokered as `satosa`) and ORCID are the only providers on the list.
+"Email is the identity key" now holds only once the login has passed an identity-provider allow-list. A token from any provider outside it, or with no `identity_provider` claim at all, provisions no row and is refused 403 with a `reason` code (`unsupported_identity_provider`), the email upsert never running for it. eduGAIN (brokered as `renater`) and ORCID are the only providers on the list.
 
 The check runs in `currentUser` before the user lookup, so there is deliberately no super-admin bypass: the allow-list applies to every caller. A row already provisioned from a now-refused provider is left as is rather than migrated away; it can no longer authenticate, and a super admin can reject it from `/users` (ADR 0023) like any other unwanted account.
 

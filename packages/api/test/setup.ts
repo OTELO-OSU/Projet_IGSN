@@ -18,7 +18,7 @@ vi.mock("../src/auth/middleware.ts", async () => {
         email: tokenEmail(sub),
         given_name: "Test",
         family_name: "User",
-        identity_provider: "satosa",
+        identity_provider: "renater",
       });
       await next();
     },
