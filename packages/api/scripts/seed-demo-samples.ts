@@ -3,6 +3,7 @@ import type { GeologicalAge } from "@projet-igsn/domain/sample/age/geological-ag
 import type { Location } from "@projet-igsn/domain/sample/location/model";
 import type { MineralClassification } from "@projet-igsn/domain/sample/mineral/model";
 import type { SampleProcessStep } from "@projet-igsn/domain/sample/process-step/model";
+import type { CreateSampleRelation } from "@projet-igsn/domain/sample/relation/model";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 
@@ -1807,4 +1808,84 @@ export const DEMO_MINERAL_CLASSIFICATIONS: Record<
 export const DEMO_ADDITIONAL_ROLES: Record<string, SampleAdditionalRole[]> = {
   "Brittany Granite": DEMO_ROLES,
   "Aar Massif Tonalite": DEMO_ROLES,
+};
+
+export const DEMO_CONDITIONS: Record<string, SampleRow["condition"]> = {
+  "Ruhr Coal Core": {
+    packaging: "plastic_bag",
+    storageConditions: ["temperature_controlled", "moisture_controlled"],
+    temperature: {
+      type: "refrigerated",
+      measurement: { value: 4, unit: "celsius" },
+    },
+    humidity: { type: "humid", percentage: 85 },
+    specificConditions: "Sealed under nitrogen to prevent oxidation",
+  },
+  "North Sea Mudstone Core": {
+    packaging: "plastic_bag",
+    storageConditions: ["temperature_controlled", "pressure_controlled"],
+    temperature: {
+      type: "frozen",
+      measurement: { value: -18, unit: "celsius" },
+    },
+    pressure: {
+      type: "controlled_gas",
+      measurement: { value: 1, unit: "atm" },
+    },
+  },
+  "Pacific Abyssal Clay": {
+    packaging: "plastic_pail",
+    storageConditions: ["temperature_controlled"],
+    temperature: {
+      type: "refrigerated",
+      measurement: { value: 4, unit: "celsius" },
+    },
+    specificConditions: "Kept wet in filtered seawater",
+  },
+  "Paris Basin Gypsum": {
+    packaging: "cardboard_box",
+    storageConditions: ["moisture_controlled", "light_controlled"],
+    humidity: { type: "dry", percentage: 20 },
+    light: "total_darkness",
+  },
+};
+
+export const DEMO_RELATIONS: Record<string, CreateSampleRelation[]> = {
+  "Brittany Granite": [
+    {
+      relationType: "is_cited_by",
+      identifierType: "doi",
+      identifier: "https://doi.org/10.5072/demo.brittany-granite",
+      targetTitle: "Variscan granites of northern Brittany",
+      targetResourceType: "journal_article",
+    },
+    {
+      relationType: "has_metadata",
+      identifierType: "url",
+      identifier: "https://example.org/metadata/brittany-granite.xml",
+      targetResourceType: "dataset",
+      relatedMetadataScheme: "DataCite",
+      schemeURI: "https://schema.datacite.org/meta/kernel-4",
+      schemeType: "XSD",
+    },
+  ],
+  "Etna Trachyte": [
+    {
+      relationType: "is_described_by",
+      identifierType: "doi",
+      identifier: "https://doi.org/10.5072/demo.etna-trachyte",
+      targetTitle: "Petrology of recent Etna trachytes",
+      targetResourceType: "journal_article",
+      description: "Major and trace element analyses",
+    },
+  ],
+  "Oman Ophiolite Peridotite": [
+    {
+      relationType: "is_referenced_by",
+      identifierType: "url",
+      identifier: "https://example.org/datasets/oman-ophiolite",
+      targetTitle: "Oman ophiolite drilling dataset",
+      targetResourceType: "dataset",
+    },
+  ],
 };

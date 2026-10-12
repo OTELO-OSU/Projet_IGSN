@@ -76,6 +76,14 @@ db-seed-bench:								## Add $(BENCH_COUNT) random published samples to the dev 
 mail-digest:								## Mail the pending-accounts digest now instead of waiting for 7:00; read it on http://localhost:1080 (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api digest:send
 
+.PHONY: data-gouv-dry-run data-gouv-export
+data-gouv-dry-run:							## Write the data.gouv.fr export CSVs of the dev Postgres to ./data-gouv-export, uploading nothing (dev stack must be up)
+	@mkdir -p data-gouv-export
+	@docker compose -f docker-compose.dev.yml run --rm --user "$$(id -u):$$(id -g)" -v "$(CURDIR)/data-gouv-export:/data-gouv-export" data-gouv-export node scripts/data-gouv-export.ts /data-gouv-export
+
+data-gouv-export:							## Upload the dev Postgres's published samples to data.gouv.fr now, per the DATA_GOUV_* of .env (dev stack must be up)
+	@docker compose -f docker-compose.dev.yml run --rm data-gouv-export node scripts/data-gouv-export.ts
+
 db-psql:									## Open a psql shell on the local dev Postgres (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec postgres psql -U igsn -d igsn
 

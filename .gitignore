@@ -13,6 +13,7 @@
 
 packages/api/attachments
 /attachments
+/data-gouv-export
 
 **/*.local
 **/.env

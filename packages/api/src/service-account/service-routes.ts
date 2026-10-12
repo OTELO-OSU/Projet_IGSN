@@ -95,7 +95,7 @@ const negotiate = (c: Context<ServiceEnv>) =>
         .find(({ type }) => supports.includes(type))?.type ?? "",
   });
 
-const NO_REACH: ModerationScope = {
+export const NO_REACH: ModerationScope = {
   callerId: "",
   superAdmin: false,
   managedLaboratories: [],
