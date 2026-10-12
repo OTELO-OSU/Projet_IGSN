@@ -203,6 +203,47 @@ export function sampleFormPage(page: Page) {
         .fill("2025-06-15");
       await fillPersonName(/operator name/i, "Paul", "Bernard");
     },
+    setPointLocation: async (longitude: string, latitude: string) => {
+      await openTab("Location");
+      await pick("Type", "Point", page.getByRole("tabpanel"));
+      await page
+        .getByRole("spinbutton", { name: /^Longitude/ })
+        .fill(longitude);
+      await page.getByRole("spinbutton", { name: /^Latitude/ }).fill(latitude);
+    },
+    addVerticalPosition: async (
+      reference: string,
+      [start, end]: [string] | [string, string],
+    ) => {
+      await openTab("Location");
+      const rank =
+        (await page
+          .getByRole("button", { name: /^Remove vertical position / })
+          .count()) + 1;
+      await page
+        .getByRole("button", { name: "Add a vertical position" })
+        .click();
+      await page
+        .getByRole("menuitem", { name: reference, exact: true })
+        .click();
+      const entry = page.getByRole("group", {
+        name: `${rank}. ${reference}`,
+        exact: true,
+      });
+      if (end === undefined) {
+        await entry
+          .getByRole("spinbutton", { name: /^Vertical position/ })
+          .fill(start);
+        return;
+      }
+      await entry.getByRole("switch", { name: "Interval" }).click();
+      await entry
+        .getByRole("spinbutton", { name: /^Minimum vertical position/ })
+        .fill(start);
+      await entry
+        .getByRole("spinbutton", { name: /^Maximum vertical position/ })
+        .fill(end);
+    },
     setPlatformType: async (label: string) => {
       await openTab("Scientific context");
       await pick("Platform type", label);

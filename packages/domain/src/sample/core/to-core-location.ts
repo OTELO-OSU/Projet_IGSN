@@ -1,14 +1,12 @@
-import type { Location } from "../location/model.ts";
+import type { Location, VerticalPosition } from "../location/model.ts";
 import type { CoreLocation } from "./core-production-schema.ts";
 
-import { verticalValues } from "../location/vertical-values.ts";
 import { toConcept } from "./concept.ts";
 import { optionalConcept } from "./core-optional.ts";
 import { CRS84, coreVerticalReference } from "./core-production-schema.ts";
 import { toVerticalDatum } from "./vertical-datum.ts";
 
 type Position = NonNullable<Location["position"]>;
-type Vertical = NonNullable<Position["vertical"]>;
 
 const POSITIVE_DIRECTION: Record<string, "up" | "down"> = {
   elevation: "up",
@@ -49,10 +47,13 @@ function toCoreGeometry(position: Position): CoreLocation["geometry"] {
   }
 }
 
-function toVerticalExtent(position: Position): CoreLocation["verticalExtent"] {
-  const vertical: Vertical | null | undefined = position.vertical;
-  const reference = vertical?.reference;
-  if (vertical == null || reference == null) return undefined;
+type CoreVerticalExtent = NonNullable<CoreLocation["verticalExtent"]>[number];
+
+function toVerticalExtent(
+  { reference, system, start, end }: VerticalPosition,
+  isPoint: boolean,
+): CoreVerticalExtent | undefined {
+  if (reference == null || (start == null && end == null)) return undefined;
   const coordinate = (value: number | null | undefined) =>
     value == null
       ? undefined
@@ -60,15 +61,21 @@ function toVerticalExtent(position: Position): CoreLocation["verticalExtent"] {
           value,
           unitCode: "m" as const,
           reference: coreVerticalReference.toCore(reference),
-          verticalDatum:
-            vertical.system == null
-              ? undefined
-              : toVerticalDatum(vertical.system),
+          verticalDatum: system == null ? undefined : toVerticalDatum(system),
           positiveDirection: POSITIVE_DIRECTION[reference],
         };
-  const [minimum, maximum] = verticalValues(position);
-  if (minimum == null && maximum == null) return undefined;
-  return { minimum: coordinate(minimum), maximum: coordinate(maximum) };
+  return {
+    minimum: coordinate(start),
+    maximum: isPoint && start === end ? undefined : coordinate(end),
+  };
+}
+
+function toVerticalExtents(location: Location): CoreLocation["verticalExtent"] {
+  const isPoint = location.position?.type === "point";
+  const extents = (location.verticalPositions ?? []).flatMap(
+    (entry) => toVerticalExtent(entry, isPoint) ?? [],
+  );
+  return extents.length === 0 ? undefined : extents;
 }
 
 export function toCoreLocation(location: Location): CoreLocation {
@@ -77,7 +84,7 @@ export function toCoreLocation(location: Location): CoreLocation {
   return {
     geometry: position == null ? undefined : toCoreGeometry(position),
     crs: position == null ? undefined : CRS84,
-    verticalExtent: position == null ? undefined : toVerticalExtent(position),
+    verticalExtent: toVerticalExtents(location),
     placeNames:
       location.localityName == null ? undefined : [location.localityName],
     countryCodes:

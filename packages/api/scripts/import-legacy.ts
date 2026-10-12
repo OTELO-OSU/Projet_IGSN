@@ -1,3 +1,5 @@
+import type { VerticalPosition } from "@projet-igsn/domain/sample/location/model";
+
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import { sql } from "kysely";
@@ -8,6 +10,7 @@ import { v7 as uuidv7 } from "uuid";
 import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
+import { replaceLocationVerticalPositions } from "../src/sample/service/replace-location-vertical-positions.ts";
 import { replaceSampleRelations } from "../src/sample/service/replace-sample-relations.ts";
 import { sampleColumns } from "../src/sample/service/sample-columns.ts";
 import {
@@ -136,7 +139,10 @@ async function main() {
     const sampleIdByIgsn = new Map<string, string>();
     const locationByIgsn = new Map<
       string,
-      ReturnType<typeof locationColumns>
+      {
+        columns: ReturnType<typeof locationColumns>;
+        verticalPositions: VerticalPosition[];
+      }
     >();
     const ownerByIgsn = new Map<string, LegacyOwner>();
     const relationsByIgsn = new Map<
@@ -147,11 +153,16 @@ async function main() {
       stored: { id: string; igsn: string | null; location_id: string | null }[],
     ) => {
       const values = [];
+      const verticalPositionsById = new Map<string, VerticalPosition[]>();
       const idsToLink: string[] = [];
       for (const { id, igsn, location_id } of stored) {
-        const columns = igsn === null ? undefined : locationByIgsn.get(igsn);
-        if (!columns) continue;
-        values.push({ id: location_id ?? id, ...columns });
+        const location = igsn === null ? undefined : locationByIgsn.get(igsn);
+        if (!location) continue;
+        values.push({ id: location_id ?? id, ...location.columns });
+        verticalPositionsById.set(
+          location_id ?? id,
+          location.verticalPositions,
+        );
         if (location_id === null) idsToLink.push(id);
       }
       if (values.length === 0) return;
@@ -171,6 +182,12 @@ async function main() {
             ),
         )
         .execute();
+      for (const [locationId, verticalPositions] of verticalPositionsById)
+        await replaceLocationVerticalPositions(
+          db,
+          locationId,
+          verticalPositions,
+        );
       if (idsToLink.length === 0) return;
       await db
         .updateTable("sample")
@@ -245,8 +262,12 @@ async function main() {
       for (const value of droppedDoiLinks(row.doi_related_resources)) {
         droppedLinks.push({ igsn: igsn.data, value });
       }
-      const location = locationColumns(parsed.data.location);
-      if (hasLocationData(location)) locationByIgsn.set(igsn.data, location);
+      const columns = locationColumns(parsed.data.location);
+      if (hasLocationData(columns))
+        locationByIgsn.set(igsn.data, {
+          columns,
+          verticalPositions: parsed.data.location?.verticalPositions ?? [],
+        });
       batch.push(toSampleRow(row, parsed.data, igsn.data));
       if (batch.length >= BATCH_SIZE) await flush();
     }

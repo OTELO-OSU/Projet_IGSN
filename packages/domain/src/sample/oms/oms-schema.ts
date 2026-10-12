@@ -132,7 +132,10 @@ const omsSamplePropertiesSchema = z.object({
     .string()
     .meta({ description: "Free-text description of the collection place." })
     .optional(),
-  verticalExtent: coreVerticalExtentSchema.optional(),
+  verticalExtent: z
+    .array(coreVerticalExtentSchema)
+    .meta({ description: "Vertical extents the sample was collected over." })
+    .optional(),
   countryCode: z
     .string()
     .meta({ description: "Country the sample was collected in." })

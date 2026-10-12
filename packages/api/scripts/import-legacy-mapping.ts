@@ -1,3 +1,4 @@
+import type { VerticalPosition } from "@projet-igsn/domain/sample/location/model";
 import type { CreateSampleRelation } from "@projet-igsn/domain/sample/relation/model";
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
@@ -363,10 +364,6 @@ const METRE_FACTOR_BY_LEGACY_UNIT: Record<string, number> = {
   km: 1000,
 };
 
-type Vertical = NonNullable<
-  NonNullable<CreateSample["location"]>["position"]
->["vertical"];
-
 function metreFactor(value: string | null): number | undefined {
   return METRE_FACTOR_BY_LEGACY_UNIT[value?.trim().toLowerCase() ?? ""];
 }
@@ -375,38 +372,31 @@ function metreFactor(value: string | null): number | undefined {
 function toPositiveRange(low: number, high: number) {
   if (high <= 0)
     return {
-      min: Math.abs(high),
-      max: Math.abs(low),
+      start: Math.abs(high),
+      end: Math.abs(low),
       reference: "bathymetry",
     } as const;
-  if (low >= 0) return { min: low, max: high, reference: "elevation" } as const;
-  return { min: 0, max: Math.max(-low, high), reference: "other" } as const;
+  if (low >= 0)
+    return { start: low, end: high, reference: "elevation" } as const;
+  return { start: 0, end: Math.max(-low, high), reference: "other" } as const;
 }
 
-export function mapVertical(
-  row: LegacyRow,
-  type: "point" | "area",
-): Vertical | null {
+export function mapVertical(row: LegacyRow): VerticalPosition | null {
   const landFactor = metreFactor(row.elevation_unit);
   const land = parseNumber(row.elevation);
   if (landFactor && Number.isFinite(land)) {
     const landEnd = parseNumber(row.elevation_end);
     const end = Number.isFinite(landEnd) ? landEnd : land;
-    const { min, max, reference } = toPositiveRange(
+    return toPositiveRange(
       Math.min(land, end) * landFactor,
       Math.max(land, end) * landFactor,
     );
-    return type === "point"
-      ? { position: min, reference }
-      : { min, max, reference };
   }
   const bathyFactor = metreFactor(row.bathy_unit);
   const bathy = parseNumber(row.bathy);
   if (bathyFactor && Number.isFinite(bathy)) {
     const depth = Math.abs(bathy * bathyFactor);
-    return type === "point"
-      ? { position: depth, reference: "bathymetry", system: "msl" }
-      : { min: depth, max: depth, reference: "bathymetry", system: "msl" };
+    return { start: depth, end: depth, reference: "bathymetry", system: "msl" };
   }
   return null;
 }
@@ -428,8 +418,6 @@ function mapPosition(row: LegacyRow): Position | null {
     inLongitude(longitudeEnd) &&
     inLatitude(latitudeEnd) &&
     (longitudeEnd !== row.longitude || latitudeEnd !== row.latitude);
-  const vertical = mapVertical(row, isArea ? "area" : "point");
-  const verticalPart = vertical ? { vertical } : {};
   if (isArea) {
     return {
       type: "area",
@@ -437,14 +425,12 @@ function mapPosition(row: LegacyRow): Position | null {
       eastLongitude: longitudeEnd,
       southLatitude: Math.min(row.latitude, latitudeEnd),
       northLatitude: Math.max(row.latitude, latitudeEnd),
-      ...verticalPart,
     };
   }
   return {
     type: "point",
     longitude: row.longitude,
     latitude: row.latitude,
-    ...verticalPart,
   };
 }
 
@@ -491,8 +477,10 @@ function mapLocation(row: LegacyRow): CreateSample["location"] | null {
   const localityName = clean(row.location_text);
   const localityDescription =
     clean(row.locality_description) ?? clean(row.location_description);
+  const vertical = position ? mapVertical(row) : null;
   const location = {
     ...(position ? { position } : {}),
+    ...(vertical ? { verticalPositions: [vertical] } : {}),
     ...(country ? { region: { kind: "country" as const, country } } : {}),
     ...(navigationType ? { navigationType } : {}),
     ...(localityName ? { localityName } : {}),

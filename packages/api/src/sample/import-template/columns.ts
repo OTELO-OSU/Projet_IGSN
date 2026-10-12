@@ -62,6 +62,7 @@ export const SHEETS = {
   elementsOfInterest: "Elements of interest",
   storageConditions: "Storage conditions",
   processSteps: "Process steps",
+  verticalPositions: "Vertical positions",
   vocabularies: "Vocabularies",
 } as const;
 
@@ -185,29 +186,14 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
     field("Position type", "location.position.type", "position_type"),
     field("Longitude", "location.position.longitude"),
     field("Latitude", "location.position.latitude"),
-    field("Vertical position", "location.position.vertical.position"),
     field("West longitude", "location.position.westLongitude"),
     field("South latitude", "location.position.southLatitude"),
-    field("Minimum vertical position", "location.position.vertical.min"),
     field("East longitude", "location.position.eastLongitude"),
     field("North latitude", "location.position.northLatitude"),
-    field("Maximum vertical position", "location.position.vertical.max"),
     field("Start longitude", "location.position.startLongitude"),
     field("Start latitude", "location.position.startLatitude"),
-    field("Start vertical position", "location.position.vertical.start"),
     field("End longitude", "location.position.endLongitude"),
     field("End latitude", "location.position.endLatitude"),
-    field("End vertical position", "location.position.vertical.end"),
-    field(
-      "Vertical reference",
-      "location.position.vertical.reference",
-      "vertical_reference",
-    ),
-    field(
-      "Vertical reference system",
-      "location.position.vertical.system",
-      "vertical_reference_system",
-    ),
     field("Navigation type", "location.navigationType", "navigation_type"),
     {
       header: "Region (level 1)",
@@ -443,6 +429,22 @@ const PROCESS_STEP_COLUMNS: readonly Column[] = marked([
   ]),
 ]);
 
+const VERTICAL_POSITION = "location.verticalPositions";
+
+const VERTICAL_POSITION_COLUMNS: readonly Column[] = marked([
+  ...KEY_COLUMNS,
+  ...grouped("Location", [
+    field("Reference", `${VERTICAL_POSITION}.reference`, "vertical_reference"),
+    field(
+      "Reference system",
+      `${VERTICAL_POSITION}.system`,
+      "vertical_reference_system",
+    ),
+    field("Minimum or start (m)", `${VERTICAL_POSITION}.start`),
+    field("Maximum or end (m)", `${VERTICAL_POSITION}.end`),
+  ]),
+]);
+
 export const CHILD_SHEETS: readonly {
   name: string;
   columns: readonly Column[];
@@ -480,6 +482,7 @@ export const CHILD_SHEETS: readonly {
   ),
   { name: SHEETS.storageConditions, columns: STORAGE_CONDITION_COLUMNS },
   { name: SHEETS.processSteps, columns: PROCESS_STEP_COLUMNS },
+  { name: SHEETS.verticalPositions, columns: VERTICAL_POSITION_COLUMNS },
 ];
 
 export const DATA_SHEETS: readonly {

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted, amended four times: the 1:1 `location` table became columns on `sample` (`type` renamed `location_type`), `geom` became planar `geometry` instead of `geography`, the position union gained a third `line` shape with the signed elevation range replaced by a non-negative vertical block, and the columns moved back off `sample` into a shared `location` table (2026-09-08, sub-samples). The live definition is the latest migration in `packages/api/migrations/`. The PostGIS, planar-geometry and raw-coordinate decisions stand unchanged.
+Accepted, amended five times (the fifth, ticket 354: the vertical block became a location-level `verticalPositions` list, stored in `location_vertical_position`): the 1:1 `location` table became columns on `sample` (`type` renamed `location_type`), `geom` became planar `geometry` instead of `geography`, the position union gained a third `line` shape with the signed elevation range replaced by a non-negative vertical block, and the columns moved back off `sample` into a shared `location` table (2026-09-08, sub-samples). The live definition is the latest migration in `packages/api/migrations/`. The PostGIS, planar-geometry and raw-coordinate decisions stand unchanged.
 
 ## Context
 
@@ -31,11 +31,10 @@ Planar geometry matches what the map draws, a Leaflet rectangle on Web Mercator 
 
 ```
 location = {
-  position?:  { type:"point", longitude, latitude, vertical?:{ position, reference, system } }
-            | { type:"area",  westLongitude, eastLongitude, southLatitude, northLatitude,
-                              vertical?:{ min, max, reference, system } }
-            | { type:"line",  startLongitude, startLatitude, endLongitude, endLatitude,
-                              vertical?:{ start, end, reference, system } }
+  position?:  { type:"point", longitude, latitude }
+            | { type:"area",  westLongitude, eastLongitude, southLatitude, northLatitude }
+            | { type:"line",  startLongitude, startLatitude, endLongitude, endLatitude }
+  verticalPositions?: { reference, system, start, end }[]   // max 6, one per reference
   region?:    { kind:"country", country } | { kind:"ocean", oceanSea }
   navigationType?
   localityName?
@@ -43,7 +42,15 @@ location = {
 }
 ```
 
-`position` is an optional `z.discriminatedUnion("type", ...)`. The vertical block is always a non-negative value in metres, with a shared `reference` (elevation, depth below ground, depth below sea floor, bathymetry, core depth, other) required once present and an optional reference `system` (amended 2026-08-31); the sign that used to live on the value now lives in `reference`. A point carries a single `position`, an area a `min`/`max` range, a line a `start`/`end` pair. Bounds are plain `z.number()`, decimals accepted since readings are not always whole units (amended 2026-08-05), stored in `double precision` columns, a native range type being unsound when the reference system varies per row. Cross-field coherence (`north >= south`, vertical `min <= max`) lives in a `superRefine` on `locationSchema`.
+`position` is an optional `z.discriminatedUnion("type", ...)`. Each vertical entry is a non-negative value in metres, with a `reference` (elevation, depth below ground, depth below sea floor, bathymetry, core depth, other) required once present and an optional reference `system` (amended 2026-08-31); the sign that used to live on the value now lives in `reference`.
+
+- **Location-level list (amended, ticket 354)**: `verticalPositions` replaces `position.vertical`, up to 6 entries, one per reference, and needs a position.
+- Every entry holds `start` and `end`: a point's single value is `start === end`, with an "Interval" switch for a range, an area needs `start <= end`, and a line is unordered.
+- Each incomplete entry raises its own indexed `vertical_position_incomplete` blocker at `["location","verticalPositions"]`.
+- Storage is the `location_vertical_position` table (`location_id` FK cascade, `reference`, `system`, `start_value`, `end_value`, unique `(location_id, reference)`), so sub-samples inherit the entries through the shared `location` row.
+- The migration `20261012111326-location-vertical-positions` copies each old datum as the first entry then drops the 7 vertical columns, its `down` lossy.
+- Bounds are plain `z.number()`, decimals accepted since readings are not always whole units (amended 2026-08-05), stored in `double precision` columns, a native range type being unsound when the reference system varies per row.
+- Cross-field coherence (`north >= south`, vertical `start <= end`) lives in a `superRefine` on `locationSchema`.
 
 **Vocabularies stay codes** per the i18n rule: ISO 3166-1 alpha-2 countries localized by native `Intl.DisplayNames` (no ~240-key label map, no dependency) with an English fallback for retired entries CLDR cannot resolve; a bespoke `snake_case` ocean/sea list with a generated label map, no ISO standard existing; SESAR navigation types stored verbatim, being language-neutral acronyms, so the label is the code; a small enum for the vertical reference (elevation, depth below ground, depth below sea floor, bathymetry, core depth, other); and a 17-value EPSG vertical reference system enum, replacing the earlier 3-value vertical datum. `msl` is kept as a code for compatibility with existing rows; the earlier `wgs84`/`grs80` fold to `unknown`.
 

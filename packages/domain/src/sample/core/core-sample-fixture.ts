@@ -45,16 +45,19 @@ export const RESEARCH_PROJECT_SAMPLE: Sample = {
       type: "point",
       longitude: 6.18,
       latitude: 48.69,
-      vertical: {
-        position: 120,
-        reference: "depth_below_ground",
-        system: "ngf_ign69",
-      },
     },
     region: { kind: "country", country: "FR" },
     navigationType: "GPS",
     localityName: "Nancy quarry",
     localityDescription: "Northern face of the quarry",
+    verticalPositions: [
+      {
+        reference: "depth_below_ground",
+        system: "ngf_ign69",
+        start: 120,
+        end: 120,
+      },
+    ],
   },
   description: {
     collectionDate: {
@@ -205,17 +208,14 @@ export const COLLECTION_SPECIMEN: Sample = {
       eastLongitude: -10,
       southLatitude: 30,
       northLatitude: 40,
-      vertical: {
-        min: 1000,
-        max: 2000,
-        reference: "bathymetry",
-        system: "msl",
-      },
     },
     region: { kind: "ocean", oceanSea: "north_atlantic_ocean" },
     navigationType: "USBL",
     localityName: "Mid Atlantic ridge",
     localityDescription: null,
+    verticalPositions: [
+      { reference: "bathymetry", system: "msl", start: 1000, end: 2000 },
+    ],
   },
   description: {
     collectionDate: {
@@ -290,17 +290,14 @@ export const LINE_SAMPLE: Sample = {
       startLatitude: 30,
       endLongitude: -10,
       endLatitude: 40,
-      vertical: {
-        start: 1200,
-        end: 1500,
-        reference: "bathymetry",
-        system: "other_epsg",
-      },
     },
     region: { kind: "ocean", oceanSea: "north_atlantic_ocean" },
     navigationType: "USBL",
     localityName: "Mid Atlantic ridge",
     localityDescription: null,
+    verticalPositions: [
+      { reference: "bathymetry", system: "other_epsg", start: 1200, end: 1500 },
+    ],
   },
 };
 

@@ -148,15 +148,17 @@ describe("toCoreSample", () => {
     expect(
       toCoreSample(RESEARCH_PROJECT_SAMPLE, FRONTEND_URL).production.location
         ?.verticalExtent,
-    ).toEqual({
-      minimum: {
-        value: 120,
-        unitCode: "m",
-        reference: "depthBelowGround",
-        verticalDatum: "EPSG:5720",
-        positiveDirection: "down",
+    ).toEqual([
+      {
+        minimum: {
+          value: 120,
+          unitCode: "m",
+          reference: "depthBelowGround",
+          verticalDatum: "EPSG:5720",
+          positiveDirection: "down",
+        },
       },
-    });
+    ]);
   });
 
   it("should convert a pressure in kbar to bar", () => {

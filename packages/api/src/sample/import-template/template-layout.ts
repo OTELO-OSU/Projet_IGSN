@@ -31,6 +31,27 @@ function headerNumbers(sheet: ExcelJS.Worksheet): Map<string, number[]> {
   return numbers;
 }
 
+const MOVED_VERTICAL_HEADERS = [
+  "Vertical position",
+  "Minimum vertical position",
+  "Maximum vertical position",
+  "Start vertical position",
+  "End vertical position",
+  "Vertical reference",
+  "Vertical reference system",
+];
+
+const movedVerticalIssues = (sheet: ExcelJS.Worksheet): ImportIssue[] => {
+  const numbers = headerNumbers(sheet);
+  return MOVED_VERTICAL_HEADERS.filter((header) =>
+    numbers.has(normalisedHeader(header)),
+  ).map((column) => ({
+    sheet: SHEETS.samples,
+    column,
+    code: "vertical_columns_moved",
+  }));
+};
+
 type IsMandatory = (sheet: string, column: Column) => boolean;
 
 type DataSheet = { name: string; columns: readonly Column[] };
@@ -78,7 +99,8 @@ export function templateLayout(
   layout: TemplateLayout;
   issues: ImportIssue[];
 } {
-  if (book.getWorksheet(SHEETS.samples) === undefined) {
+  const samples = book.getWorksheet(SHEETS.samples);
+  if (samples === undefined) {
     return {
       layout: [],
       issues: [{ sheet: SHEETS.samples, code: "missing_sheet" }],
@@ -92,6 +114,9 @@ export function templateLayout(
   });
   return {
     layout: present.map(({ name, columns }) => ({ name, columns })),
-    issues: present.flatMap((sheet) => sheet.issues),
+    issues: [
+      ...movedVerticalIssues(samples),
+      ...present.flatMap((sheet) => sheet.issues),
+    ],
   };
 }

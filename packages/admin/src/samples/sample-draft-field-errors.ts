@@ -4,8 +4,6 @@ import {
   publishBlockerSchema,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
-import type { LocationDraft } from "#/samples/compose-location.ts";
-
 import { m } from "#/paraglide/messages.js";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 
@@ -32,17 +30,7 @@ const MINERAL_CLASSIFICATION_PATH = /^mineralClassifications\.(\d+)(\.\w+)?$/;
 
 const RELATION_REQUIRED_CODES = ["invalid_type", "invalid_value", "too_small"];
 
-const VERTICAL_PREFIX = "location.position.vertical.";
-
-const VERTICAL_FIELDS: Record<string, keyof LocationDraft> = {
-  position: "verticalPosition",
-  min: "verticalPositionMin",
-  max: "verticalPositionMax",
-  start: "startVerticalPosition",
-  end: "endVerticalPosition",
-  reference: "verticalReference",
-  system: "verticalReferenceSystem",
-};
+const VERTICAL_VALUE_PATH = /^location\.verticalPositions\.\d+\.(start|end)$/;
 
 const LONGITUDE_PATH = /^location\.position\.\w*longitude$/i;
 const LATITUDE_PATH = /^location\.position\.\w*latitude$/i;
@@ -57,10 +45,6 @@ const draftFieldName = (issuePath: string): string => {
   const mineral = MINERAL_CLASSIFICATION_PATH.exec(issuePath);
   if (mineral) return `mineralClassifications[${mineral[1]}].path`;
   const path = issuePath.replace(ARRAY_INDEX, "[$1].");
-  if (path.startsWith(VERTICAL_PREFIX)) {
-    const leaf = path.slice(VERTICAL_PREFIX.length);
-    return `location.${VERTICAL_FIELDS[leaf] ?? leaf}`;
-  }
   if (path.startsWith("location.position."))
     return `location.${path.slice("location.position.".length)}`;
   if (path.startsWith("location.region")) return "location.regionPath";
@@ -139,7 +123,7 @@ function issueMessage(path: string, issue: DraftIssue): string {
   if (MINERAL_CLASSIFICATION_PATH.test(path) && issue.code === "invalid_type") {
     return m.field_relation_required();
   }
-  if (issue.code === "too_small" && path.startsWith(VERTICAL_PREFIX)) {
+  if (issue.code === "too_small" && VERTICAL_VALUE_PATH.test(path)) {
     return m.field_vertical_position_negative();
   }
   if (issue.code === "too_big" || issue.code === "too_small") {

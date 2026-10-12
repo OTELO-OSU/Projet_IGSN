@@ -34,7 +34,7 @@ Refusing materials: `synthetic_rock_mineral`, through the shared `isSyntheticMat
 Whether publishing needs that location is a second predicate, `requiresLocation(provenanceStatus)` (`domain/sample/location/requires-location.ts`), since 2026-09-04:
 
 - True unless the scientific context is a `collection_specimen` ([[scientific-context]]); an unset provenance still requires a location.
-- Read by `samplePublishBlockers` for `location_position_missing` and by the admin Location tab, where one `form.Subscribe` in `LocationFields` toggles the `*` marker on the type combobox and the coordinate fields. Vertical fields keep their own sibling gate.
+- Read by `samplePublishBlockers` for `location_position_missing` and by the admin Location tab, where one `form.Subscribe` in `LocationFields` toggles the `*` marker on the type combobox and the coordinate fields. The `verticalPositions` list keeps its own sibling gate (it needs a position) and raises one indexed `vertical_position_incomplete` per entry.
 - A research project sample therefore needs a position (point, area or line) to publish; a collection specimen publishes with or without one.
 
 - A synthetic material trades the Location tab for the Synthetic details tab, the two gates reading the same predicate.

@@ -14,12 +14,7 @@ export const PUBLISH_BLOCKER_PATH: Record<PublishBlocker, (string | number)[]> =
     numeric_age_reference_missing: ["age", "numericAgeYearsUnit"],
     numeric_age_range_incomplete: ["age"],
     geological_age_range_incomplete: ["age"],
-    vertical_position_incomplete: [
-      "location",
-      "position",
-      "vertical",
-      "reference",
-    ],
+    vertical_position_incomplete: ["location", "verticalPositions"],
     existence_status_missing: ["existenceStatus"],
     availability_status_missing: ["availabilityStatus"],
     scientific_context_missing: ["scientificContext", "provenanceStatus"],

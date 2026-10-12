@@ -125,16 +125,16 @@ The "Comment" column is mapping notes, written for a reviewer of the mapping rat
 
 ### Location (`production.location`)
 
-| Our field                                      | Core field                                         | Comment                                                                                                                |
-| ---------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `location.position.*`                          | `geometry`                                         | Point / Polygon (5-position ring) / LineString (2 positions); west > east dateline crossing kept as written (ADR 0014) |
-| (constant)                                     | `crs`                                              | `http://www.opengis.net/def/crs/OGC/1.3/CRS84`                                                                         |
-| `location.position.vertical.*`                 | `verticalExtent.minimum`/`.maximum`                | point maps to `minimum` alone; unit always `"m"`                                                                       |
-| `location.position.vertical.reference`         | `verticalExtent.*.reference`, `.positiveDirection` | snake to camel; `elevation -> up`, every depth reference -> `down`, `other` omitted                                    |
-| `location.position.vertical.system`            | `verticalExtent.*.verticalDatum`                   | `EPSG:<code>` from `EPSG_BY_VERTICAL_SYSTEM`; `other_epsg`/`local`/`unknown` emit the code itself                      |
-| `location.region.country`/`.oceanSea`          | `countryCodes[0]`/`oceanOrSea`                     | mutually exclusive                                                                                                     |
-| `location.navigationType`                      | `navigationMethod`                                 | Concept `otelo:navigation-type`; requires a geometry                                                                   |
-| `location.localityName`/`.localityDescription` | `placeNames[0]`/`locationDescription`              |                                                                                                                        |
+| Our field                                      | Core field                                           | Comment                                                                                                                |
+| ---------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `location.position.*`                          | `geometry`                                           | Point / Polygon (5-position ring) / LineString (2 positions); west > east dateline crossing kept as written (ADR 0014) |
+| (constant)                                     | `crs`                                                | `http://www.opengis.net/def/crs/OGC/1.3/CRS84`                                                                         |
+| `location.verticalPositions[].start`/`.end`    | `verticalExtent[].minimum`/`.maximum`                | a point's single value maps to `minimum` alone; unit always `"m"`                                                      |
+| `location.verticalPositions[].reference`       | `verticalExtent[].*.reference`, `.positiveDirection` | snake to camel; `elevation -> up`, every depth reference -> `down`, `other` omitted                                    |
+| `location.verticalPositions[].system`          | `verticalExtent[].*.verticalDatum`                   | `EPSG:<code>` from `EPSG_BY_VERTICAL_SYSTEM`; `other_epsg`/`local`/`unknown` emit the code itself                      |
+| `location.region.country`/`.oceanSea`          | `countryCodes[0]`/`oceanOrSea`                       | mutually exclusive                                                                                                     |
+| `location.navigationType`                      | `navigationMethod`                                   | Concept `otelo:navigation-type`; requires a geometry                                                                   |
+| `location.localityName`/`.localityDescription` | `placeNames[0]`/`locationDescription`                |                                                                                                                        |
 
 Core's "at least one of geometry / verticalExtent / region" is not enforced (deviation). A sub-sample created with a sole parent must not send `location`, inherited from that parent (`location_inherited_from_parent` at `production.location`); two parents force a synthetic material, which carries no location at all.
 
@@ -276,5 +276,7 @@ Every controlled vocabulary (nature, texture, the four hierarchies, ROR/OSU/labo
 - `relations[].targetResourceType` is the PascalCase of our 34 values, not a Core-defined list.
 - `responsibility[].roles` only accepts our 10 roles (Creator, Registrant, Collector, ChiefScientist, HostingInstitution, SampleOwner, Researcher, ProjectManager, ProjectMember, DataManager); any other Core role is refused. `Researcher`, `ProjectManager`, `ProjectMember`, `DataManager` and `SampleOwner` are all in the Core v0.11.0 controlled vocabulary, so this is not itself a deviation.
 - Core's "at least one of geometry / verticalExtent / region" on `production.location` is not enforced.
+- `production.location.verticalExtent` is an array (one entry per `location.verticalPositions` entry), where Core defines a single object, so a `/service` client sending the old object gets a 400.
+- A point's single value (`start === end`) is emitted as `minimum` alone, and a point entry with `minimum` alone is read back as a single value.
 - At most two `IsDerivedFrom` relations (two parents) are accepted, though Core does not itself limit it.
 - `includeSubSamples`, the public `GET /samples` toggle that excludes a sub-sample by default, is deliberately not part of the Core filter vocabulary: `/service` keeps returning every published sample, sub-samples included; see ADR [0045](adr/0045-sub-sample-collection-date-and-public-list-default.md).

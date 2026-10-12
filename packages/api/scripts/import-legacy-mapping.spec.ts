@@ -359,9 +359,11 @@ describe("mapVertical", () => {
   ])(
     "should convert a land elevation in %s to metres",
     (elevation_unit, elevation, expected) => {
-      expect(
-        mapVertical(legacyRow({ elevation, elevation_unit }), "area"),
-      ).toEqual({ min: expected, max: expected, reference: "elevation" });
+      expect(mapVertical(legacyRow({ elevation, elevation_unit }))).toEqual({
+        start: expected,
+        end: expected,
+        reference: "elevation",
+      });
     },
   );
 
@@ -373,62 +375,38 @@ describe("mapVertical", () => {
           elevation_end: "1300.25",
           elevation_unit: "m",
         }),
-        "area",
       ),
-    ).toEqual({ min: 1200.5, max: 1300.25, reference: "elevation" });
+    ).toEqual({ start: 1200.5, end: 1300.25, reference: "elevation" });
   });
-
-  it("should fold a land elevation range to its low bound for a point", () => {
-    expect(
-      mapVertical(
-        legacyRow({
-          elevation: "1200.5",
-          elevation_end: "1300.25",
-          elevation_unit: "m",
-        }),
-        "point",
-      ),
-    ).toEqual({ position: 1200.5, reference: "elevation" });
-  });
-
-  it.each([
-    ["point", { position: 1200, reference: "bathymetry", system: "msl" }],
-    ["area", { min: 1200, max: 1200, reference: "bathymetry", system: "msl" }],
-  ] as const)(
-    "should map bathymetry as a positive position in metres below mean sea level for a %s",
-    (type, expected) => {
-      expect(
-        mapVertical(legacyRow({ bathy: "1.2", bathy_unit: "km" }), type),
-      ).toEqual(expected);
-    },
-  );
 
   it.each([
     [
       "a land elevation below sea level",
       { elevation: "-395", elevation_unit: "m" },
-      { min: 395, max: 395, reference: "bathymetry" },
+      { start: 395, end: 395, reference: "bathymetry" },
     ],
     [
       "a land elevation range straddling sea level",
       { elevation: "-50", elevation_end: "100", elevation_unit: "m" },
-      { min: 0, max: 100, reference: "other" },
+      { start: 0, end: 100, reference: "other" },
+    ],
+    [
+      "a bathymetry in km",
+      { bathy: "1.2", bathy_unit: "km" },
+      { start: 1200, end: 1200, reference: "bathymetry", system: "msl" },
     ],
     [
       "a negative bathymetry",
       { bathy: "-1200", bathy_unit: "m" },
-      { min: 1200, max: 1200, reference: "bathymetry", system: "msl" },
+      { start: 1200, end: 1200, reference: "bathymetry", system: "msl" },
     ],
   ])("should map %s as a positive distance", (_label, row, expected) => {
-    expect(mapVertical(legacyRow(row), "area")).toEqual(expected);
+    expect(mapVertical(legacyRow(row))).toEqual(expected);
   });
 
   it("should drop an unknown elevation unit", () => {
     expect(
-      mapVertical(
-        legacyRow({ elevation: "5", elevation_unit: "Outcrop" }),
-        "point",
-      ),
+      mapVertical(legacyRow({ elevation: "5", elevation_unit: "Outcrop" })),
     ).toBe(null);
   });
 });
@@ -531,6 +509,41 @@ describe("toCreateSample", () => {
     const result = createSampleSchema.safeParse(toCreateSample(row));
     expect(result.success).toBe(true);
   });
+
+  it.each([
+    [
+      "point",
+      { latitude: 45, longitude: 3 },
+      { type: "point", longitude: 3, latitude: 45 },
+    ],
+    [
+      "area",
+      { latitude: 45, longitude: 3, latitude_end: 46, longitude_end: 4 },
+      {
+        type: "area",
+        westLongitude: 3,
+        eastLongitude: 4,
+        southLatitude: 45,
+        northLatitude: 46,
+      },
+    ],
+  ])(
+    "should carry the elevation range as one location-level vertical position on a %s",
+    (_type, coordinates, position) => {
+      const row = legacyRow({
+        ...coordinates,
+        elevation: "1200.5",
+        elevation_end: "1300.25",
+        elevation_unit: "m",
+      });
+      expect(toCreateSample(row).location).toEqual({
+        position,
+        verticalPositions: [
+          { start: 1200.5, end: 1300.25, reference: "elevation" },
+        ],
+      });
+    },
+  );
 
   it("should default nature to inapplicable and still validate a bare row", () => {
     const result = createSampleSchema.safeParse(toCreateSample(legacyRow()));

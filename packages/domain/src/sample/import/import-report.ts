@@ -25,6 +25,7 @@ export const importIssueCodeSchema = z.enum([
   "series_in_lineage",
   "parent_cycle",
   "location_inherited_from_parent",
+  "vertical_columns_moved",
   "collection_date_inherited_from_parent",
   "process_steps_without_parent",
   "unknown_sample",

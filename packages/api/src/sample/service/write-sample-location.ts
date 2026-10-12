@@ -7,6 +7,7 @@ import type { DB } from "../../db.ts";
 import { type Transactional } from "../../transaction.ts";
 import { deleteOrphanLocations } from "./delete-orphan-locations.ts";
 import { hasParent } from "./has-parent.ts";
+import { replaceLocationVerticalPositions } from "./replace-location-vertical-positions.ts";
 import { hasLocationData, locationColumns } from "./to-location.ts";
 
 function setLocationId(
@@ -52,6 +53,11 @@ export async function writeSampleLocation(
       .set(columns)
       .where("id", "=", locationId)
       .execute();
+    await replaceLocationVerticalPositions(
+      db,
+      locationId,
+      location?.verticalPositions ?? [],
+    );
     return;
   }
   const id = uuidv7();
@@ -59,5 +65,10 @@ export async function writeSampleLocation(
     .insertInto("location")
     .values({ id, ...columns })
     .execute();
+  await replaceLocationVerticalPositions(
+    db,
+    id,
+    location?.verticalPositions ?? [],
+  );
   await setLocationId(db, sampleId, id);
 }

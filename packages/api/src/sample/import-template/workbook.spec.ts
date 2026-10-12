@@ -582,6 +582,7 @@ describe("customized import template workbook", () => {
       SHEETS.rightsHolders,
       SHEETS.elementsOfInterest,
       SHEETS.storageConditions,
+      SHEETS.verticalPositions,
       SHEETS.vocabularies,
     ]);
   });

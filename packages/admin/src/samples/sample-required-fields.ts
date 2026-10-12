@@ -49,13 +49,19 @@ const ageRangeFields = (
     ? []
     : [filled(values, `age.${bound}Min`), filled(values, `age.${bound}Max`)];
 
-const verticalFields = (values: SampleDraft): RequiredField[] => {
-  const type = values.location.type;
-  if (!isLocated(values) || !type) return [];
+const verticalFields = (
+  values: SampleDraft,
+  index: number | undefined,
+): RequiredField[] => {
+  const { type, verticalPositions } = values.location;
+  const entry = index === undefined ? undefined : verticalPositions[index];
+  if (!isLocated(values) || !entry) return [];
+  const prefix = `location.verticalPositions[${index}]`;
   return [
-    "location.verticalReference",
-    ...ROWS[type].vertical.map(([key]) => `location.${key}`),
-  ].map((name) => filled(values, name));
+    "reference",
+    "start",
+    ...(type === "point" && entry.start === entry.end ? [] : ["end"]),
+  ].map((leaf) => filled(values, `${prefix}.${leaf}`));
 };
 
 const contactField = (values: SampleDraft, typedName: string): string => {
@@ -79,7 +85,7 @@ function requirementFields(
     case "geological_age_range_incomplete":
       return ageRangeFields(values, "geologicalAge");
     case "vertical_position_incomplete":
-      return verticalFields(values);
+      return verticalFields(values, index);
     case "additional_role_firstname_missing":
     case "additional_role_lastname_missing":
       return one(
@@ -173,7 +179,7 @@ export function saveRequiredFields(values: SampleDraft): LabeledField[] {
         }))
       : []),
     ...(isLocated(values) && location.type
-      ? ROWS[location.type].coordinates
+      ? ROWS[location.type]
           .flat()
           .map(([key, label]) => labeled(values, `location.${key}`, label))
       : []),

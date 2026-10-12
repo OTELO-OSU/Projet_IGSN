@@ -24,13 +24,6 @@ type LocationTable = {
   line_start_latitude: number | null;
   line_end_longitude: number | null;
   line_end_latitude: number | null;
-  vertical_position: number | null;
-  vertical_position_min: number | null;
-  vertical_position_max: number | null;
-  line_start_vertical_position: number | null;
-  line_end_vertical_position: number | null;
-  vertical_reference: string | null;
-  vertical_reference_system: string | null;
   navigation_type: string | null;
   region_kind: string | null;
   country: string | null;
@@ -38,6 +31,15 @@ type LocationTable = {
   locality_name: string | null;
   locality_description: string | null;
   geom: Generated<string | null>;
+};
+
+type LocationVerticalPositionTable = {
+  id: string;
+  location_id: string;
+  reference: string | null;
+  system: string | null;
+  start_value: number | null;
+  end_value: number | null;
 };
 
 type SampleTable = {
@@ -342,6 +344,7 @@ type ServiceAccountManagedManualGroupTable = {
 
 export type DB = {
   location: LocationTable;
+  location_vertical_position: LocationVerticalPositionTable;
   manual_group: ManualGroupTable;
   manual_group_member: ManualGroupMemberTable;
   sample: SampleTable;

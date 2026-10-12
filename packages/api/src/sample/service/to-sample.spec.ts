@@ -302,6 +302,7 @@ describe("toSample", () => {
       ...row,
       location: {
         ...locationColumns(null),
+        vertical_positions: [],
         location_type: "point",
         point_longitude: 2.35,
         point_latitude: 48.85,

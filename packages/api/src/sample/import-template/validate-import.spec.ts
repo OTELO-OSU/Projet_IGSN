@@ -1,5 +1,6 @@
 import { RESEARCH_PROJECT_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { HEADER_ROW } from "@projet-igsn/domain/sample/import/template-header";
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 
@@ -92,6 +93,13 @@ const PROCESS_STEP_ROW = {
   "Date start": new Date(Date.UTC(2024, 5, 5)),
   "Date end": "2024-06-06",
   Description: "Sawn into three slabs",
+};
+
+const VERTICAL_ROW = {
+  "Sample #": 1,
+  Reference: "Core depth",
+  "Minimum or start (m)": 3,
+  "Maximum or end (m)": 3,
 };
 
 const withKey = (book: ExcelJS.Workbook, row: number, key: string) =>
@@ -504,6 +512,80 @@ describe("validateImport", () => {
       },
     ]);
   });
+
+  it("should read a sample's vertical positions, one per Vertical positions row", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.verticalPositions, 3, VERTICAL_ROW);
+    fill(book, SHEETS.verticalPositions, 4, {
+      "Sample #": 1,
+      Reference: "Elevation",
+      "Reference system": "MSL height (EPSG:5714) - Mean sea level",
+      "Minimum or start (m)": 0,
+      "Maximum or end (m)": 12.5,
+    });
+
+    const { issues, samples } = await validate(await bytesOf(book));
+
+    expect({
+      issues,
+      verticalPositions: samples[0]?.input.location?.verticalPositions,
+    }).toEqual({
+      issues: [],
+      verticalPositions: [
+        { reference: "core_depth", start: 3, end: 3 },
+        { reference: "elevation", system: "msl", start: 0, end: 12.5 },
+      ],
+    });
+  });
+
+  it("should place an incomplete vertical position on its Vertical positions row, Reference column", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.verticalPositions, 3, {
+      ...VERTICAL_ROW,
+      Reference: null,
+    });
+
+    expect(await issuesOf(await bytesOf(book))).toEqual([
+      {
+        sheet: SHEETS.verticalPositions,
+        row: 3,
+        column: "Reference",
+        code: "vertical_position_incomplete",
+      },
+    ]);
+  });
+
+  it("should refuse a Vertical positions row on a sub-sample, its location being inherited", async () => {
+    const book = await subSampleBook();
+    fill(book, SHEETS.verticalPositions, 3, VERTICAL_ROW);
+
+    expect(await issuesOf(await bytesOf(book))).toEqual([
+      {
+        sheet: SHEETS.verticalPositions,
+        row: 3,
+        column: "Reference",
+        value: "Core depth",
+        code: "location_inherited_from_parent",
+      },
+    ]);
+  });
+
+  it.each(["Vertical reference *", "Minimum vertical position"])(
+    "should refuse a Samples sheet still carrying the moved vertical column %s",
+    async (header) => {
+      const book = await cleanBook();
+      const sheet = sheetOf(book, SHEETS.samples);
+      sheet.getRow(HEADER_ROW).getCell(sheet.columnCount + 1).value = header;
+
+      expect(await issuesOf(await bytesOf(book))).toEqual([
+        {
+          sheet: SHEETS.samples,
+          column: header.replace(" *", ""),
+          code: "vertical_columns_moved",
+        },
+      ]);
+    },
+  );
 
   it("should still validate a template predating the Parent IGSN column", async () => {
     const book = await cleanBook();

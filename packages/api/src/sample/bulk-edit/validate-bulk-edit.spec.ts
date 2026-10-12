@@ -412,6 +412,38 @@ describe("validateBulkEdit", () => {
     30_000,
   );
 
+  pgTest.for([
+    ["exported", false],
+    ["removed", true],
+  ] as const)(
+    "should add the parent a parentless row with vertical positions names, its Vertical positions sheet %s",
+    { timeout: 30_000 },
+    async ([, isSheetRemoved], { db }) => {
+      const parent = await published(db);
+      const sample = await published(db, {
+        ...STORED,
+        location: {
+          ...STORED.location,
+          verticalPositions: [
+            { reference: "core_depth", system: null, start: 3, end: 3 },
+          ],
+        },
+      });
+      const book = await exported([sample]);
+      fill(book, SHEETS.samples, ROW, { "Parent IGSN": parent.igsn });
+      if (isSheetRemoved)
+        book.removeWorksheet(sheetOf(book, SHEETS.verticalPositions).id);
+
+      const { issues, samples } = await validated(db, book, [sample]);
+
+      expect({
+        issues,
+        parentIds: samples[0]?.input.parentIds,
+        location: samples[0]?.input.location,
+      }).toEqual({ issues: [], parentIds: [parent.id], location: undefined });
+    },
+  );
+
   pgTest.for(["itself", "its child"] as const)(
     "should refuse a parentless row naming %s as its parent",
     { timeout: 30_000 },

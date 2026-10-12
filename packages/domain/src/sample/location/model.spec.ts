@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { locationSchema } from "./model.ts";
+import { VERTICAL_REFERENCES } from "./vertical-reference.ts";
 
 describe("locationSchema", () => {
   const point = {
@@ -23,6 +24,17 @@ describe("locationSchema", () => {
     endLatitude: 46,
   };
 
+  const entry = (
+    start: number | null,
+    end: number | null,
+    reference: string | null = "elevation",
+  ) => ({
+    reference,
+    system: "msl",
+    start,
+    end,
+  });
+
   it("should parse a point position to the same value", () => {
     expect(locationSchema.parse({ position: point })).toEqual({
       position: point,
@@ -31,79 +43,8 @@ describe("locationSchema", () => {
 
   it.each<[string, unknown]>([
     ["a bare point", { position: point }],
-    [
-      "a point with a vertical position",
-      {
-        position: {
-          ...point,
-          vertical: {
-            position: 1200,
-            reference: "depth_below_sea_floor",
-            system: "msl",
-          },
-        },
-      },
-    ],
     ["an area", { position: area }],
-    [
-      "an area with a vertical range",
-      {
-        position: {
-          ...area,
-          vertical: {
-            min: 0,
-            max: 100,
-            reference: "elevation",
-            system: "ngf_ign69",
-          },
-        },
-      },
-    ],
     ["a line", { position: line }],
-    [
-      "a line with vertical endpoints",
-      {
-        position: {
-          ...line,
-          vertical: {
-            start: 10,
-            end: 20,
-            reference: "core_depth",
-            system: "local",
-          },
-        },
-      },
-    ],
-    [
-      "a descending line, the endpoints having no order",
-      {
-        position: {
-          ...line,
-          vertical: {
-            start: 900,
-            end: 20,
-            reference: "bathymetry",
-            system: "egm96",
-          },
-        },
-      },
-    ],
-    [
-      "a vertical position of zero",
-      { position: { ...point, vertical: { position: 0 } } },
-    ],
-    [
-      "a vertical position missing its reference and system",
-      { position: { ...point, vertical: { position: 10 } } },
-    ],
-    [
-      "a half-entered vertical range (min only)",
-      { position: { ...area, vertical: { min: 0 } } },
-    ],
-    [
-      "a fractional vertical position",
-      { position: { ...point, vertical: { position: 10.5 } } },
-    ],
     [
       "a dateline-crossing area",
       {
@@ -129,6 +70,32 @@ describe("locationSchema", () => {
     ["a navigation type", { position: point, navigationType: "GPS" }],
     ["a locality without coordinates", { localityName: "Vent field 7" }],
     ["an empty location", {}],
+    [
+      "a descending line, its endpoints having no order",
+      { position: line, verticalPositions: [entry(900, 20)] },
+    ],
+    [
+      "a point whose single value is both start and end",
+      { position: point, verticalPositions: [entry(10.5, 10.5)] },
+    ],
+    [
+      "a vertical value of zero",
+      { position: area, verticalPositions: [entry(0, 0)] },
+    ],
+    [
+      "two entries with distinct references",
+      {
+        position: point,
+        verticalPositions: [entry(0, 10), entry(5, 5, "bathymetry")],
+      },
+    ],
+    [
+      "entries without a reference or a value",
+      {
+        position: point,
+        verticalPositions: [entry(null, null, null), entry(10, null, null)],
+      },
+    ],
   ])("should accept %s", (_label, value) => {
     expect(locationSchema.safeParse(value).success).toBe(true);
   });
@@ -170,32 +137,6 @@ describe("locationSchema", () => {
       },
     ],
     [
-      "an area with a vertical min above its max",
-      {
-        position: {
-          ...area,
-          vertical: { min: 100, max: 0, reference: "elevation", system: "msl" },
-        },
-      },
-    ],
-    [
-      "a negative vertical position on a point",
-      {
-        position: {
-          ...point,
-          vertical: { position: -50, reference: "bathymetry", system: "msl" },
-        },
-      },
-    ],
-    [
-      "a negative vertical bound on an area",
-      { position: { ...area, vertical: { min: -50, max: 0 } } },
-    ],
-    [
-      "a negative vertical endpoint on a line",
-      { position: { ...line, vertical: { start: 0, end: -50 } } },
-    ],
-    [
       "a longitude out of range",
       { position: { type: "point", longitude: 200, latitude: 0 } },
     ],
@@ -207,5 +148,53 @@ describe("locationSchema", () => {
     ["an unknown position type", { position: { type: "polygon" } }],
   ])("should reject %s", (_label, value) => {
     expect(locationSchema.safeParse(value).success).toBe(false);
+  });
+
+  it.each<[string, unknown, PropertyKey[]]>([
+    [
+      "a reference used twice",
+      {
+        position: point,
+        verticalPositions: [entry(0, 10), entry(20, 30)],
+      },
+      ["verticalPositions", 1, "reference"],
+    ],
+    [
+      "an entry without a position",
+      { verticalPositions: [entry(0, 10)] },
+      ["verticalPositions", 0],
+    ],
+    [
+      "a point interval with its start above its end",
+      { position: point, verticalPositions: [entry(100, 0)] },
+      ["verticalPositions", 0, "start"],
+    ],
+    [
+      "an area with its start above its end",
+      { position: area, verticalPositions: [entry(100, 0)] },
+      ["verticalPositions", 0, "start"],
+    ],
+    [
+      "a negative vertical value",
+      { position: line, verticalPositions: [entry(0, -50)] },
+      ["verticalPositions", 0, "end"],
+    ],
+  ])("should reject %s on that entry", (_label, value, path) => {
+    expect(
+      locationSchema.safeParse(value).error?.issues.map((issue) => issue.path),
+    ).toEqual([path]);
+  });
+
+  it("should reject more entries than references before checking any entry", () => {
+    const verticalPositions = Array.from(
+      { length: VERTICAL_REFERENCES.length + 1 },
+      () => entry(0, 10),
+    );
+
+    expect(
+      locationSchema
+        .safeParse({ position: point, verticalPositions })
+        .error?.issues.map((issue) => issue.path),
+    ).toEqual([["verticalPositions"]]);
   });
 });

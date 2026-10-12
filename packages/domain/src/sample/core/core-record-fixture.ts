@@ -242,15 +242,17 @@ export const RESEARCH_PROJECT_SAMPLE_RECORD: CoreSample = {
     location: {
       geometry: { type: "Point", coordinates: [6.18, 48.69] },
       crs: "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-      verticalExtent: {
-        minimum: {
-          value: 120,
-          unitCode: "m",
-          reference: "depthBelowGround",
-          verticalDatum: "EPSG:5720",
-          positiveDirection: "down",
+      verticalExtent: [
+        {
+          minimum: {
+            value: 120,
+            unitCode: "m",
+            reference: "depthBelowGround",
+            verticalDatum: "EPSG:5720",
+            positiveDirection: "down",
+          },
         },
-      },
+      ],
       placeNames: ["Nancy quarry"],
       countryCodes: ["FR"],
       navigationMethod: concept("navigation-type", "GPS"),
@@ -408,22 +410,24 @@ const COLLECTION_SPECIMEN_RECORD: CoreSample = {
         ],
       },
       crs: "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-      verticalExtent: {
-        minimum: {
-          value: 1000,
-          unitCode: "m",
-          reference: "bathymetry",
-          verticalDatum: "EPSG:5714",
-          positiveDirection: "down",
+      verticalExtent: [
+        {
+          minimum: {
+            value: 1000,
+            unitCode: "m",
+            reference: "bathymetry",
+            verticalDatum: "EPSG:5714",
+            positiveDirection: "down",
+          },
+          maximum: {
+            value: 2000,
+            unitCode: "m",
+            reference: "bathymetry",
+            verticalDatum: "EPSG:5714",
+            positiveDirection: "down",
+          },
         },
-        maximum: {
-          value: 2000,
-          unitCode: "m",
-          reference: "bathymetry",
-          verticalDatum: "EPSG:5714",
-          positiveDirection: "down",
-        },
-      },
+      ],
       placeNames: ["Mid Atlantic ridge"],
       oceanOrSea: concept("ocean-sea", "north_atlantic_ocean"),
       navigationMethod: concept("navigation-type", "USBL"),

@@ -152,6 +152,10 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
       "The IGSN of one already published sample. Its location and collection date are inherited.",
   },
   {
+    paths: ["location.verticalPositions.end"],
+    prompt: `On a point, repeat "${headerOf("location.verticalPositions.start")}" for a single position.`,
+  },
+  {
     paths: ["localIdDescription"],
     prompt: `Only when "${headerOf("localId")}" is filled.`,
   },
@@ -193,11 +197,7 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
     condition: material(3, "isNot", (path) => !allowsLocation(path)),
   },
   {
-    paths: [
-      "location.position.longitude",
-      "location.position.latitude",
-      "location.position.vertical.position",
-    ],
+    paths: ["location.position.longitude", "location.position.latitude"],
     condition: {
       path: "location.position.type",
       match: "is",
@@ -210,8 +210,6 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
       "location.position.eastLongitude",
       "location.position.southLatitude",
       "location.position.northLatitude",
-      "location.position.vertical.min",
-      "location.position.vertical.max",
     ],
     condition: {
       path: "location.position.type",
@@ -225,8 +223,6 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
       "location.position.startLatitude",
       "location.position.endLongitude",
       "location.position.endLatitude",
-      "location.position.vertical.start",
-      "location.position.vertical.end",
     ],
     condition: {
       path: "location.position.type",

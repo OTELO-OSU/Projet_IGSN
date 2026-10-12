@@ -20,6 +20,7 @@ import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
 import { deleteOrphanLocations } from "../src/sample/service/delete-orphan-locations.ts";
+import { replaceLocationVerticalPositions } from "../src/sample/service/replace-location-vertical-positions.ts";
 import { sampleColumns } from "../src/sample/service/sample-columns.ts";
 import {
   hasLocationData,
@@ -387,6 +388,13 @@ export async function insertSamples(
   if (locations.length > 0) {
     await db.insertInto("location").values(locations).execute();
   }
+  for (const { id, location } of parsed)
+    if (location?.verticalPositions?.length)
+      await replaceLocationVerticalPositions(
+        db,
+        id,
+        location.verticalPositions,
+      );
   const located = new Set(locations.map((location) => location.id));
   const created = await db
     .insertInto("sample")

@@ -43,8 +43,8 @@ describe("sampleDraftFieldErrors", () => {
         { path: ["type"] },
         { path: ["collectionMethod"] },
         { path: ["location", "position", "longitude"] },
-        { path: ["location", "position", "vertical", "min"] },
-        { path: ["location", "position", "vertical", "system"] },
+        { path: ["location", "verticalPositions", 1, "start"] },
+        { path: ["location", "verticalPositions", 0, "system"] },
         { path: ["location", "region", "kind"] },
       ]),
     ).toEqual({
@@ -52,8 +52,8 @@ describe("sampleDraftFieldErrors", () => {
       typePath: { message: "Invalid value." },
       collectionMethodPath: { message: "Invalid value." },
       "location.longitude": { message: "Invalid value." },
-      "location.verticalPositionMin": { message: "Invalid value." },
-      "location.verticalReferenceSystem": { message: "Invalid value." },
+      "location.verticalPositions[1].start": { message: "Invalid value." },
+      "location.verticalPositions[0].system": { message: "Invalid value." },
       "location.regionPath": { message: "Invalid value." },
     });
   });
@@ -71,20 +71,23 @@ describe("sampleDraftFieldErrors", () => {
     });
   });
 
-  it("should translate a negative vertical position", () => {
-    expect(
-      sampleDraftFieldErrors([
-        {
-          path: ["location", "position", "vertical", "position"],
-          code: "too_small",
+  it.each(["start", "end"])(
+    "should translate a negative vertical %s on its entry's field",
+    (bound) => {
+      expect(
+        sampleDraftFieldErrors([
+          {
+            path: ["location", "verticalPositions", 1, bound],
+            code: "too_small",
+          },
+        ]),
+      ).toEqual({
+        [`location.verticalPositions[1].${bound}`]: {
+          message: "A vertical position must not be negative.",
         },
-      ]),
-    ).toEqual({
-      "location.verticalPosition": {
-        message: "A vertical position must not be negative.",
-      },
-    });
-  });
+      });
+    },
+  );
 
   it("should map description issues on the draft fields that produced them", () => {
     expect(

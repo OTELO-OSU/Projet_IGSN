@@ -113,6 +113,13 @@ export function sampleDetailPage(page: Page) {
       expect(
         page.getByRole("region", { name: "Declaration" }).getByText(name),
       ).toBeVisible(),
+    expectVerticalPosition: (reference: string, value: string) =>
+      expect(
+        page
+          .getByRole("term")
+          .filter({ hasText: new RegExp(`^${reference}$`) })
+          .locator("xpath=following-sibling::dd"),
+      ).toHaveText(value),
     expectMineralClassification: (name: string) =>
       expect(
         page

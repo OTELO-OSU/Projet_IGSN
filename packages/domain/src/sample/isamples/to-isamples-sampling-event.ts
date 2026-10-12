@@ -21,7 +21,7 @@ const toSamplingSite = (
 };
 
 const toElevation = (
-  extent: CoreLocation["verticalExtent"],
+  extent: NonNullable<CoreLocation["verticalExtent"]>[number] | undefined,
 ): string | undefined =>
   extent?.minimum == null
     ? undefined
@@ -40,7 +40,7 @@ const toSampleLocation = (
   return {
     latitude: point?.[1],
     longitude: point?.[0],
-    elevation: toElevation(location.verticalExtent),
+    elevation: toElevation(location.verticalExtent?.[0]),
     obfuscated: sensitiveLocation,
   };
 };

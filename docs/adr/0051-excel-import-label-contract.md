@@ -4,7 +4,10 @@ Date: 2026-09-25
 
 ## Status
 
-Accepted.
+Accepted, amended for ticket 354: the vertical position moved off the `Samples` sheet into a child "Vertical positions" sheet.
+
+- Its columns are Reference, Reference system, "Minimum or start (m)" and "Maximum or end (m)", one row per entry keyed by `Sample #`, a point's single value repeated in both value columns.
+- A workbook still carrying the old vertical headers on `Samples` is refused with `vertical_columns_moved`.
 
 ## Context
 

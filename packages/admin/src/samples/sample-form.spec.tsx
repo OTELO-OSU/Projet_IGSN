@@ -80,14 +80,26 @@ const EMPTY_AGE = {
 
 const MSL_SYSTEM = "MSL height (EPSG:5714) - Mean sea level";
 
+async function addVerticalPosition(
+  screen: Screen,
+  index: number,
+  reference = "Bathymetry",
+) {
+  await screen.getByRole("button", { name: "Add a vertical position" }).click();
+  await screen.getByRole("menuitem", { name: reference }).click();
+  return screen.getByRole("group", { name: `${index}. ${reference}` });
+}
+
 async function fillVertical(screen: Screen) {
-  await screen.getByLabelText("Vertical position").fill("100");
-  await screen.getByRole("combobox", { name: "Vertical reference *" }).click();
-  await screen.getByRole("option", { name: "Bathymetry" }).click();
-  await screen
+  const entry = await addVerticalPosition(screen, 1, "Bathymetry");
+  await entry
+    .getByRole("spinbutton", { name: "Vertical position *" })
+    .fill("100");
+  await entry
     .getByRole("combobox", { name: "Vertical reference system" })
     .click();
   await screen.getByRole("option", { name: MSL_SYSTEM }).click();
+  return entry;
 }
 
 const BASALT_TEAM = {
@@ -1371,6 +1383,22 @@ describe("SampleForm", () => {
       },
       "Location > Coordinates",
     ],
+    [
+      "a vertical position is incomplete",
+      {
+        ...publishGateBase,
+        type: "dredge",
+        material: "rock_and_sediment.mineral",
+        location: {
+          position: { type: "point", longitude: 3, latitude: 45 },
+          verticalPositions: [
+            { reference: "elevation", start: 10, end: 10 },
+            { reference: "bathymetry", start: 100 },
+          ],
+        },
+      },
+      "Location > Vertical positions > 2. Bathymetry",
+    ],
   ])(
     "should disable Save & Publish and explain in a tooltip when %s",
     async (_case, defaultValues, message) => {
@@ -1468,12 +1496,8 @@ describe("SampleForm", () => {
         name: "Basalt",
         material: "rock_and_sediment.rock",
         location: {
-          position: {
-            type: "point",
-            longitude: 3,
-            latitude: null,
-            vertical: { position: 100 },
-          },
+          position: { type: "point", longitude: 3, latitude: null },
+          verticalPositions: [{ start: 100, end: 100 }],
         } as unknown as CreateSample["location"],
         age: { ...EMPTY_AGE, numericAgeMin: 10, geologicalAgeMin: 1 },
         description: {
@@ -1944,35 +1968,157 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should save a draft vertical position without its reference or system (publish-only)", async () => {
+  it("should save a draft point vertical value as an equal start and end, without its system", async () => {
     const onSubmit = vi.fn();
     const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByLabelText("Latitude *").fill("45");
-    await screen.getByLabelText("Vertical position").fill("1200");
-
-    await expect
-      .element(screen.getByLabelText("Vertical reference *"))
-      .toBeVisible();
-    await expect
-      .element(screen.getByLabelText("Vertical reference system"))
-      .toBeVisible();
+    const entry = await addVerticalPosition(screen, 1);
+    await entry
+      .getByRole("spinbutton", { name: "Vertical position *" })
+      .fill("1200");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           location: {
-            position: {
-              type: "point",
-              longitude: 3,
-              latitude: 45,
-              vertical: { position: 1200 },
-            },
+            position: { type: "point", longitude: 3, latitude: 45 },
+            verticalPositions: [
+              { reference: "bathymetry", start: 1200, end: 1200 },
+            ],
           },
         }),
       ),
     );
+  });
+
+  it("should submit a single point value again once the interval is turned off", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderLocation("Point", onSubmit);
+    await screen.getByLabelText("Longitude *").fill("3");
+    await screen.getByLabelText("Latitude *").fill("45");
+    const entry = await addVerticalPosition(screen, 1);
+    const interval = entry.getByRole("switch", { name: "Interval" });
+    await interval.click();
+    await entry
+      .getByRole("spinbutton", { name: "Minimum vertical position *" })
+      .fill("2.1");
+    await entry
+      .getByRole("spinbutton", { name: "Maximum vertical position *" })
+      .fill("2.35");
+    await interval.click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: { type: "point", longitude: 3, latitude: 45 },
+            verticalPositions: [
+              { reference: "bathymetry", start: 2.1, end: 2.1 },
+            ],
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should leave a reference a vertical position uses out of the add menu", async () => {
+    const screen = await renderLocation("Point");
+    await addVerticalPosition(screen, 1, "Bathymetry");
+
+    await screen
+      .getByRole("button", { name: "Add a vertical position" })
+      .click();
+
+    await expect
+      .element(screen.getByRole("menuitem", { name: "Elevation" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("menuitem", { name: "Bathymetry" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should offer the reference combobox only on a stored vertical position without one", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalt",
+          location: {
+            position: { type: "point", longitude: 3, latitude: 45 },
+            verticalPositions: [
+              { start: 100, end: 100 },
+              { reference: "elevation", start: 10, end: 10 },
+            ],
+          },
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+    await screen.getByRole("tab", { name: "Location" }).click();
+
+    await expect
+      .element(
+        screen
+          .getByRole("group", { name: "1. Vertical position" })
+          .getByRole("combobox", { name: "Vertical reference *" }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen
+          .getByRole("group", { name: "2. Elevation" })
+          .getByRole("combobox", { name: "Vertical reference *" }),
+      )
+      .not.toBeInTheDocument();
+  });
+
+  it("should submit the remaining vertical position once another is removed", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderLocation("Point", onSubmit);
+    await screen.getByLabelText("Longitude *").fill("3");
+    await screen.getByLabelText("Latitude *").fill("45");
+    await addVerticalPosition(screen, 1, "Bathymetry");
+    const second = await addVerticalPosition(screen, 2, "Elevation");
+    await second
+      .getByRole("spinbutton", { name: "Vertical position *" })
+      .fill("10");
+
+    await screen
+      .getByRole("button", { name: "Remove vertical position 1" })
+      .click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: { type: "point", longitude: 3, latitude: 45 },
+            verticalPositions: [{ reference: "elevation", start: 10, end: 10 }],
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should hide the add button once there is an entry per vertical reference", async () => {
+    const screen = await renderLocation("Point");
+    for (const [index, reference] of [
+      "Elevation",
+      "Depth below ground",
+      "Depth below sea floor",
+      "Bathymetry",
+      "Core depth",
+      "Other",
+    ].entries()) {
+      await addVerticalPosition(screen, index + 1, reference);
+    }
+
+    await expect
+      .element(screen.getByRole("button", { name: "Add a vertical position" }))
+      .not.toBeInTheDocument();
   });
 
   it("should include the vertical reference and system once selected", async () => {
@@ -1987,16 +2133,15 @@ describe("SampleForm", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           location: {
-            position: {
-              type: "point",
-              longitude: 3,
-              latitude: 45,
-              vertical: {
-                position: 100,
+            position: { type: "point", longitude: 3, latitude: 45 },
+            verticalPositions: [
+              {
                 reference: "bathymetry",
                 system: "msl",
+                start: 100,
+                end: 100,
               },
-            },
+            ],
           },
         }),
       ),
@@ -2136,19 +2281,20 @@ describe("SampleForm", () => {
     const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByLabelText("Latitude *").fill("45");
-    await screen.getByLabelText("Vertical position").fill("12.5");
+    const entry = await addVerticalPosition(screen, 1);
+    await entry
+      .getByRole("spinbutton", { name: "Vertical position *" })
+      .fill("12.5");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           location: {
-            position: {
-              type: "point",
-              longitude: 3,
-              latitude: 45,
-              vertical: { position: 12.5 },
-            },
+            position: { type: "point", longitude: 3, latitude: 45 },
+            verticalPositions: [
+              { reference: "bathymetry", start: 12.5, end: 12.5 },
+            ],
           },
         }),
       ),
@@ -2162,14 +2308,15 @@ describe("SampleForm", () => {
     await screen.getByLabelText("East longitude *").fill("8");
     await screen.getByLabelText("South latitude *").fill("44");
     await screen.getByLabelText("North latitude *").fill("46");
+    const entry = await addVerticalPosition(screen, 1);
+    await entry
+      .getByRole("spinbutton", { name: "Minimum vertical position *" })
+      .fill("200");
 
     await expect
-      .element(screen.getByLabelText("Maximum vertical position"))
-      .toBeVisible();
-    await screen.getByLabelText("Minimum vertical position").fill("200");
-
-    await expect
-      .element(screen.getByLabelText("Maximum vertical position *"))
+      .element(
+        entry.getByRole("spinbutton", { name: "Maximum vertical position *" }),
+      )
       .toBeVisible();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -2183,8 +2330,8 @@ describe("SampleForm", () => {
               eastLongitude: 8,
               southLatitude: 44,
               northLatitude: 46,
-              vertical: { min: 200 },
             },
+            verticalPositions: [{ reference: "bathymetry", start: 200 }],
           },
         }),
       ),
@@ -2198,13 +2345,14 @@ describe("SampleForm", () => {
     await screen.getByLabelText("Start latitude *").fill("45");
     await screen.getByLabelText("End longitude *").fill("4");
     await screen.getByLabelText("End latitude *").fill("46");
-    await screen.getByLabelText("Start vertical position").fill("10");
-    await screen.getByLabelText("End vertical position").fill("90");
-    await screen
-      .getByRole("combobox", { name: "Vertical reference *" })
-      .click();
-    await screen.getByRole("option", { name: "Core depth" }).click();
-    await screen
+    const entry = await addVerticalPosition(screen, 1, "Core depth");
+    await entry
+      .getByRole("spinbutton", { name: "Start vertical position *" })
+      .fill("90");
+    await entry
+      .getByRole("spinbutton", { name: "End vertical position *" })
+      .fill("10");
+    await entry
       .getByRole("combobox", { name: "Vertical reference system" })
       .click();
     await screen.getByRole("option", { name: MSL_SYSTEM }).click();
@@ -2220,71 +2368,29 @@ describe("SampleForm", () => {
               startLatitude: 45,
               endLongitude: 4,
               endLatitude: 46,
-              vertical: {
-                start: 10,
-                end: 90,
-                reference: "core_depth",
-                system: "msl",
-              },
             },
+            verticalPositions: [
+              { reference: "core_depth", system: "msl", start: 90, end: 10 },
+            ],
           },
         }),
       ),
     );
   });
 
-  it("should mark the other line vertical position required once one is filled", async () => {
-    const screen = await renderLocation("Line");
-    await screen.getByLabelText("Start vertical position").fill("10");
-
-    await expect
-      .element(screen.getByLabelText("End vertical position *"))
-      .toBeVisible();
-    await expect
-      .element(screen.getByLabelText("Start vertical position"))
-      .toBeVisible();
-  });
-
-  it("should show the reference and system only once a vertical position is entered", async () => {
-    const screen = await renderLocation("Point");
-
-    await expect
-      .element(screen.getByRole("combobox", { name: "Vertical reference" }))
-      .not.toBeInTheDocument();
-
-    await fillVertical(screen);
-
-    await screen.getByLabelText("Vertical position").fill("");
-    await expect
-      .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
-      .toHaveTextContent("Bathymetry");
-    await expect
-      .element(
-        screen.getByRole("combobox", { name: "Vertical reference system" }),
-      )
-      .toHaveTextContent(MSL_SYSTEM);
-
-    await screen.getByLabelText("Vertical position").fill("100");
-    await expect
-      .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
-      .toHaveTextContent("Bathymetry");
-  });
-
   it("should keep the vertical reference and system when the location type changes", async () => {
     const screen = await renderLocation("Point");
-    await fillVertical(screen);
+    const entry = await fillVertical(screen);
 
     for (const type of ["Polygon", "Line", "Point"]) {
       await screen
         .getByRole("combobox", { name: "Type *", exact: true })
         .click();
       await screen.getByRole("option", { name: type }).click();
-      await expect
-        .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
-        .toHaveTextContent("Bathymetry");
+      await expect.element(entry).toBeVisible();
       await expect
         .element(
-          screen.getByRole("combobox", { name: "Vertical reference system" }),
+          entry.getByRole("combobox", { name: "Vertical reference system" }),
         )
         .toHaveTextContent(MSL_SYSTEM);
     }
@@ -2534,8 +2640,10 @@ const publishedResearchProjectSampleFixture: CreateSample = {
       type: "point",
       longitude: 3,
       latitude: 45,
-      vertical: { position: 800, reference: "bathymetry", system: "msl" },
     },
+    verticalPositions: [
+      { reference: "bathymetry", system: "msl", start: 800, end: 800 },
+    ],
     region: { kind: "country", country: "FR" },
     localityName: "Massif Central",
   },
@@ -2772,7 +2880,7 @@ describe("SampleForm post-publication field lock", () => {
       .toBeEnabled();
     await expect.element(screen.getByLabelText("Locality name")).toBeEnabled();
     await expect
-      .element(screen.getByLabelText("Vertical position"))
+      .element(screen.getByRole("spinbutton", { name: "Vertical position *" }))
       .toBeEnabled();
     await expect
       .element(screen.getByLabelText("Geological context description"))
