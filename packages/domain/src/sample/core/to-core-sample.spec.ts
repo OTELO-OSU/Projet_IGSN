@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import type { Sample } from "../sample.ts";
-
 import {
   FRONTEND_URL,
   RESEARCH_PROJECT_SAMPLE_RECORD,
@@ -291,35 +289,14 @@ describe("toCoreSample", () => {
     });
   });
 
-  it.each([
-    ["program", { name: "GEOLOR" }, {}],
-    [null, { name: "GEOLOR" }, {}],
-    ["campaign", { campaign: "GEOLOR" }, {}],
-    ["cruise", { campaign: "GEOLOR" }, {}],
-    ["field", {}, { samplingSite_name: "GEOLOR" }],
-    ["mission", {}, { samplingPurpose: "GEOLOR" }],
-  ] as const)(
-    "should write the name of a %s program to its Core slot",
-    (researchProgramKind, projectSlot, productionSlot) => {
-      const sample = {
-        ...RESEARCH_PROJECT_SAMPLE,
-        scientificContext: {
-          ...RESEARCH_PROJECT_SAMPLE.scientificContext,
-          researchProgramKind,
-        } as Sample["scientificContext"],
-      };
-      const { name: _name, ...project } =
-        RESEARCH_PROJECT_SAMPLE_RECORD.production.projects?.[0] ?? {};
+  it("should write the research program name to projects.0.name alone", () => {
+    const { projects, samplingSite_name, samplingPurpose } = toCoreSample(
+      RESEARCH_PROJECT_SAMPLE,
+      FRONTEND_URL,
+    ).production;
 
-      const { projects, samplingSite_name, samplingPurpose } = toCoreSample(
-        sample,
-        FRONTEND_URL,
-      ).production;
-
-      expect({ projects, samplingSite_name, samplingPurpose }).toEqual({
-        projects: [{ ...project, ...projectSlot }],
-        ...productionSlot,
-      });
-    },
-  );
+    expect({ projects, samplingSite_name, samplingPurpose }).toEqual({
+      projects: RESEARCH_PROJECT_SAMPLE_RECORD.production.projects,
+    });
+  });
 });

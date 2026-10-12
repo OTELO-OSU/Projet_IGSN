@@ -1026,6 +1026,32 @@ describe("POST /service/samples", () => {
   );
 
   pgTest(
+    "should store a research programme named in projects[0].campaign and read it back as projects[0].name",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const body = core({
+        ...COLLECTION_SPECIMEN,
+        scientificContext: RESEARCH_PROJECT_SAMPLE.scientificContext,
+      });
+      const { name, ...project } = body.production.projects![0]!;
+      // Act
+      const res = await postSample(app, {
+        ...body,
+        production: {
+          ...body.production,
+          projects: [{ ...project, campaign: name }],
+        },
+      });
+      // Assert
+      expect(res.status).toBe(201);
+      expect(
+        coreSampleSchema.parse(await res.json()).production.projects,
+      ).toEqual([{ ...project, name }]);
+    },
+  );
+
+  pgTest(
     "should refuse mineral classifications on a non-mineral sample at their Core path",
     async ({ db }) => {
       // Arrange

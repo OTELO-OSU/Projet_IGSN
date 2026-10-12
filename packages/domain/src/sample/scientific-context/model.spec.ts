@@ -229,35 +229,17 @@ describe("a write payload carries no ORCID", () => {
   });
 });
 
-describe("a research program kind says what its name names", () => {
-  it.each([
-    {
-      case: "a name and its kind",
-      input: { researchProgramName: "MD-218", researchProgramKind: "cruise" },
-    },
-    { case: "a name alone", input: { researchProgramName: "MD-218" } },
-    { case: "neither", input: {} },
-  ])("should accept $case", ({ input }) => {
+describe("a research project sample names its program", () => {
+  it("should accept a name alone", () => {
     expect(
       createScientificContextSchema.parse({
         provenanceStatus: "research_project_sample",
-        ...input,
+        researchProgramName: "MD-218",
       }),
     ).toEqual({
       provenanceStatus: "research_project_sample",
+      researchProgramName: "MD-218",
       additionalRoles: [],
-      ...input,
     });
-  });
-
-  it("should refuse a kind naming no program, on the kind", () => {
-    const result = createScientificContextSchema.safeParse({
-      provenanceStatus: "research_project_sample",
-      researchProgramKind: "cruise",
-    });
-
-    expect(result.error?.issues).toMatchObject([
-      { path: ["researchProgramKind"] },
-    ]);
   });
 });

@@ -11,8 +11,6 @@ import {
   additionalRoleLabel,
   collectionOriginLabel,
   platformTypeLabel,
-  researchProgramDescriptionLabel,
-  researchProgramNameLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
@@ -103,11 +101,11 @@ function ResearchProjectSampleRows({
       />
       <FieldRow label={m.sample_field_funding()} value={context.funding} />
       <FieldRow
-        label={researchProgramNameLabel(context.researchProgramKind)}
+        label={m.sample_field_research_program_name()}
         value={context.researchProgramName}
       />
       <FieldRow
-        label={researchProgramDescriptionLabel(context.researchProgramKind)}
+        label={m.sample_field_research_program_description()}
         value={context.researchProgramDescription}
       />
       <FieldRow

@@ -24,10 +24,7 @@ test.describe("samples bulk edit", () => {
     const detail = sampleDetailPage(page);
     await detail.goto(basalt.igsn);
     await detail.expectSample("Basalt 42 revised", basalt.igsn);
-    await detail.expectResearchProgram(
-      "Name of the campaign",
-      "Chaîne des Puys Survey",
-    );
+    await detail.expectResearchProgram("Chaîne des Puys Survey");
   });
 
   test("a researcher reads why an export with an unknown Sample # and a changed IGSN was refused", async ({

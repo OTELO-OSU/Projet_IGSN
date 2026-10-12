@@ -33,8 +33,6 @@ export const {
   provenanceStatusLabel,
   collectionOriginLabel,
   platformTypeLabel,
-  researchProgramNameLabel,
-  researchProgramDescriptionLabel,
   startingMaterialLabel,
   startingMaterialNatureLabel,
   finalProductLabel,

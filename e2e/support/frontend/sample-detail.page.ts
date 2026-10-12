@@ -143,11 +143,14 @@ export function sampleDetailPage(page: Page) {
     },
     expectAttachment: (label: string) =>
       expect(page.getByText(label, { exact: true })).toBeVisible(),
-    expectResearchProgram: (label: string, name: string) =>
+    expectResearchProgram: (name: string) =>
       expect(
         page
           .getByRole("region", { name: "Scientific context", exact: true })
-          .getByText(label, { exact: true })
+          .getByText(
+            "Name of the research program / campaign / mission / field / cruise",
+            { exact: true },
+          )
           .locator("xpath=following-sibling::dd"),
       ).toHaveText(name),
     // ponytail: hydration scrolls back to top ~1s after load, so retry until the section stays in view

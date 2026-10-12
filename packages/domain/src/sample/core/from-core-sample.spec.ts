@@ -164,13 +164,13 @@ describe("fromCoreSample", () => {
   });
 
   it.each([
-    ["projects.0.name", "program", { name: "MD-218" }, {}],
-    ["projects.0.campaign", "campaign", { campaign: "MD-218" }, {}],
-    ["samplingSite_name", "field", {}, { samplingSite_name: "MD-218" }],
-    ["samplingPurpose", "mission", {}, { samplingPurpose: "MD-218" }],
+    ["projects.0.name", { name: "MD-218" }, {}],
+    ["projects.0.campaign", { campaign: "MD-218" }, {}],
+    ["samplingSite_name", {}, { samplingSite_name: "MD-218" }],
+    ["samplingPurpose", {}, { samplingPurpose: "MD-218" }],
   ] as const)(
-    "should read a name in %s as a %s program",
-    (_slot, researchProgramKind, projectSlot, productionSlot) => {
+    "should read a name in %s as the research program name",
+    (_slot, projectSlot, productionSlot) => {
       const { production } = RESEARCH_PROJECT_SAMPLE_RECORD;
       const { name: _name, ...project } = production.projects?.[0] ?? {};
       const body: CoreSampleBody = {
@@ -184,7 +184,6 @@ describe("fromCoreSample", () => {
 
       expect(fromCoreSample(body).sample.scientificContext).toMatchObject({
         researchProgramName: "MD-218",
-        researchProgramKind,
       });
     },
   );

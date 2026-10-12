@@ -71,6 +71,8 @@
   "sample_field_host_institution": "Host institution (project leader)",
   "sample_field_collector_orcid": "Collector ORCID",
   "sample_field_funding": "Funding",
+  "sample_field_research_program_name": "Name of the research program / campaign / mission / field / cruise",
+  "sample_field_research_program_description": "Description of the research program / campaign / mission / field / cruise",
   "sample_field_platform_type": "Platform type",
   "sample_field_launch_platform_name": "Launch platform name",
   "sample_field_collection_origin": "Collection origin",

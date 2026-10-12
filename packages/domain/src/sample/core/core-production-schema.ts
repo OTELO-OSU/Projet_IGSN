@@ -222,7 +222,7 @@ const coreProjectSchema = z.strictObject({
   campaign: freeTextSchema
     .meta({
       description:
-        "Name of the campaign or cruise the sample was collected during, refused beside name, samplingSite_name or samplingPurpose.",
+        "Research programme name, stored as such and read back as projects[0].name, refused beside name, samplingSite_name or samplingPurpose.",
     })
     .optional(),
 });
@@ -342,13 +342,13 @@ export const coreProductionSchema = z
     samplingPurpose: freeTextSchema
       .meta({
         description:
-          "Name of the mission the sample was collected for, on a research project sample alone, refused beside projects[0].name, projects[0].campaign or samplingSite_name.",
+          "Research programme name, on a research project sample alone, stored as such and read back as projects[0].name, refused beside projects[0].name, projects[0].campaign or samplingSite_name.",
       })
       .optional(),
     samplingSite_name: freeTextSchema
       .meta({
         description:
-          "Name of the field the sample was collected on, on a research project sample alone, refused beside projects[0].name, projects[0].campaign or samplingPurpose.",
+          "Research programme name, on a research project sample alone, stored as such and read back as projects[0].name, refused beside projects[0].name, projects[0].campaign or samplingPurpose.",
       })
       .optional(),
     projects: z
