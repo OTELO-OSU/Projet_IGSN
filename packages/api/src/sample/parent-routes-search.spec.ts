@@ -181,7 +181,10 @@ describe("the eligible parent search", () => {
     },
   );
 
-  pgTest("should match an exact IGSN", async ({ db }) => {
+  pgTest.for([
+    ["as typed", (igsn: string) => igsn],
+    ["lowercased", (igsn: string) => igsn.toLowerCase()],
+  ] as const)("should match a partial IGSN %s", async ([, typed], { db }) => {
     // Arrange
     const caller = await provisionUser(db, "test-token", {
       status: "accepted",
@@ -194,7 +197,9 @@ describe("the eligible parent search", () => {
     );
     await insertParent(db, caller.id, "published", "Basalte du Cantal");
     // Act
-    const data = await search(db, { search: sample.igsn! });
+    const data = await search(db, {
+      search: typed(sample.igsn!.slice(8, 16)),
+    });
     // Assert
     expect(data.map((parent) => parent.id)).toEqual([sample.id]);
   });

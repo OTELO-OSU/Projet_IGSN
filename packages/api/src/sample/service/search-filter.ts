@@ -100,14 +100,18 @@ export function tokenFilters(
   );
 }
 
-function matchesSearchToken(token: string): Expression<SqlBool> {
+function matchesSearchToken(
+  texts: readonly RawBuilder<unknown>[],
+  igsnArm: (token: string) => RawBuilder<unknown>,
+  token: string,
+): Expression<SqlBool> {
   if (token.length > MAX_TOKEN_LENGTH) return sql<SqlBool>`false`;
   const regex = termRegex(token);
   const arms = [
-    sql`igsn = upper(${token})`,
-    ...SEARCHED_TEXTS.map((text) => sql`${text} @@@ pdb.regex(${regex})`),
+    igsnArm(token),
+    ...texts.map((text) => sql`${text} @@@ pdb.regex(${regex})`),
     ...(isFuzzyToken(token)
-      ? SEARCHED_TEXTS.map(
+      ? texts.map(
           (text) =>
             sql`${text} === (lower(immutable_unaccent(${token})))::pdb.fuzzy(1, f, t)`,
         )
@@ -116,10 +120,30 @@ function matchesSearchToken(token: string): Expression<SqlBool> {
   return sql<SqlBool>`(${sql.join(arms, sql` OR `)})`;
 }
 
-export function searchFilters(search: string): Expression<SqlBool>[] {
+function textSearchFilters(
+  search: string,
+  texts: readonly RawBuilder<unknown>[],
+  igsnArm: (token: string) => RawBuilder<unknown>,
+): Expression<SqlBool>[] {
   const tokens = searchTokens(search);
   if (tokens.length === 0) return [sql<SqlBool>`false`];
-  return tokens.map(matchesSearchToken);
+  return tokens.map((token) => matchesSearchToken(texts, igsnArm, token));
+}
+
+export function searchFilters(search: string): Expression<SqlBool>[] {
+  return textSearchFilters(
+    search,
+    SEARCHED_TEXTS,
+    (token) => sql`igsn = upper(${token})`,
+  );
+}
+
+export function pickerSearchFilters(search: string): Expression<SqlBool>[] {
+  return textSearchFilters(
+    search,
+    [sql.ref("name_unaccented")],
+    (token) => sql`strpos(igsn, upper(${token})) > 0`,
+  );
 }
 
 export async function forceCustomPlan(trx: Transaction<DB>): Promise<void> {
