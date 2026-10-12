@@ -73,6 +73,8 @@ export const PARENT_IGSN_HEADER = "Parent IGSN";
 
 export const CHILDREN_IGSNS_HEADER = "Children IGSNs";
 
+export const SERIES_IGSN_HEADER = "Series IGSN";
+
 export const SAMPLE_LOOKUP_HEADER = "Sample name (filled automatically)";
 
 export const MANUAL_GROUP_PATH = "manualGroupIds";

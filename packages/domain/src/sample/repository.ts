@@ -71,6 +71,11 @@ export type SampleRepository = {
     userId: string,
     scope: ModerationScope | null,
   ): Promise<SampleParent[]>;
+  searchEligibleSeries(
+    params: SearchEligibleParentsQuery,
+    userId: string,
+    scope: ModerationScope | null,
+  ): Promise<SampleParent[]>;
   listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
   mapPublished(query: SampleMapQuery): Promise<SampleMapResponse>;
   countPublishedFacets(params: ListSamplesQuery): Promise<SampleFacetCounts>;

@@ -25,6 +25,8 @@ export const PARENT_RELATION_TYPE = coreRelationType.toCore("is_derived_from");
 
 export const CHILD_RELATION_TYPE = coreRelationType.toCore("has_part");
 
+export const SERIES_RELATION_TYPE = coreRelationType.toCore("is_part_of");
+
 export const coreTitleSchema = z.strictObject({
   value: freeTextSchema.meta({ description: "Name of the titled resource." }),
   titleType: z
@@ -35,7 +37,7 @@ export const coreTitleSchema = z.strictObject({
 export const coreRelationSchema = z.strictObject({
   relationType: coreRelationType.schema.meta({
     description:
-      "How this sample relates to the target resource, IsDerivedFrom naming a parent sample and HasPart a member of this series of samples.",
+      "How this sample relates to the target resource, IsDerivedFrom naming a parent sample, HasPart a member of this series of samples and IsPartOf the series of samples this member belongs to.",
   }),
   targetIdentifier: z
     .strictObject({
@@ -102,6 +104,9 @@ export const parentIgsnOf = (relation: CoreRelation): string | null =>
 
 export const childIgsnOf = (relation: CoreRelation): string | null =>
   relatedIgsnOf(relation, CHILD_RELATION_TYPE);
+
+export const seriesIgsnOf = (relation: CoreRelation): string | null =>
+  relatedIgsnOf(relation, SERIES_RELATION_TYPE);
 
 export const toParentIdentifierType = (igsn: string): string =>
   isLegacyIgsn(igsn) ? "IGSN" : "DOI";

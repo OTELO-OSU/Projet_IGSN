@@ -65,7 +65,7 @@ import { publishableSample } from "../tests/sample-fixtures.ts";
 import { seriesIdOf } from "../tests/series-id-of.ts";
 import {
   doiUrlOf,
-  hasPartPutsOf,
+  relationPutsOf,
   registerDois,
   STUB_DATACITE_CONFIG,
   stubDataCite,
@@ -2572,19 +2572,19 @@ describe("a series of samples over /service", () => {
         series.igsn!,
         core({ ...series, children: relatedOf(second) }),
       );
-      const duringRequest = hasPartPutsOf(fetchMock);
+      const duringRequest = relationPutsOf(fetchMock, "HasPart");
       await drainSynchronizationQueue(db, STUB_DATACITE_CONFIG, []);
       // Assert
       expect({
         status: res.status,
         children: await storedChildIds(db, series.id),
         duringRequest,
-        puts: hasPartPutsOf(fetchMock),
+        puts: relationPutsOf(fetchMock, "HasPart"),
       }).toEqual({
         status: 200,
         children: [second.id],
         duringRequest: [],
-        puts: [{ url: doiUrlOf(series.igsn), hasPart: [second.igsn] }],
+        puts: [{ url: doiUrlOf(series.igsn), related: [second.igsn] }],
       });
     },
   );
@@ -2606,10 +2606,10 @@ describe("a series of samples over /service", () => {
       ))!;
       expect({
         status: res.status,
-        puts: hasPartPutsOf(fetchMock),
+        puts: relationPutsOf(fetchMock, "HasPart"),
       }).toEqual({
         status: 201,
-        puts: [{ url: doiUrlOf(series.igsn), hasPart: [member.igsn] }],
+        puts: [{ url: doiUrlOf(series.igsn), related: [member.igsn] }],
       });
     },
   );
@@ -2749,4 +2749,122 @@ describe("a series of samples over /service", () => {
       }).toEqual({ status: 200, seriesId: series.id });
     },
   );
+
+  const asSeries = ({ id, igsn, name, material }: Sample) => ({
+    id,
+    igsn,
+    name,
+    material,
+  });
+
+  const isPartOfPath = (body: CoreSample) =>
+    `relations.${(body.relations ?? []).findIndex(
+      ({ relationType }) => relationType === "IsPartOf",
+    )}.targetIdentifier.value`;
+
+  pgTest("should join the series named by IsPartOf", async ({ db }) => {
+    // Arrange
+    const { app } = await arrangeAccount(db);
+    const member = await coreInReach(db, "Core 1");
+    const series = await publishedInReach(db, {
+      ...publishableSample,
+      type: CORE_SERIES,
+    });
+    // Act
+    const res = await putSample(
+      app,
+      member.igsn!,
+      core({ ...member, series: asSeries(series) }),
+    );
+    // Assert
+    expect({
+      status: res.status,
+      seriesId: await seriesIdOf(db, member.id),
+    }).toEqual({ status: 200, seriesId: series.id });
+  });
+
+  pgTest.for([
+    {
+      code: "series_not_found",
+      series: async (db: Kysely<DB>) => ({
+        ...(await publishedInReach(db, {
+          ...publishableSample,
+          type: CORE_SERIES,
+        })),
+        igsn: "ABCDEFGHJKMNPQRSTVWXYZ0123",
+      }),
+    },
+    {
+      code: "series_not_eligible",
+      series: async (db: Kysely<DB>) =>
+        (await publishSample(
+          db,
+          (
+            await inLaboratory(
+              db,
+              { ...publishableSample, type: CORE_SERIES },
+              OUT_OF_REACH,
+            )
+          ).id,
+        ))!,
+    },
+  ])(
+    "should refuse with $code a series the account cannot reach",
+    async ({ code, series }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const member = await coreInReach(db, "Core 1");
+      const body = core({ ...member, series: asSeries(await series(db)) });
+      // Act
+      const res = await putSample(app, member.igsn!, body);
+      // Assert
+      expect({
+        status: res.status,
+        body: await res.json(),
+        seriesId: await seriesIdOf(db, member.id),
+      }).toEqual({
+        status: 422,
+        body: {
+          error: "Invalid sample",
+          issues: [{ path: isPartOfPath(body), code }],
+        },
+        seriesId: null,
+      });
+    },
+  );
+
+  pgTest("should refuse a sample created in a series", async ({ db }) => {
+    // Arrange
+    const { app } = await arrangeAccount(db);
+    const series = await publishedInReach(db, {
+      ...publishableSample,
+      type: CORE_SERIES,
+    });
+    const body = core({ ...COLLECTION_SPECIMEN, series: asSeries(series) });
+    // Act
+    const res = await postSample(app, body);
+    // Assert
+    expect({ status: res.status, body: await res.json() }).toEqual({
+      status: 422,
+      body: {
+        error: "Invalid sample",
+        issues: [{ path: isPartOfPath(body), code: "series_not_eligible" }],
+      },
+    });
+  });
+
+  pgTest("should emit a member's series as IsPartOf", async ({ db }) => {
+    // Arrange
+    const { app } = await arrangeAccount(db);
+    const member = await coreInReach(db, "Core 1");
+    const series = await publishedInReach(db, {
+      ...publishableSample,
+      type: CORE_SERIES,
+      childIds: [member.id],
+    });
+    // Act
+    const res = await getSample(app, member.igsn!);
+    // Assert
+    expect(relatedIgsns(await res.json(), "IsPartOf")).toEqual([series.igsn]);
+  });
 });

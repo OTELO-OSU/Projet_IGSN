@@ -24,6 +24,7 @@ import { insertSampleBatch } from "../tests/insert-sample-batch.ts";
 import { insertServiceAccount } from "../tests/insert-service-account.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
+import { readSample } from "../tests/read-sample.ts";
 import { publishableSample } from "../tests/sample-fixtures.ts";
 import { savepointTransactions } from "../tests/savepoint-transactions.ts";
 import { STUB_DATACITE_CONFIG, stubDataCite } from "../tests/stub-datacite.ts";
@@ -691,12 +692,22 @@ describe("POST /service/samples/batch", () => {
     },
   );
 
-  pgTest(
-    "should answer and record an unchanged update as published, without queuing its sample",
-    async ({ db }) => {
+  pgTest.for([
+    { label: "a sample", isMember: false },
+    { label: "a series member", isMember: true },
+  ])(
+    "should answer and record an unchanged update of $label as published, without queuing it",
+    async ({ isMember }, { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const existing = await publishedIn(db);
+      const published = await publishedIn(db);
+      if (isMember)
+        await publishedIn(db, {
+          ...publishableSample,
+          type: "serie_of_sample.core",
+          childIds: [published.id],
+        });
+      const existing = (await readSample(db, published.id))!;
       // Act
       const posted = await postBatch(app, [
         { partnerId: "same", sample: core(existing) },

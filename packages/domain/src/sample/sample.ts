@@ -48,6 +48,7 @@ import {
   scientificContextSchema,
 } from "./scientific-context/model.ts";
 import { securitySchema } from "./security/model.ts";
+import { sampleSeriesSchema } from "./series/model.ts";
 import { isSyntheticMaterial } from "./synthetic-details/is-synthetic-material.ts";
 import {
   createSyntheticDetailsSchema,
@@ -127,6 +128,7 @@ export const sampleSchema = z.object({
   manualGroups: z.array(manualGroupSchema).default([]),
   parents: z.array(sampleParentSchema).default([]),
   children: z.array(sampleParentSchema).default([]),
+  series: sampleSeriesSchema.nullable().default(null),
   hasSubSamples: z.boolean().default(false),
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
@@ -179,6 +181,7 @@ const createSampleFieldsSchema = z.strictObject({
   manualGroupIds: z.array(z.uuid()).optional(),
   parentIds: z.array(z.uuid()).max(MAX_SAMPLE_PARENTS).optional(),
   childIds: z.array(z.uuid()).optional(),
+  seriesId: z.uuid().nullish(),
 });
 
 const checkSample = (
@@ -291,6 +294,20 @@ const checkSample = (
       code: "custom",
       path: ["childIds"],
       message: "only a series of samples carries children",
+    });
+  }
+  if (value.seriesId != null && isVirtualSample(value.type)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["seriesId"],
+      message: "a series of samples is in no series",
+    });
+  }
+  if (value.seriesId != null && (value.parentIds?.length ?? 0) > 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["seriesId"],
+      message: "a sub-sample is in no series",
     });
   }
   if ((value.parentIds?.length ?? 0) > 0 && isVirtualSample(value.type)) {

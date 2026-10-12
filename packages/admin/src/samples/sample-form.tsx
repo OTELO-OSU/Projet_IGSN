@@ -43,6 +43,7 @@ import {
   type SampleStatus,
   type SynchronizationStatus,
 } from "@projet-igsn/domain/sample/sample";
+import { type SampleSeries } from "@projet-igsn/domain/sample/series/model";
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 import { canBecomeSeries } from "@projet-igsn/domain/sample/type/can-become-series";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
@@ -109,6 +110,7 @@ import {
 } from "#/samples/sample-required-fields.ts";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
+import { SampleSeriesField } from "#/samples/sample-series-field.tsx";
 import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { UnsavedChangesGuard } from "#/samples/unsaved-changes-guard.tsx";
@@ -238,6 +240,7 @@ export type SampleFormProps = {
   defaultContactUserId?: string;
   parents?: SampleFormParent[];
   storedChildren?: SampleParent[];
+  storedSeries?: SampleSeries | null;
   hasSubSamples?: boolean;
   canAddParent?: boolean;
   fieldSuggestions?: FieldSuggestionRule;
@@ -263,6 +266,7 @@ export function SampleForm({
   defaultContactUserId,
   parents = [],
   storedChildren,
+  storedSeries = null,
   hasSubSamples = false,
   canAddParent = false,
   fieldSuggestions = NO_FIELD_SUGGESTIONS,
@@ -682,10 +686,10 @@ export function SampleForm({
                           <LocalIdFields />
 
                           <SampleTypeFields
-                            canBeSeries={canBecomeSeries({
-                              parents,
-                              hasSubSamples,
-                            })}
+                            canBeSeries={
+                              canBecomeSeries({ parents, hasSubSamples }) &&
+                              storedSeries === null
+                            }
                           />
 
                           <form.AppField name="nature">
@@ -719,6 +723,12 @@ export function SampleForm({
                           sampleId={sampleId}
                           storedChildren={storedChildren}
                           canSetChildren={canSetSampleChildren({ status })}
+                        />
+
+                        <SampleSeriesField
+                          storedSeries={storedSeries}
+                          status={status}
+                          hasParents={parents.length > 0}
                         />
                       </TabsContent>
 

@@ -120,6 +120,20 @@ export function sampleChildrenQuery(eb: ExpressionBuilder<DB, "sample">) {
   ).as("children");
 }
 
+export function sampleSeriesQuery(eb: ExpressionBuilder<DB, "sample">) {
+  return jsonObjectFrom(
+    eb
+      .selectFrom("sample_series_membership")
+      .innerJoin(
+        "sample as series",
+        "series.id",
+        "sample_series_membership.series_id",
+      )
+      .select(["series.id", "series.igsn", "series.name", "series.material"])
+      .whereRef("sample_series_membership.sample_id", "=", "sample.id"),
+  ).as("series");
+}
+
 const personAccount = (
   eb: ExpressionBuilder<DB, "sample">,
   column:

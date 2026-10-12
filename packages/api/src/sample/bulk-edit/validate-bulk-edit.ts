@@ -24,6 +24,7 @@ import {
   plainHeader,
   SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
+  SERIES_IGSN_HEADER,
   SHEETS,
 } from "../import-template/columns.ts";
 import { openWorkbook } from "../import-template/open-workbook.ts";
@@ -51,6 +52,7 @@ import {
 } from "./export-columns.ts";
 import { isFrozen } from "./export-workbook.ts";
 import { mergeStoredSample } from "./merge-stored-sample.ts";
+import { resolveBulkEditSeries } from "./resolve-bulk-edit-series.ts";
 import { type Cell as StoredCell, childRows, sampleRow } from "./sample-row.ts";
 
 export type BulkEditTarget = { sample: Sample; issue?: ImportIssueCode };
@@ -252,6 +254,26 @@ async function validateMatched(
       }),
     },
   );
+  const series = await resolveBulkEditSeries(
+    matched.map(({ row, sample }, index) => ({
+      row: row.row,
+      sample,
+      igsns: igsnsInCell(rows[index]!.cells[SERIES_IGSN_HEADER]),
+    })),
+    childCandidates,
+  );
+  const seriesWithParent = series.seriesIds.flatMap((seriesId, index) =>
+    seriesId !== null && (addedParentIds.get(index)?.length ?? 0) > 0
+      ? [
+          {
+            sheet: SHEETS.samples,
+            row: matched[index]!.row.row,
+            column: SERIES_IGSN_HEADER,
+            code: "series_not_eligible" as const,
+          },
+        ]
+      : [],
+  );
   const isEveryRowValid = validated.samples.length === matched.length;
   const seriesInLineage = isEveryRowValid
     ? validated.samples.flatMap(({ input }, index) => {
@@ -269,11 +291,13 @@ async function validateMatched(
       ...parentless,
       ...seriesInLineage,
       ...cycles,
+      ...series.issues,
+      ...seriesWithParent,
       ...validated.issues,
     ],
     samples: validated.samples.map(({ input }, index) => ({
       id: matched[index]!.sample.id,
-      input,
+      input: { ...input, seriesId: series.seriesIds[index] },
       updatedAt: matched[index]!.sample.updatedAt,
     })),
   };

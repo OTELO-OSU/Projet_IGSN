@@ -203,6 +203,7 @@ describe("toSample", () => {
       manualGroups: [],
       parents: [],
       children: [],
+      series: null,
       hasSubSamples: false,
       institutionalOrganization: null,
       institutionalOsu: null,

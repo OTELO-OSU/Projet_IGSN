@@ -19,7 +19,7 @@ import { draft, publishableSample } from "../tests/sample-fixtures.ts";
 import { seriesIdOf } from "../tests/series-id-of.ts";
 import {
   doiUrlOf,
-  hasPartPutsOf,
+  relationPutsOf,
   registerDois,
   STUB_DATACITE_CONFIG,
   stubDataCite,
@@ -540,12 +540,12 @@ describe("a series at DataCite", () => {
       // Assert
       expect({
         status: res.status,
-        puts: hasPartPutsOf(fetchMock),
+        puts: relationPutsOf(fetchMock, "HasPart"),
         statuses: await statusesOf(db, [dropped, kept, added]),
       }).toEqual({
         status: 200,
         puts: [
-          { url: doiUrlOf(series.igsn), hasPart: [kept.igsn, added.igsn] },
+          { url: doiUrlOf(series.igsn), related: [kept.igsn, added.igsn] },
         ],
         statuses: ["published", "published", "published"],
       });
@@ -584,11 +584,11 @@ describe("a series at DataCite", () => {
       expect({
         status: res.status,
         child: await rowOf(db, child.id),
-        puts: hasPartPutsOf(fetchMock),
+        puts: relationPutsOf(fetchMock, "HasPart"),
       }).toEqual({
         status: 200,
         child: before,
-        puts: [{ url: doiUrlOf(series.igsn), hasPart: [child.igsn] }],
+        puts: [{ url: doiUrlOf(series.igsn), related: [child.igsn] }],
       });
     },
   );

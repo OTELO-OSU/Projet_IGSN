@@ -6,7 +6,7 @@ import { test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 
 test.describe("virtual samples", () => {
-  test("a researcher publishes a series of two cores that the public pages link both ways", async ({
+  test("a researcher publishes a series of two cores, a third core joins it, and the public pages link them both ways", async ({
     page,
   }) => {
     test.slow();
@@ -39,6 +39,7 @@ test.describe("virtual samples", () => {
     const stamp = Date.now();
     const first = await publishCore(`Series core one ${stamp}`);
     const second = await publishCore(`Series core two ${stamp}`);
+    const third = await publishCore(`Series core three ${stamp}`);
     const children = [first, second];
 
     const seriesName = `Core series ${stamp}`;
@@ -52,12 +53,22 @@ test.describe("virtual samples", () => {
     await edit.save();
     const series = { name: seriesName, igsn: await edit.publicPageIgsn() };
 
+    await edit.goToList();
+    await list.expectVisible();
+    await list.openSample(third.name);
+    await edit.expectVisible();
+    await edit.openTab("Identity");
+    await edit.pickSeries(series);
+    await edit.save();
+
     const detail = sampleDetailPage(page);
     await detail.goto(series.igsn);
-    for (const child of children)
+    for (const child of [...children, third])
       await detail.expectChild(child.name, child.igsn);
 
-    await detail.goto(first.igsn);
-    await detail.expectParent(series.name, series.igsn);
+    for (const member of [first, third]) {
+      await detail.goto(member.igsn);
+      await detail.expectParent(series.name, series.igsn);
+    }
   });
 });

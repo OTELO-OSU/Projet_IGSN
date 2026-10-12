@@ -134,6 +134,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -180,6 +181,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: null,
         type: null,
@@ -224,6 +226,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core.section",
@@ -257,6 +260,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core.half_round",
@@ -290,6 +294,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core",
@@ -364,6 +369,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Granite",
         nature: "thin_section",
         type: null,
@@ -417,6 +423,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Granite",
         nature: "thin_section",
         type: null,
@@ -473,6 +480,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Rock",
         nature: "thin_section",
         type: null,
@@ -546,6 +554,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Gneiss",
         nature: "thin_section",
         type: null,
@@ -608,6 +617,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Meta-granite",
         nature: "thin_section",
         type: null,
@@ -664,6 +674,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Rock",
         nature: "thin_section",
         type: null,
@@ -699,6 +710,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -753,6 +765,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -821,6 +834,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -865,6 +879,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -909,6 +924,7 @@ describe("SampleForm", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         manualGroupIds: [],
+        seriesId: null,
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -1266,6 +1282,7 @@ describe("SampleForm", () => {
       expect(onPublish).toHaveBeenCalledWith(
         {
           manualGroupIds: [],
+          seriesId: null,
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
