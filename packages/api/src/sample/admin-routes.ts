@@ -1,4 +1,3 @@
-import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type {
@@ -11,8 +10,7 @@ import type {
   InvalidImport,
 } from "@projet-igsn/domain/sample/import/import-report";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
-import type { SeriesLinkCandidate } from "@projet-igsn/domain/sample/repository";
-import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
+import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type {
   AdminListSamplesResponse,
   AdminSampleResponse,
@@ -21,11 +19,9 @@ import type {
 import type { StagedUploadRepository } from "@projet-igsn/domain/staged-upload/repository";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
-import type { User } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
-import { canJoinSeries } from "@projet-igsn/domain/sample/publication/can-join-series";
 import { canSetSampleChildren } from "@projet-igsn/domain/sample/publication/can-set-sample-children";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { isPublicationQueued } from "@projet-igsn/domain/sample/publication/is-publication-queued";
@@ -47,7 +43,6 @@ import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-fro
 import { canPublishSamples } from "@projet-igsn/domain/user/can-publish-samples";
 import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 import { Hono } from "hono";
-import { HTTPException } from "hono/http-exception";
 
 import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
@@ -68,27 +63,32 @@ import { attachmentDownload } from "./attachment-download.ts";
 import { bulkEditTargets } from "./bulk-edit/bulk-edit-targets.ts";
 import { samplesExportResponse } from "./bulk-edit/export-workbook.ts";
 import { validateBulkEdit } from "./bulk-edit/validate-bulk-edit.ts";
+import { canEditCandidate } from "./can-edit-candidate.ts";
 import { findEligibleAddedParents } from "./find-eligible-added-parents.ts";
+import { hasInvalidSeriesLink } from "./has-invalid-series-link.ts";
 import { findImportDuplicates } from "./import-template/find-import-duplicates.ts";
 import { internalIdRequestMail } from "./import-template/internal-id-request-mail.ts";
 import { resolvePublishedParents } from "./import-template/resolve-published-parents.ts";
 import { validateImport } from "./import-template/validate-import.ts";
 import { importTemplateResponse } from "./import-template/workbook.ts";
-import { isEligibleChild } from "./is-eligible-child.ts";
-import { isEligibleSeries } from "./is-eligible-series.ts";
+import { isJoinableSeries } from "./is-joinable-series.ts";
 import { notifyEmbargo } from "./notify-embargo.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { notifySubSampleDeclared } from "./notify-sub-sample-declared.ts";
 import { notifySubSamplesImported } from "./notify-sub-samples-imported.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
-import { effectiveRole, requireSampleAccess } from "./require-sample-access.ts";
+import { requireSampleAccess } from "./require-sample-access.ts";
 import { sampleDeletionRequestMail } from "./sample-deletion-request-mail.ts";
 import {
   catchChildNotEligible,
   CHILD_NOT_ELIGIBLE_MESSAGE,
   ChildNotEligibleError,
 } from "./service/replace-sample-children.ts";
+import {
+  NOT_ATTACHABLE,
+  templateManualGroups,
+} from "./template-manual-groups.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
   validateAddCollaboratorBody,
@@ -109,10 +109,6 @@ import {
   validateUpdateSampleBody,
 } from "./validator.ts";
 import { withSeriesId } from "./with-series-id.ts";
-
-const NOT_ATTACHABLE = {
-  error: "Manual group not attachable to this sample",
-} as const;
 
 const PARENT_NOT_ELIGIBLE = {
   error: "Parent sample not eligible",
@@ -177,68 +173,7 @@ export function createSampleAdminRoutes(
 ) {
   const accessibleSample = requireSampleAccess(repository, users);
 
-  const canEditCandidate = (
-    user: Pick<User, "superAdmin">,
-    candidate: SeriesLinkCandidate,
-  ) => isSampleEditor(effectiveRole(user, candidate.role, candidate.moderated));
-
-  const hasInvalidSeriesLink = async (
-    user: Pick<User, "id" | "superAdmin">,
-    { childIds = [], type }: Pick<CreateSample, "childIds" | "type">,
-    current: Pick<Sample, "id" | "children">,
-  ): Promise<boolean> => {
-    const stored = current.children.map(({ id }) => id);
-    const added = childIds.filter((id) => !stored.includes(id));
-    const toSeries = isVirtualSample(type);
-    if (!toSeries && added.length === 0) return false;
-    const candidates = await repository.listSeriesLinkCandidates(
-      [current.id, ...added],
-      user.id,
-      added.length > 0 ? await getModerationScope(users, user) : null,
-    );
-    if (toSeries && candidates.get(current.id)?.seriesId) return true;
-    return added.some((childId) => {
-      const child = candidates.get(childId);
-      return (
-        child === undefined ||
-        !canEditCandidate(user, child) ||
-        !isEligibleChild(child, current.id)
-      );
-    });
-  };
-
-  const isJoinableSeries = async (
-    user: Pick<User, "id" | "superAdmin">,
-    seriesId: string,
-    member: Sample,
-  ): Promise<boolean> => {
-    const series = (
-      await repository.listSeriesLinkCandidates(
-        [seriesId],
-        user.id,
-        await getModerationScope(users, user),
-      )
-    ).get(seriesId);
-    return (
-      series !== undefined &&
-      canJoinSeries(member) &&
-      isEligibleSeries(series) &&
-      canEditCandidate(user, series)
-    );
-  };
   const unlockedSample = requireEditLock(repository);
-
-  const templateManualGroups = async (
-    userId: string,
-    manualGroupId: string | undefined,
-  ): Promise<{ attachable: ManualGroup[]; manualGroup?: ManualGroup }> => {
-    const attachable = await manualGroups.listAttachableForUser(userId);
-    const manualGroup = attachable.find((group) => group.id === manualGroupId);
-    if (manualGroupId !== undefined && manualGroup === undefined) {
-      throw new HTTPException(422, { message: NOT_ATTACHABLE.error });
-    }
-    return { attachable, manualGroup };
-  };
 
   return new Hono<SampleAdminEnv>()
     .get("/", validateListQuery, async (c) => {
@@ -271,6 +206,7 @@ export function createSampleAdminRoutes(
     .get("/import-template", validateImportTemplateQuery, async (c) => {
       const { rows, manualGroupId, ...customization } = c.req.valid("query");
       const { attachable, manualGroup } = await templateManualGroups(
+        manualGroups,
         c.get("user").id,
         manualGroupId,
       );
@@ -287,6 +223,7 @@ export function createSampleAdminRoutes(
       async (c) => {
         const { count, manualGroupId, ...customization } = c.req.valid("json");
         const { attachable, manualGroup } = await templateManualGroups(
+          manualGroups,
           c.get("user").id,
           manualGroupId,
         );
@@ -686,13 +623,27 @@ export function createSampleAdminRoutes(
         ) {
           return c.json(CHILDREN_NEED_PUBLICATION, 422);
         }
-        if (await hasInvalidSeriesLink(c.get("user"), toPersist, current)) {
+        if (
+          await hasInvalidSeriesLink(
+            repository,
+            users,
+            c.get("user"),
+            toPersist,
+            current,
+          )
+        ) {
           return c.json(CHILD_NOT_ELIGIBLE, 422);
         }
         if (
           toPersist.seriesId != null &&
           toPersist.seriesId !== current.series?.id &&
-          !(await isJoinableSeries(c.get("user"), toPersist.seriesId, current))
+          !(await isJoinableSeries(
+            repository,
+            users,
+            c.get("user"),
+            toPersist.seriesId,
+            current,
+          ))
         ) {
           return c.json(SERIES_NOT_ELIGIBLE, 422);
         }
