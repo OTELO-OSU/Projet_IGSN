@@ -1,5 +1,4 @@
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
-import type { ResearchProgramKind } from "@projet-igsn/domain/sample/scientific-context/research-program-kind";
 
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 import { render } from "vitest-browser-react";
@@ -99,8 +98,8 @@ describe("ScientificContextView", () => {
         "Researcher",
         "Funder organizations",
         "Funding",
-        "Research program",
-        "Research program description",
+        "Name of the research program / campaign / mission / field / cruise",
+        "Description of the research program / campaign / mission / field / cruise",
         "Platform type",
         "Launch platform name",
       ],
@@ -135,32 +134,28 @@ describe("ScientificContextView", () => {
     },
   );
 
-  it.each<[ResearchProgramKind | null, string, string]>([
-    [null, "Research program", "Research program description"],
-    ["cruise", "Name of the cruise", "Description of the cruise"],
-  ])(
-    "should label the research program name and description for kind %s",
-    async (researchProgramKind, nameLabel, descriptionLabel) => {
-      const screen = await render(
-        <ScientificContextView
-          scientificContext={{
-            provenanceStatus: "research_project_sample",
-            researchProgramKind,
-            researchProgramName: "Deep Earth Sampling",
-            researchProgramDescription: "A deep sampling programme.",
-            additionalRoles: [],
-          }}
-        />,
-      );
+  it("should label the research program name and description with every kind of programme", async () => {
+    const screen = await render(
+      <ScientificContextView
+        scientificContext={{
+          provenanceStatus: "research_project_sample",
+          researchProgramName: "Deep Earth Sampling",
+          researchProgramDescription: "A deep sampling programme.",
+          additionalRoles: [],
+        }}
+      />,
+    );
 
-      expect(
-        screen
-          .getByRole("term")
-          .elements()
-          .map((term) => term.textContent),
-      ).toEqual([nameLabel, descriptionLabel]);
-    },
-  );
+    expect(
+      screen
+        .getByRole("term")
+        .elements()
+        .map((term) => term.textContent),
+    ).toEqual([
+      "Name of the research program / campaign / mission / field / cruise",
+      "Description of the research program / campaign / mission / field / cruise",
+    ]);
+  });
 
   it("should render only the fields that are present", async () => {
     const screen = await render(

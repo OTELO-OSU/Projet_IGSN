@@ -35,7 +35,6 @@ describe("import template customization", () => {
         "scientificContext.chiefScientistFirstname",
         "scientificContext.chiefScientistLastname",
         "scientificContext.funding",
-        "scientificContext.researchProgramKind",
         "scientificContext.researchProgramName",
         "scientificContext.researchProgramDescription",
         "scientificContext.platformType",

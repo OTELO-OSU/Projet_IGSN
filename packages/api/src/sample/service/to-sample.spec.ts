@@ -70,7 +70,6 @@ const row = {
   sc_provenance_status: null,
   sc_funder_organizations: null,
   sc_research_program_name: null,
-  sc_research_program_kind: null,
   sc_chief_scientist_user_id: null,
   sc_chief_scientist_firstname: null,
   sc_chief_scientist_lastname: null,

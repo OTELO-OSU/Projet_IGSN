@@ -236,7 +236,6 @@ test.describe("sample import", () => {
       testInfo,
       {
         Name: name,
-        "Research program kind": "Cruise",
         "Name of the research programme": "MAR-12",
       },
       [NOTES, PHOTO],
@@ -275,7 +274,7 @@ test.describe("sample import", () => {
     const igsn = await sampleEditPage(page).publicPageIgsn();
     const detail = sampleDetailPage(page);
     await detail.goto(igsn);
-    await detail.expectResearchProgram("Name of the cruise", "MAR-12");
+    await detail.expectResearchProgram("MAR-12");
     for (const attachment of [NOTES, PHOTO]) {
       await detail.expectAttachment(attachment.Title);
     }

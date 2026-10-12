@@ -22,7 +22,6 @@ const roundTripped: [string, ScientificContext][] = [
       additionalRoles: [],
       funderOrganizations: ["02feahw73", "04kdfz702"],
       researchProgramName: "Deep Biosphere Survey",
-      researchProgramKind: "cruise",
       chiefScientistFirstname: "Marie",
       chiefScientistLastname: "Curie",
       hostInstitution: ["04kdfz702", "02feahw73"],

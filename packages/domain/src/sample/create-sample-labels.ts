@@ -43,7 +43,6 @@ import { type RelationTargetResourceType } from "./relation/target-resource-type
 import { type CollectionOrigin } from "./scientific-context/collection-origin.ts";
 import { type PlatformType } from "./scientific-context/platform-type.ts";
 import { type ProvenanceStatus } from "./scientific-context/provenance-status.ts";
-import { type ResearchProgramKind } from "./scientific-context/research-program-kind.ts";
 import { type ExperimentType } from "./synthetic-details/experiment-type.ts";
 import { type FinalProduct } from "./synthetic-details/final-product.ts";
 import { type StartingMaterialNature } from "./synthetic-details/starting-material-nature.ts";
@@ -77,15 +76,6 @@ type _provenanceStatusKeys =
 type _collectionOriginKeys =
   AssertKeys<`collection_origin_${CollectionOrigin}`>;
 type _platformTypeKeys = AssertKeys<`platform_type_${PlatformType}`>;
-type _researchProgramKindKeys =
-  AssertKeys<`research_program_kind_${ResearchProgramKind}`>;
-type _researchProgramNameKeys = AssertKeys<
-  "research_program_name" | `research_program_name_${ResearchProgramKind}`
->;
-type _researchProgramDescriptionKeys = AssertKeys<
-  | "research_program_description"
-  | `research_program_description_${ResearchProgramKind}`
->;
 type _startingMaterialKeys =
   AssertKeys<`starting_material_${StartingMaterial}`>;
 type _startingMaterialNatureKeys =
@@ -150,13 +140,6 @@ export type SampleLabels = {
   provenanceStatusLabel: (status: ProvenanceStatus) => string;
   collectionOriginLabel: (origin: CollectionOrigin) => string;
   platformTypeLabel: (platformType: PlatformType) => string;
-  researchProgramKindLabel: (kind: ResearchProgramKind) => string;
-  researchProgramNameLabel: (
-    kind: ResearchProgramKind | null | undefined,
-  ) => string;
-  researchProgramDescriptionLabel: (
-    kind: ResearchProgramKind | null | undefined,
-  ) => string;
   startingMaterialLabel: (nature: StartingMaterial) => string;
   startingMaterialNatureLabel: (form: StartingMaterialNature) => string;
   finalProductLabel: (product: FinalProduct) => string;
@@ -211,7 +194,6 @@ const LABEL_KEY = {
   provenanceStatusLabel: ["provenance_status", "code"],
   collectionOriginLabel: ["collection_origin", "code"],
   platformTypeLabel: ["platform_type", "code"],
-  researchProgramKindLabel: ["research_program_kind", "code"],
   startingMaterialLabel: ["starting_material", "code"],
   startingMaterialNatureLabel: ["starting_material_nature", "code"],
   finalProductLabel: ["final_product", "code"],
@@ -227,12 +209,7 @@ const LABEL_KEY = {
   collectionDatePrecisionLabel: ["collection_date_precision", "code"],
   positiveDirectionLabel: ["positive_direction", "code"],
 } satisfies Record<
-  Exclude<
-    keyof SampleLabels,
-    | "mineralClassificationLabel"
-    | "researchProgramNameLabel"
-    | "researchProgramDescriptionLabel"
-  >,
+  Exclude<keyof SampleLabels, "mineralClassificationLabel">,
   [string, keyof typeof KEY_SEGMENT]
 >;
 
@@ -252,16 +229,8 @@ export function createSampleLabels(m: Messages): SampleLabels {
       `strunz_${strunzId.toLowerCase().replaceAll(/[.-]/g, "_")}`,
     m,
   );
-  const kindLabel = (prefix: string) =>
-    vocabularyLabel(
-      (kind: ResearchProgramKind | null | undefined) =>
-        kind == null ? prefix : `${prefix}_${kind}`,
-      m,
-    );
   return {
     ...labels,
-    researchProgramNameLabel: kindLabel("research_program_name"),
-    researchProgramDescriptionLabel: kindLabel("research_program_description"),
     mineralClassificationLabel: (path) => {
       const row = fromMineralPath(path);
       return row.mindatId == null

@@ -12,8 +12,6 @@ export function scientificContextColumns(
     sc_funder_organizations: researchProjectSample?.funderOrganizations ?? null,
     sc_research_program_name:
       researchProjectSample?.researchProgramName ?? null,
-    sc_research_program_kind:
-      researchProjectSample?.researchProgramKind ?? null,
     sc_chief_scientist_user_id:
       researchProjectSample?.chiefScientistUserId ?? null,
     sc_chief_scientist_firstname:

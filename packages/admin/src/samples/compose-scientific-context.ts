@@ -3,7 +3,6 @@ import type { CollectionOrigin } from "@projet-igsn/domain/sample/scientific-con
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 import type { PlatformType } from "@projet-igsn/domain/sample/scientific-context/platform-type";
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
-import type { ResearchProgramKind } from "@projet-igsn/domain/sample/scientific-context/research-program-kind";
 
 import type { AdditionalRoleDraft } from "#/samples/sample-draft-schema.ts";
 
@@ -14,7 +13,6 @@ export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;
   funderOrganizations: string[];
   researchProgramName: string | null | undefined;
-  researchProgramKind: ResearchProgramKind | undefined;
   chiefScientistUserId: string | null | undefined;
   chiefScientistFirstname: string | null | undefined;
   chiefScientistLastname: string | null | undefined;
@@ -36,7 +34,6 @@ type ScientificContextCandidate =
       provenanceStatus: "research_project_sample";
       funderOrganizations: string[] | undefined;
       researchProgramName: string | undefined;
-      researchProgramKind: ResearchProgramKind | undefined;
       chiefScientistUserId: string | undefined;
       chiefScientistFirstname: string | undefined;
       chiefScientistLastname: string | undefined;
@@ -80,9 +77,6 @@ export function composeScientificContext(
       provenanceStatus: "research_project_sample",
       funderOrganizations: nonEmpty(draft.funderOrganizations),
       researchProgramName: draft.researchProgramName || undefined,
-      researchProgramKind: draft.researchProgramName
-        ? draft.researchProgramKind
-        : undefined,
       chiefScientistUserId: chiefScientist.userId,
       chiefScientistFirstname: chiefScientist.firstname,
       chiefScientistLastname: chiefScientist.lastname,
@@ -138,8 +132,6 @@ export function toScientificContextDraft(
     funderOrganizations: researchProjectSample?.funderOrganizations ?? [],
     researchProgramName:
       researchProjectSample?.researchProgramName ?? undefined,
-    researchProgramKind:
-      researchProjectSample?.researchProgramKind ?? undefined,
     chiefScientistUserId:
       researchProjectSample?.chiefScientistUserId ?? undefined,
     chiefScientistFirstname:
