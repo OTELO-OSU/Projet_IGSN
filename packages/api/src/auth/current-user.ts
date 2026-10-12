@@ -15,7 +15,7 @@ export type AuthenticatedEnv = {
   Variables: { jwtPayload: KeycloakClaims; user: User };
 };
 
-const DEFAULT_ALLOWED_IDENTITY_PROVIDERS = ["satosa", "orcid"];
+const DEFAULT_ALLOWED_IDENTITY_PROVIDERS = ["renater", "orcid"];
 
 function allowedIdentityProviders(): string[] {
   const configured = envList("OIDC_ALLOWED_IDENTITY_PROVIDERS");

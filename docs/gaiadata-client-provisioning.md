@@ -73,13 +73,13 @@ Proposed `igsn-api`; an env-suffixed name per their convention
 
 Per ADR 0003; this is the "who creates what" to settle:
 
-- The GaiaData SSO exposes three broker aliases: `satosa` (eduGAIN,
+- The GaiaData SSO exposes three broker aliases: `renater` (eduGAIN,
   RENATER's SAML broker), `ORCID`, and `myaccessid`. The api's allow-list
-  accepts logins from `satosa` and `orcid` only; `myaccessid` and any
+  accepts logins from `renater` and `orcid` only; `myaccessid` and any
   self-registered local account are refused (product-owner decision).
 - RENATER/eduGAIN Shibboleth broker: signature validation ON, signed
   AuthnRequests, real IdP metadata; register the SP endpoint
-  (`.../realms/<realm>/broker/satosa/endpoint`) with RENATER.
+  (`.../realms/<realm>/broker/renater/endpoint`) with RENATER.
 - Single logout on that broker (the IdP metadata's SLO endpoint in
   `singleLogoutServiceUrl`). Without it Keycloak silently skips IdP logout on
   sign-out and the institution SSO session survives, so the next login

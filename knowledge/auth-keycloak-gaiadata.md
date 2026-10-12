@@ -18,7 +18,7 @@ relations:
 status: stable
 ---
 
-Users sign in through Keycloak, which brokers two identity providers: institution (Shibboleth/SAML over eduGAIN, brokered as `satosa`) and ORCID (OIDC). The admin SPA (`react-oidc-context` / oidc-client-ts) never talks to the IdPs directly, only to Keycloak, so the same build runs in every environment.
+Users sign in through Keycloak, which brokers two identity providers: institution (Shibboleth/SAML over eduGAIN, brokered as `renater`) and ORCID (OIDC). The admin SPA (`react-oidc-context` / oidc-client-ts) never talks to the IdPs directly, only to Keycloak, so the same build runs in every environment.
 
 - **The SPA is env-driven.** `VITE_OIDC_AUTHORITY` and `VITE_OIDC_CLIENT_ID` (`packages/admin/src/auth/oidc-config.ts`) are baked in at build time and wired as Docker `ARG`s, so pointing at a real Keycloak is a build-arg change. `redirect_uri` and `post_logout_redirect_uri` derive from `window.location.origin` plus the Vite `BASE_URL` (`/admin/`), so any domain works with no config; redirect URIs are registered exactly, with no wildcard, and the GaiaData `formaterre-igsn` client must be re-registered for the `/admin` mount before preprod login works again ([[single-origin-routing]]).
 - **Production and preprod use the externally-managed GaiaData mutualized Keycloak**, and no prod realm file ships. Provisioning it is configuration, documented in `docs/gaiadata-client-provisioning.md`, its requirements in [[gaiadata-sso-compliance]].
