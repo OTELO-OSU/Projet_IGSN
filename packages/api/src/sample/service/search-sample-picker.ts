@@ -11,7 +11,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
-import { forceCustomPlan, searchFilters } from "./search-filter.ts";
+import { forceCustomPlan, pickerSearchFilters } from "./search-filter.ts";
 
 const PICKER_SEARCH_LIMIT = 20;
 
@@ -50,7 +50,7 @@ export async function searchSamplePicker(
       .where((eb) =>
         eb.and([
           ...where,
-          ...(search === undefined ? [] : searchFilters(search)),
+          ...(search === undefined ? [] : pickerSearchFilters(search)),
         ]),
       )
       .orderBy("name")
