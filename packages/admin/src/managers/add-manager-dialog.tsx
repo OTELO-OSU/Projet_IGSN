@@ -64,7 +64,9 @@ export function AddManagerDialog({
           <div className="grid gap-2">
             <Label htmlFor={USER_FIELD_ID}>{m.field_group_manager()}</Label>
             <form.AppField name="picked">
-              {() => <UserField id={USER_FIELD_ID} status="accepted" />}
+              {() => (
+                <UserField id={USER_FIELD_ID} status="accepted" includeSelf />
+              )}
             </form.AppField>
           </div>
           <DialogFooter>

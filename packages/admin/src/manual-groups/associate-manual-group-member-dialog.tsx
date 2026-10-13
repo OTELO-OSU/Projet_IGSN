@@ -79,6 +79,7 @@ export function AssociateManualGroupMemberDialog({
                   id={USER_FIELD_ID}
                   status="accepted"
                   excludeMembersOf={groupId}
+                  includeSelf
                 />
               )}
             </form.AppField>

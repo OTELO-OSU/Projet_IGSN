@@ -4,7 +4,7 @@ Date: 2026-08-14
 
 ## Status
 
-Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a manual group, and the leave rule became per-group. Amended 2026-08-21: the published-sample rule now guards every detach, and a manual group manager curates its own groups (ADR 0030). Amended 2026-08-28: the group list carries `managerCount` and a `noManager` filter, and a super admin curates a group's managers from the group page (ADR 0030). Amended 2026-09-08: the attachable set now adds the groups a user manages, one query, `api/src/manual-group/attachable-manual-groups.ts`, shared by sample create, sample update and the service-account request.
+Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a manual group, and the leave rule became per-group. Amended 2026-08-21: the published-sample rule now guards every detach, and a manual group manager curates its own groups (ADR 0030). Amended 2026-08-28: the group list carries `managerCount` and a `noManager` filter, and a super admin curates a group's managers from the group page (ADR 0030). Amended 2026-09-08: the attachable set now adds the groups a user manages, one query, `api/src/manual-group/attachable-manual-groups.ts`, shared by sample create, sample update and the service-account request. Amended 2026-10-13: the group page's pickers offer the caller, so a super admin adds themselves as member or manager, a group manager as member.
 
 ## Context
 
@@ -37,7 +37,7 @@ Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a
 - `GET /admin/users/search` takes an optional `status` param; with no param it still returns pending and accepted, never rejected, which the sample invite-collaborator picker relies on. The manual group associate picker sends `status=accepted`, so a pending account is not offered there; `?status=rejected` is a 400, and the unconditional `status != "rejected"` stays in the SQL. That is a UX narrowing only, `addManualGroupMember`'s accepted-only 422 remaining the enforcement.
 - Security review: the endpoint serves any authenticated user and `userIdentitySchema` deliberately omits `status`, yet narrowing to accepted lets a caller infer who is pending by diffing against the unfiltered list. Inherent to filtering by a caller-chosen status, and accepted.
 - A member rejected after joining stays a member (explicit PO decision); their status shows in the members table.
-- A super admin cannot add themselves, `searchUsers` excluding the caller, but another super admin can add them.
+- The group page's member and manager pickers pass `includeSelf`, so a super admin adds themselves as member or manager, a group manager as member; the institutional group manager picker, the same dialog, follows.
 - The published-sample rule guards every detach, `detachManualGroupMember` being the single path: the self-service leave answers 403, the group page and `PUT /admin/users/:id` answer 409.
 - The public sample page names the attached groups in their own section, gated on a non-empty list and labelled "Groups", since "manual" is admin jargon a public reader has no context for.
 - The Teams/Projects tag distinction stays a separate ticket; filtering published samples by group shipped as its own.
