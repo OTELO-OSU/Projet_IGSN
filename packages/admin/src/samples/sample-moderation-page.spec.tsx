@@ -190,6 +190,15 @@ describe("SampleModerationPage", () => {
       "availabilityStatus=restricted",
       { availabilityStatus: "restricted" },
     ],
+    [
+      "synchronization status",
+      async (screen) => {
+        await addFilter(screen, "Synchronization");
+        await pickPath(screen, "Synchronization", "Synchronization failed");
+      },
+      "synchronizationStatus=failed",
+      { synchronizationStatus: "failed" },
+    ],
   ])(
     "should ask the server for the chosen %s, keep it in the URL and reset to page 1",
     async (_, act, query, expected) => {

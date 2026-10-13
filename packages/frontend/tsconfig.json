@@ -8,6 +8,6 @@
       "#/*": ["./src/*"]
     },
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
-    "types": ["vite/client", "vitest/globals"]
+    "types": ["vite/client", "vitest/globals", "@tanstack/react-start"]
   }
 }

@@ -20,7 +20,7 @@ export function CenteredScreen({
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 text-center">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">{m.app_title()}</h1>
+        <h1 className="text-primary text-3xl font-bold">{m.app_title()}</h1>
         {!isError && <p className="text-muted-foreground">{message}</p>}
       </div>
       {isError && (

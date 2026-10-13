@@ -1,6 +1,12 @@
 import { useState } from "react";
 
-const DEFAULT_COLUMNS = ["type", "material", "location", "collectorName"];
+const DEFAULT_COLUMNS = [
+  "synchronizationStatus",
+  "type",
+  "material",
+  "location",
+  "collectorName",
+];
 
 export function useSampleColumns(
   offered: readonly string[],

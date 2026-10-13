@@ -86,6 +86,14 @@ const LOCKED_COLUMNS = {
   >
 >;
 
+const SYNCHRONIZATION_COLUMN: PickableColumn = {
+  id: "synchronizationStatus",
+  label: m.column_synchronization,
+  section: m.sample_section_sample,
+  cell: (sample) => <SynchronizationStatusBadge sample={sample} />,
+  className: "w-44",
+};
+
 const PICKABLE_COLUMNS: readonly PickableColumn[] = [
   {
     id: "type",
@@ -143,7 +151,18 @@ const PICKABLE_COLUMNS: readonly PickableColumn[] = [
   },
 ];
 
-const PICKABLE_COLUMN_IDS = PICKABLE_COLUMNS.map((column) => column.id);
+const OFFERED_COLUMNS = [SYNCHRONIZATION_COLUMN, ...PICKABLE_COLUMNS];
+
+const OFFERED_COLUMN_IDS = OFFERED_COLUMNS.map((column) => column.id);
+
+function toColumnDef(column: PickableColumn): ColumnDef<AdminSampleListItem> {
+  return {
+    id: column.id,
+    header: () => column.label(),
+    cell: ({ row }) => column.cell(row.original),
+    meta: { className: column.className ?? "w-40" },
+  };
+}
 
 function sampleColumns(
   moderated: boolean,
@@ -218,14 +237,10 @@ function sampleColumns(
           {{ asc: " ↑", desc: " ↓" }[column.getIsSorted() as string] ?? ""}
         </button>
       ),
-      cell: ({ row }) => (
-        <div className="flex flex-wrap gap-1">
-          <SampleStatusBadge status={row.original.status} />
-          <SynchronizationStatusBadge sample={row.original} />
-        </div>
-      ),
+      cell: ({ row }) => <SampleStatusBadge status={row.original.status} />,
       meta: { className: "w-28" },
     },
+    toColumnDef(SYNCHRONIZATION_COLUMN),
     {
       accessorKey: "owner",
       header: () => LOCKED_COLUMNS.owner.label(),
@@ -242,14 +257,7 @@ function sampleColumns(
       },
       meta: { className: "w-32" },
     },
-    ...PICKABLE_COLUMNS.map(
-      (column): ColumnDef<AdminSampleListItem> => ({
-        id: column.id,
-        header: () => column.label(),
-        cell: ({ row }) => column.cell(row.original),
-        meta: { className: column.className ?? "w-40" },
-      }),
-    ),
+    ...PICKABLE_COLUMNS.map(toColumnDef),
     {
       id: "actions",
       header: () => m.column_actions(),
@@ -288,7 +296,7 @@ export function SampleTable({
   const [templateSample, setTemplateSample] =
     useState<AdminSampleListItem | null>(null);
   const { columns, saveColumns } = useSampleColumns(
-    PICKABLE_COLUMN_IDS,
+    OFFERED_COLUMN_IDS,
     moderated,
   );
   const table = useReactTable({
@@ -301,7 +309,7 @@ export function SampleTable({
       sorting,
       rowSelection,
       columnVisibility: Object.fromEntries(
-        PICKABLE_COLUMN_IDS.map((id) => [id, columns.includes(id)]),
+        OFFERED_COLUMN_IDS.map((id) => [id, columns.includes(id)]),
       ),
     },
     onSortingChange,
@@ -318,7 +326,7 @@ export function SampleTable({
               ...column,
               locked: true,
             })),
-            ...PICKABLE_COLUMNS.map((column) => ({ ...column, locked: false })),
+            ...OFFERED_COLUMNS.map((column) => ({ ...column, locked: false })),
           ].map(({ id, label, section, locked }) => ({
             key: id,
             label: label(),

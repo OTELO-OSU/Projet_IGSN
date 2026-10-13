@@ -5,7 +5,7 @@ import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { userStatusLabel } from "./user-status-label.ts";
 
 const STATUS_CLASS: Record<UserStatus, string> = {
-  pending: "",
+  pending: "bg-accent text-accent-foreground",
   accepted: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
 };

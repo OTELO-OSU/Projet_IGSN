@@ -30,6 +30,7 @@ const searchSchema = listSamplesQuerySchema.pick({
   status: true,
   existenceStatus: true,
   availabilityStatus: true,
+  synchronizationStatus: true,
 });
 
 export const Route = createFileRoute("/")({

@@ -10,7 +10,10 @@ import { COLLECTION_METHOD_HIERARCHY } from "@projet-igsn/domain/sample/collecti
 import { AVAILABILITY_STATUSES } from "@projet-igsn/domain/sample/curation/availability-status";
 import { EXISTENCE_STATUSES } from "@projet-igsn/domain/sample/curation/existence-status";
 import { NATURES } from "@projet-igsn/domain/sample/nature";
-import { sampleStatusSchema } from "@projet-igsn/domain/sample/sample";
+import {
+  sampleStatusSchema,
+  synchronizationStatusSchema,
+} from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 
 import type { FilterEntry } from "#/filters/list-header.tsx";
@@ -27,6 +30,7 @@ import {
   natureLabel,
 } from "#/samples/sample-labels.ts";
 import { SAMPLE_STATUS } from "#/samples/sample-status-badge.tsx";
+import { SYNCHRONIZATION_STATUS } from "#/samples/synchronization-status-badge.tsx";
 
 type SampleFilterValues = Pick<
   ListSamplesQuery,
@@ -36,11 +40,16 @@ type SampleFilterValues = Pick<
   | "status"
   | "existenceStatus"
   | "availabilityStatus"
+  | "synchronizationStatus"
 >;
 
 const NATURE_ITEMS = toComboboxItems(NATURES, natureLabel);
 const STATUS_ITEMS = toComboboxItems(sampleStatusSchema.options, (value) =>
   SAMPLE_STATUS[value].label(),
+);
+const SYNCHRONIZATION_STATUS_ITEMS = toComboboxItems(
+  synchronizationStatusSchema.options,
+  (value) => SYNCHRONIZATION_STATUS[value].label(),
 );
 const EXISTENCE_STATUS_ITEMS = toComboboxItems(
   EXISTENCE_STATUSES,
@@ -121,6 +130,16 @@ export function sampleFilterEntries({
       value: values.status,
       parse: (next) => listSamplesQuerySchema.shape.status.parse(next),
       onChange: (status) => onChange({ status }),
+    }),
+    selectFilterEntry({
+      name: "synchronizationStatus",
+      label: m.column_synchronization(),
+      anyLabel: m.samples_synchronization_all(),
+      items: SYNCHRONIZATION_STATUS_ITEMS,
+      value: values.synchronizationStatus,
+      parse: (next) =>
+        listSamplesQuerySchema.shape.synchronizationStatus.parse(next),
+      onChange: (synchronizationStatus) => onChange({ synchronizationStatus }),
     }),
     searchFilterEntry({
       name: "collectorName",

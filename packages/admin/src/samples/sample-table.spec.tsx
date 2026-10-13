@@ -165,7 +165,7 @@ describe("SampleTable", () => {
       .toHaveTextContent(/^IGSN/);
   });
 
-  it("should show IGSN, Name, Status, Owner, the four default card fields and Actions by default", async () => {
+  it("should show IGSN, Name, Status, Synchronization, Owner, the four default card fields and Actions by default", async () => {
     const screen = await renderTable(samples);
     await expect
       .element(screen.getByRole("columnheader", { name: "Actions" }))
@@ -180,6 +180,7 @@ describe("SampleTable", () => {
       "IGSN",
       "Name",
       "Status",
+      "Synchronization",
       "Owner",
       "Type",
       "Material",
@@ -243,6 +244,17 @@ describe("SampleTable", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should hide the synchronization column once unticked", async () => {
+    const screen = await renderTable(samples);
+
+    await screen.getByRole("button", { name: "Columns" }).click();
+    await screen.getByRole("checkbox", { name: "Synchronization" }).click();
+
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Synchronization" }))
+      .not.toBeInTheDocument();
+  });
+
   it("should keep the picked columns across a remount", async () => {
     const first = await renderTable(samples);
     await first.getByRole("button", { name: "Columns" }).click();
@@ -303,7 +315,7 @@ describe("SampleTable", () => {
     const screen = await renderTable([]);
     await expect
       .element(screen.getByRole("cell", { name: "No results" }))
-      .toHaveAttribute("colspan", "10");
+      .toHaveAttribute("colspan", "11");
   });
 
   it("should render the internal identifier of a published sample", async () => {
@@ -325,16 +337,15 @@ describe("SampleTable", () => {
     expect(screen.getByText(/^sample-/).elements()).toHaveLength(0);
   });
 
-  it("should badge a sample with its status and synchronization labels", async () => {
+  it("should badge the synchronization status in its own column, not the status one", async () => {
     const screen = await renderTable([
       { ...sample, status: "tombstone", synchronizationStatus: "pending" },
     ]);
-    const statusCell = screen
-      .getByRole("cell")
-      .filter({ hasText: "Tombstone" });
+    const cells = screen.getByRole("cell");
+    await expect.element(cells.nth(3)).toHaveTextContent(/^Tombstone$/);
     await expect
-      .element(statusCell)
-      .toHaveTextContent("Synchronization pending");
+      .element(cells.nth(4))
+      .toHaveTextContent(/^Synchronization pending$/);
   });
 
   it("should request an asc then desc status sort when the header is clicked", async () => {

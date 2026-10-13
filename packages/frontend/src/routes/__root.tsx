@@ -1,3 +1,4 @@
+import faviconUrl from "@projet-igsn/design-system/assets/favicon.png";
 import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-link";
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import {
@@ -41,7 +42,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         {
           rel: "icon",
           type: "image/png",
-          href: "/favicon.png",
+          href: faviconUrl,
         },
         {
           rel: "manifest",
