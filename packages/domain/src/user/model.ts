@@ -8,6 +8,12 @@ export const userStatusSchema = z.enum(USER_STATUSES);
 
 export type UserStatus = z.infer<typeof userStatusSchema>;
 
+export const USER_ROLES = ["super_admin", "space_manager", "regular"] as const;
+
+export const userRoleSchema = z.enum(USER_ROLES);
+
+export type UserRole = z.infer<typeof userRoleSchema>;
+
 export const userSchema = z.object({
   id: z.uuid(),
   email: z.string(),

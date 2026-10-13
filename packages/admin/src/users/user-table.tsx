@@ -16,6 +16,7 @@ import {
 import { m } from "#/paraglide/messages.js";
 
 import { RemoveUserInstitutionButton } from "./remove-user-institution-button.tsx";
+import { SuperAdminMark } from "./super-admin-mark.tsx";
 import { UserStatusBadge } from "./user-status-badge.tsx";
 
 const MAX_LISTED_GROUPS = 3;
@@ -33,13 +34,16 @@ const columns: ColumnDef<ListedUser>[] = [
     accessorKey: "name",
     header: () => m.column_name(),
     cell: ({ row }) => (
-      <Link
-        to="/users/$userId"
-        params={{ userId: row.original.id }}
-        className="hover:underline"
-      >
-        {row.original.name ?? row.original.email}
-      </Link>
+      <span className="inline-flex items-center gap-1">
+        <Link
+          to="/users/$userId"
+          params={{ userId: row.original.id }}
+          className="hover:underline"
+        >
+          {row.original.name ?? row.original.email}
+        </Link>
+        {row.original.superAdmin && <SuperAdminMark />}
+      </span>
     ),
   },
   {

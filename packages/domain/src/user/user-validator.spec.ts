@@ -25,6 +25,23 @@ describe("listUsersQuerySchema", () => {
     ).toEqual({ page: 3, perPage: DEFAULT_PAGE_SIZE, status: "pending" });
   });
 
+  it.each([
+    ["a comma-separated string", "super_admin,regular"],
+    ["an array", ["super_admin", "regular"]],
+  ])("should read the role filter from %s", (_case, roles) => {
+    expect(listUsersQuerySchema.parse({ roles }).roles).toEqual([
+      "super_admin",
+      "regular",
+    ]);
+  });
+
+  it.each([
+    ["an unknown role", "super_admin,owner"],
+    ["an empty list", []],
+  ])("should drop a role filter holding %s", (_case, roles) => {
+    expect(listUsersQuerySchema.parse({ roles }).roles).toBeUndefined();
+  });
+
   it("should read an empty value as no institutional filter", () => {
     expect(
       listUsersQuerySchema.parse({
@@ -76,7 +93,7 @@ describe("updateUserSchema", () => {
   });
 
   it.each([
-    ["an unknown field", { status: "accepted", ...TRIO, superAdmin: true }],
+    ["an unknown field", { status: "accepted", ...TRIO, owner: true }],
     [
       "an organization without its laboratory",
       {

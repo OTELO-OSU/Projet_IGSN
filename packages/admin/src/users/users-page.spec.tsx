@@ -50,7 +50,8 @@ const USERS = [
   user(1, "pending", [1, 2, 3, 4].map(manualGroup)),
   { ...user(2, "accepted"), ...CALLER_GROUPS },
   user(3, "rejected"),
-  ...Array.from({ length: 9 }, (_, i) => user(i + 4, "accepted")),
+  { ...user(4, "accepted"), superAdmin: true },
+  ...Array.from({ length: 8 }, (_, i) => user(i + 5, "accepted")),
 ];
 
 function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
@@ -257,6 +258,40 @@ describe("UsersPage", () => {
     await expect
       .poll(() => requested.at(-1))
       .toContain(`manualGroup=${manualGroup(1).id}`);
+  });
+
+  it("should ask the server for every picked role", async () => {
+    const { requested } = fakeApi();
+    const { screen } = await renderUsersPage();
+
+    await screen.getByRole("button", { name: "Add a filter" }).click();
+    await screen
+      .getByRole("dialog")
+      .getByRole("button", { name: "Role" })
+      .click();
+    await screen.getByRole("combobox", { name: "Role" }).click();
+    await screen.getByRole("option", { name: "Space managers" }).click();
+    await screen.getByRole("option", { name: "Regular users" }).click();
+
+    await expect
+      .poll(() => requested.at(-1))
+      .toContain("roles=space_manager%2Cregular");
+  });
+
+  it("should mark a super admin", async () => {
+    fakeApi();
+    const { screen } = await renderUsersPage();
+
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /user4@univ-lorraine\.fr/ })
+          .getByRole("img", { name: "Super admin" }),
+      )
+      .toBeVisible();
+    expect(
+      screen.getByRole("img", { name: "Super admin" }).elements(),
+    ).toHaveLength(1);
   });
 
   it("should page through the list from the server", async () => {

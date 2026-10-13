@@ -8,13 +8,17 @@ import { useAppForm } from "@projet-igsn/design-system/components/form/app-form"
 import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { canJoinManualGroup } from "@projet-igsn/domain/manual-group/can-join-manual-group";
+import { canBecomeSuperAdmin } from "@projet-igsn/domain/user/can-become-super-admin";
 import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
+import { canSetSuperAdmin } from "@projet-igsn/domain/user/can-set-super-admin";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { settableUserStatuses } from "@projet-igsn/domain/user/settable-user-statuses";
 import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { userManagementRights } from "@projet-igsn/domain/user/user-management-rights";
 import { updateUserSchema } from "@projet-igsn/domain/user/user-validator";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { institutionalGroupsFieldErrors } from "#/institutional-groups/institutional-groups-field-errors.ts";
 import { InstitutionalGroupsFields } from "#/institutional-groups/institutional-groups-fields.tsx";
 import {
@@ -40,6 +44,7 @@ const toDraft = (user: AdminUser) => ({
   institutionalLaboratory: user.institutionalLaboratory,
   manualGroupIds: user.manualGroups.map((group) => group.id),
   managedGroups: user.managedGroups,
+  superAdmin: user.superAdmin,
 });
 
 const composeUser = (draft: UpdateUser): UpdateUser => ({
@@ -63,6 +68,7 @@ export function UserForm({
   const isSuperAdmin = me?.superAdmin === true;
   const myManagedGroups = me?.managedManualGroups ?? [];
   const caller = {
+    callerId: me?.id ?? "",
     superAdmin: isSuperAdmin,
     managedLaboratories: me?.managedLaboratories ?? [],
     managedManualGroupIds: myManagedGroups.map((group) => group.id),
@@ -114,6 +120,13 @@ export function UserForm({
       )}
     </form.AppField>
   );
+  const superAdminHint = (status: UpdateUser["status"]) => {
+    if (!canSetSuperAdmin(caller, user.id)) return m.user_super_admin_self();
+    if (!user.superAdmin && !canBecomeSuperAdmin(status)) {
+      return m.user_super_admin_active_only();
+    }
+    return null;
+  };
   const rePendNotice = (
     <div className="grid gap-2">
       <span className="text-sm font-medium">{m.column_status()}</span>
@@ -132,7 +145,7 @@ export function UserForm({
         event.preventDefault();
         void form.handleSubmit();
       }}
-      className="grid w-full gap-4"
+      className="grid w-full gap-4 pb-16"
     >
       <FormSection title={m.user_form_title()}>
         <form.Subscribe
@@ -144,6 +157,28 @@ export function UserForm({
               : statusField
           }
         </form.Subscribe>
+        {isSuperAdmin && (
+          <form.Subscribe selector={(state) => state.values.status}>
+            {(status) => {
+              const hint = superAdminHint(status);
+              return (
+                <>
+                  <form.AppField name="superAdmin">
+                    {(field) => (
+                      <field.SwitchField
+                        label={m.user_super_admin()}
+                        disabled={hint !== null}
+                      />
+                    )}
+                  </form.AppField>
+                  {hint && (
+                    <p className="text-muted-foreground text-sm">{hint}</p>
+                  )}
+                </>
+              );
+            }}
+          </form.Subscribe>
+        )}
       </FormSection>
 
       <FormSection title={m.settings_institution_title()}>
@@ -195,13 +230,36 @@ export function UserForm({
         </form.AppForm>
       )}
 
-      <div>
-        <form.AppForm>
-          <form.SubmitButton
-            label={m.action_save()}
-            disabled={save.isPending}
-          />
-        </form.AppForm>
+      <div className="bg-background fixed inset-x-0 bottom-0 z-40 flex flex-wrap justify-end gap-2 border-t px-6 py-3 md:left-(--sidebar-width) md:duration-500 md:ease-in-out md:motion-safe:transition-[left]">
+        <form.Subscribe selector={(state) => state.values.superAdmin}>
+          {(superAdmin) =>
+            superAdmin === user.superAdmin ? (
+              <form.AppForm>
+                <form.SubmitButton
+                  label={m.action_save()}
+                  disabled={save.isPending}
+                />
+              </form.AppForm>
+            ) : (
+              <ConfirmButton
+                title={
+                  superAdmin
+                    ? m.user_super_admin_grant_title()
+                    : m.user_super_admin_revoke_title()
+                }
+                description={(superAdmin
+                  ? m.user_super_admin_grant_description
+                  : m.user_super_admin_revoke_description)({
+                  name: fullName(user) || user.email,
+                })}
+                disabled={save.isPending}
+                onConfirm={() => void form.handleSubmit()}
+              >
+                {m.action_save()}
+              </ConfirmButton>
+            )
+          }
+        </form.Subscribe>
       </div>
     </form>
   );

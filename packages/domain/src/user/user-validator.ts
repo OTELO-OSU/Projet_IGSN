@@ -12,7 +12,7 @@ import {
 } from "../sample/sample-validator.ts";
 import { MAX_SEARCH_LENGTH } from "../sample/search/search-tokens.ts";
 import { managedGroupsSchema } from "./managed-groups.ts";
-import { userSchema, userStatusSchema } from "./model.ts";
+import { userRoleSchema, userSchema, userStatusSchema } from "./model.ts";
 
 export const userIdentitySchema = userSchema.pick({
   id: true,
@@ -79,6 +79,13 @@ export const listUsersQuerySchema = z.object({
   institutionalOsu: osuCodeSchema.optional().catch(undefined),
   institutionalLaboratory: laboratoryCodeSchema.optional().catch(undefined),
   manualGroup: z.uuid().optional().catch(undefined),
+  roles: z
+    .preprocess(
+      (value) => (typeof value === "string" ? value.split(",") : value),
+      z.array(userRoleSchema).min(1),
+    )
+    .optional()
+    .catch(undefined),
 });
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
@@ -133,6 +140,7 @@ export const updateUserSchema = z
     institutionalLaboratory: laboratoryCodeSchema.nullable(),
     manualGroupIds: z.array(z.uuid()),
     managedGroups: managedGroupsSchema,
+    superAdmin: z.boolean().optional(),
   })
   .superRefine((user, ctx) => {
     for (const issue of optionalInstitutionalGroupIssues(user)) {

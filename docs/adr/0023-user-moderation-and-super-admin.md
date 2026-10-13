@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Amended 2026-08-24, folded in below. Amended 2026-09-04: a rejected account is never mailed.
+Accepted. Amended 2026-08-24, folded in below. Amended 2026-09-04: a rejected account is never mailed. Amended 2026-10-13: a super admin grants and revokes the role, folded in below.
 
 ## Context
 
@@ -16,7 +16,13 @@ ADR 0019 gave every researcher an owned space but no gate: any Keycloak account 
 
 **Rejected users are locked out in `currentUser`**, the middleware every authenticated route already passes through: one guard, no per-route duplication, and it 403s rather than 401s so the SPA's silent-renew-then-redirect retry (ADR 0006) never loops on an account that will never become valid again.
 
-**Super admin is a local DB boolean (`user.super_admin`), not a Keycloak realm role.** The realm is GaiaData's, shared with other service providers we do not administer, so we cannot ask it to carry our role; `requireRole` (built in ADR 0006) stays unused for this reason and is the rejected alternative. The flag is never token-derived: no request claim sets it and no endpoint accepts it as input (`updateUserSchema` is a `strictObject` carrying only the status, the institutional trio and the manual groups), so it can only change by direct database write.
+**Super admin is a local DB boolean (`user.super_admin`), not a Keycloak realm role.** The realm is GaiaData's, shared with other service providers we do not administer, so we cannot ask it to carry our role; `requireRole` (built in ADR 0006) stays unused for this reason and is the rejected alternative. The flag is never token-derived: no request claim sets it.
+
+**A super admin grants and revokes the role from the user page**, through the optional `superAdmin` of `PUT /admin/users/:id`.
+
+- `canSetSuperAdmin` allows it to a super admin on another account only, so at least one super admin always remains; any other caller's submitted flag keeps the stored value, as ADR 0030 does for a field out of reach.
+- Only an account `accepted` after the save may be promoted (`canBecomeSuperAdmin`), a promotion otherwise answering 422, so no new pending super admin appears; demotion is always allowed.
+- The users list filters on a role (`super_admin`, `space_manager`, `regular`), exclusive in that order, so a super admin managing groups is no space manager there.
 
 **Super admin overrides ownership in `requireSampleAccess`**, which lets its request through whatever role the share table holds for it. `GET /admin/samples` stays per-assignment for every role, a global reach living in the moderation list `GET /admin/samples/moderated` ([ADR 0030](0030-scoped-user-moderation.md)).
 
@@ -35,7 +41,7 @@ UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>
 ## Consequences
 
 - No email is sent on any status change (out of scope), so a moderated user only learns their status by loading the app.
-- The super admin flag has no UI or endpoint to grant it: promoting a second super admin is the same manual `UPDATE`, recorded in [deploy.md](../deploy.md).
+- Only the first super admin needs the manual `UPDATE`, recorded in [deploy.md](../deploy.md); the next ones are granted from the user page.
 - `requireRole`/`realm_access.roles` stays built but unused; revisit if GaiaData ever lets us manage a realm role for this registry.
 - The weekly `listPending` digest sweeps the `pending` column, so an account demoted by any of the paths reaches the same recipients with no extra work. It reports and orders by `created_at`, so a demoted account shows its signup age and sorts above genuine newcomers; a re-pending timestamp is deferred until a moderator complains.
 - Adding a role beyond owner and super admin shipped as the space manager (ADR 0030), derived from a scope rather than a second boolean.

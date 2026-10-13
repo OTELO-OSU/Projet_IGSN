@@ -85,6 +85,7 @@ export type UserRepository = {
 type UpdateUserResult = {
   user: AdminUser;
   previousStatus: UserStatus;
+  previousSuperAdmin: boolean;
   joinedGroups: ManualGroup[];
   leftGroupIds: string[];
   orphanedGroups: OrphanedGroup[];

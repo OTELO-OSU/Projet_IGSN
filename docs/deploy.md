@@ -106,7 +106,7 @@ Once per environment:
 
 ## First super admin
 
-- No endpoint or UI grants the `super_admin` flag (ADR 0023, by design).
+- A super admin grants and revokes the role from a user's page, so only the first one needs this manual write (ADR 0023).
 - After the intended person has signed in once, so their `user` row exists, run once per environment with `docker exec` on the stack's `postgres` container (Portainer's console works too):
 
   ```sql

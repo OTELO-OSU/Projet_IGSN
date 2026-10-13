@@ -51,6 +51,7 @@ type Options = {
   manualGroups?: { id: string; name: string; canDetach: boolean }[];
   managedManualGroupIds?: string[];
   caller?: Partial<CurrentUser>;
+  superAdmin?: boolean;
 };
 
 const OFF_CATALOG_ID = "3f2504e0-4f89-41d3-9a0c-0305000000ff";
@@ -83,6 +84,7 @@ function fakeApi({
   manualGroups = [BASALT],
   managedManualGroupIds = [],
   caller = { superAdmin: true },
+  superAdmin = false,
 }: Options) {
   let user = {
     id: USER_ID,
@@ -91,7 +93,7 @@ function fakeApi({
     firstname,
     orcid: null,
     status,
-    superAdmin: false,
+    superAdmin,
     manualGroups,
     managedGroups: {
       ...NO_MANAGED_GROUPS,
@@ -340,6 +342,7 @@ describe("UserDetailPage", () => {
           ...CALLER_GROUPS,
           manualGroupIds: [BASALT.id, METEORITE.id],
           managedGroups: NO_MANAGED_GROUPS,
+          superAdmin: false,
         },
       ]);
     await expect.element(screen.getByText("Account updated")).toBeVisible();
@@ -359,6 +362,7 @@ describe("UserDetailPage", () => {
           ...CALLER_GROUPS,
           manualGroupIds: [],
           managedGroups: NO_MANAGED_GROUPS,
+          superAdmin: false,
         },
       ]);
   });
@@ -382,6 +386,7 @@ describe("UserDetailPage", () => {
           institutionalLaboratory: "UMR7358",
           manualGroupIds: [BASALT.id],
           managedGroups: NO_MANAGED_GROUPS,
+          superAdmin: false,
         },
       ]);
   });
@@ -422,6 +427,7 @@ describe("UserDetailPage", () => {
           institutionalLaboratory: null,
           manualGroupIds: [BASALT.id],
           managedGroups: NO_MANAGED_GROUPS,
+          superAdmin: false,
         },
       ]);
   });
@@ -574,6 +580,7 @@ describe("UserDetailPage", () => {
             ...NO_MANAGED_GROUPS,
             organizations: ["04vfs2w97"],
           },
+          superAdmin: false,
         },
       ]);
   });
@@ -586,6 +593,76 @@ describe("UserDetailPage", () => {
 
     await expect
       .element(screen.getByRole("button", { name: `Remove ${OFF_CATALOG_ID}` }))
+      .toBeVisible();
+  });
+
+  it.each([
+    ["granted", false, "Grant super admin rights?"],
+    ["revoked", true, "Revoke super admin rights?"],
+  ] as const)(
+    "should save the super admin role %s only once the warning is confirmed",
+    async (_case, superAdmin, title) => {
+      const { screen, calls } = await renderUserPage({
+        status: "accepted",
+        superAdmin,
+      });
+
+      await screen.getByRole("switch", { name: "Super admin" }).click();
+      await screen.getByRole("button", { name: "Save" }).click();
+
+      await expect
+        .element(screen.getByRole("dialog", { name: title }))
+        .toBeVisible();
+      expect(calls).toEqual([]);
+
+      await screen.getByRole("button", { name: "Confirm" }).click();
+
+      await expect
+        .poll(() => calls)
+        .toEqual([
+          {
+            status: "accepted",
+            ...CALLER_GROUPS,
+            manualGroupIds: [BASALT.id],
+            managedGroups: NO_MANAGED_GROUPS,
+            superAdmin: !superAdmin,
+          },
+        ]);
+    },
+  );
+
+  it.each([
+    [
+      "their own account",
+      { status: "accepted", caller: { superAdmin: true, id: USER_ID } },
+      "You cannot remove your own super admin rights.",
+    ],
+    [
+      "an account that is not active",
+      { status: "pending" },
+      "Only an active account can become super admin.",
+    ],
+  ] as const)(
+    "should keep a super admin from changing the role of %s",
+    async (_case, options, hint) => {
+      const { screen } = await renderUserPage(options);
+
+      await expect
+        .element(screen.getByRole("switch", { name: "Super admin" }))
+        .toBeDisabled();
+      await expect.element(screen.getByText(hint)).toBeVisible();
+    },
+  );
+
+  it("should mark a super admin account", async () => {
+    const { screen } = await renderUserPage({ superAdmin: true });
+
+    await expect
+      .element(
+        screen
+          .getByRole("heading", { level: 1 })
+          .getByRole("img", { name: "Super admin" }),
+      )
       .toBeVisible();
   });
 
