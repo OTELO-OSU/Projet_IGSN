@@ -114,6 +114,7 @@ async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
       child.name,
       child.columns,
       rows.length + MAX_IMPORT_ROWS,
+      EXPORT_SAMPLE_COLUMNS,
       sampleRows,
     );
     fill(sheet, child.columns, rows);
