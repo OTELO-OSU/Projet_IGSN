@@ -16,7 +16,7 @@ export function PublicationLock({ isPublished }: { isPublished: boolean }) {
     <Tooltip>
       <TooltipTrigger asChild>
         <span tabIndex={0} aria-label={text}>
-          <Icon aria-hidden="true" className="text-muted-foreground size-4" />
+          <Icon aria-hidden="true" className="text-muted-foreground size-3.5" />
         </span>
       </TooltipTrigger>
       <TooltipContent>{text}</TooltipContent>

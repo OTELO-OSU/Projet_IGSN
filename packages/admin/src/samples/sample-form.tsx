@@ -606,7 +606,10 @@ export function SampleForm({
               const required = sampleRequiredFields(values, keptAttachments);
               const isLocked = wasPublished
                 ? isFrozenByPublication
-                : publishedSampleFrozenField(provenanceStatus ?? null, null);
+                : publishedSampleFrozenField(
+                    provenanceStatus ?? null,
+                    material,
+                  );
               const isTabDisabled = (value: SampleFormTab) =>
                 (value === "parent" && !hasParentTab) ||
                 (value === "location" &&
@@ -623,7 +626,7 @@ export function SampleForm({
                 >
                   <FieldAdornmentProvider
                     value={(name) =>
-                      isLocked(name) || isLocked(`${name}[0]`) ? (
+                      isLocked(name) ? (
                         <PublicationLock isPublished={wasPublished} />
                       ) : null
                     }

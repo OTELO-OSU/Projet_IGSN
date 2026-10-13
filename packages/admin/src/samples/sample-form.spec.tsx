@@ -3152,6 +3152,45 @@ describe("SampleForm post-publication field lock", () => {
     ).toEqual([null]);
   });
 
+  it.each<{ status: SampleStatus; text: string }>([
+    { status: "draft", text: LOCKED_AFTER_PUBLICATION },
+    { status: "published", text: LOCKED_SINCE_PUBLICATION },
+  ])(
+    "should lock only the material chips publication freezes on a $status sample",
+    async ({ status, text }) => {
+      const screen = await render(
+        <SampleForm
+          onCancel={noop}
+          status={status}
+          defaultValues={{
+            ...publishedFixture,
+            material: "rock_and_sediment.rock.igneous.plutonic",
+          }}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />,
+      );
+
+      await screen.getByRole("tab", { name: "Sample classification" }).click();
+      const material = screen.getByRole("combobox", {
+        name: "Material *",
+        exact: true,
+      });
+      await expect.element(material).toBeVisible();
+      expect(
+        ["Rock and sediment", "Rock", "Igneous", "Plutonic"].map(
+          (level) =>
+            screen
+              .getByText(level, { exact: true })
+              .element()
+              .closest('[data-slot="badge"]')
+              ?.querySelector("span[aria-label]")
+              ?.getAttribute("aria-label") ?? null,
+        ),
+      ).toEqual([text, text, null, null]);
+      expect(publicationLocksOf(material.element())).toEqual([null]);
+    },
+  );
+
   it("blocks publishing a draft whose relation has no resource type", async () => {
     const screen = await render(
       <TooltipProvider>

@@ -1,5 +1,5 @@
 import { CheckIcon, ChevronsUpDownIcon, XIcon } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 
 import {
   canStopAtPath,
@@ -41,6 +41,7 @@ type HierarchyInputProps = {
   onBlur?: () => void;
   isSelectable?: (path: string) => boolean;
   isLevelLocked?: (depth: number) => boolean;
+  levelAdornment?: (depth: number) => ReactNode;
   disabled?: boolean;
   placeholder: string;
   searchPlaceholder: string;
@@ -62,6 +63,7 @@ export function HierarchyInput({
   onBlur,
   isSelectable = () => true,
   isLevelLocked,
+  levelAdornment,
   disabled,
   placeholder,
   searchPlaceholder,
@@ -154,7 +156,10 @@ export function HierarchyInput({
                   )}
                 >
                   {locked ? (
-                    <TruncatedText>{nodeLabel}</TruncatedText>
+                    <>
+                      <TruncatedText>{nodeLabel}</TruncatedText>
+                      {levelAdornment?.(level)}
+                    </>
                   ) : (
                     <>
                       <button
@@ -167,6 +172,7 @@ export function HierarchyInput({
                       >
                         <TruncatedText>{nodeLabel}</TruncatedText>
                       </button>
+                      {levelAdornment?.(level)}
                       <button
                         type="button"
                         aria-label={removeLabel(nodeLabel)}
