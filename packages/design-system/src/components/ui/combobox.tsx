@@ -20,6 +20,7 @@ export type ComboboxItem = {
   value: string;
   label: string;
   display?: ReactNode;
+  count?: number;
 };
 
 export const toComboboxItems = <Value extends string>(
@@ -139,6 +140,11 @@ export function Combobox({
                   key={item.value}
                   value={item.value}
                   keywords={[item.label]}
+                  aria-label={
+                    item.count === undefined
+                      ? undefined
+                      : `${item.label} (${item.count})`
+                  }
                   onSelect={() => {
                     onChange(
                       clearable && item.value === value ? "" : item.value,
@@ -152,6 +158,11 @@ export function Combobox({
                     )}
                   />
                   {item.display ?? item.label}
+                  {item.count !== undefined ? (
+                    <span className="text-muted-foreground ml-auto tabular-nums">
+                      {item.count}
+                    </span>
+                  ) : null}
                 </CommandItem>
               ))}
             </CommandGroup>

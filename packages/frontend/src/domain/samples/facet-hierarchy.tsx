@@ -3,7 +3,6 @@ import { Label } from "@projet-igsn/design-system/components/ui/label";
 import {
   composeHierarchyValue,
   type Hierarchy,
-  hierarchyPathLabel,
   isPathSearchable,
   toHierarchyPath,
 } from "@projet-igsn/design-system/lib/hierarchy";
@@ -36,23 +35,14 @@ export function HierarchyFacet({
 }: HierarchyFacetProps) {
   const id = useId();
   const selected = toHierarchyPath(value ?? null);
-  const countByLabelCode = new Map(
-    Object.entries(counts ?? {}).map(([path, count]) => [
-      hierarchyPathLabel(hierarchy, path, (code) => code),
-      count,
-    ]),
-  );
-  const withCount = (code: string) => {
-    const count = countByLabelCode.get(code);
-    return count ? `${translate(code)} (${count})` : translate(code);
-  };
   return (
     <div className="space-y-1">
       <Label htmlFor={id}>{label}</Label>
       <HierarchyInput
         id={id}
         hierarchy={hierarchy}
-        translate={withCount}
+        translate={translate}
+        count={(path) => counts?.[path] || undefined}
         value={selected}
         onChange={(path) => onChange(composeHierarchyValue(path) ?? undefined)}
         isSelectable={(path) =>
