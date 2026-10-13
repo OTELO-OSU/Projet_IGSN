@@ -1000,6 +1000,7 @@
   "import_samples_document_too_large": "{name} is larger than {max} MB.",
   "import_samples_duplicates_note": "Rows {rows} of the workbook match published samples.",
   "import_template_download_error": "The template could not be downloaded.",
+  "import_template_include_section": "Include {section}",
   "import_template_reserve_label": "Reserve internal IDs",
   "import_template_reserve_count_label": "Number of internal IDs",
   "import_template_reserve_count_hint": "Up to {max} IDs. Reserve generously: an unused ID is never reissued, and a new reservation starts a new range.",
