@@ -1434,6 +1434,52 @@ describe("listSamples", () => {
     },
   );
 
+  pgTest(
+    "should match the material classification in the public search alone",
+    async ({ db }) => {
+      // Arrange
+      const classified = async (material: string) => {
+        const sample = await insertSample(db, {
+          ...draft,
+          name: "Brittany core",
+          material,
+        });
+        await publishSample(db, sample.id);
+        return sample;
+      };
+      const granite = await classified(
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      );
+      await classified(
+        "rock_and_sediment.rock.sedimentary.clastic_sedimentary_rock.sandstone",
+      );
+      const publicIds = async (search: string) =>
+        (
+          await listPublishedSamples(db, { page: 1, perPage: 10, search })
+        ).data.map((sample) => sample.id);
+      // Act
+      const found = {
+        granite: await publicIds("granite"),
+        igneous: await publicIds("igneous"),
+        graniteBrittany: await publicIds("granite brittany"),
+        moderated: (
+          await listModeratedSamples(
+            db,
+            { page: 1, perPage: 10, search: "granite" },
+            superAdminScope(crypto.randomUUID()),
+          )
+        ).data,
+      };
+      // Assert
+      expect(found).toEqual({
+        granite: [granite.id],
+        igneous: [granite.id],
+        graniteBrittany: [granite.id],
+        moderated: [],
+      });
+    },
+  );
+
   describe("fuzzy threshold", () => {
     const seedAchondrite = (db: Transactional<DB>) =>
       insertSample(db, {

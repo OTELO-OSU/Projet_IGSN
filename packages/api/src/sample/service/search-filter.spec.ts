@@ -3,21 +3,26 @@ import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
 import { insertSample } from "./insert-sample.ts";
-import { relevanceScore, searchFilters } from "./search-filter.ts";
+import {
+  publicSearchFilters,
+  relevanceScore,
+  searchFilters,
+} from "./search-filter.ts";
 
 describe("searchFilters", () => {
   pgTest.for([
-    ["the substring arm", "gres"],
-    ["the typo-tolerance arm", "achondrites"],
-    ["the wildcard arm", "bas*"],
+    ["the substring arm", "gres", searchFilters],
+    ["the typo-tolerance arm", "achondrites", searchFilters],
+    ["the wildcard arm", "bas*", searchFilters],
+    ["the material classification arm", "granite", publicSearchFilters],
   ] as const)(
     "should plan %s as a ParadeDB index query, never a heap filter",
-    async ([, search], { db }) => {
+    async ([, search, filters], { db }) => {
       // Act
       const plan = await db
         .selectFrom("sample")
         .select("id")
-        .where((eb) => eb.and(searchFilters(search)))
+        .where((eb) => eb.and(filters(search)))
         .explain();
       // Assert
       const lines = plan.map((row) => Object.values(row).join(""));

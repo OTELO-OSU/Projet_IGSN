@@ -8,6 +8,8 @@ Accepted
 
 Amended 2026-10-02: the search box runs in the ParadeDB index `sample_search_idx` instead of the pg_trgm GIN indexes, which changes the word definition, the typo tolerance, the escaping target, the bounds and the indexes below. The person facets keep pg_trgm.
 
+Amended 2026-10-12: the public callers also match a token against the material classification labels, through the `publicSearchFilters` arm below.
+
 ## Context
 
 The public sample list has a free-text search box, separate from the `SAMPLE_FACETS` sidebar filters. Its grammar and its typo tolerance are a public contract: changing them changes what a shared `/search?q=...` link returns.
@@ -15,6 +17,8 @@ The public sample list has a free-text search box, separate from the `SAMPLE_FAC
 ## Decision
 
 **Grammar.** The query splits on whitespace; every token must match (AND), and a token matches on `name`, `specific_name` or `local_id` (OR), or on `igsn` by whole-token equality only. A word is a whitespace-separated word, punctuation being no boundary. `*` matches any run of characters inside one word, so it never spans two words: `bas*der` does not match "Basalt powder". The starless side of a token anchors to the word's start or end, `bas*` being "a word starting with bas" (it matches "basalt (x)" but not "Rock-basalt"), while a wildcard-free `gres` stays a substring inside one word and keeps matching "Grès de Fontainebleau". At most two wildcards apply per token (`MAX_WILDCARDS`), the extra `*` beyond that being literal, which bounds the pattern an untrusted query hands to the regex engine; only wildcards between two literals count, so `*bas*alt*` spends one of the two. The result highlighter agrees with this word definition.
+
+**Material label arm (public callers only).** `publicSearchFilters` adds to each token's OR one `<path> = any(material_paths)` arm per material path whose own label matches the token, so "igneous" finds every sample at or under that node through the indexed ancestor array, inside ParadeDB. The label is the English catalog label as displayed ("Meta-" prefix included) and matches by substring in one word with `*` anchoring, case and accent insensitive, with no typo tolerance. The root `rock_and_sediment` is excluded, since it would match every sample. Paths are resolved in JS against the `domain` catalog (`createMatchingMaterialPaths`) into `material_paths` terms rather than a stored column. Only the public list, map and facet counts use it; admin lists, `/service`, the export and the pickers keep `searchFilters`. Relevance ordering is unchanged, so a material-only hit ranks low.
 
 **Bounds** (`search-tokens.ts`), because Tantivy's regex has a non-configurable 1000-state limit (about 480 bytes of regex, `unaccent` and escaping expanding one character to at most 6 bytes) and each very short word adds regex arms matching nearly every word (16 one-letter words OOM-killed the backend in a test).
 
@@ -56,5 +60,6 @@ Out of scope: the `text` facets keep their substring `ILIKE`, and quoted exact s
 
 - `igsn` matches by equality only (`igsn = upper(token)`), so wildcards, substrings and typo tolerance are `name`, `specific_name` and `local_id` only. A partial identifier finds nothing, a prefix of a Crockford base32 UUIDv7 being shared by every sample minted in the same millisecond. `igsn` is indexed as a `pdb.literal`, so it matches whole.
 - The admin sample pickers (parent picker, second-parent dialog, series children picker, through `searchSamplePicker`) are the exception: `pickerSearchFilters` matches `name_unaccented` alone (same substring, wildcard and typo arms) plus a partial IGSN, any substring, case-insensitive (`strpos(igsn, upper(token)) > 0`), a `*` token matching names only. Specific name and local ID do not match there. The parent picker reaches every published sample, so a shared IGSN prefix floods it as it would public search: the pickers accept that noise to find a sample by any fragment, a longer fragment narrowing the 20 results. The IGSN arm stays outside ParadeDB: `igsn @@@ pdb.regex(...)` evaluated as a heap filter fails intermittently with `term ord should be retrievable`. The name arms still scan ParadeDB, so the `force_custom_plan` constraint above applies.
+- A material label matches in English only, so a French label finds nothing, and a new material node is searchable by its label with no migration.
 - A fraction character (`½`) can never match, its unaccented form containing a space.
 - The grammar is documented nowhere in the UI, the search help popover that once explained it having been removed.

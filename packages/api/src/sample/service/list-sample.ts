@@ -42,6 +42,7 @@ import {
 import {
   applyFuzzyThreshold,
   forceCustomPlan,
+  publicSearchFilters,
   relevanceScore,
   searchFilters,
 } from "./search-filter.ts";
@@ -86,9 +87,10 @@ function isPublished(): Expression<SqlBool> {
 export function sampleFilters(
   params: Partial<ListSamplesQuery>,
   linkedAccounts?: LinkedAccounts,
+  searchBuilder = searchFilters,
 ): Expression<SqlBool>[] {
   return [
-    ...(params.search === undefined ? [] : searchFilters(params.search)),
+    ...(params.search === undefined ? [] : searchBuilder(params.search)),
     ...(params.bbox === undefined ? [] : [withinBbox(params.bbox)]),
     ...(params.viewport === undefined ? [] : [withinBbox(params.viewport)]),
     ...facetFilters(params, linkedAccounts),
@@ -119,6 +121,7 @@ async function listSamplesWhere(
   params: ListSamplesQuery,
   scope: Expression<SqlBool>[],
   withOwner = false,
+  searchBuilder = searchFilters,
 ) {
   const { page, perPage, search, sort, order = "asc" } = params;
 
@@ -127,7 +130,7 @@ async function listSamplesWhere(
     await applyFuzzyThreshold(trx, personFacetValues(params));
 
     const filters = [
-      ...sampleFilters(params),
+      ...sampleFilters(params, undefined, searchBuilder),
       ...(params.status === undefined ? [] : [hasStatus(params.status)]),
       ...scope,
     ];
@@ -302,6 +305,8 @@ export async function listPublishedSamples(
     db,
     params,
     publishedScope(params),
+    false,
+    publicSearchFilters,
   );
   return { data, total };
 }
