@@ -75,7 +75,10 @@ export function AuthGate({ children }: { children?: ReactNode }) {
   const identityProvider = auth.user?.profile.identity_provider;
   const isOrcid =
     typeof identityProvider === "string" &&
-    identityProvider.toLowerCase() === "orcid";
+    identityProvider.toLowerCase() ===
+      (
+        import.meta.env.VITE_OIDC_ORCID_IDENTITY_PROVIDER || "orcid"
+      ).toLowerCase();
 
   return (
     <IdentityGate isOrcid={isOrcid} onSignOut={signOut}>

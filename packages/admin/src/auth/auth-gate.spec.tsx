@@ -194,4 +194,18 @@ describe("AuthGate", () => {
         .toHaveTextContent(/orcid access gate/i);
     },
   );
+
+  it("routes a user signed in through the configured ORCID alias to the ORCID access gate", async () => {
+    vi.stubEnv("VITE_OIDC_ORCID_IDENTITY_PROVIDER", "orcid-gaia");
+    onTestFinished(() => {
+      vi.unstubAllEnvs();
+    });
+    auth.isAuthenticated = true;
+    auth.user = { profile: { identity_provider: "ORCID-GAIA" } };
+
+    const screen = await render(<AuthGate />);
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(/orcid access gate/i);
+  });
 });

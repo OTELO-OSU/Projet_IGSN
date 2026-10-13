@@ -32,6 +32,7 @@
 - Both dev IdPs are faked locally, so dev and CI need no external account.
 - The app only ever talks to Keycloak, so the same build runs everywhere and only each broker's target IdP changes, via env vars (prod overrides them, dev falls back to the mocks).
 - The broker alias reaches the app in the `identity_provider` claim, whose case differs per environment (`orcid` on the mock realm, `ORCID` on GaiaData), so the admin gate and the api both match it case-insensitively.
+- The alias itself is `OIDC_ORCID_IDENTITY_PROVIDER` (default `orcid`), read by the api and baked into the admin as `VITE_OIDC_ORCID_IDENTITY_PROVIDER`, and a renamed alias also goes in `OIDC_ALLOWED_IDENTITY_PROVIDERS`.
 - The api's match keeps an ORCID session off the email upsert (ADR 0020), which a case-sensitive comparison would break by handing over the account matching the token's email.
 - The institution alias was renamed `satosa` -> `renater` to match GaiaData, so a dev account imported before the rename keeps the old federated link until you re-import.
 - `currentUser` refuses a login whose `identity_provider` claim is missing or outside `OIDC_ALLOWED_IDENTITY_PROVIDERS`, before any lookup or write.

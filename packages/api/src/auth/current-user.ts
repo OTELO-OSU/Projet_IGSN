@@ -24,11 +24,14 @@ function allowedIdentityProviders(): string[] {
     : DEFAULT_ALLOWED_IDENTITY_PROVIDERS;
 }
 
+const orcidIdentityProvider = (): string =>
+  process.env.OIDC_ORCID_IDENTITY_PROVIDER?.trim().toLowerCase() || "orcid";
+
 async function resolveUser(
   users: UserRepository,
   claims: KeycloakClaims,
 ): Promise<User | undefined> {
-  if (claims.identity_provider?.toLowerCase() === "orcid") {
+  if (claims.identity_provider?.toLowerCase() === orcidIdentityProvider()) {
     return claims.identity_provider_identity
       ? users.findByOrcid(claims.identity_provider_identity)
       : undefined;
