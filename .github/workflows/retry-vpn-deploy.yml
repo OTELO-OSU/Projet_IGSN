@@ -1,0 +1,28 @@
+name: Retry a VPN-blocked deploy
+
+on:
+  workflow_run:
+    workflows: [Deploy]
+    types: [completed]
+
+permissions:
+  actions: write
+
+jobs:
+  retry:
+    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.run_attempt < 4
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Rerun the deploy if the VPN did not connect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        run: |
+          # A blocked runner IP never recovers, but a rerun gets a new runner.
+          failed="$(gh run view "$RUN_ID" --attempt "$ATTEMPT" --json jobs --jq '.jobs[].steps[] | select(.conclusion == "failure") | .name')"
+          grep -qx 'Connect the VPN' <<<"$failed" || exit 0
+          sleep 30
+          gh run rerun "$RUN_ID" --failed
