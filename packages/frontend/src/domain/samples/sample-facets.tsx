@@ -101,7 +101,7 @@ function withCounts(
   if (!counts) return items;
   return items.flatMap((item) => {
     const count = counts[item.value] ?? 0;
-    if (count > 0) return [{ ...item, label: `${item.label} (${count})` }];
+    if (count > 0) return [{ ...item, count }];
     return item.value === selected ? [item] : [];
   });
 }

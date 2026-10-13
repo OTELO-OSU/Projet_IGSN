@@ -90,7 +90,7 @@ describe("SampleFacets", () => {
     const { screen, onChange } = await renderFacets({ type: "core" });
 
     await screen
-      .getByRole("button", { name: "Remove Core (2)", exact: true })
+      .getByRole("button", { name: "Remove Core", exact: true })
       .click();
 
     expect(onChange).toHaveBeenCalledWith("type", undefined);
@@ -358,31 +358,31 @@ describe("SampleFacets", () => {
       facet: "Nature",
       section: "Identity",
       values: {},
-      offered: ["Hand sample (3)"],
+      offered: ["Hand sample3"],
     },
     {
       facet: "Nature",
       section: "Identity",
       values: { nature: "powder" },
-      offered: ["Hand sample (3)", "Powder"],
+      offered: ["Hand sample3", "Powder"],
     },
     {
       facet: TYPE_FACET,
       section: "Identity",
       values: {},
-      offered: ["Core (2)"],
+      offered: ["Core2"],
     },
     {
       facet: /other group/i,
       section: "Declaration",
       values: {},
-      offered: ["ANR CritMet (1)"],
+      offered: ["ANR CritMet1"],
     },
     {
       facet: /other group/i,
       section: "Declaration",
       values: { manualGroup: "01980e2d-6f9b-7000-9000-000000000003" },
-      offered: ["ANR CritMet (1)", "X"],
+      offered: ["ANR CritMet1", "X"],
     },
   ])(
     "should offer only the $facet options with results or selected",
@@ -415,6 +415,14 @@ describe("SampleFacets", () => {
     await expect
       .element(screen.getByRole("combobox", { name: /contributor/i }))
       .toHaveTextContent("Marie Dupont");
+  });
+
+  it("should name a picked value without its count", async () => {
+    const { screen } = await renderFacets({ nature: "hand_sample" });
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Nature" }))
+      .toHaveTextContent(/^Hand sample$/);
   });
 
   it("should keep offering the selected hierarchy node without results", async () => {

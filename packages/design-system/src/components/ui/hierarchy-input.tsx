@@ -35,6 +35,7 @@ type HierarchyInputProps = {
   id?: string;
   hierarchy: Hierarchy;
   translate: (code: string) => string;
+  count?: (path: string) => number | undefined;
   value: string[];
   onChange: (value: string[]) => void;
   onBlur?: () => void;
@@ -55,6 +56,7 @@ export function HierarchyInput({
   id,
   hierarchy,
   translate,
+  count,
   value: path,
   onChange,
   onBlur,
@@ -222,21 +224,34 @@ export function HierarchyInput({
                   {stopLabel}
                 </CommandItem>
               ) : null}
-              {children.map(({ value, label }) => (
-                <CommandItem
-                  key={value}
-                  value={value}
-                  aria-checked={value === path[depth]}
-                  onSelect={() => pick(value)}
-                >
-                  <CheckIcon
-                    className={cn(
-                      value === path[depth] ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  {label}
-                </CommandItem>
-              ))}
+              {children.map(({ value, label }) => {
+                const optionCount = count?.(value);
+                return (
+                  <CommandItem
+                    key={value}
+                    value={value}
+                    aria-checked={value === path[depth]}
+                    aria-label={
+                      optionCount === undefined
+                        ? undefined
+                        : `${label} (${optionCount})`
+                    }
+                    onSelect={() => pick(value)}
+                  >
+                    <CheckIcon
+                      className={cn(
+                        value === path[depth] ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {label}
+                    {optionCount !== undefined ? (
+                      <span className="text-muted-foreground ml-auto tabular-nums">
+                        {optionCount}
+                      </span>
+                    ) : null}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
