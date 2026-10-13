@@ -76,8 +76,28 @@ const groupRunsOf = (name: string) => {
 const sampleKeyRange = (lastRow: number) =>
   `=${SHEETS.samples}!$A$${FIRST_DATA_ROW}:$A$${lastRow}`;
 
-const sampleLookupFormula = (row: number) =>
-  `IFERROR(VLOOKUP($A${row}, ${SHEETS.samples}!$A:$B, 2, FALSE), "")`;
+const sampleValueOf = (row: number, letter: string, number: number) =>
+  `VLOOKUP($A${row}, ${SHEETS.samples}!$A:$${letter}, ${number}, FALSE)`;
+
+const specificNameColumnOf = (source: ExcelJS.Workbook) => {
+  const samples = sheetOf(source, SHEETS.samples);
+  const index = valuesOf(samples.getRow(HEADER_ROW).values).indexOf(
+    "Specific name",
+  );
+  return index < 0
+    ? undefined
+    : { letter: samples.getColumn(index + 1).letter, number: index + 1 };
+};
+
+const sampleLookupFormula = (
+  row: number,
+  specificName: { letter: string; number: number } | undefined,
+) => {
+  const name = sampleValueOf(row, "B", 2);
+  if (specificName === undefined) return `IFERROR(${name}, "")`;
+  const specific = sampleValueOf(row, specificName.letter, specificName.number);
+  return `IFERROR(${name} & IF(${specific} = "", "", " (" & ${specific} & ")"), "")`;
+};
 
 const lastRowOf = (formula: string | undefined) =>
   formula?.match(/:\$[A-Z]+\$(\d+)$/)?.[1];
@@ -208,13 +228,17 @@ describe("import template workbook", () => {
       additionalRoles: String(lastRow),
       validatedAtLastRow: true,
       validatedPastLastRow: false,
-      lookupAtLastRow: sampleLookupFormula(lastRow),
+      lookupAtLastRow: sampleLookupFormula(
+        lastRow,
+        specificNameColumnOf(small),
+      ),
       lookupPastLastRow: undefined,
     });
   });
 
-  it("should key a child row on a sample number of the Samples sheet and fill the name beside it by lookup", () => {
+  it("should key a child row on a sample number of the Samples sheet and fill the name and specific name beside it by lookup", () => {
     const lastRow = MAX_IMPORT_ROWS + HEADER_ROW;
+    const specificName = specificNameColumnOf(book);
 
     expect(
       CHILD_SHEETS.map((child) => ({
@@ -225,9 +249,10 @@ describe("import template workbook", () => {
     ).toEqual(
       CHILD_SHEETS.map(() => ({
         key: sampleKeyRange(lastRow),
-        lookup: sampleLookupFormula(FIRST_DATA_ROW),
+        lookup: sampleLookupFormula(FIRST_DATA_ROW, specificName),
       })),
     );
+    expect(specificName).toBeDefined();
   });
 
   it("should fill the Sample # of each row with its reserved internal ID", async () => {
@@ -514,6 +539,22 @@ describe("customized import template workbook", () => {
           (name) => name !== SHEETS.processSteps,
         ),
       },
+    });
+  });
+
+  it("should fill the name alone beside a child row when the material leaves no specific name", async () => {
+    const unknownRock = await loaded(rows, [], {
+      materialPath: "rock_and_sediment.rock.unknown",
+    });
+
+    expect({
+      specificName: specificNameColumnOf(unknownRock),
+      lookup: sheetOf(unknownRock, SHEETS.relations).getCell(
+        `B${FIRST_DATA_ROW}`,
+      ).formula,
+    }).toEqual({
+      specificName: undefined,
+      lookup: sampleLookupFormula(FIRST_DATA_ROW, undefined),
     });
   });
 

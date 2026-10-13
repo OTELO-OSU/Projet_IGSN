@@ -105,8 +105,20 @@ const columnLetter = (sheet: ExcelJS.Worksheet, index: number) =>
 const sampleKeyRange = (rows: number) =>
   `${SHEETS.samples}!$A$${FIRST_DATA_ROW}:$A$${lastDataRow(rows)}`;
 
-const sampleLookupFormula = (row: number) =>
-  `IFERROR(VLOOKUP($A${row}, ${SHEETS.samples}!$A:$B, 2, FALSE), "")`;
+type SampleColumn = { letter: string; number: number };
+
+const sampleValueOf = (row: number, { letter, number }: SampleColumn) =>
+  `VLOOKUP($A${row}, ${SHEETS.samples}!$A:$${letter}, ${number}, FALSE)`;
+
+const sampleLookupFormula = (
+  row: number,
+  specificName: SampleColumn | undefined,
+) => {
+  const name = sampleValueOf(row, { letter: "B", number: 2 });
+  if (specificName === undefined) return `IFERROR(${name}, "")`;
+  const specific = sampleValueOf(row, specificName);
+  return `IFERROR(${name} & IF(${specific} = "", "", " (" & ${specific} & ")"), "")`;
+};
 
 const breadcrumbOf = (
   sheet: ExcelJS.Worksheet,
@@ -270,9 +282,20 @@ export function addChildSheet(
   name: string,
   columns: readonly Column[],
   rows: number,
+  sampleColumns: readonly Column[],
   sampleRows = rows,
 ) {
   const sheet = addDataSheet(book, name, columns, rows);
+  const specificNameIndex = sampleColumns.findIndex(
+    ({ path }) => path === "specificName",
+  );
+  const specificName =
+    specificNameIndex < 0
+      ? undefined
+      : {
+          letter: columnLetter(sheet, specificNameIndex),
+          number: specificNameIndex + 1,
+        };
   sheetValidations(sheet).add(dataRange("A", rows), {
     type: "list",
     allowBlank: true,
@@ -286,7 +309,9 @@ export function addChildSheet(
     error: `This "${SAMPLE_KEY_HEADER}" is not in the ${SHEETS.samples} sheet.`,
   });
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
-    sheet.getCell(row, 2).value = { formula: sampleLookupFormula(row) };
+    sheet.getCell(row, 2).value = {
+      formula: sampleLookupFormula(row, specificName),
+    };
   }
   return sheet;
 }
@@ -390,7 +415,7 @@ async function build(
     if (isParentColumnDropped && child.name === SHEETS.processSteps) continue;
     const columns = keptColumnsOf(child.columns, stored, droppedGroups);
     if (columns.every((column) => column.path === undefined)) continue;
-    addChildSheet(book, child.name, columns, rows);
+    addChildSheet(book, child.name, columns, rows, sampleColumns);
   }
   await addVocabularySheet(book, vocabulary.rows).protect("", {});
   return book.xlsx.writeBuffer();
