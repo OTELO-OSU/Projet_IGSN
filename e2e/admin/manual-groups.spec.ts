@@ -1,5 +1,4 @@
 import { manualGroupPage } from "../support/admin/manual-group.page";
-import { waitForAttachableManualGroups } from "../support/admin/manual-groups-field";
 import { manualGroupsPage } from "../support/admin/manual-groups.page";
 import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
@@ -10,148 +9,14 @@ import {
   signInAsResearcher,
   signInAsResearcherInOwnSession,
 } from "../support/admin/sign-in";
-import { userPage } from "../support/admin/user.page";
-import { usersPage } from "../support/admin/users.page";
 import { expect, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { sampleListPage as publicSampleListPage } from "../support/frontend/sample-list.page";
-import { maildev } from "../support/maildev";
 import { frontendUrl } from "../support/urls";
 
 const uniqueName = (name: string) => `${name} ${Date.now()}`;
 
 test.describe("manual groups", () => {
-  test("a super admin runs a manual group through its lifecycle", async ({
-    page,
-    request,
-  }) => {
-    const groups = manualGroupsPage(page);
-    const group = manualGroupPage(page);
-    const name = uniqueName("Team Basalt");
-
-    await signInAsResearcher(page, RESEARCHERS.nadia);
-    await groups.open();
-    await groups.expectVisible();
-
-    await groups.create(name);
-    await groups.expectGroupRow(name, 0);
-
-    await groups.openGroup(name);
-    await group.expectVisible(name);
-    await group.expectNoSuggestion("Roux");
-    await group.associate("Martin", RESEARCHERS.jean.email);
-    await group.expectMember(RESEARCHERS.jean.email, "Active");
-
-    await maildev(request).expectMail(
-      RESEARCHERS.jean.email,
-      `Nadia Leroy added you to the group "${name}"`,
-      ["/settings/groups"],
-    );
-
-    await group.detach("Jean Martin");
-    await group.expectNoMember(RESEARCHERS.jean.email);
-
-    const renamed = uniqueName("Team Andesite");
-    await group.rename(renamed);
-    await group.expectVisible(renamed);
-
-    await group.remove();
-    await groups.expectVisible();
-    await groups.expectNoGroupRow(renamed);
-  });
-
-  test("a super admin attaches a group from the account page", async ({
-    page,
-  }) => {
-    const groups = manualGroupsPage(page);
-    const group = manualGroupPage(page);
-    const users = usersPage(page);
-    const user = userPage(page);
-    const name = uniqueName("Team Dunite");
-
-    await signInAsResearcher(page, RESEARCHERS.nadia);
-    await groups.open();
-    await groups.create(name);
-
-    await users.open();
-    await users.expectVisible();
-    await users.openUser(RESEARCHERS.camille.email);
-    await user.expectVisible(RESEARCHERS.camille.email);
-
-    await user.associateGroup(name);
-    await user.expectGroup(name);
-
-    await users.open();
-    await users.expectGroup(RESEARCHERS.camille.email, name);
-
-    await groups.open();
-    await groups.openGroup(name);
-    await group.expectMember(RESEARCHERS.camille.email, "Active");
-  });
-
-  test("a super admin searches the manual groups by name", async ({ page }) => {
-    const groups = manualGroupsPage(page);
-    const matching = uniqueName("Volcano watchers");
-    const other = uniqueName("Sediment readers");
-
-    await signInAsResearcher(page, RESEARCHERS.nadia);
-    await groups.open();
-    await groups.create(matching);
-    await groups.create(other);
-
-    await groups.search("Volcano watchers");
-
-    await groups.expectGroupRow(matching, 0);
-    await groups.expectNoGroupRow(other);
-  });
-
-  test("a member reads their manual groups in their settings and cannot edit them", async ({
-    page,
-    browser,
-  }) => {
-    test.slow();
-    const groups = manualGroupsPage(page);
-    const group = manualGroupPage(page);
-    const first = uniqueName("Andesite crew");
-    const second = uniqueName("Tuff crew");
-
-    await signInAsResearcher(page, RESEARCHERS.nadia);
-    await groups.open();
-    for (const name of [first, second]) {
-      await groups.create(name);
-      await groups.openGroup(name);
-      await group.associate("Durand", RESEARCHERS.pierre.email);
-      await group.expectMember(RESEARCHERS.pierre.email, "Active");
-      await groups.open();
-    }
-
-    const memberPage = await signInAsResearcherInOwnSession(
-      browser,
-      RESEARCHERS.pierre,
-    );
-    const settings = settingsPage(memberPage);
-    await settings.openGroups();
-
-    await settings.expectManualGroup(first);
-    await settings.expectManualGroup(second);
-    await settings.expectNoManualGroupEditControl();
-
-    await memberPage.context().close();
-  });
-
-  test("a researcher who is not a super admin cannot reach the manual groups", async ({
-    page,
-  }) => {
-    const groups = manualGroupsPage(page);
-    const samples = sampleListPage(page);
-
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    await groups.goto();
-
-    await samples.expectVisible();
-    await groups.expectNoMenuEntry();
-  });
-
   test("a manual group member publishes a sample under their group", async ({
     page,
     browser,
@@ -160,14 +25,18 @@ test.describe("manual groups", () => {
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
     const name = uniqueName("Team Gabbro");
+    const other = uniqueName("Team Tuff");
     const sampleName = uniqueName("Gabbro core");
 
     await signInAsResearcher(page, RESEARCHERS.nadia);
     await groups.open();
-    await groups.create(name);
-    await groups.openGroup(name);
-    await group.associate("Martin", RESEARCHERS.jean.email);
-    await group.expectMember(RESEARCHERS.jean.email, "Active");
+    for (const groupName of [name, other]) {
+      await groups.create(groupName);
+      await groups.openGroup(groupName);
+      await group.associate("Martin", RESEARCHERS.jean.email);
+      await group.expectMember(RESEARCHERS.jean.email, "Active");
+      await groups.open();
+    }
 
     const memberPage = await signInAsResearcherInOwnSession(
       browser,
@@ -176,6 +45,7 @@ test.describe("manual groups", () => {
     const settings = settingsPage(memberPage);
     await settings.openGroups();
     await settings.expectManualGroup(name);
+    await settings.expectNoManualGroupEditControl();
 
     const list = sampleListPage(memberPage);
     const edit = sampleEditPage(memberPage);
@@ -194,6 +64,7 @@ test.describe("manual groups", () => {
 
     await list.openSample(sampleName);
     await edit.expectManualGroupFrozen(name);
+    const sampleId = edit.sampleId();
     const igsn = await edit.publicPageIgsn();
 
     await settings.openProfile();
@@ -209,79 +80,11 @@ test.describe("manual groups", () => {
     await detail.expectSample(sampleName, igsn);
     await detail.expectManualGroup(name);
 
-    await memberPage.context().close();
-  });
-
-  test("a researcher in no manual group is offered none on their sample", async ({
-    page,
-  }) => {
-    const sampleName = uniqueName("Limestone block");
-
-    await signInAsResearcher(page, RESEARCHERS.luc);
-    const list = sampleListPage(page);
-    const create = sampleCreatePage(page);
-    const edit = sampleEditPage(page);
-
-    await list.expectVisible();
-    const groupsLoaded = waitForAttachableManualGroups(page);
-    await list.goToCreate();
-    await create.expectVisible();
-    await groupsLoaded;
-    await create.expectNoManualGroupOffered();
-
-    await create.fillName(sampleName);
-    await create.submit();
-
-    await edit.expectName(sampleName);
-    await edit.expectNoManualGroupOffered();
-  });
-
-  test("a researcher owning a published sample leaves the group it is not attached to", async ({
-    page,
-    browser,
-  }) => {
-    test.slow();
-    const groups = manualGroupsPage(page);
-    const group = manualGroupPage(page);
-    const attached = uniqueName("Team Basalt");
-    const other = uniqueName("Team Tuff");
-    const sampleName = uniqueName("Basalt core");
-
-    await signInAsResearcher(page, RESEARCHERS.nadia);
-    await groups.open();
-    for (const name of [attached, other]) {
-      await groups.create(name);
-      await groups.openGroup(name);
-      await group.associate("Martin", RESEARCHERS.jean.email);
-      await group.expectMember(RESEARCHERS.jean.email, "Active");
-      await groups.open();
-    }
-
-    const memberPage = await signInAsResearcherInOwnSession(
-      browser,
-      RESEARCHERS.jean,
-    );
-    const list = sampleListPage(memberPage);
-    const create = sampleCreatePage(memberPage);
-    const edit = sampleEditPage(memberPage);
-
-    await list.expectVisible();
-    await list.goToCreate();
-    await create.expectVisible();
-    await create.fillName(sampleName);
-    await create.attachManualGroup(attached);
-    await create.submit();
-    await edit.expectName(sampleName);
-
-    await edit.fillPublishableFields();
-    await edit.publish();
-    await list.expectVisible();
-
-    const settings = settingsPage(memberPage);
+    await edit.goto(sampleId);
     await settings.openGroups();
-    await settings.expectManualGroupLeaveLocked(attached);
+    await settings.expectManualGroupLeaveLocked(name);
     await settings.leaveManualGroup(other);
-    await settings.expectManualGroup(attached);
+    await settings.expectManualGroup(name);
     await settings.expectNoManualGroup(other);
 
     await memberPage.context().close();

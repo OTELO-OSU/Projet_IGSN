@@ -12,10 +12,6 @@ export function sampleDetailPage(page: Page) {
   const locationMap = page
     .getByRole("region", { name: "Identity", exact: true })
     .getByRole("group", { name: "Sample location map" });
-  const tableOfContents = page.getByRole("navigation", {
-    name: "Sample",
-    exact: true,
-  });
   const lineageLink = (name: string, relation: string) =>
     lineage.getByRole("link", { name: `${name} ${relation}` });
   // ponytail: hydration scrolls back to top ~1s after load and swallows the first tap, so retry until the dialog opens
@@ -39,13 +35,10 @@ export function sampleDetailPage(page: Page) {
     },
     gotoNotFound: (igsn: string) => page.goto(url(igsn)),
     addSubSample: () => addSubSampleLink.click(),
-    expectNoAddSubSampleAction: () => expect(addSubSampleLink).toHaveCount(0),
     expectSample: async (name: string, igsn: string) => {
       await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
       await expect(page.getByText(igsn)).toBeVisible();
     },
-    expectInternalId: (internalId: string) =>
-      expect(page.getByText(internalId, { exact: true })).toBeVisible(),
     expectNotFound: async (name: string) => {
       await expect(
         page.getByRole("heading", { level: 1, name: "Page not found" }),
@@ -73,12 +66,6 @@ export function sampleDetailPage(page: Page) {
         "content",
         "noindex",
       ),
-    expectType: (label: string) =>
-      expect(
-        page
-          .getByRole("list", { name: "Type" })
-          .getByText(label, { exact: true }),
-      ).toBeVisible(),
     expectNature: async (label: string) => {
       await expect(page.getByText("Nature")).toBeVisible();
       await expect(page.getByText(label)).toBeVisible();
@@ -112,20 +99,6 @@ export function sampleDetailPage(page: Page) {
     expectManualGroup: (name: string) =>
       expect(
         page.getByRole("region", { name: "Declaration" }).getByText(name),
-      ).toBeVisible(),
-    expectVerticalPosition: (reference: string, value: string) =>
-      expect(
-        page
-          .getByRole("term")
-          .filter({ hasText: new RegExp(`^${reference}$`) })
-          .locator("xpath=following-sibling::dd"),
-      ).toHaveText(value),
-    expectMineralClassification: (name: string) =>
-      expect(
-        page
-          .getByRole("region", { name: "Strunz-Mindat (2026) Classifications" })
-          .getByText(name, { exact: true })
-          .first(),
       ).toBeVisible(),
     expectParent: (name: string, igsn: string) =>
       expect(lineageLink(name, "Parent sample")).toHaveAttribute(
@@ -161,16 +134,6 @@ export function sampleDetailPage(page: Page) {
           .locator("xpath=following-sibling::dd"),
       ).toHaveText(name),
     // ponytail: hydration scrolls back to top ~1s after load, so retry until the section stays in view
-    openSection: (title: string) =>
-      expect(async () => {
-        await tableOfContents
-          .getByRole("link", { name: title, exact: true })
-          .click();
-        await expect(
-          page.getByRole("heading", { level: 2, name: title, exact: true }),
-        ).toBeInViewport({ timeout: 2_000 });
-      }).toPass({ timeout: 20_000 }),
-    expectHash: (id: string) => expect(page).toHaveURL(new RegExp(`#${id}$`)),
     attachmentDownloadHref: (name: string) =>
       page.getByRole("link", { name: `Download ${name}` }).getAttribute("href"),
   };

@@ -6,8 +6,6 @@ export function manualGroupPage(page: Page) {
   const associateDialog = page.getByRole("dialog", {
     name: "Associate a user",
   });
-  const detachButton = (name: string) =>
-    page.getByRole("button", { name: `Detach ${name}` });
   const searchUser = async (search: string) => {
     await page.getByRole("button", { name: "Associate a user" }).click();
     await associateDialog.getByRole("combobox", { name: "User" }).click();
@@ -15,8 +13,6 @@ export function manualGroupPage(page: Page) {
   };
 
   return {
-    expectVisible: (name: string) =>
-      expect(page.getByRole("heading", { name, level: 1 })).toBeVisible(),
     associate: async (search: string, email: string) => {
       await searchUser(search);
       await page.getByRole("option").filter({ hasText: email }).click();
@@ -25,49 +21,7 @@ export function manualGroupPage(page: Page) {
         .click();
       await expect(associateDialog).toBeHidden();
     },
-    expectNoSuggestion: async (search: string) => {
-      await searchUser(search);
-      await expect(page.getByText("No colleague found")).toBeVisible();
-      await page.keyboard.press("Escape");
-      await associateDialog.getByRole("button", { name: "Cancel" }).click();
-      await expect(associateDialog).toBeHidden();
-    },
     expectMember: (email: string, status: string) =>
       expect(memberRow(email)).toContainText(status),
-    expectNoMember: (email: string) => expect(memberRow(email)).toHaveCount(0),
-    expectDetachDisabled: (name: string) =>
-      expect(detachButton(name)).toBeDisabled(),
-    detach: async (name: string) => {
-      await detachButton(name).click();
-      await page
-        .getByRole("dialog", { name: "Detach this member?" })
-        .getByRole("button", { name: "Detach", exact: true })
-        .click();
-    },
-    expectNoEditControl: async () => {
-      await expect(
-        page.getByRole("button", { name: "Rename this group" }),
-      ).toHaveCount(0);
-      await expect(
-        page.getByRole("button", { name: "Delete this group" }),
-      ).toHaveCount(0);
-    },
-    rename: async (name: string) => {
-      const dialog = page.getByRole("dialog", {
-        name: "Rename this manual group",
-      });
-      await page.getByRole("button", { name: "Rename this group" }).click();
-      await dialog.getByRole("textbox", { name: "Group name" }).fill(name);
-      await dialog.getByRole("button", { name: "Save" }).click();
-      await expect(dialog).toBeHidden();
-    },
-    remove: async () => {
-      const dialog = page.getByRole("dialog", {
-        name: "Delete this manual group?",
-      });
-      await page.getByRole("button", { name: "Delete this group" }).click();
-      await dialog.getByLabel("Type DELETE to confirm").fill("DELETE");
-      await dialog.getByRole("button", { name: "Delete", exact: true }).click();
-    },
   };
 }

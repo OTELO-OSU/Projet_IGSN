@@ -37,7 +37,7 @@
 - The institution alias was renamed `satosa` -> `renater` to match GaiaData, so a dev account imported before the rename keeps the old federated link until you re-import.
 - `currentUser` refuses a login whose `identity_provider` claim is missing or outside `OIDC_ALLOWED_IDENTITY_PROVIDERS`, before any lookup or write.
 - That list is comma-separated and case-insensitive, defaulting to `renater,orcid` (also the fallback when it is empty or whitespace-only), so GaiaData's own MyAccessID broker and self-registration are refused.
-- A Keycloak-local account like `test` / `test` carries no such claim at all, so it is the fixture for the two refusal scenarios in [`e2e/admin/auth.spec.ts`](../e2e/admin/auth.spec.ts).
+- A Keycloak-local account like `test` / `test` carries no such claim at all, so it is the fixture for the refusal scenario in [`e2e/admin/auth.spec.ts`](../e2e/admin/auth.spec.ts).
 - **SAML** users live in [`saml-idp/authsources.php`](../saml-idp/authsources.php) and release a French researcher profile (eduPersonPrincipalName, email, name), so login completes without prompts.
 - The SAML broker skips signature validation in dev, and only the IdP metadata/SSO URL changes for prod.
 - **ORCID** is mocked by the [`mock-orcid`](../keycloak/mock-orcid-realm.json) realm playing the OIDC provider, so no external account or approval is needed.

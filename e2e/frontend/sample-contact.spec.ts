@@ -16,7 +16,7 @@ const VISITOR: Visitor = {
 };
 
 test.describe("contact the record owner", () => {
-  test("a visitor emails the owner of a published sample", async ({
+  test("a visitor emails the owner, then the current archive contact, of a published sample", async ({
     page,
     request,
     samples,
@@ -41,20 +41,11 @@ test.describe("contact the record owner", () => {
       [VISITOR.message, `${frontendUrl}/samples/${sample.igsn}`],
       VISITOR.email,
     );
-  });
 
-  test("a visitor emails the current archive contact", async ({
-    page,
-    request,
-    samples,
-  }) => {
-    const sample = sampleNamed(samples, "Basalt 42");
-
-    const detail = sampleDetailPage(page);
     await detail.goto(sample.igsn);
     await detail.openArchiveContactForm();
 
-    await sampleContactPage(page).send(VISITOR);
+    await contact.send(VISITOR);
     await detail.expectArchiveContactSent();
 
     await maildev(request).expectMail(

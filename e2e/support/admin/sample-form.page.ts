@@ -6,9 +6,6 @@ import { pickComboboxOption } from "./pick-combobox-option.ts";
 
 const SYNTHETIC_MATERIAL = "Synthetic rock / mineral";
 
-const additionalRoleName = (rank: number, role: string) =>
-  new RegExp(`^${rank}\\. ${role}( \\*)?$`);
-
 export function sampleFormPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
   const fieldCombobox = (field: string, scope: Locator | Page = page) =>
@@ -76,8 +73,6 @@ export function sampleFormPage(page: Page) {
     return row;
   };
 
-  const publishDialog = page.getByRole("dialog", { name: "Publish sample" });
-
   const confirm = (dialog: string) =>
     page
       .getByRole("dialog", { name: dialog })
@@ -93,7 +88,6 @@ export function sampleFormPage(page: Page) {
     pick,
     confirm,
     confirmStatusChange,
-    fillPersonName,
 
     expectHierarchyLevel: (label: string) =>
       expect(
@@ -130,7 +124,6 @@ export function sampleFormPage(page: Page) {
       await expect(panel.getByLabel("Latitude")).toHaveCount(0);
     },
 
-    pickType: (label: string) => pickHierarchy("Type", label),
     attachChild: ({ name, igsn }: { name: string; igsn: string }) =>
       pickComboboxOption(page, {
         field: "Add a sample",
@@ -153,20 +146,6 @@ export function sampleFormPage(page: Page) {
         }
         await expect(combobox).toHaveText(label, { timeout: 2_000 });
       }).toPass({ timeout: 30_000 });
-    },
-    expectCompleteTypeWithoutRepeatedLevel: async (label: string) => {
-      await expect(
-        page.getByRole("option", { name: "Stop here", exact: true }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("option", { name: label, exact: true }),
-      ).toHaveCount(0);
-      await expect(fieldCombobox("Type")).toHaveAccessibleDescription(
-        /Complete, a sub-level may be picked/,
-      );
-      await page
-        .getByRole("option", { name: "Stop here", exact: true })
-        .click();
     },
 
     fillPublishableFields: async ({
@@ -203,88 +182,10 @@ export function sampleFormPage(page: Page) {
         .fill("2025-06-15");
       await fillPersonName(/operator name/i, "Paul", "Bernard");
     },
-    setPointLocation: async (longitude: string, latitude: string) => {
-      await openTab("Location");
-      await pick("Type", "Point", page.getByRole("tabpanel"));
-      await page
-        .getByRole("spinbutton", { name: /^Longitude/ })
-        .fill(longitude);
-      await page.getByRole("spinbutton", { name: /^Latitude/ }).fill(latitude);
-    },
-    addVerticalPosition: async (
-      reference: string,
-      [start, end]: [string] | [string, string],
-    ) => {
-      await openTab("Location");
-      const rank =
-        (await page
-          .getByRole("button", { name: /^Remove vertical position / })
-          .count()) + 1;
-      await page
-        .getByRole("button", { name: "Add a vertical position" })
-        .click();
-      await page
-        .getByRole("menuitem", { name: reference, exact: true })
-        .click();
-      const entry = page.getByRole("group", {
-        name: `${rank}. ${reference}`,
-        exact: true,
-      });
-      if (end === undefined) {
-        await entry
-          .getByRole("spinbutton", { name: /^Vertical position/ })
-          .fill(start);
-        return;
-      }
-      await entry.getByRole("switch", { name: "Interval" }).click();
-      await entry
-        .getByRole("spinbutton", { name: /^Minimum vertical position/ })
-        .fill(start);
-      await entry
-        .getByRole("spinbutton", { name: /^Maximum vertical position/ })
-        .fill(end);
-    },
-    setPlatformType: async (label: string) => {
-      await openTab("Scientific context");
-      await pick("Platform type", label);
-    },
-    expectPlatformType: async (label: string) => {
-      await openTab("Scientific context");
-      await expect(fieldCombobox("Platform type")).toHaveText(label);
-    },
     expectNoCollectionDate: () =>
       expect(page.getByRole("group", { name: /collection date/i })).toHaveCount(
         0,
       ),
-    addAdditionalRole: async (
-      role: string,
-      { firstname, lastname }: { firstname: string; lastname: string },
-    ) => {
-      await openTab("Scientific context");
-      const rank =
-        (await page.getByRole("button", { name: /^Remove role / }).count()) + 1;
-      await page.getByRole("button", { name: "Add a role" }).click();
-      await page.getByRole("menuitem", { name: role, exact: true }).click();
-      const person = additionalRoleName(rank, role);
-      await expect(page.getByRole("group", { name: person })).toBeVisible();
-      await fillPersonName(person, firstname, lastname);
-    },
-    expectAdditionalRole: async (
-      index: number,
-      role: string,
-      { firstname, lastname }: { firstname: string; lastname: string },
-    ) => {
-      await openTab("Scientific context");
-      const group = page.getByRole("group", {
-        name: additionalRoleName(index, role),
-      });
-      await expect(
-        group.getByRole("textbox", { name: /first name/i }),
-      ).toHaveValue(firstname);
-      await expect(
-        group.getByRole("textbox", { name: /last name/i }),
-      ).toHaveValue(lastname);
-    },
     addProcessStep: async (
       kind: string,
       { date, description }: { date: string; description: string },
@@ -299,26 +200,6 @@ export function sampleFormPage(page: Page) {
       await block.getByRole("textbox", { name: /^Date/ }).fill(date);
       await block.getByLabel("Description").fill(description);
     },
-    addMineralBySearch: async (
-      search: string,
-      option: string,
-      abundance: string,
-    ) => {
-      const row = await addClassificationRow();
-      const combobox = fieldCombobox("Classification", row);
-      const searchbox = page.getByPlaceholder("Search a class or a mineral...");
-      const chip = row.getByRole("button", {
-        name: `Remove ${option.split(" > ").at(-1)}`,
-        exact: true,
-      });
-      await expect(async () => {
-        if (!(await searchbox.isVisible())) await combobox.click();
-        await searchbox.fill(search);
-        await page.getByRole("option", { name: option, exact: true }).click();
-        await expect(chip).toBeVisible({ timeout: 2_000 });
-      }).toPass({ timeout: 20_000 });
-      await pick("Abundance", abundance, row);
-    },
     addStrunzClass: async (levels: string[]) => {
       const row = await addClassificationRow();
       const combobox = fieldCombobox("Classification", row);
@@ -328,65 +209,6 @@ export function sampleFormPage(page: Page) {
         .getByRole("option", { name: "Stop here", exact: true })
         .click();
     },
-    fillMeasurement: (label: string, value: string) =>
-      page.getByRole("spinbutton", { name: label, exact: true }).fill(value),
-    expectTabCount: (tab: string, count: string) =>
-      expect(
-        page.getByRole("tab", { name: `${tab} (${count})`, exact: true }),
-      ).toBeVisible(),
-    setOriented: async (explanation: string) => {
-      await openTab("Physical description");
-      await page.getByRole("switch", { name: "Oriented sample" }).click();
-      await page.getByLabel("Orientation explanation").fill(explanation);
-    },
-    expectDuplicateWarning: async (
-      duplicates: { name: string; igsn: string }[],
-    ) => {
-      await expect(publishDialog).toBeVisible();
-      await expect(publishDialog).toContainText("Suspected duplicates");
-      for (const duplicate of duplicates) {
-        await expect(
-          publishDialog.getByRole("link", {
-            name: `${duplicate.name} (${duplicate.igsn})`,
-            exact: true,
-          }),
-        ).toHaveAttribute("href", `${frontendUrl}/samples/${duplicate.igsn}`);
-      }
-    },
-    cancelDuplicateWarning: async () => {
-      await publishDialog.getByRole("button", { name: "Cancel" }).click();
-      await expect(publishDialog).toBeHidden();
-    },
-    confirmDuplicateWarning: async () => {
-      await publishDialog
-        .getByRole("button", { name: "Continue anyway" })
-        .click();
-      await expect(publishDialog).toBeHidden();
-    },
-    openPublish: () =>
-      page.getByRole("button", { name: "Publish", exact: true }).click(),
     publish: () => confirmStatusChange("Publish", "Publish sample"),
-    publishAsWithdrawn: async () => {
-      await page
-        .getByRole("button", { name: "More publishing options" })
-        .click();
-      await page
-        .getByRole("menuitem", { name: "Withdraw", exact: true })
-        .click();
-      await confirm("Publish sample as withdrawn");
-    },
-    publishWithEmbargo: async (date: string) => {
-      await page
-        .getByRole("button", { name: "More publishing options" })
-        .click();
-      await page
-        .getByRole("menuitem", { name: "Publish with embargo", exact: true })
-        .click();
-      const dialog = page.getByRole("dialog", {
-        name: "Publish sample with embargo",
-      });
-      await dialog.getByLabel("Publication date").fill(date);
-      await confirm("Publish sample with embargo");
-    },
   };
 }

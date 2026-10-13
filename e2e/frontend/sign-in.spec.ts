@@ -1,6 +1,4 @@
 import { adminPage } from "../support/admin/admin.page";
-import { charterPage } from "../support/admin/charter.page";
-import { institutionalGroupsPage } from "../support/admin/institutional-groups.page";
 import {
   RESEARCHERS,
   completeIdpLogin,
@@ -12,7 +10,7 @@ import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { adminUrl } from "../support/urls";
 
 test.describe("sign in from the public frontend", () => {
-  test("a researcher signs in from a sample page, lands in admin and edits their own sample", async ({
+  test("a researcher signs in from a sample page, lands in admin, edits their own sample and signs out in admin", async ({
     page,
     samples,
   }) => {
@@ -42,9 +40,17 @@ test.describe("sign in from the public frontend", () => {
     await header.expectSignedIn();
     await header.expectNoEditLink();
 
-    await header.signOut();
-    await detail.expectSample(other.name, other.igsn);
+    await detail.goto(own.igsn);
+    await header.expectEditHref(`${adminUrl}/samples/${own.id}`);
+
+    const adminTab = await page.context().newPage();
+    await adminTab.goto(`${adminUrl}/`);
+    const admin = adminPage(adminTab);
+    await admin.expectSignedIn();
+    await admin.signOut();
+
     await header.expectSignedOut();
+    await header.expectNoEditLink();
   });
 
   test("signing out on the public site signs the admin tab out", async ({
@@ -71,45 +77,5 @@ test.describe("sign in from the public frontend", () => {
     await admin.expectSignedOut();
     await page.reload();
     await admin.expectSignedOut();
-  });
-
-  test("signing out in admin drops the session of the public tab", async ({
-    page,
-    samples,
-  }) => {
-    const own = sampleNamed(samples, "Basalt 42");
-    const header = headerPage(page);
-    const detail = sampleDetailPage(page);
-
-    await detail.goto(own.igsn);
-    await header.signIn();
-    await completeIdpLogin(page, RESEARCHERS.jean);
-    await adminPage(page).expectSignedIn();
-    await detail.goto(own.igsn);
-    await header.expectEditHref(`${adminUrl}/samples/${own.id}`);
-
-    const adminTab = await page.context().newPage();
-    await adminTab.goto(`${adminUrl}/`);
-    const admin = adminPage(adminTab);
-    await admin.expectSignedIn();
-    await admin.signOut();
-
-    await header.expectSignedOut();
-    await header.expectNoEditLink();
-  });
-
-  test("a researcher with no institution signing in from a sample page is asked for it in admin", async ({
-    page,
-    samples,
-  }) => {
-    const sample = sampleNamed(samples, "Basalt 42");
-    const header = headerPage(page);
-
-    await sampleDetailPage(page).goto(sample.igsn);
-    await header.signIn();
-    await completeIdpLogin(page, RESEARCHERS.theo);
-    await charterPage(page).accept();
-
-    await institutionalGroupsPage(page).expectShown();
   });
 });

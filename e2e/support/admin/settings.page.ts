@@ -22,8 +22,6 @@ export function settingsPage(page: Page) {
   return {
     openProfile: () => openFromUserMenu("Profile"),
     openGroups: () => openFromUserMenu("Groups"),
-    mySamplesLink: () =>
-      page.getByRole("textbox", { name: "My samples link" }).inputValue(),
     groupSamplesLink: async (name: string) => {
       const link = page.getByRole("textbox", { name: "Group samples link" });
       const groupPicker = page.getByRole("combobox", {

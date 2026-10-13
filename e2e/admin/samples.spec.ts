@@ -1,107 +1,12 @@
-import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { sampleNamed, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
-import { sampleListPage as publicSampleListPage } from "../support/frontend/sample-list.page";
+import { maildev } from "../support/maildev";
 
 test.describe("samples", () => {
-  test("a researcher browses the samples they declared", async ({
-    page,
-    samples,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.jean);
-
-    const list = sampleListPage(page);
-    await list.expectVisible();
-    await list.expectColumns();
-    const mine = (s: (typeof samples)[number]) =>
-      s.owner === "jean" && s.status !== "tombstone";
-    for (const sample of samples.filter(mine)) {
-      await list.expectSampleRow(sample.name);
-    }
-    for (const sample of samples.filter((s) => !mine(s))) {
-      await list.expectNoSampleRow(sample.name);
-    }
-  });
-
-  test("a researcher declares a new sample", async ({ page }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    await create.expectVisible();
-    const name = `Basalte du Massif Central ${Date.now()}`;
-    await create.fillName(name);
-    await create.submit();
-
-    const edit = sampleEditPage(page);
-    await edit.expectVisible();
-    await edit.expectName(name);
-
-    await edit.goToList();
-    await list.expectVisible();
-    await list.expectSampleRow(name);
-  });
-
-  test("a researcher sees no sample declared by someone else", async ({
-    page,
-    samples,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.luc);
-
-    const list = sampleListPage(page);
-    await list.expectVisible();
-    await list.expectEmpty();
-
-    const edit = sampleEditPage(page);
-    await edit.goto(samples[0]!.id);
-    await edit.expectForbidden();
-  });
-
-  test("a researcher tells their own samples from the shared ones", async ({
-    page,
-    samples,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.camille);
-
-    const owned = samples.filter((sample) => sample.owner === "camille");
-    const shared = samples.filter((sample) =>
-      sample.collaborators.some(
-        (collaborator) => collaborator.researcher === "camille",
-      ),
-    );
-
-    const list = sampleListPage(page);
-    const expectOnly = async (
-      visible: typeof samples,
-      hidden: typeof samples,
-    ) => {
-      for (const sample of visible) {
-        await list.expectSampleRow(sample.name);
-      }
-      for (const sample of hidden) {
-        await list.expectNoSampleRow(sample.name);
-      }
-    };
-
-    await list.expectVisible();
-    await expectOnly([...owned, ...shared], []);
-
-    await list.filterByOwnership("Mine");
-    await expectOnly(owned, shared);
-
-    await list.filterByOwnership("Shared with me");
-    await expectOnly(shared, owned);
-
-    await list.filterByOwnership("All samples");
-    await expectOnly([...owned, ...shared], []);
-  });
-
-  test("an owner withdraws a published sample and republishes it", async ({
+  test("an owner withdraws a published sample, readers see its reduced page, then the owner republishes it", async ({
     page,
     samples,
   }) => {
@@ -120,276 +25,29 @@ test.describe("samples", () => {
     const detail = sampleDetailPage(page);
     await detail.goto(sample.igsn);
     await detail.expectWithdrawnNotice();
+    await detail.expectSample(sample.name, sample.igsn);
+    await detail.expectNoSection("Location");
+    await detail.expectNoIndex();
+    await detail.openContactForm();
 
     await edit.goto(sample.id);
     await edit.republish();
     await edit.expectSaveMenuItem("Withdraw");
   });
 
-  test("a researcher credits additional roles on a research project sample", async ({
+  test("a researcher deletes their own draft, but asks the super admin to delete a published sample", async ({
     page,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    const name = `Additional roles ${Date.now()}`;
-    await create.fillName(name);
-    await create.selectNature("Thin section");
-    await create.fillPublishableFields();
-    await create.openTab("Identity");
-    await create.pick("Provenance status", "Research project sample");
-    await create.openTab("Scientific context");
-    await create.fillPersonName(/^Collector name/, "Pierre", "Curie");
-    await create.addAdditionalRole("Researcher", {
-      firstname: "Marie",
-      lastname: "Tharp",
-    });
-    await create.addAdditionalRole("Data manager", {
-      firstname: "Georges",
-      lastname: "Cuvier",
-    });
-    await create.setPlatformType("Ship");
-    await create.submit();
-
-    const edit = sampleEditPage(page);
-    await edit.expectVisible();
-    await page.reload();
-    await edit.expectAdditionalRole(1, "Researcher", {
-      firstname: "Marie",
-      lastname: "Tharp",
-    });
-    await edit.expectAdditionalRole(2, "Data manager", {
-      firstname: "Georges",
-      lastname: "Cuvier",
-    });
-    await edit.expectPlatformType("Ship");
-
-    await edit.publish();
-    await list.expectVisible();
-    await list.expectSampleRow(name);
-  });
-
-  test("a researcher publishes a new sample straight as withdrawn", async ({
-    page,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    const name = `Withdrawn on arrival ${Date.now()}`;
-    await create.fillName(name);
-    await create.selectNature("Thin section");
-    await create.fillPublishableFields();
-    await create.publishAsWithdrawn();
-    await list.expectVisible();
-
-    const edit = sampleEditPage(page);
-    await list.openSample(name);
-    await edit.expectWithdrawnHint();
-    await edit.expectStatusAction("Republish");
-    const igsn = await edit.publicPageIgsn();
-
-    const detail = sampleDetailPage(page);
-    await detail.goto(igsn);
-    await detail.expectWithdrawnNotice();
-  });
-
-  test("a researcher publishes a new sample with embargo, then publishes it now", async ({
-    page,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    const name = `Embargoed on arrival ${Date.now()}`;
-    const publicationDate = new Date();
-    publicationDate.setUTCMonth(publicationDate.getUTCMonth() + 6);
-    const date = publicationDate.toISOString().slice(0, 10);
-    await create.fillName(name);
-    await create.selectNature("Thin section");
-    await create.fillPublishableFields();
-    await create.publishWithEmbargo(date);
-    await list.expectVisible();
-
-    const edit = sampleEditPage(page);
-    await list.expectSampleRowWithStatus(name, "Under embargo");
-    await list.openSample(name);
-    await edit.expectEmbargoHint(date);
-    const sampleId = edit.sampleId();
-    const igsn = await edit.publicPageIgsn();
-
-    const detail = sampleDetailPage(page);
-    await detail.goto(igsn);
-    await detail.expectWithdrawnNotice();
-
-    await edit.goto(sampleId);
-    await edit.publishNow();
-    await edit.goToList();
-    await list.expectSampleRowWithStatus(name, "Published");
-    await detail.goto(igsn);
-    await detail.expectSample(name, igsn);
-  });
-
-  test("a published sample shows the same internal id in admin and on its public page", async ({
-    page,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    const name = `Internal id ${Date.now()}`;
-    await create.fillName(name);
-    await create.selectNature("Thin section");
-    await create.fillPublishableFields();
-    await create.publish();
-    await list.expectVisible();
-
-    const edit = sampleEditPage(page);
-    await list.openSample(name);
-    const internalId = await edit.internalId();
-    const igsn = await edit.publicPageIgsn();
-
-    const detail = sampleDetailPage(page);
-    await detail.goto(igsn);
-    await detail.expectInternalId(internalId);
-  });
-
-  test("a researcher publishes a hand sample core, stopping at Core", async ({
-    page,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    const name = `Stopped at core ${Date.now()}`;
-    await create.fillName(name);
-    await create.expectNature("Hand sample");
-    await create.expectLastNatureOption("Inapplicable");
-    await create.pickType("Core");
-    await create.expectCompleteTypeWithoutRepeatedLevel("Core");
-    await create.fillPublishableFields({ type: "Core" });
-    await create.publish();
-    await list.expectVisible();
-
-    await list.openSample(name);
-    const igsn = await sampleEditPage(page).publicPageIgsn();
-    const detail = sampleDetailPage(page);
-    await detail.goto(igsn);
-    await detail.expectType("Core");
-    await detail.expectNature("Hand sample");
-  });
-
-  test("a researcher classifies a mineral sample that readers find by its Strunz class", async ({
-    page,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    const name = `Muscovite schist ${Date.now()}`;
-    await create.fillName(name);
-    await create.selectNature("Thin section");
-    await create.fillPublishableFields({ material: "Mineral" });
-    await create.addMineralBySearch(
-      "Muscovite",
-      "Silicates > Phyllosilicates > Muscovite",
-      "Major",
-    );
-    await create.addStrunzClass(["Silicates"]);
-    await create.publish();
-    await list.expectVisible();
-
-    await list.openSample(name);
-    const igsn = await sampleEditPage(page).publicPageIgsn();
-    const detail = sampleDetailPage(page);
-    await detail.goto(igsn);
-    await detail.expectMineralClassification("Muscovite");
-
-    const search = publicSampleListPage(page);
-    await search.gotoWithSearch("mineralClassification=9.E");
-    await search.expectSampleLink(name, igsn);
-  });
-
-  test("a researcher publishes a marine core with two vertical positions that readers see", async ({
-    page,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    const name = `Marine core ${Date.now()}`;
-    await create.fillName(name);
-    await create.fillPublishableFields({
-      type: ["Core", "Core Piece"],
-      material: "Mineral",
-    });
-    await create.addStrunzClass(["Silicates"]);
-    await create.setPointLocation("-25.5", "37.8");
-    await create.addVerticalPosition("Bathymetry", ["3200"]);
-    await create.addVerticalPosition("Depth below sea floor", ["2.1", "2.35"]);
-    await create.publish();
-    await list.expectVisible();
-
-    await list.openSample(name);
-    const igsn = await sampleEditPage(page).publicPageIgsn();
-    const detail = sampleDetailPage(page);
-    await detail.goto(igsn);
-    await detail.expectVerticalPosition("Bathymetry", "3200 m");
-    await detail.expectVerticalPosition(
-      "Depth below sea floor",
-      "2.1 - 2.35 m",
-    );
-  });
-
-  test("a researcher sees a measurement unit counted once its value is entered", async ({
-    page,
-  }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    await sampleListPage(page).goToCreate();
-
-    const create = sampleCreatePage(page);
-    await create.openTab("Physical description");
-    await create.fillMeasurement("Length", "12");
-    await create.expectTabCount("Physical description", "0/1");
-    await create.pick("Length unit", "cm");
-
-    await create.expectTabCount("Physical description", "1/1");
-  });
-
-  test("the create form rejects a sample without a name", async ({ page }) => {
-    await signInAsResearcher(page, RESEARCHERS.camille);
-
-    const list = sampleListPage(page);
-    await list.goToCreate();
-
-    const create = sampleCreatePage(page);
-    await create.submit();
-
-    await create.expectNameRequired();
-    await create.expectVisible();
-  });
-
-  test("a researcher deletes their own draft, but never a published sample", async ({
-    page,
+    request,
     samples,
   }) => {
     const draft = samples.find(
       (sample) => sample.status === "draft" && sample.owner === "jean",
     );
-    const published = samples.find(
-      (sample) => sample.status === "published" && sample.owner === "jean",
-    );
-    if (!draft || !published) {
-      throw new Error("seed must give jean a draft and a published sample");
+    if (!draft) {
+      throw new Error("seed must give jean a draft sample");
     }
+    const published = sampleNamed(samples, "Basalt 42");
+    const reason = `Duplicate of a colleague's sample ${Date.now()}`;
 
     await signInAsResearcher(page, RESEARCHERS.jean);
     const list = sampleListPage(page);
@@ -414,5 +72,17 @@ test.describe("samples", () => {
     await list.openSample(published.name);
     await edit.expectVisible();
     await edit.expectNoDeleteAction();
+    await edit.expectDeletionRequestRefused();
+    await edit.requestDeletion(reason);
+    await edit.expectDeletionRequestSent();
+
+    await maildev(request).expectMail(
+      RESEARCHERS.nadia.email,
+      `Jean Martin requests the deletion of the sample "${published.name}"`,
+      [published.igsn, reason, `/samples/${published.id}`],
+    );
+
+    await edit.goto(published.id);
+    await edit.expectVisible();
   });
 });

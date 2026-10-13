@@ -23,25 +23,6 @@ function resetAndSeed(): SeededSample[] {
   return JSON.parse(lastLine) as SeededSample[];
 }
 
-export function lastInternalNumber(): number {
-  const out = execFileSync(
-    "docker",
-    [
-      "exec",
-      "igsn-e2e-postgres-1",
-      "psql",
-      "-U",
-      "igsn",
-      "-d",
-      "igsn",
-      "-tAc",
-      "select max(internal_number) from sample",
-    ],
-    { encoding: "utf8" },
-  );
-  return Number(out.trim());
-}
-
 export function sampleNamed(samples: SeededSample[], name: string) {
   const sample = samples.find((s) => s.name === name);
   if (!sample?.igsn) throw new Error(`seed must publish "${name}"`);
@@ -54,17 +35,6 @@ export function published(samples: SeededSample[]) {
     granite: sampleNamed(samples, "Granite 7").igsn,
   };
 }
-
-const sampleWithStatus =
-  (status: SeededSample["status"]) => (samples: SeededSample[]) => {
-    const sample = samples.find((s) => s.status === status);
-    if (!sample?.igsn)
-      throw new Error(`seed must hold a ${status} sample with an igsn`);
-    return { igsn: sample.igsn, name: sample.name };
-  };
-
-export const withdrawn = sampleWithStatus("withdrawn");
-export const tombstone = sampleWithStatus("tombstone");
 
 export const test = base.extend<{ samples: SeededSample[] }>({
   samples: [

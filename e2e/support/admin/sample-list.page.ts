@@ -40,23 +40,6 @@ export function sampleListPage(page: Page) {
       ).toHaveCount(0);
       await page.keyboard.press("Escape");
     },
-    expectColumns: async () => {
-      for (const name of [
-        "IGSN",
-        "Name",
-        "Status",
-        "Owner",
-        "Type",
-        "Material",
-        "Location",
-        "Collector",
-        "Actions",
-      ]) {
-        await expect(
-          page.getByRole("columnheader", { name, exact: true }),
-        ).toBeVisible();
-      }
-    },
     filterByOwnership: async (
       choice: "All samples" | "Mine" | "Shared with me",
     ) => {
@@ -67,11 +50,5 @@ export function sampleListPage(page: Page) {
       expect(page.getByRole("cell", { name, exact: true })).toBeVisible(),
     expectNoSampleRow: (name: string) =>
       expect(page.getByRole("cell", { name, exact: true })).toBeHidden(),
-    expectEmpty: () =>
-      expect(page.getByRole("cell", { name: "No results" })).toBeVisible(),
-    expectSampleRowWithStatus: (name: string, status: string) =>
-      expect(
-        sampleRow(page, name).getByText(status, { exact: true }),
-      ).toBeVisible(),
   };
 }
