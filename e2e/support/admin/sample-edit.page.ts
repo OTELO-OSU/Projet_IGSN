@@ -2,7 +2,6 @@ import { expect, type Page } from "@playwright/test";
 
 import { adminUrl } from "../urls";
 import { chooseOption } from "./choose-option.ts";
-import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
 import { sampleFormPage } from "./sample-form.page.ts";
 
 type SaveMenuAction = "Withdraw" | "Tombstone";
@@ -80,10 +79,6 @@ export function sampleEditPage(page: Page) {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
     goto: (sampleId: string) => page.goto(`${adminUrl}/samples/${sampleId}`),
-    expectForbidden: () =>
-      expect(
-        page.getByText("You do not have access to this sample."),
-      ).toBeVisible(),
     expectName: (name: string) =>
       expect(page.getByLabel(/name/i)).toHaveValue(name),
     fillSpecificName: async (value: string) => {
@@ -92,11 +87,6 @@ export function sampleEditPage(page: Page) {
       await page.getByLabel("Specific Name").fill(value);
     },
     goToList: () => page.getByRole("link", { name: "IGSN Dashboard" }).click(),
-    expectAddSubSampleAction: async (name: string) => {
-      await openSampleMenu();
-      await expect(sampleMenuItem(`Add a sub sample of ${name}`)).toBeVisible();
-      await closeSampleMenu();
-    },
 
     expectNotFound: () =>
       expect(page.getByText("Sample not found")).toBeVisible(),
@@ -150,7 +140,6 @@ export function sampleEditPage(page: Page) {
       await expect(requestDeletionDialog).toBeHidden();
     },
 
-    expectNoManualGroupOffered: () => expectNoManualGroupOffered(page),
     expectManualGroupFrozen: (name: string) =>
       expect(
         page.getByRole("button", { name: `Detach ${name}` }),
@@ -160,10 +149,6 @@ export function sampleEditPage(page: Page) {
       if (!id) throw new Error("the edit page url carries no sample id");
       return id;
     },
-    expectNoPublicPage: () =>
-      expect(page.getByRole("link", { name: "View public page" })).toHaveCount(
-        0,
-      ),
     publicPageIgsn: async () => {
       const href = await page
         .getByRole("link", { name: "View public page" })
@@ -171,12 +156,6 @@ export function sampleEditPage(page: Page) {
       const igsn = href?.split("/").at(-1);
       if (!igsn) throw new Error("the published sample has no public page");
       return igsn;
-    },
-
-    internalId: async () => {
-      const internalId = page.getByLabel("Internal ID", { exact: true });
-      await expect(internalId).toHaveText(/^sample-\d+$/);
-      return internalId.innerText();
     },
 
     saveAnd: async (action: SaveMenuAction) => {
@@ -207,18 +186,11 @@ export function sampleEditPage(page: Page) {
       await confirm("Restore sample as withdrawn");
     },
     republish: () => confirmStatusChange("Republish", "Republish sample"),
-    publishNow: () => confirmStatusChange("Publish now", "Publish sample now"),
     expectStatusAction: (name: string) =>
       expect(page.getByRole("button", { name })).toBeVisible(),
     expectWithdrawnHint: () =>
       expect(
         page.getByText("This sample is withdrawn from public view."),
-      ).toBeVisible(),
-    expectEmbargoHint: (date: string) =>
-      expect(
-        page.getByText(
-          `This sample is under embargo until ${date}, when it is published automatically.`,
-        ),
       ).toBeVisible(),
 
     openRelatedResourcesTab: () => openTab("Related URL or document"),
@@ -240,24 +212,6 @@ export function sampleEditPage(page: Page) {
         .getByRole("button", { name: `Describe relation ${index} in detail` })
         .click();
       await block.getByLabel("Description").fill(relation.description);
-    },
-    expectRelation: async (index: number, relation: RelationFields) => {
-      const block = relationBlock(index, relation.identifierType);
-      await expect(
-        block.getByRole("combobox", { name: "Relation type" }),
-      ).toHaveText(relation.relationType);
-      await expect(
-        block.getByRole("textbox", {
-          name: identifierField(relation.identifierType),
-        }),
-      ).toHaveValue(relation.identifier);
-      await expect(block.getByLabel(/^Title/)).toHaveValue(relation.title);
-      await expect(
-        block.getByRole("combobox", { name: /^Resource type/ }),
-      ).toHaveText(relation.resourceType);
-      await expect(block.getByLabel("Description")).toHaveValue(
-        relation.description,
-      );
     },
     uploadAttachments: (paths: string[]) =>
       page.getByLabel("Browse files").setInputFiles(paths),

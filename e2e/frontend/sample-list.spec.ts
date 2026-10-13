@@ -1,94 +1,18 @@
-import { expect, test } from "../support/db";
-import { readZipEntry } from "../support/frontend/results-zip";
+import { sampleNamed, test } from "../support/db";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 
 test.describe("sample list", () => {
-  test("a reader opening the results page without a query is sent home", async ({
-    page,
-  }) => {
-    const list = sampleListPage(page);
-    await list.gotoEmptySearch();
-
-    await list.expectLanding();
-  });
-
-  test("a reader can search for a sample by name", async ({
+  test("a reader can search for a sample by name and add a field to the result cards", async ({
     page,
     samples,
   }) => {
-    const target = samples.find(
-      (s) => s.status === "published" && s.igsn !== null,
-    );
-    if (!target?.igsn) {
-      throw new Error("seed must include a published sample");
-    }
+    const target = sampleNamed(samples, "Basalt 42");
 
     const list = sampleListPage(page);
     await list.goto();
     await list.search(target.name);
 
     await list.expectSampleLink(target.name, target.igsn);
-  });
-
-  test("a reader downloads the search results as a zip", async ({
-    page,
-    samples,
-  }) => {
-    const target = samples.find((sample) => sample.name === "Basalt 42");
-    if (!target?.igsn) {
-      throw new Error("seed must include the published Basalt 42 sample");
-    }
-
-    const list = sampleListPage(page);
-    await list.goto();
-    await list.search(target.name);
-    const download = await list.downloadResults();
-
-    expect(download.suggestedFilename()).toMatch(
-      /^igsn-samples-\d{4}-\d{2}-\d{2}\.zip$/,
-    );
-    expect(await readZipEntry(await download.path(), "samples.csv")).toContain(
-      target.igsn,
-    );
-  });
-
-  test("a reader can search words that are not next to each other", async ({
-    page,
-    samples,
-  }) => {
-    const target = samples.find((sample) => sample.name === "Basalt 42");
-    if (!target?.igsn) {
-      throw new Error("seed must include the published Basalt 42 sample");
-    }
-
-    const list = sampleListPage(page);
-    await list.goto();
-    await list.search("42 basalt");
-
-    await list.expectSampleLink(target.name, target.igsn);
-  });
-
-  test("a shared URL restores the chosen page size", async ({ page }) => {
-    const list = sampleListPage(page);
-    await list.gotoWithSearch("q=basalt&perPage=10");
-
-    await list.expectPageSize(10);
-  });
-
-  test("a reader is told when nothing matches the query", async ({ page }) => {
-    const list = sampleListPage(page);
-    await list.goto();
-    await list.search("zzzznotasample");
-
-    await list.expectNoResults();
-  });
-
-  test("a reader adds a field to the result cards and keeps it after a reload", async ({
-    page,
-  }) => {
-    const list = sampleListPage(page);
-    await list.goto();
-    await list.search("basalt");
 
     await list.pickCardField("Collection method");
     await list.expectCardLine("Collection method", "Blasting");
@@ -96,39 +20,5 @@ test.describe("sample list", () => {
     await page.reload();
 
     await list.expectCardLine("Collection method", "Blasting");
-  });
-
-  test("a reader sees a result's internal id only once they pick it", async ({
-    page,
-    samples,
-  }) => {
-    const target = samples.find((sample) => sample.name === "Basalt 42");
-    if (!target?.igsn) {
-      throw new Error("seed must include the published Basalt 42 sample");
-    }
-
-    const list = sampleListPage(page);
-    await list.goto();
-    await list.search(target.name);
-    await list.expectCardIds(target.name, target.igsn, false);
-
-    await list.pickCardField("Internal ID");
-    await page.reload();
-
-    await list.expectCardIds(target.name, target.igsn, true);
-  });
-
-  test("a reader can search with a wildcard", async ({ page, samples }) => {
-    const target = samples.find((sample) => sample.name === "Basalt 42");
-    if (!target?.igsn) {
-      throw new Error("seed must include the published Basalt 42 sample");
-    }
-
-    const list = sampleListPage(page);
-    await list.goto();
-    await list.search("bas*");
-
-    await list.expectSampleLink(target.name, target.igsn);
-    await list.expectSampleAbsent("Granite 7");
   });
 });

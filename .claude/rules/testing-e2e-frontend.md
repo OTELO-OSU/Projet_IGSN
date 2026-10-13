@@ -7,6 +7,8 @@ paths:
 # E2E testing (Playwright)
 
 - One journey per business case, never per variation: these are the slowest tests in the repo. Variations belong in unit tests.
+- A new critical path extends the existing journey it belongs to rather than adding a test.
+- Add no e2e test for a case a unit test already covers.
 - Business cases only, framed as user journeys. No implementation-detail tests.
 - Page objects per screen, in a `support/` directory, not beside the tests. Tests call their methods, never raw selectors inline.
 - Locate by role and accessible name, the way a user or assistive tech would, never by CSS or test id.

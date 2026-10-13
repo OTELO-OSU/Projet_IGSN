@@ -84,12 +84,6 @@ export function bulkEditPage(page: Page) {
           `${count} samples imported. Publication is running in the background.`,
         ),
       ).toBeVisible(),
-    expectIssue: (problem: string) =>
-      expect(
-        dialog
-          .getByRole("table", { name: "Samples" })
-          .getByRole("cell", { name: problem, exact: true }),
-      ).toBeVisible(),
     expectPublishedAfterReload: (name: string) =>
       expect(async () => {
         await page.reload();

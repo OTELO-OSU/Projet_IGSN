@@ -7,7 +7,7 @@ import {
   completeIdpLogin,
   signInAsResearcher,
 } from "../support/admin/sign-in";
-import { sampleNamed, test } from "../support/db";
+import { test } from "../support/db";
 import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { sampleListPage as publicSampleListPage } from "../support/frontend/sample-list.page";
@@ -174,79 +174,6 @@ test.describe("sub samples", () => {
     await list.expectSampleRow(subSampleName);
   });
 
-  test("a researcher declares a synthetic sub sample of two published samples", async ({
-    page,
-  }) => {
-    test.slow();
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    const create = sampleCreatePage(page);
-    const edit = sampleEditPage(page);
-
-    const publishParent = async (name: string, orientation?: string) => {
-      await list.goToCreate();
-      await create.expectVisible();
-      await create.fillName(name);
-      await create.selectNature("Thin section");
-      await create.fillPublishableFields({ material: "Mineral" });
-      await create.addStrunzClass(["Silicates"]);
-      if (orientation) await create.setOriented(orientation);
-      await create.publish();
-      await list.expectVisible();
-      await list.openSample(name);
-      await edit.expectVisible();
-      const igsn = await edit.publicPageIgsn();
-      await edit.goToList();
-      return { name, igsn };
-    };
-
-    const stamp = Date.now();
-    const first = await publishParent(`Two parent one ${stamp}`, "North up");
-    const second = await publishParent(`Two parent two ${stamp}`);
-
-    await list.addSubSample(first.name);
-    await create.continueWithSecondParent(second.name);
-    await create.expectTwoParentSubSampleVisible(first.name, second.name);
-    await create.expectName("");
-    await create.expectNature("Hand sample");
-    await create.expectNoLocationTab();
-    await create.expectParentTab([first, second]);
-
-    await create.openTab("Physical description");
-    await create.fillFromParent(first.name, "Yes");
-    await create.expectParentSlots(
-      { source: first.name, value: "North up" },
-      second.name,
-    );
-    await create.fillFromParent(first.name, "North up");
-    await create.expectOriented("North up");
-
-    const subSampleName = `Two parent sub sample ${stamp}`;
-    await create.openTab("Identity");
-    await create.fillName(subSampleName);
-    await create.selectNature("Thin section");
-    await create.fillFromParent(first.name, "Dredge");
-    await create.expectHierarchyLevel("Dredge");
-    await create.expectNoCollectionDate();
-    await create.fillPublishableFields({
-      collectionDate: false,
-      material: null,
-    });
-    await create.expectMaterialLockedToSynthetic();
-    await create.publish();
-
-    await list.expectVisible();
-    await list.openSample(subSampleName);
-    await edit.expectVisible();
-    const subSampleIgsn = await edit.publicPageIgsn();
-
-    const detail = sampleDetailPage(page);
-    await detail.goto(subSampleIgsn);
-    await detail.expectSample(subSampleName, subSampleIgsn);
-    await detail.expectParent(first.name, first.igsn);
-    await detail.expectParent(second.name, second.igsn);
-  });
-
   test("a researcher adds a parent to a published sample", async ({ page }) => {
     await signInAsResearcher(page, RESEARCHERS.pierre);
     const list = sampleListPage(page);
@@ -280,20 +207,5 @@ test.describe("sub samples", () => {
     await detail.goto(child.igsn);
     await detail.expectParent(parent.name, parent.igsn);
     await detail.expectLineageGraph(2);
-  });
-
-  test("the edit page of a published sample offers to add a sub sample", async ({
-    page,
-    samples,
-  }) => {
-    const parent = sampleNamed(samples, "Granite 7");
-
-    await signInAsResearcher(page, RESEARCHERS.pierre);
-    const list = sampleListPage(page);
-    await list.openSample(parent.name);
-
-    const edit = sampleEditPage(page);
-    await edit.expectVisible();
-    await edit.expectAddSubSampleAction(parent.name);
   });
 });

@@ -16,7 +16,6 @@ export function charterPage(page: Page) {
     expectNotShown: () => expect(dialog).toBeHidden(),
     expectAcceptDisabled: () => expect(accept).toBeDisabled(),
     dismissWithEscape: () => page.keyboard.press("Escape"),
-    readToEnd,
     accept: async () => {
       await readToEnd();
       await accept.click();

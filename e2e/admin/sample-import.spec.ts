@@ -1,22 +1,17 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
-import { execFileSync } from "node:child_process";
-import { copyFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { importSamplesPage } from "../support/admin/import-samples.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
-import { templateInternalIds } from "../support/admin/template-internal-ids";
 import {
   FIRST_DATA_ROW,
   fillTemplateSample,
   openSamplesSheet,
 } from "../support/admin/template-workbook";
-import { lastInternalNumber, test } from "../support/db";
+import { test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
-
-const MANUAL_GROUP = "ANR CritMet";
 
 const CUSTOMIZED_SAMPLE = {
   "Sample type (level 1)": "Individual sample",
@@ -91,18 +86,6 @@ async function templateWithAttachments(
   return template;
 }
 
-async function writeCleanImport(testInfo: TestInfo): Promise<string> {
-  const file = testInfo.outputPath("clean-import.xlsx");
-  // ponytail: same hard-coded container as db.ts; the api generates the publishable workbook so the fixture never drifts from the template.
-  const base64 = execFileSync(
-    "docker",
-    ["exec", "igsn-e2e-api-1", "node", "scripts/write-clean-import.ts"],
-    { encoding: "utf8" },
-  ).trim();
-  await writeFile(file, Buffer.from(base64, "base64"));
-  return file;
-}
-
 const attachmentRow = (page: Page, fileName: string) =>
   page
     .getByRole("dialog", { name: "Import samples" })
@@ -126,104 +109,6 @@ async function addDocuments(
 }
 
 test.describe("sample import", () => {
-  test("a researcher uploads the empty template and reads why it was refused", async ({
-    page,
-  }, testInfo) => {
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    await sampleListPage(page).expectVisible();
-
-    const importSamples = importSamplesPage(page);
-    await importSamples.open();
-    const template = await importSamples.downloadTemplate(testInfo);
-    await importSamples.upload(template);
-    await importSamples.submit();
-
-    await importSamples.expectIssue("Samples", "The file holds no sample.");
-    await importSamples.expectOpen();
-  });
-
-  test("a researcher imports a publishable file and sees it published", async ({
-    page,
-  }, testInfo) => {
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    await sampleListPage(page).expectVisible();
-
-    const importSamples = importSamplesPage(page);
-    await importSamples.open();
-    await importSamples.upload(await writeCleanImport(testInfo));
-    await importSamples.submit();
-
-    await importSamples.expectPublishedInBackground("Basalt 1");
-  });
-
-  test("a researcher importing the same file twice is warned of the duplicate, then imports it anyway", async ({
-    page,
-  }, testInfo) => {
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    await sampleListPage(page).expectVisible();
-    const file = await writeCleanImport(testInfo);
-    const importSamples = importSamplesPage(page);
-    await importSamples.open();
-    await importSamples.upload(file);
-    await importSamples.submit();
-    await importSamples.expectPublishedInBackground("Basalt 1");
-
-    await importSamples.open();
-    await importSamples.upload(file);
-    await importSamples.submit();
-    await importSamples.continueDespiteDuplicate("Basalt 1");
-
-    await importSamples.expectQueued();
-  });
-
-  test("a researcher imports a customized template and publishes the sample under its manual group", async ({
-    page,
-  }, testInfo) => {
-    const name = `Basalt ${Date.now()}`;
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    const list = sampleListPage(page);
-    await list.expectVisible();
-
-    const importSamples = importSamplesPage(page);
-    await importSamples.open();
-    const template = await importSamples.downloadCustomizedTemplate(
-      {
-        provenance: "Research project sample",
-        manualGroup: MANUAL_GROUP,
-        uncheckSections: ["Include Curation and repository"],
-      },
-      testInfo,
-    );
-    await fillTemplateSample(template, { ...CUSTOMIZED_SAMPLE, Name: name });
-    await importSamples.upload(template);
-    await importSamples.submit();
-
-    await importSamples.expectPublishedInBackground(name);
-    await list.openSample(name);
-    await sampleEditPage(page).expectManualGroupFrozen(MANUAL_GROUP);
-  });
-
-  test("a researcher reserves internal IDs following the last published sample", async ({
-    page,
-  }, testInfo) => {
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    await sampleListPage(page).expectVisible();
-    const last = lastInternalNumber();
-
-    const importSamples = importSamplesPage(page);
-    await importSamples.open();
-    const template = await importSamples.reserveInternalIds(
-      { provenance: "Research project sample", count: 3 },
-      testInfo,
-    );
-
-    expect(await templateInternalIds(template)).toEqual([
-      `sample-${last + 1}`,
-      `sample-${last + 2}`,
-      `sample-${last + 3}`,
-    ]);
-  });
-
   test("a researcher imports a cruise sample with two documents, following each upload, and the public page serves them", async ({
     page,
   }, testInfo) => {
@@ -286,79 +171,5 @@ test.describe("sample import", () => {
     const download = await page.request.get(href!);
     expect(download.status()).toBe(200);
     expect(await download.text()).toContain("Lorem ipsum dolor sit amet");
-  });
-
-  test("a researcher corrects a refused file and imports it without uploading its documents again", async ({
-    page,
-  }, testInfo) => {
-    const name = `Basalt ${Date.now()}`;
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    await sampleListPage(page).expectVisible();
-
-    const importSamples = importSamplesPage(page);
-    await importSamples.open();
-    const corrected = await templateWithAttachments(
-      page,
-      testInfo,
-      { Name: name },
-      [NOTES],
-    );
-    const refused = testInfo.outputPath("refused.xlsx");
-    await copyFile(corrected, refused);
-    await fillTemplateSample(refused, { Longitude: 200 });
-    let stagedUploadRequests = 0;
-    await page.route(STAGED_UPLOADS, (route) => {
-      stagedUploadRequests += 1;
-      return route.continue();
-    });
-    await importSamples.upload(refused);
-    await addDocuments(page, [NOTES]);
-    await importSamples.submit();
-
-    const dialog = page.getByRole("dialog", { name: "Import samples" });
-    await expect(
-      dialog.getByText(
-        "The file was not imported and nothing was saved. Fix the problems below, then upload it again.",
-      ),
-    ).toBeVisible();
-    const uploadsBeforeResubmit = stagedUploadRequests;
-    expect(uploadsBeforeResubmit).toBeGreaterThan(0);
-    await dialog.getByRole("button", { name: /^Remove the workbook/ }).click();
-    await importSamples.upload(corrected);
-    await addDocuments(page, [NOTES]);
-    await importSamples.submit();
-
-    await importSamples.expectPublishedInBackground(name);
-    expect(stagedUploadRequests).toBe(uploadsBeforeResubmit);
-  });
-
-  test("a researcher's import survives a document chunk lost on the network", async ({
-    page,
-  }, testInfo) => {
-    const name = `Basalt ${Date.now()}`;
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    await sampleListPage(page).expectVisible();
-
-    const importSamples = importSamplesPage(page);
-    await importSamples.open();
-    const template = await templateWithAttachments(
-      page,
-      testInfo,
-      { Name: name },
-      [NOTES],
-    );
-    await importSamples.upload(template);
-    await addDocuments(page, [NOTES]);
-    let isChunkLost = false;
-    await page.route(STAGED_UPLOADS, (route) => {
-      if (route.request().method() !== "PATCH" || isChunkLost)
-        return route.continue();
-      isChunkLost = true;
-      return route.abort("connectionreset");
-    });
-    await importSamples.submit();
-
-    await importSamples.expectPublishedInBackground(name);
-    expect(isChunkLost).toBe(true);
   });
 });

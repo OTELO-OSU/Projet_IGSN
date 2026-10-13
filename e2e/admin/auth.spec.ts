@@ -10,20 +10,6 @@ import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
 
 test.describe("authentication", () => {
-  test("a researcher signs in through their institution", async ({ page }) => {
-    const admin = adminPage(page);
-    await admin.goto();
-    await keycloakLoginPage(page).chooseInstitution();
-
-    await shibbolethLoginPage(page).login("marie.dupont", "password");
-    await keycloakProfilePage(page).completeIfShown(
-      "marie.dupont@univ-lorraine.fr",
-    );
-
-    await admin.expectSignedIn();
-    await admin.expectUserName("Marie Dupont");
-  });
-
   test("a researcher who signed out must re-enter credentials", async ({
     page,
   }) => {
@@ -58,18 +44,6 @@ test.describe("authentication", () => {
     await orcidLoginPage(page).expectCredentialsPrompt();
   });
 
-  test("a Gaia Data account with no supported provider is denied app access", async ({
-    page,
-  }) => {
-    const admin = adminPage(page);
-    await admin.goto();
-
-    await keycloakLoginPage(page).loginLocally("test", "test");
-
-    await admin.expectUnsupportedProvider();
-    await sampleListPage(page).expectHidden();
-  });
-
   test("a Gaia Data account denied for its provider must re-enter credentials", async ({
     page,
   }) => {
@@ -77,6 +51,7 @@ test.describe("authentication", () => {
     await admin.goto();
     await keycloakLoginPage(page).loginLocally("test", "test");
     await admin.expectUnsupportedProvider();
+    await sampleListPage(page).expectHidden();
 
     await admin.signOut();
 
@@ -94,6 +69,7 @@ test.describe("authentication", () => {
       "marie.dupont@univ-lorraine.fr",
     );
     await admin.expectSignedIn();
+    await admin.expectUserName("Marie Dupont");
 
     const settings = settingsPage(page);
     await settings.openProfile();

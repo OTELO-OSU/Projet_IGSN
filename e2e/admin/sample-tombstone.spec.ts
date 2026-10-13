@@ -6,11 +6,11 @@ import {
   signInAsResearcher,
   signInAsResearcherInOwnSession,
 } from "../support/admin/sign-in";
-import { sampleNamed, test, tombstone } from "../support/db";
+import { sampleNamed, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 
 test.describe("tombstone", () => {
-  test("a space manager tombstones a published sample of the labs it manages", async ({
+  test("a space manager tombstones a published sample of the labs it manages, then restores it as withdrawn and republishes it", async ({
     page,
     browser,
     samples,
@@ -44,17 +44,8 @@ test.describe("tombstone", () => {
     const detail = sampleDetailPage(page);
     await detail.gotoNotFound(sample.igsn);
     await detail.expectNotFound(sample.name);
-  });
 
-  test("a space manager restores a tombstoned sample as withdrawn, then republishes it", async ({
-    page,
-    samples,
-  }) => {
-    const sample = tombstone(samples);
-    const moderation = sampleModerationPage(page);
-    const edit = sampleEditPage(page);
-
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await edit.goto(sample.id);
     await moderation.open();
     await moderation.openSample(sample.name);
 
@@ -64,7 +55,6 @@ test.describe("tombstone", () => {
     await edit.expectSaveMenuItem("Tombstone");
     await edit.republish();
 
-    const detail = sampleDetailPage(page);
     await detail.goto(sample.igsn);
     await detail.expectSample(sample.name, sample.igsn);
   });

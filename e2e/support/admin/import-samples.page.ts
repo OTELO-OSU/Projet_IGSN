@@ -1,6 +1,5 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
-import { chooseOption } from "./choose-option.ts";
 import { sampleRow } from "./sample-list.page.ts";
 
 async function saveDownload(
@@ -33,83 +32,12 @@ export function importSamplesPage(page: Page) {
         page.getByRole("menuitem", { name: "Complete template" }).click(),
       );
     },
-    downloadCustomizedTemplate: async (
-      {
-        provenance,
-        manualGroup,
-        uncheckSections = [],
-      }: {
-        provenance: string;
-        manualGroup: string;
-        uncheckSections?: string[];
-      },
-      testInfo: TestInfo,
-    ) => {
-      await dialog.getByRole("button", { name: "Download template" }).click();
-      await page.getByRole("menuitem", { name: "Customized template" }).click();
-      const customize = page.getByRole("dialog", {
-        name: "Customize the template",
-      });
-      const choose = chooseOption(page, customize);
-      await choose(/^Manual group/, manualGroup);
-      await choose(/^Provenance status/, provenance);
-      for (const name of uncheckSections) {
-        await customize.getByRole("checkbox", { name, exact: true }).click();
-      }
-      return saveDownload(page, testInfo, () =>
-        customize
-          .getByRole("button", { name: "Download this template" })
-          .click(),
-      );
-    },
-    reserveInternalIds: async (
-      { provenance, count }: { provenance: string; count: number },
-      testInfo: TestInfo,
-    ) => {
-      await dialog.getByRole("button", { name: "Download template" }).click();
-      await page.getByRole("menuitem", { name: "Customized template" }).click();
-      const customize = page.getByRole("dialog", {
-        name: "Customize the template",
-      });
-      await chooseOption(page, customize)(/^Provenance status/, provenance);
-      await customize
-        .getByRole("checkbox", { name: "Reserve internal IDs" })
-        .click();
-      await customize.getByLabel("Number of internal IDs").fill(String(count));
-      return saveDownload(page, testInfo, () =>
-        customize
-          .getByRole("button", { name: "Download this template" })
-          .click(),
-      );
-    },
     upload: (path: string) =>
       dialog.getByLabel("choose one").setInputFiles(path),
     addDocument: (path: string) =>
       dialog.getByLabel("choose them").setInputFiles(path),
     submit: () =>
       dialog.getByRole("button", { name: "Import", exact: true }).click(),
-    expectIssue: async (sheet: string, problem: string) => {
-      await expect(
-        dialog.getByText(
-          "The file was not imported and nothing was saved. Fix the problems below, then upload it again.",
-        ),
-      ).toBeVisible();
-      await expect(
-        dialog
-          .getByRole("table", { name: sheet })
-          .getByRole("row")
-          .filter({ has: page.getByRole("cell", { name: problem }) }),
-      ).toBeVisible();
-    },
-    continueDespiteDuplicate: async (name: string) => {
-      const warning = page.getByRole("dialog", {
-        name: "Possible duplicate sample",
-      });
-      await expect(warning.getByRole("link", { name })).toBeVisible();
-      await warning.getByRole("button", { name: "Continue anyway" }).click();
-    },
-    expectQueued,
-    expectOpen: () => expect(dialog).toBeVisible(),
     expectPublishedInBackground: async (name: string) => {
       await expectQueued();
       await expect(async () => {
