@@ -62,6 +62,16 @@ const rejectedManager = {
   status: "rejected",
 };
 
+const self = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000f1",
+  email: "marie.dupont@univ-lorraine.fr",
+  name: "Dupont",
+  firstname: "Marie",
+  orcid: null,
+  status: "accepted",
+  canDetach: true,
+};
+
 const dupuis = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3403",
   email: "theo.dupuis@univ-lorraine.fr",
@@ -139,8 +149,12 @@ function fakeApi({
       const params = new URL(request.url).searchParams;
       const search = (params.get("search") ?? "").toLowerCase();
       const status = params.get("status");
+      const pool = [
+        ...directory,
+        ...(params.get("includeSelf") === "true" ? [self] : []),
+      ];
       return HttpResponse.json({
-        data: directory.filter(
+        data: pool.filter(
           (user) =>
             user.name.toLowerCase().includes(search) &&
             (status === null || user.status === status),
@@ -198,7 +212,7 @@ describe("ManualGroupDetailPage", () => {
     await screen
       .getByRole("combobox", { name: "Search by name or email" })
       .fill("dup");
-    await screen.getByRole("option", { name: /Dupont/ }).click();
+    await screen.getByRole("option", { name: /Pierre Dupont/ }).click();
     await screen.getByRole("button", { name: "Add", exact: true }).click();
 
     await expect
@@ -249,7 +263,7 @@ describe("ManualGroupDetailPage", () => {
     await screen
       .getByRole("combobox", { name: "Search by name or email" })
       .fill("dup");
-    await screen.getByRole("option", { name: /Dupont/ }).click();
+    await screen.getByRole("option", { name: /Pierre Dupont/ }).click();
     await screen
       .getByRole("button", { name: "Associate", exact: true })
       .click();
@@ -258,6 +272,22 @@ describe("ManualGroupDetailPage", () => {
       .element(screen.getByRole("cell", { name: dupont.email }))
       .toBeVisible();
   });
+
+  it.each(["Add a manager", "Associate a user"])(
+    "should offer the signed-in caller in the %s picker",
+    async (action) => {
+      fakeApi();
+
+      const { screen } = await renderDetailPage();
+      await screen.getByRole("button", { name: action }).click();
+      await screen.getByRole("combobox", { name: "User" }).click();
+      await screen.getByPlaceholder("Search by name or email").fill("dup");
+
+      await expect
+        .element(screen.getByRole("option", { name: /Marie Dupont/ }))
+        .toBeVisible();
+    },
+  );
 
   it("should not offer a pending user in the associate picker", async () => {
     fakeApi({ directory: [dupont, dupuis] });
@@ -268,7 +298,7 @@ describe("ManualGroupDetailPage", () => {
     await screen.getByPlaceholder("Search by name or email").fill("dup");
 
     await expect
-      .element(screen.getByRole("option", { name: /Dupont/ }))
+      .element(screen.getByRole("option", { name: /Pierre Dupont/ }))
       .toBeVisible();
     expect(screen.getByRole("option", { name: /Dupuis/ }).elements()).toEqual(
       [],
