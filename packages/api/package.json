@@ -27,6 +27,7 @@
     "exceljs": "catalog:",
     "hono": "catalog:",
     "i18next": "catalog:",
+    "jszip": "catalog:",
     "kysely": "catalog:",
     "kysely-postgres-js": "catalog:",
     "mjml": "catalog:",

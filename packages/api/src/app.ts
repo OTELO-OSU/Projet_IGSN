@@ -19,6 +19,7 @@ import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { createManualGroupRoutes } from "./manual-group/routes.ts";
 import {
   CONTACT_MAIL_IP_BUDGET,
+  EXPORT_IP_BUDGET,
   MAP_IP_BUDGET,
   IMPORT_TEMPLATE_USER_BUDGET,
   MAIL_REQUEST_USER_BUDGET,
@@ -119,6 +120,7 @@ export function createApp(
       "/:igsn/contact/*",
       rateLimit(rateLimitConfig, "ip", CONTACT_MAIL_IP_BUDGET),
     )
+    .use("/export", rateLimit(rateLimitConfig, "ip", EXPORT_IP_BUDGET))
     .route(
       "/",
       createSampleRoutes(

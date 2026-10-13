@@ -103,6 +103,12 @@ const VARS: EnvVar[] = [
     default: "5",
   },
   {
+    name: "SEARCH_EXPORT_LIMIT",
+    purpose:
+      "Most samples a public search download zips; also baked into the frontend bundle as VITE_SEARCH_EXPORT_LIMIT.",
+    default: "5000",
+  },
+  {
     name: "SAMPLE_EDIT_LOCK_TTL_MINUTES",
     purpose: "Lifetime of a sample edit lock.",
     default: "15",

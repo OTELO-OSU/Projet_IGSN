@@ -61,6 +61,7 @@ export function SearchResultsView({
   onPageChange,
   onPerPageChange,
   onFieldsChange,
+  download,
   actions,
 }: {
   samples: PublicListedSample[];
@@ -74,6 +75,7 @@ export function SearchResultsView({
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
   onFieldsChange: (fields: string[]) => void;
+  download?: ReactNode;
   actions?: ReactNode;
 }) {
   if (total === 0) {
@@ -89,15 +91,18 @@ export function SearchResultsView({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <ResultsCount total={total} />
-        <div className="flex items-center gap-4">
+      <div className="mb-2 flex flex-col gap-6">
+        <div className="flex items-center justify-between gap-4">
+          <ResultsCount total={total} />
           <PageSizeSelect
             perPage={perPage}
             pageSizes={PAGE_SIZES}
             label={m.search_per_page()}
             onPerPageChange={onPerPageChange}
           />
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-4">
+          {download}
           <CardFieldPicker fields={fields} onFieldsChange={onFieldsChange} />
           {actions}
         </div>

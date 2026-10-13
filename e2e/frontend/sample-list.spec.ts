@@ -1,4 +1,5 @@
-import { test } from "../support/db";
+import { expect, test } from "../support/db";
+import { readZipEntry } from "../support/frontend/results-zip";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 
 test.describe("sample list", () => {
@@ -27,6 +28,28 @@ test.describe("sample list", () => {
     await list.search(target.name);
 
     await list.expectSampleLink(target.name, target.igsn);
+  });
+
+  test("a reader downloads the search results as a zip", async ({
+    page,
+    samples,
+  }) => {
+    const target = samples.find((sample) => sample.name === "Basalt 42");
+    if (!target?.igsn) {
+      throw new Error("seed must include the published Basalt 42 sample");
+    }
+
+    const list = sampleListPage(page);
+    await list.goto();
+    await list.search(target.name);
+    const download = await list.downloadResults();
+
+    expect(download.suggestedFilename()).toMatch(
+      /^igsn-samples-\d{4}-\d{2}-\d{2}\.zip$/,
+    );
+    expect(await readZipEntry(await download.path(), "samples.csv")).toContain(
+      target.igsn,
+    );
   });
 
   test("a reader can search words that are not next to each other", async ({

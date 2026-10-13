@@ -13,6 +13,7 @@ import { AuthProvider } from "react-oidc-context";
 import type { MyRouterContext } from "../router-context";
 
 import { onSigninCallback, userManager } from "../auth/oidc-config.ts";
+import { OpenDataLink } from "../domain/samples/open-data-link.tsx";
 import { SiteHeader } from "../header/site-header.tsx";
 import { m } from "../paraglide/messages.js";
 import { getLocale, localizeHref } from "../paraglide/runtime.js";
@@ -78,25 +79,28 @@ function RootLayout() {
             </ExternalLink>
             <span aria-hidden className="bg-border h-px flex-1" />
           </div>
-          <div className="mx-auto mt-4 flex max-w-6xl flex-wrap justify-end gap-x-4 gap-y-2 ps-6 pe-8 md:-mt-8">
-            <Link
-              to="/legal-notice"
-              className="text-primary text-sm font-medium underline-offset-4 hover:underline"
-            >
-              {m.footer_legal_notice()}
-            </Link>
-            <Link
-              to="/privacy-policy"
-              className="text-primary text-sm font-medium underline-offset-4 hover:underline"
-            >
-              {m.footer_privacy_policy()}
-            </Link>
-            <Link
-              to="/terms-of-use"
-              className="text-primary text-sm font-medium underline-offset-4 hover:underline"
-            >
-              {m.footer_terms_of_use()}
-            </Link>
+          <div className="mx-auto mt-4 flex max-w-6xl flex-wrap gap-x-4 gap-y-2 ps-6 pe-8 md:-mt-8">
+            <OpenDataLink className="text-primary text-sm font-medium no-underline underline-offset-4 hover:underline" />
+            <div className="ms-auto flex flex-wrap gap-x-4 gap-y-2">
+              <Link
+                to="/legal-notice"
+                className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+              >
+                {m.footer_legal_notice()}
+              </Link>
+              <Link
+                to="/privacy-policy"
+                className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+              >
+                {m.footer_privacy_policy()}
+              </Link>
+              <Link
+                to="/terms-of-use"
+                className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+              >
+                {m.footer_terms_of_use()}
+              </Link>
+            </div>
           </div>
         </footer>
       </div>
