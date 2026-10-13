@@ -1,8 +1,10 @@
 import type { Hierarchy } from "../../lib/hierarchy.ts";
 
-import { withRequired } from "../../lib/with-required.ts";
 import { HierarchyInput } from "../ui/hierarchy-input.tsx";
-import { Label } from "../ui/label.tsx";
+import {
+  FieldLabel,
+  useFieldAdornmentRule,
+} from "./field-adornment-context.tsx";
 import {
   useFieldDisabled,
   useFieldDisabledRule,
@@ -48,10 +50,11 @@ export function HierarchyField({
   const isDisabled = useFieldDisabled(disabled);
   const isRequired = useFieldRequired(requiredToPublish);
   const isLevelDisabled = useFieldDisabledRule();
+  const adornment = useFieldAdornmentRule();
 
   return (
     <FieldRow format={(value) => toPath(value).map(translate).join(" / ")}>
-      <Label htmlFor={field.name}>{withRequired(label, isRequired)}</Label>
+      <FieldLabel label={label} isRequired={isRequired} />
       <div className="sm:max-w-72">
         <HierarchyInput
           id={field.name}
@@ -60,6 +63,7 @@ export function HierarchyField({
           onBlur={field.handleBlur}
           disabled={isDisabled}
           isLevelLocked={(depth) => isLevelDisabled(`${field.name}[${depth}]`)}
+          levelAdornment={(depth) => adornment(`${field.name}[${depth}]`)}
           hint={{ id: hintId, mustRefineText, canRefineText }}
           translate={translate}
           {...ariaProps}

@@ -119,6 +119,24 @@ const NATURAL_PARENT = {
   material: "rock_and_sediment.mineral",
 } as const;
 
+const LOCKED_AFTER_PUBLICATION =
+  "This field will no longer be editable once the sample is published.";
+const LOCKED_SINCE_PUBLICATION =
+  "This field can no longer be edited since the sample is published.";
+const PARENT_LOCKED_AFTER_SAVE =
+  "The parent can no longer be changed once the sample is saved.";
+const PARENT_LOCKED_SINCE_SAVE = "The parent can no longer be changed.";
+
+function publicationLocksOf(control: Element) {
+  return [
+    ...control.ownerDocument.querySelectorAll(
+      `label[for="${CSS.escape(control.id)}"]`,
+    ),
+  ].map(
+    (label) => label.nextElementSibling?.getAttribute("aria-label") ?? null,
+  );
+}
+
 describe("SampleForm", () => {
   it("should reject a blank name and not submit", async () => {
     const onSubmit = vi.fn();
@@ -3069,6 +3087,113 @@ describe("SampleForm post-publication field lock", () => {
       .toBeEnabled();
   });
 
+  it("should mark a draft's fields publication freezes with an open lock, and no other field", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    const provenanceStatus = screen.getByRole("combobox", {
+      name: "Provenance status *",
+    });
+    await expect.element(provenanceStatus).toBeVisible();
+    expect(publicationLocksOf(provenanceStatus.element())).toEqual([
+      LOCKED_AFTER_PUBLICATION,
+    ]);
+    expect(
+      publicationLocksOf(
+        screen.getByRole("textbox", { name: "Name *" }).element(),
+      ),
+    ).toEqual([null]);
+  });
+
+  it("should mark a published sample's frozen fields with a closed lock", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        status="published"
+        defaultValues={publishedFixture}
+        primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+      />,
+    );
+
+    const provenanceStatus = screen.getByRole("combobox", {
+      name: "Provenance status *",
+    });
+    await expect.element(provenanceStatus).toBeVisible();
+    expect(publicationLocksOf(provenanceStatus.element())).toEqual([
+      LOCKED_SINCE_PUBLICATION,
+    ]);
+  });
+
+  it("should lock the collection origin but not the collector of a collection specimen draft", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          scientificContext: { provenanceStatus: "collection_specimen" },
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
+    const collectionOrigin = screen.getByRole("combobox", {
+      name: "Collection origin *",
+    });
+    await expect.element(collectionOrigin).toBeVisible();
+    expect(publicationLocksOf(collectionOrigin.element())).toEqual([
+      LOCKED_AFTER_PUBLICATION,
+    ]);
+    expect(
+      publicationLocksOf(
+        screen
+          .getByRole("group", { name: "Collector name" })
+          .getByRole("combobox", { name: "Collector name" })
+          .element(),
+      ),
+    ).toEqual([null]);
+  });
+
+  it.each<{ status: SampleStatus; text: string }>([
+    { status: "draft", text: LOCKED_AFTER_PUBLICATION },
+    { status: "published", text: LOCKED_SINCE_PUBLICATION },
+  ])(
+    "should lock only the material chips publication freezes on a $status sample",
+    async ({ status, text }) => {
+      const screen = await render(
+        <SampleForm
+          onCancel={noop}
+          status={status}
+          defaultValues={{
+            ...publishedFixture,
+            material: "rock_and_sediment.rock.igneous.plutonic",
+          }}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />,
+      );
+
+      await screen.getByRole("tab", { name: "Sample classification" }).click();
+      const material = screen.getByRole("combobox", {
+        name: "Material *",
+        exact: true,
+      });
+      await expect.element(material).toBeVisible();
+      expect(
+        ["Rock and sediment", "Rock", "Igneous", "Plutonic"].map(
+          (level) =>
+            screen
+              .getByText(level, { exact: true })
+              .element()
+              .closest('[data-slot="badge"]')
+              ?.querySelector("span[aria-label]")
+              ?.getAttribute("aria-label") ?? null,
+        ),
+      ).toEqual([text, text, null, null]);
+      expect(publicationLocksOf(material.element())).toEqual([null]);
+    },
+  );
+
   it("blocks publishing a draft whose relation has no resource type", async () => {
     const screen = await render(
       <TooltipProvider>
@@ -3130,6 +3255,51 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("link", { name: NATURAL_PARENT.name }))
       .toHaveAttribute("href", `http://localhost:3000/samples/${PARENT_IGSN}`);
+  });
+
+  it.each<{ name: string; sampleId: string | undefined; text: string }>([
+    {
+      name: "open on a sample not saved yet",
+      sampleId: undefined,
+      text: PARENT_LOCKED_AFTER_SAVE,
+    },
+    {
+      name: "closed on a saved sample",
+      sampleId: "3f2504e0-4f89-41d3-9a0c-0305000000d1",
+      text: PARENT_LOCKED_SINCE_SAVE,
+    },
+  ])("should lock the parent, $name", async ({ sampleId, text }) => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        sampleId={sampleId}
+        parents={[NATURAL_PARENT]}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+    const parent = screen.getByRole("textbox", { name: "Parent" });
+    await expect.element(parent).toBeVisible();
+    expect(publicationLocksOf(parent.element())).toEqual([text]);
+  });
+
+  it("should mark the parent picker of a parentless saved sample with an open lock", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        sampleId="3f2504e0-4f89-41d3-9a0c-0305000000d1"
+        canAddParent
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+    const picker = screen.getByRole("combobox", { name: "Parent" });
+    await expect.element(picker).toBeVisible();
+    expect(publicationLocksOf(picker.element())).toEqual([
+      PARENT_LOCKED_AFTER_SAVE,
+    ]);
   });
 
   it("should replace the location fields with a notice linking the parent it inherits from", async () => {

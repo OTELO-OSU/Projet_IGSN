@@ -779,7 +779,9 @@ describe("EditSamplePage", () => {
       expect(
         screen.getByRole("button", { name: "Publish", exact: true }).elements(),
       ).toHaveLength(0);
-      expect(document.querySelectorAll('span[tabindex="0"]')).toHaveLength(0);
+      expect(
+        document.querySelectorAll('span[tabindex="0"]:has(button)'),
+      ).toHaveLength(0);
     },
   );
 

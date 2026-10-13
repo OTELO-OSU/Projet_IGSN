@@ -574,7 +574,9 @@ describe("SampleTable", () => {
       name: "Customize the template",
     });
     await expect
-      .element(dialog.getByRole("checkbox", { name: "Age", exact: true }))
+      .element(
+        dialog.getByRole("checkbox", { name: "Include Age", exact: true }),
+      )
       .not.toBeChecked();
     await expect
       .element(screen.getByText("Edit page stub"))
