@@ -7,6 +7,8 @@ import { API_URL } from "#/api-url.ts";
 import { apiJson } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
+const SYNCHRONIZATION_POLL_INTERVAL_MS = 5_000;
+
 export type SampleListParams = Pick<
   ListSamplesQuery,
   | "page"
@@ -56,5 +58,11 @@ export function useSamples(params: SampleListParams, moderated = false) {
       return { data, total: meta.total };
     },
     placeholderData: keepPreviousData,
+    refetchInterval: (query) =>
+      query.state.data?.data.some(
+        (sample) => sample.synchronizationStatus === "pending",
+      )
+        ? SYNCHRONIZATION_POLL_INTERVAL_MS
+        : false,
   });
 }

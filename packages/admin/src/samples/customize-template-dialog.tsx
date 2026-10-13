@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@projet-igsn/design-system/components/ui/dialog";
 import { HierarchyInput } from "@projet-igsn/design-system/components/ui/hierarchy-input";
+import { Input } from "@projet-igsn/design-system/components/ui/input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import {
   composeHierarchyValue,
@@ -19,10 +20,12 @@ import {
 } from "@projet-igsn/design-system/lib/hierarchy";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import {
+  reserveInternalIdsSchema,
   TEMPLATE_SECTION_KEYS,
   type TemplateSectionKey,
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
+import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import {
   MATERIAL_HIERARCHY,
   MATERIAL_ROOTS,
@@ -34,7 +37,6 @@ import { useState } from "react";
 import { useAttachableManualGroups } from "#/manual-groups/use-attachable-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import { HIERARCHY_FIELD_LABELS } from "#/samples/hierarchy-field-labels.ts";
-import { ReserveInternalIdsDialog } from "#/samples/reserve-internal-ids-dialog.tsx";
 import {
   materialPathLabel,
   provenanceStatusLabel,
@@ -94,6 +96,12 @@ export function CustomizeTemplateDialog({
   const [sections, setSections] = useState(
     initialValues?.sections ?? ALL_SECTIONS,
   );
+  const [isReserving, setIsReserving] = useState(false);
+  const [reserveCount, setReserveCount] = useState("250");
+  const reservation = reserveInternalIdsSchema.safeParse({
+    count: Number(reserveCount),
+  });
+  const isCountInvalid = isReserving && !reservation.success;
   const groups = useAttachableManualGroups().data?.data ?? [];
   const downloadTemplate = useDownloadImportTemplate();
   const provenanceStatus = PROVENANCE_STATUSES.find(
@@ -119,7 +127,7 @@ export function CustomizeTemplateDialog({
         <DialogHeader>
           <DialogTitle>{m.customize_template_title()}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 rounded-md border p-4">
+        <div className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="customize-template-material">
               {m.customize_template_material_label()}
@@ -200,11 +208,55 @@ export function CustomizeTemplateDialog({
             </div>
           ))}
         </div>
-        <ReserveInternalIdsDialog
-          customization={customization}
-          disabled={!provenanceStatus || isRefused}
-          onDownloaded={onBack}
-        />
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="customize-template-reserve"
+            checked={isReserving}
+            onCheckedChange={(checked) => setIsReserving(checked === true)}
+          />
+          <Label htmlFor="customize-template-reserve">
+            {m.import_template_reserve_label()}
+          </Label>
+        </div>
+        {isReserving ? (
+          <div className="grid gap-2">
+            <Label htmlFor="customize-template-reserve-count">
+              {m.import_template_reserve_count_label()}
+            </Label>
+            <Input
+              id="customize-template-reserve-count"
+              type="number"
+              min={1}
+              max={MAX_IMPORT_ROWS}
+              className="sm:max-w-72"
+              value={reserveCount}
+              onChange={(event) => setReserveCount(event.target.value)}
+              aria-invalid={isCountInvalid}
+              aria-describedby={
+                isCountInvalid
+                  ? "customize-template-reserve-count-hint customize-template-reserve-count-error"
+                  : "customize-template-reserve-count-hint"
+              }
+            />
+            <p
+              id="customize-template-reserve-count-hint"
+              className="text-muted-foreground text-sm"
+            >
+              {m.import_template_reserve_count_hint({ max: MAX_IMPORT_ROWS })}
+            </p>
+            {isCountInvalid ? (
+              <p
+                id="customize-template-reserve-count-error"
+                role="alert"
+                className="text-destructive text-sm"
+              >
+                {m.import_template_reserve_count_invalid({
+                  max: MAX_IMPORT_ROWS,
+                })}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={onBack}>
             <ArrowLeftIcon aria-hidden />
@@ -213,13 +265,19 @@ export function CustomizeTemplateDialog({
           <Button
             type="button"
             disabled={
-              !provenanceStatus || isRefused || downloadTemplate.isPending
+              !provenanceStatus ||
+              isRefused ||
+              isCountInvalid ||
+              downloadTemplate.isPending
             }
             onClick={() => {
               if (!customization) return;
-              downloadTemplate.mutate(customization, {
-                onSuccess: () => onBack(),
-              });
+              downloadTemplate.mutate(
+                isReserving && reservation.success
+                  ? { ...reservation.data, ...customization }
+                  : customization,
+                { onSuccess: () => onBack() },
+              );
             }}
           >
             <FileDownIcon aria-hidden />

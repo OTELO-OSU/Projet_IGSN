@@ -51,11 +51,7 @@ export function ImportReport({ issues }: { issues: ImportIssue[] }) {
     code === "unavailable_internal_id" && value !== undefined ? [value] : [],
   );
   return (
-    <section
-      aria-labelledby={`${id}-intro`}
-      tabIndex={0}
-      className="grid max-h-80 gap-4 overflow-auto text-sm"
-    >
+    <section aria-labelledby={`${id}-intro`} className="grid gap-4 text-sm">
       <Alert variant="destructive">
         <CircleAlertIcon aria-hidden />
         <AlertDescription className="flex items-center justify-between gap-4">
@@ -114,10 +110,10 @@ export function ImportReport({ issues }: { issues: ImportIssue[] }) {
                 <TableRow key={issueKey(issue)}>
                   <TableCell>{issue.row}</TableCell>
                   <TableCell>{issue.column}</TableCell>
-                  <TableCell className="wrap-anywhere whitespace-normal">
+                  <TableCell className="min-w-64 wrap-anywhere whitespace-normal">
                     <IssueValue value={issue.value} />
                   </TableCell>
-                  <TableCell className="whitespace-normal">
+                  <TableCell className="min-w-80 wrap-anywhere whitespace-normal">
                     {importIssueLabel(issue)}
                   </TableCell>
                 </TableRow>

@@ -24,7 +24,6 @@ import { DuplicateSamplesDialog } from "#/samples/duplicate-samples-dialog.tsx";
 import { ImportAttachmentList } from "#/samples/import-attachment-list.tsx";
 import { ImportFileUpload } from "#/samples/import-file-upload.tsx";
 import { ImportUploadDialog } from "#/samples/import-upload-dialog.tsx";
-import { ReserveInternalIdsDialog } from "#/samples/reserve-internal-ids-dialog.tsx";
 import { useCheckImportDuplicates } from "#/samples/use-check-import-duplicates.ts";
 import { useDownloadImportTemplate } from "#/samples/use-download-import-template.ts";
 import { useImportFiles } from "#/samples/use-import-files.ts";
@@ -77,7 +76,7 @@ export function ImportSamplesDialog() {
         <DialogTrigger asChild>
           <Button variant="outline">{m.action_bulk_import()}</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-3xl" closeLabel={m.action_close()}>
+        <DialogContent className="sm:max-w-7xl" closeLabel={m.action_close()}>
           <DialogHeader>
             <DialogTitle>{m.import_samples_title()}</DialogTitle>
           </DialogHeader>
@@ -108,20 +107,14 @@ export function ImportSamplesDialog() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <ReserveInternalIdsDialog />
           </div>
           <ImportFileUpload
             dropZone={{
-              hint: hasRequiredNames
-                ? m.import_samples_documents_drop_hint()
-                : m.import_samples_drop_hint(),
-              browseLabel: hasRequiredNames
-                ? m.import_samples_choose_documents()
-                : m.import_samples_choose_file(),
-              accept: hasRequiredNames ? undefined : ".xlsx",
-              multiple: hasRequiredNames,
-              onFiles: (picked) => {
-                files.pickFiles(picked);
+              hint: m.import_samples_drop_hint(),
+              browseLabel: m.import_samples_choose_file(),
+              accept: ".xlsx",
+              onFiles: ([picked]) => {
+                void files.pickWorkbook(picked ?? null);
                 importSamples.clearReport();
               },
             }}
@@ -139,6 +132,10 @@ export function ImportSamplesDialog() {
                 requiredNames={files.requiredNames}
                 addedNames={files.addedNames}
                 unreferencedNames={files.unreferencedNames}
+                onAdd={(picked) => {
+                  files.addDocuments(picked);
+                  importSamples.clearReport();
+                }}
                 onRemove={files.removeDocument}
               />
             ) : null}

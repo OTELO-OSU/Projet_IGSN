@@ -116,9 +116,9 @@ async function addDocuments(
 ): Promise<void> {
   for (const attachment of attachments) {
     await expect(attachmentRow(page, attachment["File name"])).toContainText(
-      "Missing",
+      "To add",
     );
-    await importSamplesPage(page).upload(fixture(attachment["File name"]));
+    await importSamplesPage(page).addDocument(fixture(attachment["File name"]));
     await expect(attachmentRow(page, attachment["File name"])).toContainText(
       "Added",
     );
@@ -212,7 +212,10 @@ test.describe("sample import", () => {
 
     const importSamples = importSamplesPage(page);
     await importSamples.open();
-    const template = await importSamples.reserveInternalIds(3, testInfo);
+    const template = await importSamples.reserveInternalIds(
+      { provenance: "Research project sample", count: 3 },
+      testInfo,
+    );
 
     expect(await templateInternalIds(template)).toEqual([
       `sample-${last + 1}`,

@@ -42,14 +42,6 @@ async function openDialog() {
   };
 }
 
-async function openReserveDialog() {
-  const { screen, dialog } = await openDialog();
-  await dialog.getByRole("button", { name: "Reserve internal IDs" }).click();
-  return {
-    reserveDialog: screen.getByRole("dialog", { name: "Reserve internal IDs" }),
-  };
-}
-
 type Screen = Awaited<ReturnType<typeof openDialog>>["screen"];
 type Dialog = Awaited<ReturnType<typeof openDialog>>["dialog"];
 
@@ -217,57 +209,13 @@ describe("ImportSamplesDialog", () => {
     await expect.element(customize).not.toBeInTheDocument();
   });
 
-  it("should require a count before reserving internal IDs", async () => {
-    const posted: unknown[] = [];
-    worker.use(
-      http.post(
-        "*/admin/samples/import-template/reservation",
-        ({ request }) => {
-          posted.push(request.url);
-          return new HttpResponse("reserved-bytes");
-        },
-      ),
-    );
-    const { reserveDialog } = await openReserveDialog();
-
-    await reserveDialog.getByLabelText("Number of internal IDs").clear();
-    await reserveDialog
-      .getByRole("button", { name: "Download template with reserved IDs" })
-      .click();
+  it("should offer no internal ID reservation, which lives in the customize dialog alone", async () => {
+    const { dialog } = await openDialog();
 
     await expect
-      .element(reserveDialog.getByRole("alert"))
-      .toHaveTextContent("Enter a number from 1 to 500.");
-    expect(posted).toEqual([]);
-  });
-
-  it("should post the reserved count and save the template it answers", async () => {
-    const posted: unknown[] = [];
-    worker.use(
-      http.post(
-        "*/admin/samples/import-template/reservation",
-        async ({ request }) => {
-          posted.push(await request.json());
-          return new HttpResponse("reserved-bytes");
-        },
-      ),
-    );
-    const createObjectURL = vi
-      .spyOn(URL, "createObjectURL")
-      .mockReturnValue("blob:test");
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    const { reserveDialog } = await openReserveDialog();
-
-    await reserveDialog.getByLabelText("Number of internal IDs").fill("3");
-    await reserveDialog
-      .getByRole("button", { name: "Download template with reserved IDs" })
-      .click();
-
-    await expect.poll(() => posted).toEqual([{ count: 3 }]);
-    await expect.poll(() => createObjectURL.mock.calls.length).toBe(1);
-    expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
-      "reserved-bytes",
-    );
+      .element(dialog.getByRole("button", { name: "Download template" }))
+      .toBeVisible();
+    expect(dialog.getByText("Reserve internal IDs").elements()).toHaveLength(0);
   });
 
   it("should enable Import once an xlsx file is picked, showing its name", async () => {
@@ -415,7 +363,7 @@ describe("ImportSamplesDialog", () => {
     expect(posted).toEqual([]);
   });
 
-  it("should report an invalid file in the open dialog without a toast, until another file is picked", async () => {
+  it("should report an invalid file in the open dialog without a toast, until the workbook is removed for another", async () => {
     answerNoSample();
     const { screen, dialog, importButton } = await openDialog();
     await dialog.getByLabelText("choose one").upload([xlsx()]);
@@ -429,6 +377,9 @@ describe("ImportSamplesDialog", () => {
         .textContent,
     ).toBe("");
 
+    await dialog
+      .getByRole("button", { name: "Remove the workbook samples.xlsx" })
+      .click();
     await dialog.getByLabelText("choose one").upload([xlsx("fixed.xlsx")]);
 
     await expect.element(dialog.getByText("fixed.xlsx")).toBeVisible();
@@ -483,7 +434,7 @@ describe("ImportSamplesDialog", () => {
 
     await expect
       .poll(statuses)
-      .toEqual(["report.pdfMissing", "photo.jpgMissing"]);
+      .toEqual(["report.pdfTo add", "photo.jpgTo add"]);
     await expect.element(importButton).toBeDisabled();
 
     await addDocuments([
@@ -524,7 +475,7 @@ describe("ImportSamplesDialog", () => {
     {
       reason: "the workbook does not name as an error",
       dropped: "other.xlsx",
-      expected: ["data.xlsxMissing", "other.xlsxNot named in the workbook"],
+      expected: ["data.xlsxTo add", "other.xlsxNot named in the workbook"],
     },
   ])(
     "should add a dropped xlsx $reason, keeping the workbook",
@@ -532,7 +483,7 @@ describe("ImportSamplesDialog", () => {
       const { dialog, addDocuments, statuses } = await dropWorkbookNaming([
         "data.xlsx",
       ]);
-      await expect.poll(statuses).toEqual(["data.xlsxMissing"]);
+      await expect.poll(statuses).toEqual(["data.xlsxTo add"]);
 
       await addDocuments([xlsx(dropped)]);
 
@@ -561,6 +512,23 @@ describe("ImportSamplesDialog", () => {
     await expect.element(importButton).toBeDisabled();
   });
 
+  it("should swap the workbook zone for the picked workbook, so a document can only reach the documents zone", async () => {
+    const { dialog, addDocuments, statuses } = await dropWorkbookNaming([
+      "report.pdf",
+    ]);
+    await addDocuments([attachmentFile("report.pdf")]);
+
+    await expect
+      .element(
+        dialog.getByRole("button", {
+          name: "Remove the workbook samples.xlsx",
+        }),
+      )
+      .toBeVisible();
+    expect(dialog.getByLabelText("choose one").elements()).toHaveLength(0);
+    expect(statuses()).toEqual(["report.pdfAdded"]);
+  });
+
   it("should reject a file whose name is already added", async () => {
     const { dialog, addDocuments, statuses } = await dropWorkbookNaming([
       "report.pdf",
@@ -580,7 +548,7 @@ describe("ImportSamplesDialog", () => {
     const { dialog, importButton, statuses } = await dropWorkbookNaming([
       "report.pdf",
     ]);
-    await expect.poll(statuses).toEqual(["report.pdfMissing"]);
+    await expect.poll(statuses).toEqual(["report.pdfTo add"]);
     const oversized = attachmentFile("report.pdf");
     Object.defineProperty(oversized, "size", {
       value: ATTACHMENT_MAX_BYTES + 1,
@@ -591,7 +559,7 @@ describe("ImportSamplesDialog", () => {
     await expect
       .element(dialog.getByRole("alert"))
       .toHaveTextContent("report.pdf is larger than 100 MB.");
-    expect(statuses()).toEqual(["report.pdfMissing"]);
+    expect(statuses()).toEqual(["report.pdfTo add"]);
     await expect.element(importButton).toBeDisabled();
   });
 

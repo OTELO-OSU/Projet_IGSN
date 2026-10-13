@@ -62,22 +62,30 @@ export function importSamplesPage(page: Page) {
           .click(),
       );
     },
-    reserveInternalIds: async (count: number, testInfo: TestInfo) => {
-      await dialog
-        .getByRole("button", { name: "Reserve internal IDs" })
-        .click();
-      const reserve = page.getByRole("dialog", {
-        name: "Reserve internal IDs",
+    reserveInternalIds: async (
+      { provenance, count }: { provenance: string; count: number },
+      testInfo: TestInfo,
+    ) => {
+      await dialog.getByRole("button", { name: "Download template" }).click();
+      await page.getByRole("menuitem", { name: "Customized template" }).click();
+      const customize = page.getByRole("dialog", {
+        name: "Customize the template",
       });
-      await reserve.getByLabel("Number of internal IDs").fill(String(count));
+      await chooseOption(page, customize)(/^Provenance status/, provenance);
+      await customize
+        .getByRole("checkbox", { name: "Reserve internal IDs" })
+        .click();
+      await customize.getByLabel("Number of internal IDs").fill(String(count));
       return saveDownload(page, testInfo, () =>
-        reserve
-          .getByRole("button", { name: "Download template with reserved IDs" })
+        customize
+          .getByRole("button", { name: "Download this template" })
           .click(),
       );
     },
     upload: (path: string) =>
-      dialog.locator('input[type="file"]').setInputFiles(path),
+      dialog.getByLabel("choose one").setInputFiles(path),
+    addDocument: (path: string) =>
+      dialog.getByLabel("choose them").setInputFiles(path),
     submit: () =>
       dialog.getByRole("button", { name: "Import", exact: true }).click(),
     expectIssue: async (sheet: string, problem: string) => {
@@ -105,7 +113,6 @@ export function importSamplesPage(page: Page) {
     expectPublishedInBackground: async (name: string) => {
       await expectQueued();
       await expect(async () => {
-        await page.reload();
         for (const badge of ["Published", "Synchronized"]) {
           await expect(
             sampleRow(page, name).getByText(badge, { exact: true }),

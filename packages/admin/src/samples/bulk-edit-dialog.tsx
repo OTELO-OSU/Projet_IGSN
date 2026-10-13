@@ -45,7 +45,7 @@ export function BulkEditDialog({
       <DialogTrigger asChild>
         <Button variant="outline">{m.action_bulk_edit()}</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl" closeLabel={m.action_close()}>
+      <DialogContent className="sm:max-w-7xl" closeLabel={m.action_close()}>
         <DialogHeader>
           <DialogTitle>{m.action_bulk_edit()}</DialogTitle>
         </DialogHeader>
