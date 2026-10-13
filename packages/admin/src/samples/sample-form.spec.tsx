@@ -123,6 +123,9 @@ const LOCKED_AFTER_PUBLICATION =
   "This field will no longer be editable once the sample is published.";
 const LOCKED_SINCE_PUBLICATION =
   "This field can no longer be edited since the sample is published.";
+const PARENT_LOCKED_AFTER_SAVE =
+  "The parent can no longer be changed once the sample is saved.";
+const PARENT_LOCKED_SINCE_SAVE = "The parent can no longer be changed.";
 
 function publicationLocksOf(control: Element) {
   return [
@@ -3252,6 +3255,51 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("link", { name: NATURAL_PARENT.name }))
       .toHaveAttribute("href", `http://localhost:3000/samples/${PARENT_IGSN}`);
+  });
+
+  it.each<{ name: string; sampleId: string | undefined; text: string }>([
+    {
+      name: "open on a sample not saved yet",
+      sampleId: undefined,
+      text: PARENT_LOCKED_AFTER_SAVE,
+    },
+    {
+      name: "closed on a saved sample",
+      sampleId: "3f2504e0-4f89-41d3-9a0c-0305000000d1",
+      text: PARENT_LOCKED_SINCE_SAVE,
+    },
+  ])("should lock the parent, $name", async ({ sampleId, text }) => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        sampleId={sampleId}
+        parents={[NATURAL_PARENT]}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+    const parent = screen.getByRole("textbox", { name: "Parent" });
+    await expect.element(parent).toBeVisible();
+    expect(publicationLocksOf(parent.element())).toEqual([text]);
+  });
+
+  it("should mark the parent picker of a parentless saved sample with an open lock", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        sampleId="3f2504e0-4f89-41d3-9a0c-0305000000d1"
+        canAddParent
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+    const picker = screen.getByRole("combobox", { name: "Parent" });
+    await expect.element(picker).toBeVisible();
+    expect(publicationLocksOf(picker.element())).toEqual([
+      PARENT_LOCKED_AFTER_SAVE,
+    ]);
   });
 
   it("should replace the location fields with a notice linking the parent it inherits from", async () => {

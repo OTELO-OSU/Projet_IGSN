@@ -5,13 +5,14 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { LockIcon, LockOpenIcon } from "lucide-react";
 
-import { m } from "#/paraglide/messages.js";
-
-export function PublicationLock({ isPublished }: { isPublished: boolean }) {
-  const text = isPublished
-    ? m.field_locked_since_publication()
-    : m.field_locked_after_publication();
-  const Icon = isPublished ? LockIcon : LockOpenIcon;
+export function FieldLock({
+  isClosed,
+  text,
+}: {
+  isClosed: boolean;
+  text: string;
+}) {
+  const Icon = isClosed ? LockIcon : LockOpenIcon;
   return (
     <Tooltip>
       <TooltipTrigger asChild>

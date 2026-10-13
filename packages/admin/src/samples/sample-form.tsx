@@ -69,12 +69,12 @@ import {
   ExistenceStatusField,
 } from "#/samples/curation-fields.tsx";
 import { DuplicateSamplesDialog } from "#/samples/duplicate-samples-dialog.tsx";
+import { FieldLock } from "#/samples/field-lock.tsx";
 import { hasUnsavedAttachmentChanges } from "#/samples/has-unsaved-attachment-changes.ts";
 import { LocalIdFields } from "#/samples/local-id-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { ProvenanceStatusField } from "#/samples/provenance-status-field.tsx";
 import { PublicationDateField } from "#/samples/publication-date-field.tsx";
-import { PublicationLock } from "#/samples/publication-lock.tsx";
 import { publishBlockerLines } from "#/samples/publish-blocker-field-label.ts";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
@@ -147,15 +147,27 @@ function ParentSampleLink({ parent }: { parent: SampleFormParent }) {
 function ParentSampleField({
   parent,
   label,
+  isSaved,
 }: {
   parent: SampleFormParent;
   label: string;
+  isSaved: boolean;
 }) {
   const id = `parent-${parent.igsn}`;
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div className="grid w-full gap-2 sm:w-72">
-        <Label htmlFor={id}>{label}</Label>
+        <div className="flex items-center gap-1">
+          <Label htmlFor={id}>{label}</Label>
+          <FieldLock
+            isClosed={isSaved}
+            text={
+              isSaved
+                ? m.parent_locked_since_save()
+                : m.parent_locked_after_save()
+            }
+          />
+        </div>
         <Input id={id} value={parent.name} disabled />
       </div>
       <Button asChild variant="outline">
@@ -627,7 +639,14 @@ export function SampleForm({
                   <FieldAdornmentProvider
                     value={(name) =>
                       isLocked(name) ? (
-                        <PublicationLock isPublished={wasPublished} />
+                        <FieldLock
+                          isClosed={wasPublished}
+                          text={
+                            wasPublished
+                              ? m.field_locked_since_publication()
+                              : m.field_locked_after_publication()
+                          }
+                        />
                       ) : null
                     }
                   >
@@ -661,6 +680,7 @@ export function SampleForm({
                                   <ParentSampleField
                                     key={each.igsn}
                                     parent={each}
+                                    isSaved={sampleId !== undefined}
                                     label={
                                       parents.length > 1
                                         ? m.field_parent_numbered({

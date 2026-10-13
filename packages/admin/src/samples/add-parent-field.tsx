@@ -5,6 +5,7 @@ import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
+import { FieldLock } from "#/samples/field-lock.tsx";
 import { SamplePicker } from "#/samples/sample-picker.tsx";
 
 export function AddParentField({
@@ -20,7 +21,10 @@ export function AddParentField({
   const disabled = useFieldDisabled();
   return (
     <div className="grid w-full gap-2 sm:w-72">
-      <Label htmlFor="add-parent">{m.field_parent()}</Label>
+      <div className="flex items-center gap-1">
+        <Label htmlFor="add-parent">{m.field_parent()}</Label>
+        <FieldLock isClosed={false} text={m.parent_locked_after_save()} />
+      </div>
       <SamplePicker
         id="add-parent"
         value={picked && parentIds.includes(picked.id) ? picked : null}
