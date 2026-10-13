@@ -44,7 +44,6 @@ jobs:
           fi
 
       # The registry, like Portainer, is reachable through the infra team's VPN only.
-      # retry-vpn-deploy.yml matches this step name.
       - name: Connect the VPN
         env:
           VPN_HOST: ${{ vars.VPN_HOST }}

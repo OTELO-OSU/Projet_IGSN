@@ -21,7 +21,6 @@ jobs:
           RUN_ID: ${{ github.event.workflow_run.id }}
           ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
         run: |
-          # A blocked runner IP never recovers, but a rerun gets a new runner.
           failed="$(gh run view "$RUN_ID" --attempt "$ATTEMPT" --json jobs --jq '.jobs[].steps[] | select(.conclusion == "failure") | .name')"
           grep -qx 'Connect the VPN' <<<"$failed" || exit 0
           sleep 30
