@@ -311,6 +311,8 @@
   "reveal_open_description": "Describe the sample in detail",
   "reveal_specific_name": "Add a specific name",
   "save_blocked_not_editor": "Only the owner or an editor can update a published sample",
+  "field_locked_after_publication": "This field will no longer be editable once the sample is published.",
+  "field_locked_since_publication": "This field can no longer be edited since the sample is published.",
   "publish_blocked_nature_missing": "Set the nature before publishing.",
   "publish_blocked_type_missing": "Set the sample type before publishing.",
   "publish_blocked_type_incomplete": "Classify the type down to a specific sub-type before publishing.",

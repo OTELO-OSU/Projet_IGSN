@@ -119,6 +119,21 @@ const NATURAL_PARENT = {
   material: "rock_and_sediment.mineral",
 } as const;
 
+const LOCKED_AFTER_PUBLICATION =
+  "This field will no longer be editable once the sample is published.";
+const LOCKED_SINCE_PUBLICATION =
+  "This field can no longer be edited since the sample is published.";
+
+function publicationLocksOf(control: Element) {
+  return [
+    ...control.ownerDocument.querySelectorAll(
+      `label[for="${CSS.escape(control.id)}"]`,
+    ),
+  ].map(
+    (label) => label.nextElementSibling?.getAttribute("aria-label") ?? null,
+  );
+}
+
 describe("SampleForm", () => {
   it("should reject a blank name and not submit", async () => {
     const onSubmit = vi.fn();
@@ -3067,6 +3082,74 @@ describe("SampleForm post-publication field lock", () => {
           .getByRole("combobox", { name: "Collector name" }),
       )
       .toBeEnabled();
+  });
+
+  it("should mark a draft's fields publication freezes with an open lock, and no other field", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    const provenanceStatus = screen.getByRole("combobox", {
+      name: "Provenance status *",
+    });
+    await expect.element(provenanceStatus).toBeVisible();
+    expect(publicationLocksOf(provenanceStatus.element())).toEqual([
+      LOCKED_AFTER_PUBLICATION,
+    ]);
+    expect(
+      publicationLocksOf(
+        screen.getByRole("textbox", { name: "Name *" }).element(),
+      ),
+    ).toEqual([null]);
+  });
+
+  it("should mark a published sample's frozen fields with a closed lock", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        status="published"
+        defaultValues={publishedFixture}
+        primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+      />,
+    );
+
+    const provenanceStatus = screen.getByRole("combobox", {
+      name: "Provenance status *",
+    });
+    await expect.element(provenanceStatus).toBeVisible();
+    expect(publicationLocksOf(provenanceStatus.element())).toEqual([
+      LOCKED_SINCE_PUBLICATION,
+    ]);
+  });
+
+  it("should lock the collection origin but not the collector of a collection specimen draft", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          scientificContext: { provenanceStatus: "collection_specimen" },
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
+    const collectionOrigin = screen.getByRole("combobox", {
+      name: "Collection origin *",
+    });
+    await expect.element(collectionOrigin).toBeVisible();
+    expect(publicationLocksOf(collectionOrigin.element())).toEqual([
+      LOCKED_AFTER_PUBLICATION,
+    ]);
+    expect(
+      publicationLocksOf(
+        screen
+          .getByRole("group", { name: "Collector name" })
+          .getByRole("combobox", { name: "Collector name" })
+          .element(),
+      ),
+    ).toEqual([null]);
   });
 
   it("blocks publishing a draft whose relation has no resource type", async () => {

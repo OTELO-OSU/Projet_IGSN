@@ -1,3 +1,4 @@
+import { useFieldAdornmentRule } from "@projet-igsn/design-system/components/form/field-adornment-context";
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { useFieldRequiredRule } from "@projet-igsn/design-system/components/form/field-required-context";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
@@ -39,6 +40,7 @@ export function ContactNameFields({
   const lastnameName = `${person}Lastname` as const;
   const isFrozen = useIsFieldDisabled(userIdName);
   const isRequired = useFieldRequiredRule();
+  const adornment = useFieldAdornmentRule()(userIdName);
 
   const clearTypedNames = () => {
     form.setFieldValue(firstnameName, undefined);
@@ -75,24 +77,24 @@ export function ContactNameFields({
     </div>
   );
 
-  const withAction = (title: ReactNode) =>
-    action ? (
-      <div className="flex items-center gap-1">
-        {title}
-        <div className="-my-2">{action}</div>
-      </div>
-    ) : (
-      title
-    );
+  const withAction = (title: ReactNode) => (
+    <div className="flex items-center gap-1">
+      {title}
+      {action ? <div className="-my-2">{action}</div> : null}
+    </div>
+  );
 
   const picker = (
     <form.AppField name={userIdName}>
       {(field) => (
         <div className="grid w-full gap-2 sm:w-72">
           {withAction(
-            <Label htmlFor={userIdName}>
-              {withRequired(label, isRequired(userIdName))}
-            </Label>,
+            <>
+              <Label htmlFor={userIdName}>
+                {withRequired(label, isRequired(userIdName))}
+              </Label>
+              {adornment}
+            </>,
           )}
           <ContactNamePicker
             id={userIdName}
