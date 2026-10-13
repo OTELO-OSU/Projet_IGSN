@@ -8,7 +8,10 @@ export const SAMPLE_STATUS: Record<
   SampleStatus,
   { className: string; label: () => string }
 > = {
-  draft: { className: "", label: m.status_draft },
+  draft: {
+    className: "bg-accent text-accent-foreground",
+    label: m.status_draft,
+  },
   embargo: {
     className: "bg-sky-100 text-sky-800",
     label: m.status_embargo,

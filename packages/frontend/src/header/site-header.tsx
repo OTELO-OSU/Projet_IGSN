@@ -1,3 +1,4 @@
+import logoIgsnUrl from "@projet-igsn/design-system/assets/logo-igsn.svg";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { MenuIcon, XIcon } from "lucide-react";
@@ -32,11 +33,7 @@ export function SiteHeader() {
     <header className="bg-background/80 sticky top-0 z-40 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-6xl items-center gap-3 px-6 sm:h-32 sm:gap-6">
         <Link to="/" aria-label={m.app_title()} className="shrink-0">
-          <img
-            src={`${import.meta.env.BASE_URL}logo-igsn.svg`}
-            alt=""
-            className="h-12 w-auto sm:h-22"
-          />
+          <img src={logoIgsnUrl} alt="" className="h-12 w-auto sm:h-22" />
         </Link>
         <Button
           ref={menuButtonRef}

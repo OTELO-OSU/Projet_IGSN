@@ -2,6 +2,7 @@ import type { LinkProps } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import logoIgsnUrl from "@projet-igsn/design-system/assets/logo-igsn.svg";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { cn } from "@projet-igsn/design-system/lib/utils";
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
@@ -54,7 +55,7 @@ const GROUPS_NAV = [
 ] as const;
 
 const navLinkClass =
-  "hover:bg-accent aria-[current=page]:bg-accent flex items-center gap-2 overflow-hidden rounded-md px-3 py-2 text-sm whitespace-nowrap [&>svg]:size-4 [&>svg]:shrink-0";
+  "text-primary hover:bg-primary/5 aria-[current=page]:bg-primary/10 flex items-center gap-2 overflow-hidden rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap [&>svg]:size-4 [&>svg]:shrink-0";
 
 function NavItem({
   to,
@@ -108,27 +109,24 @@ export function AppLayout({
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header
-        className={cn(
-          "flex h-16 items-center justify-between gap-4 border-b pr-6",
-          !hasSidebar && "pl-4.5",
-        )}
-      >
-        <Link to="/" search={listSearch} className="flex h-full items-center">
-          <img
-            src={`${import.meta.env.BASE_URL}logo-igsn.png`}
-            alt={m.app_title()}
-            className="h-full w-auto"
-          />
-        </Link>
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="sm">
-            <a href={FRONTEND_URL}>
-              <GlobeIcon />
-              {m.nav_public_site()}
-            </a>
-          </Button>
-          <UserMenu onSignOut={onSignOut} />
+      <header className="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
+        <div className="mx-auto flex h-20 max-w-6xl items-center gap-3 px-6 sm:h-32 sm:gap-6">
+          <Link to="/" search={listSearch} className="shrink-0">
+            <img
+              src={logoIgsnUrl}
+              alt={m.app_title()}
+              className="h-12 w-auto sm:h-22"
+            />
+          </Link>
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <Button asChild variant="secondary">
+              <a href={FRONTEND_URL}>
+                <GlobeIcon />
+                {m.nav_public_site()}
+              </a>
+            </Button>
+            <UserMenu onSignOut={onSignOut} />
+          </div>
         </div>
       </header>
       <div
@@ -187,7 +185,7 @@ export function AppLayout({
                   <li>
                     <p
                       id={GROUPS_NAV_ID}
-                      className={`px-3 py-2 text-sm font-medium whitespace-nowrap transition-opacity motion-reduce:transition-none ${isCollapsed ? "md:opacity-0" : ""}`}
+                      className={`text-primary px-3 py-2 text-sm font-medium whitespace-nowrap transition-opacity motion-reduce:transition-none ${isCollapsed ? "md:opacity-0" : ""}`}
                     >
                       {m.nav_institutional_groups()}
                     </p>

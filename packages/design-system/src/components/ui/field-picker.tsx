@@ -39,7 +39,11 @@ export function FieldPicker({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button type="button" variant={triggerVariant} className="text-primary">
+        <Button
+          type="button"
+          variant={triggerVariant}
+          className={triggerVariant === "ghost" ? "text-primary" : undefined}
+        >
           <TriggerIcon aria-hidden />
           {triggerLabel}
         </Button>

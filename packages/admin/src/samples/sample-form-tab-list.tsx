@@ -68,7 +68,7 @@ export function SampleFormTabList({
               key={value}
               value={value}
               disabled={isTabDisabled(value)}
-              className="text-muted-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground h-auto flex-none gap-2 rounded-none border-x-0 border-t-0 border-b-[3px] border-transparent px-3 py-2 text-base after:hidden data-[state=active]:shadow-none"
+              className="text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground h-auto flex-none gap-2 rounded-none border-x-0 border-t-0 border-b-[3px] border-transparent px-3 py-2 text-base after:hidden data-[state=active]:shadow-none"
             >
               <Icon className="size-4" aria-hidden />
               {value === "parent" ? parentTabLabel(parentCount) : label()}

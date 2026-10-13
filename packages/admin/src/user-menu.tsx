@@ -33,7 +33,7 @@ export function UserMenu({ onSignOut }: { onSignOut: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
+        <Button type="button" variant="secondary">
           <UserIcon />
           {data.name ?? data.username ?? data.sub}
           <ChevronDownIcon />

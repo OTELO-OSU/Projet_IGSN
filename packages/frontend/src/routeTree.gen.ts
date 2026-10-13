@@ -14,6 +14,7 @@ import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as ManifestDotjsonRouteImport } from './routes/manifest[.]json'
 import { Route as LegalNoticeRouteImport } from './routes/legal-notice'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,6 +45,11 @@ const PartnersRoute = PartnersRouteImport.update({
   path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManifestDotjsonRoute = ManifestDotjsonRouteImport.update({
+  id: '/manifest.json',
+  path: '/manifest.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LegalNoticeRoute = LegalNoticeRouteImport.update({
   id: '/legal-notice',
   path: '/legal-notice',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/faq': typeof FaqRoute
   '/legal-notice': typeof LegalNoticeRoute
+  '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/search': typeof SearchRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/faq': typeof FaqRoute
   '/legal-notice': typeof LegalNoticeRoute
+  '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/search': typeof SearchRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/faq': typeof FaqRoute
   '/legal-notice': typeof LegalNoticeRoute
+  '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/search': typeof SearchRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/faq'
     | '/legal-notice'
+    | '/manifest.json'
     | '/partners'
     | '/privacy-policy'
     | '/search'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/faq'
     | '/legal-notice'
+    | '/manifest.json'
     | '/partners'
     | '/privacy-policy'
     | '/search'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/faq'
     | '/legal-notice'
+    | '/manifest.json'
     | '/partners'
     | '/privacy-policy'
     | '/search'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FaqRoute: typeof FaqRoute
   LegalNoticeRoute: typeof LegalNoticeRoute
+  ManifestDotjsonRoute: typeof ManifestDotjsonRoute
   PartnersRoute: typeof PartnersRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   SearchRoute: typeof SearchRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manifest.json': {
+      id: '/manifest.json'
+      path: '/manifest.json'
+      fullPath: '/manifest.json'
+      preLoaderRoute: typeof ManifestDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/legal-notice': {
       id: '/legal-notice'
       path: '/legal-notice'
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FaqRoute: FaqRoute,
   LegalNoticeRoute: LegalNoticeRoute,
+  ManifestDotjsonRoute: ManifestDotjsonRoute,
   PartnersRoute: PartnersRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   SearchRoute: SearchRoute,

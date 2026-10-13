@@ -8,7 +8,7 @@ import { isPublicationQueued } from "@projet-igsn/domain/sample/publication/is-p
 
 import { m } from "#/paraglide/messages.js";
 
-const SYNCHRONIZATION_STATUS: Record<
+export const SYNCHRONIZATION_STATUS: Record<
   SynchronizationStatus,
   { className: string; label: () => string }
 > = {
@@ -20,7 +20,10 @@ const SYNCHRONIZATION_STATUS: Record<
     className: "bg-red-100 text-red-800",
     label: m.sync_status_failed,
   },
-  synced: { className: "", label: m.sync_status_synced },
+  synced: {
+    className: "bg-accent text-accent-foreground",
+    label: m.sync_status_synced,
+  },
 };
 
 export function SynchronizationStatusBadge({
