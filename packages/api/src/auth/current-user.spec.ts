@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describe, expect } from "vitest";
+import { afterEach, describe, expect, vi } from "vitest";
 
 import type { KeycloakClaims } from "./middleware.ts";
 
@@ -30,6 +30,10 @@ const claims: KeycloakClaims = {
 };
 
 describe("currentUser", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   pgTest(
     "should provision the caller and hand them to the route",
     async ({ db }) => {
@@ -187,6 +191,34 @@ describe("currentUser", () => {
       orcid: "0000-0002-2949-0096",
     });
   });
+
+  pgTest(
+    "should resolve a login through the configured ORCID alias to the linked user",
+    async ({ db }) => {
+      // Arrange
+      vi.stubEnv("OIDC_ORCID_IDENTITY_PROVIDER", "orcid-gaia");
+      vi.stubEnv("OIDC_ALLOWED_IDENTITY_PROVIDERS", "renater,orcid-gaia");
+      const repository = createUserRepository(db);
+      const linked = await repository.upsert({
+        email: "jean.martin-b85@univ-lorraine.fr",
+        name: "Martin",
+        firstname: "Jean",
+      });
+      await repository.setOrcid(linked.id, "0000-0002-2949-0096");
+      const aliased: KeycloakClaims = {
+        ...orcidClaims,
+        identity_provider: "ORCID-GAIA",
+      };
+      // Act
+      const res = await appWithClaims(db, aliased).request("/probe");
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({
+        ...linked,
+        orcid: "0000-0002-2949-0096",
+      });
+    },
+  );
 
   pgTest(
     "should answer 403 and provision nothing for an unlinked ORCID login",

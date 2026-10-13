@@ -139,6 +139,12 @@ const VARS: EnvVar[] = [
     default: "renater,orcid",
   },
   {
+    name: "OIDC_ORCID_IDENTITY_PROVIDER",
+    purpose:
+      "ORCID broker alias in the `identity_provider` claim, also listed in OIDC_ALLOWED_IDENTITY_PROVIDERS and baked into the admin bundle as VITE_OIDC_ORCID_IDENTITY_PROVIDER.",
+    default: "orcid",
+  },
+  {
     name: "DATACITE_API_HOST",
     purpose:
       "Unset disables DOI registration: samples publish without a DOI; set, publishing answers 502 when DataCite refuses the record.",
