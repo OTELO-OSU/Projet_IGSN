@@ -40,7 +40,9 @@ export function LegalNotice() {
         <Section title={m.legal_ip_title()}>
           <p>{m.legal_ip()}</p>
           <p>{m.legal_ip_photo_credits()}</p>
-          <p>{m.legal_ip_photo_credits_list()}</p>
+          <p className="whitespace-pre-line">
+            {m.legal_ip_photo_credits_list()}
+          </p>
           <p>{m.legal_ip_reuse()}</p>
         </Section>
         <Section title={m.legal_links_title()}>
