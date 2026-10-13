@@ -1,13 +1,15 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { XIcon } from "lucide-react";
+import { CheckIcon, CircleDashedIcon, XIcon } from "lucide-react";
 import { useId } from "react";
 
 import { m } from "#/paraglide/messages.js";
+import { FileDropZone } from "#/samples/file-drop-zone.tsx";
 
 type ImportAttachmentListProps = {
   requiredNames: readonly string[];
   addedNames: ReadonlySet<string>;
   unreferencedNames: readonly string[];
+  onAdd: (files: File[]) => void;
   onRemove: (name: string) => void;
 };
 
@@ -15,6 +17,7 @@ export function ImportAttachmentList({
   requiredNames,
   addedNames,
   unreferencedNames,
+  onAdd,
   onRemove,
 }: ImportAttachmentListProps) {
   const titleId = useId();
@@ -26,6 +29,13 @@ export function ImportAttachmentList({
       <p className="text-muted-foreground">
         {m.import_samples_attachments_hint()}
       </p>
+      <FileDropZone
+        hint={m.import_samples_documents_drop_hint()}
+        browseLabel={m.import_samples_choose_documents()}
+        multiple
+        isInline
+        onFiles={onAdd}
+      />
       <ul aria-labelledby={titleId} className="grid gap-1">
         {[...requiredNames, ...unreferencedNames].map((name) => (
           <li key={name} className="flex items-center justify-between gap-2">
@@ -46,9 +56,13 @@ export function ImportAttachmentList({
                 </Button>
               </span>
             ) : addedNames.has(name) ? (
-              <span>{m.import_samples_attachment_added()}</span>
+              <span className="flex items-center gap-1">
+                <CheckIcon aria-hidden className="size-4" />
+                {m.import_samples_attachment_added()}
+              </span>
             ) : (
-              <span className="text-destructive">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <CircleDashedIcon aria-hidden className="size-4" />
                 {m.import_samples_attachment_missing()}
               </span>
             )}

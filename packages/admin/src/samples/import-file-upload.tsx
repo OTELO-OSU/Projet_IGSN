@@ -10,7 +10,12 @@ import {
   IMPORT_MAX_BYTES,
   importSamplesSchema,
 } from "@projet-igsn/domain/sample/import/import-validator";
-import { CircleXIcon, UploadIcon, XIcon } from "lucide-react";
+import {
+  CircleXIcon,
+  FileSpreadsheetIcon,
+  UploadIcon,
+  XIcon,
+} from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { FileDropZone } from "#/samples/file-drop-zone.tsx";
@@ -46,30 +51,40 @@ export function ImportFileUpload({
 
   return (
     <>
-      <FileDropZone {...dropZone} isInline />
       {file ? (
         <div className="grid gap-1 text-sm">
-          <span className="flex items-center gap-1">
-            <span className="truncate" title={file.name}>
-              {file.name}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={m.import_samples_remove_workbook({ name: file.name })}
-              onClick={onRemove}
-            >
-              <XIcon aria-hidden />
-            </Button>
-          </span>
+          <div className="flex flex-col items-center gap-2 rounded-md border p-6">
+            <FileSpreadsheetIcon
+              aria-hidden
+              className="text-muted-foreground size-5"
+            />
+            <p className="flex max-w-full items-center gap-1">
+              <span className="truncate" title={file.name}>
+                {file.name}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-5"
+                aria-label={m.import_samples_remove_workbook({
+                  name: file.name,
+                })}
+                onClick={onRemove}
+              >
+                <XIcon aria-hidden />
+              </Button>
+            </p>
+          </div>
           {error ? (
             <p role="alert" className="text-destructive">
               {error}
             </p>
           ) : null}
         </div>
-      ) : null}
+      ) : (
+        <FileDropZone {...dropZone} isInline />
+      )}
       {children}
       {issues?.length ? <ImportReport issues={issues} /> : null}
       <DialogFooter>

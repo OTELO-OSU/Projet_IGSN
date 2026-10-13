@@ -54,11 +54,6 @@ export function useImportFiles() {
     setPickErrors([...new Set(errors)]);
   }
 
-  function pickFiles(picked: File[]) {
-    if (requiredNames.length > 0) addDocuments(picked);
-    else void pickWorkbook(picked[0] ?? null);
-  }
-
   const unreferencedNames = [...addedNames].filter(
     (name) => !requiredNames.includes(name),
   );
@@ -74,7 +69,8 @@ export function useImportFiles() {
       !isParsing &&
       requiredNames.every((name) => addedNames.has(name)) &&
       unreferencedNames.length === 0,
-    pickFiles,
+    pickWorkbook,
+    addDocuments,
     removeDocument: (name: string) =>
       setDocuments(documents.filter((added) => added.name !== name)),
     reset: () => void pickWorkbook(null),
