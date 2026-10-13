@@ -67,11 +67,10 @@ const sectionOf = (
     ),
   ].join("\n");
 
-export const datasetReadme = (frontendUrl: string): ExportFile => ({
+const readmeOf = (...head: string[]): ExportFile => ({
   fileName: "README.txt",
   content: `${[
-    "# IGSN-CNRS samples: open data export",
-    introOf(frontendUrl),
+    ...head,
     CONVENTIONS,
     LICENSE,
     "## Files",
@@ -81,3 +80,9 @@ export const datasetReadme = (frontendUrl: string): ExportFile => ({
     ),
   ].join("\n\n")}\n`,
 });
+
+export const datasetReadme = (frontendUrl: string): ExportFile =>
+  readmeOf("# IGSN-CNRS samples: open data export", introOf(frontendUrl));
+
+export const searchReadme = (): ExportFile =>
+  readmeOf("# IGSN-CNRS samples: search export");

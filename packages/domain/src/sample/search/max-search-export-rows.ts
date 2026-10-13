@@ -1,0 +1,1 @@
+export const MAX_SEARCH_EXPORT_ROWS = 5000;

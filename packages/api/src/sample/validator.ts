@@ -168,6 +168,12 @@ export const validatePublicListQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
+export const validatePublicExportQuery = zodValidator(
+  "query",
+  publicListSamplesQuerySchema.omit({ page: true, perPage: true }),
+  "Invalid query parameters",
+);
+
 export const validatePublicMapQuery = zodValidator(
   "query",
   sampleMapQuerySchema,

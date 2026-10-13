@@ -17,11 +17,13 @@ import type { SendMail } from "../mail/send-mail.ts";
 
 import { attachmentDownload } from "./attachment-download.ts";
 import { contactSampleOwnerMail } from "./contact-sample-owner-mail.ts";
+import { searchExportResponse } from "./search-export.ts";
 import {
   validateContactBody,
   validateContactParams,
   validateIgsnAttachmentParams,
   validateIgsnParam,
+  validatePublicExportQuery,
   validatePublicListQuery,
   validatePublicMapQuery,
 } from "./validator.ts";
@@ -52,6 +54,9 @@ export function createSampleRoutes(
       };
       return c.json(body);
     })
+    .get("/export", validatePublicExportQuery, async (c) =>
+      searchExportResponse(repository, c.req.valid("query")),
+    )
     .get("/:igsn", validateIgsnParam, async (c) => {
       const sample = await repository.getPublicByIgsn(
         c.req.valid("param").igsn,

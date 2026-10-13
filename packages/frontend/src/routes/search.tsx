@@ -11,12 +11,12 @@ import {
   listManualGroupsQueryOptions,
   useListManualGroups,
 } from "#/domain/manual-groups/hook/list-manual-groups.ts";
+import { DownloadResultsLink } from "#/domain/samples/download-results-link.tsx";
 import { useListSampleFacetCounts } from "#/domain/samples/hook/list-sample-facet-counts.ts";
 import {
   listSamplesQueryOptions,
   useListSamples,
 } from "#/domain/samples/hook/list-samples.ts";
-import { OpenDataLink } from "#/domain/samples/open-data-link.tsx";
 import {
   ResultsMapButton,
   ResultsMapDialog,
@@ -123,12 +123,7 @@ function SearchPage() {
           {params && !search.map ? (
             <Results
               params={params}
-              actions={
-                <>
-                  <OpenDataLink />
-                  <ResultsMapButton onClick={() => setMap(true)} />
-                </>
-              }
+              actions={<ResultsMapButton onClick={() => setMap(true)} />}
             />
           ) : null}
           {params ? (
@@ -173,6 +168,7 @@ function Results({
         navigate({ search: (prev) => ({ ...prev, perPage, page: 1 }) })
       }
       onFieldsChange={saveFields}
+      download={<DownloadResultsLink filters={params} total={data.total} />}
       actions={actions}
     />
   );

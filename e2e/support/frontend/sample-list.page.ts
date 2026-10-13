@@ -89,6 +89,11 @@ export function sampleListPage(page: Page) {
       await field.blur();
       await page.waitForURL(/[?&]ageMin=/);
     },
+    downloadResults: async () => {
+      const download = page.waitForEvent("download");
+      await page.getByRole("link", { name: "Download results" }).click();
+      return download;
+    },
     clearAllFilters: () =>
       page.getByRole("button", { name: /clear all filters/i }).click(),
     pickCardField: async (field: string) => {
