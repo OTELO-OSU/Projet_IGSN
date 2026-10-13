@@ -46,7 +46,7 @@
 - Lists are paginated server-side, so sorting and filtering MUST happen in the Postgres query (Kysely `orderBy`/`where`), never in the client or on a fetched page.
 - Declare the sort/filter params in the list query schema in `domain`, pass them through the repository, and keep them in the URL app-side.
 - Public sample-list filters are driven by the `SAMPLE_FACETS` registry (`domain/sample/search/facets.ts`) as single source of truth; to add or extend one, see the `add-search-facet` skill.
-- The free-text global search box is a separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet, and it runs in the ParadeDB index `sample_search_idx` for every `searchFilters` caller; see ADR 0018.
+- The free-text global search box is a separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet, and it runs in the ParadeDB index `sample_search_idx` for every `searchFilters` caller, the public callers adding a material-label arm through `publicSearchFilters`; see ADR 0018.
 - The admin sample lists accept `ownerId` / `institution` / `manualGroup` / `status` / `collectorName` / `existenceStatus` / `availabilityStatus` on `listSamplesQuerySchema`, ANDed inside the caller's moderation scope; the three `institutional*` facet params stay dropped there, one param one meaning.
 - `existenceStatus` and `availabilityStatus` are top-level params, not `SAMPLE_FACETS` entries: the registry is the public facet contract, and these two stay admin-only, off the sidebar and the Core `/service` contract.
 - The status filter, the `sort: "status"` order (`array_position` over `sampleStatusSchema.options`, so the enum order is the sort order) and the admin badge all read the `status` column.

@@ -1,10 +1,7 @@
-import type { SearchToken } from "@projet-igsn/domain/sample/search/search-tokens";
+import type { SearchToken } from "./search-tokens.ts";
 
-import {
-  parseSearchToken,
-  searchTokens,
-} from "@projet-igsn/domain/sample/search/search-tokens";
-import { normalizeSearch } from "@projet-igsn/domain/text/normalize-search";
+import { normalizeSearch } from "../../text/normalize-search.ts";
+import { parseSearchToken, searchTokens } from "./search-tokens.ts";
 
 const RUNS = /\S+/g;
 const MAX_HIGHLIGHT_LENGTH = 300;
@@ -64,6 +61,14 @@ function matchRun(
       : undefined;
   }
   return [start, tail === "" ? run.length : cursor];
+}
+
+export function matchesSearchToken(text: string, token: SearchToken): boolean {
+  return token.segments.length === 1
+    ? text.includes(token.segments[0] ?? "")
+    : (text.match(RUNS) ?? []).some(
+        (run) => matchRun(run, token) !== undefined,
+      );
 }
 
 export function matchRanges(text: string, query: string): Range[] {

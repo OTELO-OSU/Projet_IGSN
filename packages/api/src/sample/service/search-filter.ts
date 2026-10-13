@@ -1,3 +1,4 @@
+import { createMatchingMaterialPaths } from "@projet-igsn/domain/sample/search/matching-material-paths";
 import {
   MAX_TOKEN_LENGTH,
   parseSearchToken,
@@ -13,6 +14,7 @@ import {
 
 import type { DB } from "../../db.ts";
 
+import { labels } from "../import-template/labels.ts";
 import { fuzzyThreshold } from "./fuzzy-threshold.ts";
 
 const SEARCHED_TEXTS = [
@@ -22,6 +24,10 @@ const SEARCHED_TEXTS = [
 ].map((column) => sql.ref(column));
 
 const FUZZY_MIN_LENGTH = 5;
+
+const matchingMaterialPaths = createMatchingMaterialPaths(
+  labels.materialPathLabel,
+);
 
 const ESCAPED_GROUP = "\\\\\\1";
 
@@ -102,13 +108,13 @@ export function tokenFilters(
 
 function matchesSearchToken(
   texts: readonly RawBuilder<unknown>[],
-  igsnArm: (token: string) => RawBuilder<unknown>,
+  tokenArms: (token: string) => RawBuilder<unknown>[],
   token: string,
 ): Expression<SqlBool> {
   if (token.length > MAX_TOKEN_LENGTH) return sql<SqlBool>`false`;
   const regex = termRegex(token);
   const arms = [
-    igsnArm(token),
+    ...tokenArms(token),
     ...texts.map((text) => sql`${text} @@@ pdb.regex(${regex})`),
     ...(isFuzzyToken(token)
       ? texts.map(
@@ -123,27 +129,32 @@ function matchesSearchToken(
 function textSearchFilters(
   search: string,
   texts: readonly RawBuilder<unknown>[],
-  igsnArm: (token: string) => RawBuilder<unknown>,
+  tokenArms: (token: string) => RawBuilder<unknown>[],
 ): Expression<SqlBool>[] {
   const tokens = searchTokens(search);
   if (tokens.length === 0) return [sql<SqlBool>`false`];
-  return tokens.map((token) => matchesSearchToken(texts, igsnArm, token));
+  return tokens.map((token) => matchesSearchToken(texts, tokenArms, token));
 }
 
+const igsnArm = (token: string) => sql`igsn = upper(${token})`;
+
 export function searchFilters(search: string): Expression<SqlBool>[] {
-  return textSearchFilters(
-    search,
-    SEARCHED_TEXTS,
-    (token) => sql`igsn = upper(${token})`,
-  );
+  return textSearchFilters(search, SEARCHED_TEXTS, (token) => [igsnArm(token)]);
+}
+
+export function publicSearchFilters(search: string): Expression<SqlBool>[] {
+  return textSearchFilters(search, SEARCHED_TEXTS, (token) => [
+    igsnArm(token),
+    ...matchingMaterialPaths(token).map(
+      (path) => sql`${path} = any(material_paths)`,
+    ),
+  ]);
 }
 
 export function pickerSearchFilters(search: string): Expression<SqlBool>[] {
-  return textSearchFilters(
-    search,
-    [sql.ref("name_unaccented")],
-    (token) => sql`strpos(igsn, upper(${token})) > 0`,
-  );
+  return textSearchFilters(search, [sql.ref("name_unaccented")], (token) => [
+    sql`strpos(igsn, upper(${token})) > 0`,
+  ]);
 }
 
 export async function forceCustomPlan(trx: Transaction<DB>): Promise<void> {

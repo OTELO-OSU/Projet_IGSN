@@ -6,6 +6,10 @@ import {
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
+import {
+  exactRanges,
+  matchRanges,
+} from "@projet-igsn/domain/sample/search/highlight-match";
 import { Link } from "@tanstack/react-router";
 import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -20,7 +24,6 @@ import {
   collectorText,
 } from "#/domain/samples/card-fields.ts";
 import { CARD_LINE_ICONS } from "#/domain/samples/card-line-icons.ts";
-import { exactRanges, matchRanges } from "#/domain/samples/highlight-match.ts";
 import { m } from "#/paraglide/messages.js";
 
 const SEARCH_HIGHLIGHT = "sample-search-match";
@@ -119,7 +122,7 @@ function CardDetails({
       ) : null}
       {material ? (
         <CardLine field="material" label={m.sample_field_material()}>
-          {material}
+          <span data-highlight>{material}</span>
         </CardLine>
       ) : null}
       {place ? (

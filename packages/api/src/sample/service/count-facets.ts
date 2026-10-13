@@ -18,7 +18,11 @@ import {
   personFacetValues,
 } from "./facet-filter.ts";
 import { publishedScope, sampleFilters } from "./list-sample.ts";
-import { applyFuzzyThreshold, forceCustomPlan } from "./search-filter.ts";
+import {
+  applyFuzzyThreshold,
+  forceCustomPlan,
+  publicSearchFilters,
+} from "./search-filter.ts";
 
 type Facet = (typeof SAMPLE_FACETS)[number];
 
@@ -94,6 +98,7 @@ export function countPublishedFacets(
           ),
         },
         await resolveLinkedAccounts(trx, params),
+        publicSearchFilters,
       ),
       ...publishedScope(params),
     ];

@@ -318,6 +318,20 @@ describe("SampleList", () => {
       .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRS");
   });
 
+  it("should highlight a search term found in the material line", async () => {
+    const screen = await renderWithRouter(
+      <SampleList samples={[sampleItem()]} query="igneous" />,
+      ["/samples/$igsn"],
+    );
+
+    await expect
+      .element(screen.getByRole("link", { name: /Basalt 42/ }))
+      .toBeInTheDocument();
+    expect(
+      [...(CSS.highlights.get("sample-search-match") ?? [])].map(String),
+    ).toEqual(["Igneous"]);
+  });
+
   it("should report the hovered sample, then none once the pointer leaves", async () => {
     const onHoverSample = vi.fn();
     const screen = await renderWithRouter(
