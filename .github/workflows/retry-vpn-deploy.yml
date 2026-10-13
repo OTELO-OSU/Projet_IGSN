@@ -20,8 +20,13 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RUN_ID: ${{ github.event.workflow_run.id }}
           ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           failed="$(gh run view "$RUN_ID" --attempt "$ATTEMPT" --json jobs --jq '.jobs[].steps[] | select(.conclusion == "failure") | .name')"
           grep -qx 'Connect the VPN' <<<"$failed" || exit 0
           sleep 30
+          newer="$(gh run list --workflow deploy.yml --json databaseId,headBranch \
+            | jq --argjson id "$RUN_ID" --arg branch "$HEAD_BRANCH" --arg release_tag '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+              '[.[] | select(.databaseId > $id and (.headBranch | test($release_tag)) == ($branch | test($release_tag)))] | length')"
+          [ "$newer" = 0 ] || exit 0
           gh run rerun "$RUN_ID" --failed
