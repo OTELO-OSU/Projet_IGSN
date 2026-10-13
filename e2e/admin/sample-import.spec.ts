@@ -190,7 +190,7 @@ test.describe("sample import", () => {
       {
         provenance: "Research project sample",
         manualGroup: MANUAL_GROUP,
-        uncheckSections: ["Curation and repository"],
+        uncheckSections: ["Include Curation and repository"],
       },
       testInfo,
     );

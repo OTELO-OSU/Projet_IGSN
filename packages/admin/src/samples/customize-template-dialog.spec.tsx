@@ -278,18 +278,18 @@ describe("CustomizeTemplateDialog", () => {
     const section = (name: string) =>
       dialog.getByRole("checkbox", { name, exact: true });
     for (const name of [
-      "Physical description",
-      "Age",
-      "Conservation and security",
-      "Curation and repository",
-      "Related URL or document",
-      "Geological context",
+      "Include Physical description",
+      "Include Age",
+      "Include Conservation and security",
+      "Include Curation and repository",
+      "Include Related URL or document",
+      "Include Geological context",
     ]) {
       await expect.element(section(name)).toBeChecked();
     }
 
-    await section("Curation and repository").click();
-    await section("Geological context").click();
+    await section("Include Curation and repository").click();
+    await section("Include Geological context").click();
     await download.click();
 
     await expect.poll(() => requested.length).toBe(1);
@@ -344,8 +344,10 @@ describe("CustomizeTemplateDialog", () => {
       await expect
         .element(checkbox("The file will contain sub-samples"))
         .toBeChecked();
-      await expect.element(checkbox("Physical description")).toBeChecked();
-      await expect.element(checkbox("Age")).not.toBeChecked();
+      await expect
+        .element(checkbox("Include Physical description"))
+        .toBeChecked();
+      await expect.element(checkbox("Include Age")).not.toBeChecked();
       await expect
         .element(dialog.getByRole("combobox", { name: "Manual group" }))
         .toHaveTextContent(GROUP.name);

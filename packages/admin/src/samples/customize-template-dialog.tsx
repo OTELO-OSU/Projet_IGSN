@@ -203,7 +203,9 @@ export function CustomizeTemplateDialog({
                 }
               />
               <Label htmlFor={`customize-template-section-${key}`}>
-                {SECTION_LABELS[key]()}
+                {m.import_template_include_section({
+                  section: SECTION_LABELS[key](),
+                })}
               </Label>
             </div>
           ))}
@@ -226,8 +228,9 @@ export function CustomizeTemplateDialog({
             <Input
               id="customize-template-reserve-count"
               type="number"
-              min={1}
+              min={25}
               max={MAX_IMPORT_ROWS}
+              step={25}
               className="sm:max-w-72"
               value={reserveCount}
               onChange={(event) => setReserveCount(event.target.value)}
