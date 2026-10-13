@@ -18,9 +18,9 @@ export function sampleCreatePage(page: Page) {
       ).toBeVisible(),
     continueWithOneParent: () =>
       page.getByRole("button", { name: "Continue" }).click(),
-    fillName: (name: string) => page.getByLabel(/name/i).fill(name),
+    fillName: (name: string) => page.getByLabel(/^name/i).fill(name),
     expectName: (name: string) =>
-      expect(page.getByLabel(/name/i)).toHaveValue(name),
+      expect(page.getByLabel(/^name/i)).toHaveValue(name),
     expectNature: (label: string) =>
       expect(page.getByRole("combobox", { name: /^Nature/ })).toHaveText(label),
     selectNature: async (label: string) => {

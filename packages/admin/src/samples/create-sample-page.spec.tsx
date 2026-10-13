@@ -357,7 +357,7 @@ const continueWithTwoParents = async (screen: CreateScreen) => {
 };
 
 async function fillPublishableSample(screen: CreateScreen) {
-  await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+  await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
   await pick(screen, "Nature *", "Thin section");
   await pick(screen, "Type *", "Dredge");
   await pick(screen, "Provenance status *", "Collection specimen");
@@ -382,7 +382,7 @@ const renderDuplicatePage = (duplicateId: string) =>
 describe("CreateSamplePage", () => {
   it("should redirect to the new sample's edit page after creation, with a toast", async () => {
     const screen = await renderCreatePage();
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("button", { name: "Save", exact: true }).click();
@@ -391,7 +391,7 @@ describe("CreateSamplePage", () => {
       .element(screen.getByRole("heading", { name: "Edit sample" }))
       .toBeVisible();
     await expect
-      .element(screen.getByLabelText(/name/i))
+      .element(screen.getByLabelText(/^name/i))
       .toHaveValue("Basalte du Massif Central");
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
@@ -408,7 +408,7 @@ describe("CreateSamplePage", () => {
 
   it("should reopen the created sample on the tab its first save came from", async () => {
     const screen = await renderCreatePage();
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await openTab(screen, "Age");
     await screen.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -463,7 +463,7 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("tab", { name: "Parent sample" }))
       .toBeVisible();
-    await screen.getByLabelText(/name/i).fill("Thin section MC-2026-007");
+    await screen.getByLabelText(/^name/i).fill("Thin section MC-2026-007");
     await screen.getByRole("button", { name: "Save", exact: true }).click();
 
     await expect
@@ -489,7 +489,7 @@ describe("CreateSamplePage", () => {
         }),
       )
       .toBeVisible();
-    await expect.element(screen.getByLabelText(/name/i)).toHaveValue("");
+    await expect.element(screen.getByLabelText(/^name/i)).toHaveValue("");
     await expect
       .element(screen.getByRole("combobox", { name: "Nature *", exact: true }))
       .toHaveTextContent("Hand sample");
@@ -512,7 +512,7 @@ describe("CreateSamplePage", () => {
     const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
     await continueWithTwoParents(screen);
 
-    await screen.getByLabelText(/name/i).fill("Synthetic MC x VG");
+    await screen.getByLabelText(/^name/i).fill("Synthetic MC x VG");
     await openTab(screen, "Sample classification");
     await screen.getByRole("button", { name: "Add a specific name" }).click();
     await expect
@@ -642,7 +642,7 @@ describe("CreateSamplePage", () => {
       .element(screen.getByRole("dialog", { name: "Add a sub sample" }))
       .not.toBeInTheDocument();
     await expect
-      .element(screen.getByLabelText(/name/i))
+      .element(screen.getByLabelText(/^name/i))
       .toHaveValue("Basalte du Massif Central (copy)");
     await expect
       .element(screen.getByRole("combobox", { name: "Nature *", exact: true }))
@@ -661,7 +661,7 @@ describe("CreateSamplePage", () => {
     const screen = await renderDuplicatePage(OUT_OF_REACH_SOURCE_ID);
 
     await expect
-      .element(screen.getByLabelText(/name/i))
+      .element(screen.getByLabelText(/^name/i))
       .toHaveValue("Basalte du Massif Central (copy)");
     await expect
       .element(screen.getByRole("tab", { name: "Parent sample" }))
@@ -687,7 +687,7 @@ describe("CreateSamplePage", () => {
 
   it("should offer the groups the depositor may attach and submit the picked one", async () => {
     const screen = await renderCreatePage();
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen
@@ -706,7 +706,7 @@ describe("CreateSamplePage", () => {
 
   it("should create a metamorphic sample with no facies", async () => {
     const screen = await renderCreatePage();
-    await screen.getByLabelText(/name/i).fill("Gneiss");
+    await screen.getByLabelText(/^name/i).fill("Gneiss");
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
@@ -733,7 +733,7 @@ describe("CreateSamplePage", () => {
 
   it("should send a relation added on the create page in the POST body", async () => {
     const screen = await renderCreatePage();
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Related URL or document" }).click();
@@ -874,7 +874,7 @@ describe("CreateSamplePage", () => {
 
   it("should show an error toast when creation fails", async () => {
     const screen = await renderCreatePage(true);
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("button", { name: "Save", exact: true }).click();

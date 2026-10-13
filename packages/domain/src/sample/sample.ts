@@ -202,7 +202,7 @@ const checkSample = (
     ctx.addIssue({
       code: "custom",
       path: ["localIdDescription"],
-      message: "a local id description needs a local id",
+      message: "a local name description needs a local name",
     });
   }
   if (value.specificName != null && !allowsSpecificName(value.material)) {

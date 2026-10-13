@@ -94,7 +94,7 @@ describe("SampleSeriesField", () => {
     async ({ type, parents }) => {
       const screen = await renderMember({ type }, { parents });
 
-      await expect.element(screen.getByLabelText("Name")).toBeVisible();
+      await expect.element(screen.getByLabelText(/^name/i)).toBeVisible();
       await expect.element(seriesSection(screen)).not.toBeInTheDocument();
     },
   );

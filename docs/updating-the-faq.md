@@ -85,12 +85,12 @@ The list order is the display order, and the numbers of a numbered question foll
 
 The answers to "How does the search find samples?" describe rules set in the code. When a developer changes one of these, its sentence must change too:
 
-| Sentence                                                  | Set in                                                                                                                                                    |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The fields searched (name, specific name, local ID, IGSN) | `SEARCHED_TEXTS` in [packages/api/src/sample/service/search-filter.ts](../packages/api/src/sample/service/search-filter.ts)                               |
-| Typos forgiven from 5 letters                             | `FUZZY_MIN_LENGTH`, same file                                                                                                                             |
-| Only the first 6 words, single letters skipped            | `MAX_SEARCH_TOKENS` and `MIN_TOKEN_LENGTH` in [packages/domain/src/sample/search/search-tokens.ts](../packages/domain/src/sample/search/search-tokens.ts) |
-| An area no bigger than a quarter of the globe             | `MAX_SEARCH_BBOX_WORLD_FRACTION` in [packages/domain/src/sample/sample-validator.ts](../packages/domain/src/sample/sample-validator.ts)                   |
+| Sentence                                                    | Set in                                                                                                                                                    |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The fields searched (name, specific name, local name, IGSN) | `SEARCHED_TEXTS` in [packages/api/src/sample/service/search-filter.ts](../packages/api/src/sample/service/search-filter.ts)                               |
+| Typos forgiven from 5 letters                               | `FUZZY_MIN_LENGTH`, same file                                                                                                                             |
+| Only the first 6 words, single letters skipped              | `MAX_SEARCH_TOKENS` and `MIN_TOKEN_LENGTH` in [packages/domain/src/sample/search/search-tokens.ts](../packages/domain/src/sample/search/search-tokens.ts) |
+| An area no bigger than a quarter of the globe               | `MAX_SEARCH_BBOX_WORLD_FRACTION` in [packages/domain/src/sample/sample-validator.ts](../packages/domain/src/sample/sample-validator.ts)                   |
 
 ## Check your change
 

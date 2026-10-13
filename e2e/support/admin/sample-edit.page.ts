@@ -80,7 +80,7 @@ export function sampleEditPage(page: Page) {
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
     goto: (sampleId: string) => page.goto(`${adminUrl}/samples/${sampleId}`),
     expectName: (name: string) =>
-      expect(page.getByLabel(/name/i)).toHaveValue(name),
+      expect(page.getByLabel(/^name/i)).toHaveValue(name),
     fillSpecificName: async (value: string) => {
       await openTab("Sample classification");
       await page.getByRole("button", { name: "Add a specific name" }).click();

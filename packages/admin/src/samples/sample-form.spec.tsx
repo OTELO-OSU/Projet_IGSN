@@ -156,7 +156,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("button", { name: "Create" }).click();
@@ -189,13 +189,13 @@ describe("SampleForm", () => {
     );
 
     await expect
-      .element(screen.getByLabelText("Local ID description"))
+      .element(screen.getByLabelText("Local name description"))
       .not.toBeInTheDocument();
 
-    await screen.getByLabelText("Local ID").fill("MC-2026-007");
+    await screen.getByLabelText("Local name").fill("MC-2026-007");
 
     await expect
-      .element(screen.getByLabelText("Local ID description"))
+      .element(screen.getByLabelText("Local name description"))
       .toBeVisible();
   });
 
@@ -205,7 +205,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -248,7 +248,7 @@ describe("SampleForm", () => {
     );
 
     await expect
-      .element(screen.getByLabelText(/name/i))
+      .element(screen.getByLabelText(/^name/i))
       .toHaveValue("Basalte du Massif Central");
 
     await screen.getByRole("button", { name: "Save" }).click();
@@ -281,7 +281,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await pickPath(screen, "Type *", "Core", "Core Half round");
@@ -315,7 +315,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await pickPath(screen, "Type *", "Core", "Stop here");
@@ -372,7 +372,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Granite");
+    await screen.getByLabelText(/^name/i).fill("Granite");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
@@ -425,7 +425,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Granite");
+    await screen.getByLabelText(/^name/i).fill("Granite");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
@@ -479,7 +479,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Rock");
+    await screen.getByLabelText(/^name/i).fill("Rock");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
@@ -562,7 +562,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Gneiss");
+    await screen.getByLabelText(/^name/i).fill("Gneiss");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
@@ -611,7 +611,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Meta-granite");
+    await screen.getByLabelText(/^name/i).fill("Meta-granite");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
@@ -675,7 +675,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Rock");
+    await screen.getByLabelText(/^name/i).fill("Rock");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
@@ -780,7 +780,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
     await pickPath(
@@ -2698,7 +2698,7 @@ describe("SampleForm post-publication field lock", () => {
   it("keeps the editable fields interactive on a published sample", async () => {
     const screen = await renderPublished();
 
-    await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
+    await expect.element(screen.getByLabelText(/^name/i)).toBeEnabled();
     await expect
       .element(screen.getByRole("button", { name: "Remove Dredge" }))
       .toBeEnabled();
@@ -3552,7 +3552,7 @@ describe("SampleForm duplicate check", () => {
     const bodies = fakeApi();
     const { screen, onSubmit } = await renderPublishedSave();
 
-    await screen.getByLabelText("Name").fill(RENAMED);
+    await screen.getByLabelText(/^name/i).fill(RENAMED);
     await screen.getByRole("button", { name: "Save" }).click();
 
     await expect
@@ -3603,7 +3603,7 @@ describe("SampleForm duplicate check", () => {
       } as unknown as SampleAttachmentChanges,
     });
 
-    await screen.getByLabelText("Name").fill(RENAMED);
+    await screen.getByLabelText(/^name/i).fill(RENAMED);
     await screen.getByRole("button", { name: "Save" }).click();
     await screen
       .getByRole("dialog")

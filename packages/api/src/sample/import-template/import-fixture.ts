@@ -85,7 +85,7 @@ export function swapColumns(
 
 export const CLEAN_SAMPLE: Cells = {
   Name: "Basalt 1",
-  "Local ID": 123,
+  "Local name": 123,
   "Sample type (level 1)": "Individual sample",
   Nature: "Hand sample",
   "Material (level 1)": "Rock and sediment",
