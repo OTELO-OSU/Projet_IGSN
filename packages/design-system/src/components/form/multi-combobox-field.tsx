@@ -1,9 +1,8 @@
 import type { ComboboxItem } from "../ui/combobox.tsx";
 
-import { withRequired } from "../../lib/with-required.ts";
 import { comboboxItemFormat } from "../ui/combobox.tsx";
-import { Label } from "../ui/label.tsx";
 import { MultiCombobox } from "../ui/multi-combobox.tsx";
+import { FieldLabel } from "./field-adornment-context.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldRequired } from "./field-required-context.tsx";
@@ -36,7 +35,7 @@ export function MultiComboboxField({
   const isRequired = useFieldRequired(requiredToPublish);
   return (
     <FieldRow format={comboboxItemFormat(items)}>
-      <Label htmlFor={field.name}>{withRequired(label, isRequired)}</Label>
+      <FieldLabel label={label} isRequired={isRequired} />
       <div className="sm:max-w-72">
         <MultiCombobox
           id={field.name}

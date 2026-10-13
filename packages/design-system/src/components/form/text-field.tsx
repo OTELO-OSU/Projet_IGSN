@@ -1,9 +1,8 @@
 import { useState } from "react";
 
-import { withRequired } from "../../lib/with-required.ts";
 import { Input } from "../ui/input.tsx";
-import { Label } from "../ui/label.tsx";
 import { Textarea } from "../ui/textarea.tsx";
+import { FieldLabel } from "./field-adornment-context.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldRequired } from "./field-required-context.tsx";
@@ -46,7 +45,7 @@ export function TextField({
   const Control = multiline ? Textarea : Input;
   const row = (
     <FieldRow isFullWidth={isFullWidth}>
-      <Label htmlFor={field.name}>{withRequired(label, isRequired)}</Label>
+      <FieldLabel label={label} isRequired={isRequired} />
       <Control
         id={field.name}
         {...(number ? { type: "number", step: "any" } : {})}

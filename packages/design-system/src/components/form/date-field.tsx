@@ -1,6 +1,5 @@
-import { withRequired } from "../../lib/with-required.ts";
 import { Input } from "../ui/input.tsx";
-import { Label } from "../ui/label.tsx";
+import { FieldLabel } from "./field-adornment-context.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldRequired } from "./field-required-context.tsx";
@@ -24,7 +23,7 @@ export function DateField({
   const isRequired = useFieldRequired(requiredToPublish);
   return (
     <FieldRow>
-      <Label htmlFor={field.name}>{withRequired(label, isRequired)}</Label>
+      <FieldLabel label={label} isRequired={isRequired} />
       <Input
         id={field.name}
         type={withTime ? "datetime-local" : "date"}

@@ -1,8 +1,7 @@
 import type { Hierarchy } from "../../lib/hierarchy.ts";
 
-import { withRequired } from "../../lib/with-required.ts";
 import { HierarchyInput } from "../ui/hierarchy-input.tsx";
-import { Label } from "../ui/label.tsx";
+import { FieldLabel } from "./field-adornment-context.tsx";
 import {
   useFieldDisabled,
   useFieldDisabledRule,
@@ -51,7 +50,7 @@ export function HierarchyField({
 
   return (
     <FieldRow format={(value) => toPath(value).map(translate).join(" / ")}>
-      <Label htmlFor={field.name}>{withRequired(label, isRequired)}</Label>
+      <FieldLabel label={label} isRequired={isRequired} />
       <div className="sm:max-w-72">
         <HierarchyInput
           id={field.name}
