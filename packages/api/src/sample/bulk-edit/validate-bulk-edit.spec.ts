@@ -180,7 +180,7 @@ describe("validateBulkEdit", () => {
     async ({ db }) => {
       const sample = await published(db);
       const book = await exported([sample]);
-      deleteColumn(book, SHEETS.samples, "Local ID");
+      deleteColumn(book, SHEETS.samples, "Local name");
 
       const { samples } = await validated(db, book, [sample]);
 
@@ -194,7 +194,7 @@ describe("validateBulkEdit", () => {
     async ({ db }) => {
       const sample = await published(db);
       const book = await exported([sample]);
-      fill(book, SHEETS.samples, ROW, { "Local ID": null });
+      fill(book, SHEETS.samples, ROW, { "Local name": null });
 
       const { issues, samples } = await validated(db, book, [sample]);
 

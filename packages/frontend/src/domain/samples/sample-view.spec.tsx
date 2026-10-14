@@ -359,8 +359,8 @@ describe("SampleView", () => {
       },
       "Identity",
       [
-        "Local ID",
-        "Local ID description",
+        "Local name",
+        "Local name description",
         "Type",
         "Nature",
         "Collection method",

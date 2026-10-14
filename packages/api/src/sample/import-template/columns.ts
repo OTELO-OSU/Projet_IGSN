@@ -140,8 +140,8 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
   ...grouped("Identity", [
     field(SAMPLE_NAME_HEADER, "name"),
     field(PARENT_IGSN_HEADER, "parentIds"),
-    field("Local ID", "localId"),
-    field("Local ID description", "localIdDescription"),
+    field("Local name", "localId"),
+    field("Local name description", "localIdDescription"),
     ...tree("type", "sample_type", "Sample type", SAMPLE_TYPES),
     field("Nature", "nature", "nature"),
     ...tree(

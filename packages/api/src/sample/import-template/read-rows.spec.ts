@@ -27,7 +27,7 @@ const CLEAN = {
       cells: {
         ...CLEAN_SAMPLE,
         "Sample #": "1",
-        "Local ID": "123",
+        "Local name": "123",
         Longitude: "2.35",
       },
       children: [
@@ -75,7 +75,7 @@ describe("readRows", () => {
     const book = await cleanBook();
     swapColumns(book, SHEETS.samples, "Name", "Latitude");
     swapColumns(book, SHEETS.relations, "Identifier", "Resource type");
-    deleteColumn(book, SHEETS.samples, "Local ID description");
+    deleteColumn(book, SHEETS.samples, "Local name description");
 
     expect(read(book)).toEqual(CLEAN);
   });

@@ -93,7 +93,7 @@ describe("SampleChildrenField", () => {
     async ({ type, shown }) => {
       const screen = await renderSeries({ type });
 
-      await expect.element(screen.getByLabelText("Name")).toBeVisible();
+      await expect.element(screen.getByLabelText(/^name/i)).toBeVisible();
       if (shown) {
         await expect.element(childrenSection(screen)).toBeVisible();
       } else {

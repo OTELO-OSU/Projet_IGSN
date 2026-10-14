@@ -940,7 +940,7 @@ describe("EditSamplePage", () => {
       .toHaveTextContent(
         "This sample is a tombstone, hidden from everyone but its space managers.",
       );
-    await expect.element(screen.getByLabelText("Name")).toBeDisabled();
+    await expect.element(screen.getByLabelText(/^name/i)).toBeDisabled();
     expect(
       screen.getByRole("button", { name: /save|share/i }).elements(),
     ).toHaveLength(0);
@@ -1435,7 +1435,7 @@ describe("EditSamplePage", () => {
 
   it("should save the edits, then publish, and warn the IGSN is permanent", async () => {
     const { screen, calls } = await renderEditPage();
-    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Publish", exact: true }).click();
 
     await expect.element(screen.getByText(/the IGSN stays/i)).toBeVisible();
@@ -1453,7 +1453,7 @@ describe("EditSamplePage", () => {
 
   it("should publish straight as withdrawn from the publish menu", async () => {
     const { screen, calls } = await renderEditPage();
-    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
     await screen
       .getByRole("button", { name: "More publishing options" })
       .click();
@@ -1481,7 +1481,7 @@ describe("EditSamplePage", () => {
   it("should publish with embargo from the publish menu once a valid publication date is picked", async () => {
     const date = dateFromToday(0, 30);
     const { screen, calls } = await renderEditPage();
-    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
     await screen
       .getByRole("button", { name: "More publishing options" })
       .click();
@@ -1516,7 +1516,7 @@ describe("EditSamplePage", () => {
       "rock_and_sediment.mineral",
       "save",
     );
-    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Save", exact: true }).click();
 
     await expect
@@ -1540,7 +1540,7 @@ describe("EditSamplePage", () => {
 
   it("should stay on the page after Save, with a toast", async () => {
     const { screen, calls } = await renderEditPage();
-    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Save", exact: true }).click();
 
     await expect
@@ -1607,7 +1607,7 @@ describe("EditSamplePage", () => {
       await expect
         .element(screen.getByRole("status"))
         .toHaveTextContent("Pierre Martin");
-      await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+      await expect.element(screen.getByLabelText(/^name/i)).toBeDisabled();
       const save = screen.getByRole("button", { name: "Save", exact: true });
       await expect.element(save).toBeDisabled();
       save.element().closest<HTMLElement>("[tabindex]")?.focus();
@@ -1636,18 +1636,18 @@ describe("EditSamplePage", () => {
       await expect
         .element(screen.getByRole("status"))
         .toHaveTextContent("Another collaborator is editing this sample");
-      await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+      await expect.element(screen.getByLabelText(/^name/i)).toBeDisabled();
     });
 
     it("should become editable when a later poll returns the lock as mine", async () => {
       const { screen, releaseLock, poll } =
         await renderEditPageLockedBy(PIERRE);
-      await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+      await expect.element(screen.getByLabelText(/^name/i)).toBeDisabled();
 
       releaseLock();
       await poll();
 
-      await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
+      await expect.element(screen.getByLabelText(/^name/i)).toBeEnabled();
       await expect.element(screen.getByRole("status")).not.toBeInTheDocument();
     });
 
@@ -1683,7 +1683,7 @@ describe("EditSamplePage", () => {
           () => new HttpResponse(null, { status: 204 }),
         ),
       );
-      await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+      await expect.element(screen.getByLabelText(/^name/i)).toBeDisabled();
 
       releaseLock();
       await screen.getByRole("button", { name: "Share" }).click();
@@ -1693,7 +1693,7 @@ describe("EditSamplePage", () => {
       await screen.getByRole("button", { name: "Confirm" }).click();
       await screen.getByRole("button", { name: "Close" }).click();
 
-      await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
+      await expect.element(screen.getByLabelText(/^name/i)).toBeEnabled();
       await expect.element(screen.getByRole("status")).not.toBeInTheDocument();
     });
 
@@ -1778,7 +1778,7 @@ describe("EditSamplePage", () => {
 
     it("should ask before leaving with unsaved changes", async () => {
       const { screen, lockCalls } = await renderEditPage();
-      await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+      await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
 
       await leave(screen);
       await unsavedDialog(screen)
@@ -1793,7 +1793,7 @@ describe("EditSamplePage", () => {
 
     it("should stay on the form when the leave is cancelled", async () => {
       const { screen } = await renderEditPage();
-      const name = screen.getByLabelText(/name/i);
+      const name = screen.getByLabelText(/^name/i);
       await name.fill("Grès de Fontainebleau");
 
       await leave(screen);
@@ -1810,7 +1810,7 @@ describe("EditSamplePage", () => {
 
     it("should not ask when switching tabs with unsaved changes", async () => {
       const { screen } = await renderEditPage();
-      await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+      await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
 
       await screen.getByRole("tab", { name: /^Age/ }).click();
 
@@ -1838,7 +1838,7 @@ describe("EditSamplePage", () => {
 
     it("should not ask after a successful save", async () => {
       const { screen, calls } = await renderEditPage();
-      await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+      await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
       await screen.getByRole("button", { name: "Save", exact: true }).click();
       await vi.waitFor(() =>
         expect(calls).toEqual(["PUT Grès de Fontainebleau"]),
@@ -1860,7 +1860,7 @@ describe("EditSamplePage", () => {
         "rock_and_sediment.mineral",
         "save",
       );
-      await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+      await screen.getByLabelText(/^name/i).fill("Grès de Fontainebleau");
       await screen.getByRole("button", { name: "Save", exact: true }).click();
       await expect
         .element(screen.getByRole("region", { name: /notifications/i }))
@@ -1898,7 +1898,7 @@ describe("EditSamplePage", () => {
         "rock_and_sediment.mineral",
         reason,
       );
-      const name = screen.getByLabelText(/name/i);
+      const name = screen.getByLabelText(/^name/i);
       await name.fill("Grès de Fontainebleau");
       await screen.getByRole("button", { name: "Save", exact: true }).click();
 
