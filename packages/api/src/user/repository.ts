@@ -4,6 +4,8 @@ import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope"
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { ExpressionBuilder, Kysely, Transaction } from "kysely";
 
+import { canBecomeSuperAdmin } from "@projet-igsn/domain/user/can-become-super-admin";
+import { canSetSuperAdmin } from "@projet-igsn/domain/user/can-set-super-admin";
 import { isSpaceManager } from "@projet-igsn/domain/user/is-space-manager";
 import {
   knownManagedCodes,
@@ -38,6 +40,7 @@ import { orphanedGroupsOfUser } from "./orphaned-groups-of-user.ts";
 import { searchUsers } from "./search-users.ts";
 import { updateUserStatusAndInstitutions } from "./update-user-status-and-institutions.ts";
 import { upsertUserManualGroups } from "./upsert-user-manual-groups.ts";
+import { userRoleWhere } from "./user-role-where.ts";
 
 const USER_COLUMNS = [
   "id",
@@ -141,6 +144,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
         institutionalOsu,
         institutionalLaboratory,
         manualGroup,
+        roles,
       },
       scope,
     ) =>
@@ -174,6 +178,11 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
                   .whereRef("manual_group_member.user_id", "=", "user.id")
                   .where("manual_group_member.group_id", "=", manualGroup!),
               ),
+            ),
+          )
+          .$if(roles !== undefined, (qb) =>
+            qb.where((eb) =>
+              eb.or(roles!.map((role) => userRoleWhere(eb, role))),
             ),
           );
         const rows = await matching
@@ -297,6 +306,19 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           previous,
           rights,
         );
+        const superAdmin =
+          canSetSuperAdmin(scope, id) && submitted.superAdmin !== undefined
+            ? submitted.superAdmin
+            : previous.superAdmin;
+        if (
+          superAdmin &&
+          !previous.superAdmin &&
+          !canBecomeSuperAdmin(user.status)
+        ) {
+          throw new HTTPException(422, {
+            message: "Only an accepted user can become super admin",
+          });
+        }
         const { joined, leftIds } = await upsertUserManualGroups(
           trx,
           id,
@@ -316,6 +338,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .updateTable("user")
           .set({
             status: user.status,
+            super_admin: superAdmin,
             institutional_organization: user.institutionalOrganization,
             institutional_osu: user.institutionalOsu,
             institutional_laboratory: user.institutionalLaboratory,
@@ -333,6 +356,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
         return {
           user: toAdminUser(row),
           previousStatus: previous.status,
+          previousSuperAdmin: previous.superAdmin,
           joinedGroups: joined,
           leftGroupIds: leftIds,
           orphanedGroups: await orphanedGroupsOnLeavingAccepted(

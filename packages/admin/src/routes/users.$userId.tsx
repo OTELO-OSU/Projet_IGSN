@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { RouteGuard } from "#/auth/route-guard.tsx";
 import { m } from "#/paraglide/messages.js";
+import { SuperAdminMark } from "#/users/super-admin-mark.tsx";
 import { useUpdateUser } from "#/users/use-update-user.ts";
 import { useUser } from "#/users/use-user.ts";
 import { UserForm } from "#/users/user-form.tsx";
@@ -36,7 +37,10 @@ function UserDetailPage() {
   return (
     <>
       <div className="grid gap-1">
-        <h1 className="text-2xl font-bold">{fullName(user) || user.email}</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold">
+          {fullName(user) || user.email}
+          {user.superAdmin && <SuperAdminMark />}
+        </h1>
         <p className="text-muted-foreground">{user.email}</p>
       </div>
 

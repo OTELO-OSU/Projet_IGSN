@@ -124,6 +124,7 @@ export function createUserRoutes(
         const {
           user,
           previousStatus,
+          previousSuperAdmin,
           joinedGroups,
           leftGroupIds,
           orphanedGroups,
@@ -131,6 +132,13 @@ export function createUserRoutes(
 
         const actor = c.get("user");
         logStatusChange(actor.id, user.id, previousStatus, user.status);
+        if (previousSuperAdmin !== user.superAdmin) {
+          console.info("user super admin changed", {
+            actor: actor.id,
+            target: user.id,
+            superAdmin: user.superAdmin,
+          });
+        }
         if (
           mail &&
           previousStatus !== "accepted" &&
