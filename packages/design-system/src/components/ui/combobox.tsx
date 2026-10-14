@@ -68,7 +68,7 @@ export function ComboboxTrigger({
         aria-expanded={open}
         disabled={disabled}
         onBlur={onBlur}
-        className="disabled:bg-input/20 disabled:text-foreground/70 w-full min-w-0 justify-between font-normal disabled:opacity-100"
+        className="border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:bg-input/20 disabled:text-foreground/70 w-full min-w-0 justify-between font-normal disabled:opacity-100"
         {...aria}
       >
         <span className="truncate">

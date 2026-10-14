@@ -121,7 +121,7 @@ export function MultiCombobox({
               aria-expanded={open}
               disabled={disabled}
               onBlur={onBlur}
-              className="text-muted-foreground h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent disabled:opacity-100"
+              className="text-muted-foreground hover:text-accent-foreground h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent disabled:opacity-100"
               {...aria}
             >
               {selected.length === 0 ? placeholder : null}

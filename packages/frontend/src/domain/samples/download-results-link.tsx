@@ -15,8 +15,6 @@ import {
 import { m } from "#/paraglide/messages.js";
 import { SEARCH_EXPORT_LIMIT } from "#/search-export-limit.ts";
 
-const className = "text-primary hover:bg-primary/5 hover:text-primary";
-
 export function DownloadResultsLink({
   filters,
   total,
@@ -37,12 +35,7 @@ export function DownloadResultsLink({
         <Tooltip>
           <TooltipTrigger asChild>
             <span tabIndex={0}>
-              <Button
-                type="button"
-                variant="ghost"
-                className={className}
-                disabled
-              >
+              <Button type="button" variant="ghost" disabled>
                 {label}
               </Button>
             </span>
@@ -58,7 +51,7 @@ export function DownloadResultsLink({
   const href = new URL("samples/export", baseBrowserApiUrl);
   href.search = searchFilterParams(filters).toString();
   return (
-    <Button asChild variant="ghost" className={className}>
+    <Button asChild variant="ghost">
       <a href={href.href} download>
         {label}
       </a>

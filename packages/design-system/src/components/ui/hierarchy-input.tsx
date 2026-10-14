@@ -204,7 +204,7 @@ export function HierarchyInput({
               aria-expanded={open}
               disabled={isLocked(path.length) || isLeaf}
               onBlur={onBlur}
-              className="h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent disabled:opacity-100 has-[>svg]:px-1"
+              className="text-foreground hover:text-accent-foreground h-7 min-w-0 flex-1 justify-between px-1 font-normal hover:bg-transparent disabled:opacity-100 has-[>svg]:px-1"
               {...aria}
             >
               {path.length === 0 ? (
