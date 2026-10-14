@@ -34,16 +34,13 @@ const columns: ColumnDef<ListedUser>[] = [
     accessorKey: "name",
     header: () => m.column_name(),
     cell: ({ row }) => (
-      <span className="inline-flex items-center gap-1">
-        <Link
-          to="/users/$userId"
-          params={{ userId: row.original.id }}
-          className="hover:underline"
-        >
-          {row.original.name ?? row.original.email}
-        </Link>
-        {row.original.superAdmin && <SuperAdminMark />}
-      </span>
+      <Link
+        to="/users/$userId"
+        params={{ userId: row.original.id }}
+        className="hover:underline"
+      >
+        {row.original.name ?? row.original.email}
+      </Link>
     ),
   },
   {
@@ -55,6 +52,11 @@ const columns: ColumnDef<ListedUser>[] = [
     accessorKey: "email",
     header: () => m.column_email(),
     cell: ({ row }) => row.original.email,
+  },
+  {
+    id: "superAdmin",
+    header: () => m.user_super_admin(),
+    cell: ({ row }) => (row.original.superAdmin ? <SuperAdminMark /> : null),
   },
   {
     id: "institution",

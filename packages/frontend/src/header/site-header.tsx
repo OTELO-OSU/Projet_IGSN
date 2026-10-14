@@ -44,7 +44,7 @@ export function SiteHeader() {
           aria-expanded={isOpen}
           aria-controls={MENU_ID}
           onClick={() => setIsOpen(!isOpen)}
-          className="text-primary ml-auto size-11 md:hidden"
+          className="ml-auto size-11 md:hidden"
         >
           {isOpen ? (
             <XIcon aria-hidden className="size-6" />
