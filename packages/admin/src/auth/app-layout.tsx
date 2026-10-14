@@ -110,12 +110,12 @@ export function AppLayout({
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
-        <div className="mx-auto flex h-20 max-w-6xl items-center gap-3 px-6 sm:h-32 sm:gap-6">
+        <div className="flex h-20 items-center gap-3 px-6 sm:h-24 sm:gap-6">
           <Link to="/" search={listSearch} className="shrink-0">
             <img
               src={logoIgsnUrl}
               alt={m.app_title()}
-              className="h-12 w-auto sm:h-22"
+              className="h-12 w-auto sm:h-16"
             />
           </Link>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
