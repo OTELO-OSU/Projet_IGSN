@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 
 import { ADMIN_URL } from "#/admin-url.ts";
+import { NAV_LINK_CLASS } from "#/header/nav-link-class.ts";
 import { m } from "#/paraglide/messages.js";
 
 export function AuthControls() {
@@ -19,10 +20,10 @@ export function AuthControls() {
 
   if (auth.isAuthenticated) {
     return (
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button asChild variant="secondary">
-          <a href={ADMIN_URL}>{m.auth_go_to_dashboard()}</a>
-        </Button>
+      <div className="flex flex-wrap items-center justify-end gap-6">
+        <a href={ADMIN_URL} className={NAV_LINK_CLASS}>
+          {m.auth_go_to_dashboard()}
+        </a>
         <Button
           type="button"
           variant="secondary"

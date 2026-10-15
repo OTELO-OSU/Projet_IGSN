@@ -1,103 +1,86 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@projet-igsn/design-system/components/ui/accordion";
 import { SearchInput } from "@projet-igsn/design-system/components/ui/search-input";
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeftIcon } from "lucide-react";
 
 import { PageBanner } from "#/page-banner.tsx";
 import { m } from "#/paraglide/messages.js";
 
-import { type FaqItem, filterFaq } from "./filter-faq.ts";
+import { type FaqCategory, faqCategories } from "./faq-categories.ts";
+import { FaqQuestions } from "./faq-questions.tsx";
+import { filterFaq } from "./filter-faq.ts";
 
-function faqItems(): FaqItem[] {
-  return [
-    {
-      value: "search",
-      title: m.faq_search_title(),
-      ordered: true,
-      entries: [
-        m.faq_search_step_words(),
-        m.faq_search_step_location(),
-        m.faq_search_step_filters(),
-        m.faq_search_step_map(),
-      ],
-    },
-    {
-      value: "search-rules",
-      title: m.faq_search_rules_title(),
-      ordered: false,
-      entries: [
-        m.faq_search_rule_fields(),
-        m.faq_search_rule_case(),
-        m.faq_search_rule_typo(),
-        m.faq_search_rule_wildcard(),
-        m.faq_search_rule_limits(),
-        m.faq_search_rule_area(),
-        m.faq_search_rule_published(),
-      ],
-    },
-  ];
-}
-
-export function Faq() {
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState<string[]>([]);
-  const matches = filterFaq(faqItems(), query);
-
-  function search(next: string) {
-    setQuery(next);
-    setOpen(
-      next.trim() ? filterFaq(faqItems(), next).map(({ value }) => value) : [],
-    );
-  }
+export function Faq({
+  category,
+  query,
+  onQueryChange,
+}: {
+  category?: FaqCategory;
+  query: string;
+  onQueryChange: (query: string) => void;
+}) {
+  const matches = filterFaq(category ? [category] : faqCategories(), query);
 
   return (
     <>
-      <PageBanner title={m.faq_title()} />
+      <PageBanner title={category?.title ?? m.faq_title()} />
       <div className="mx-auto max-w-3xl px-6 py-16">
+        {category && (
+          <Link
+            to="/faq"
+            className="text-primary mb-6 inline-flex items-center gap-2 font-medium underline-offset-4 hover:underline"
+          >
+            <ArrowLeftIcon aria-hidden className="size-4" />
+            {m.faq_all_questions()}
+          </Link>
+        )}
         <SearchInput
           label={m.faq_filter_label()}
           placeholder={m.faq_filter_placeholder()}
           value={query}
-          onChange={(event) => search(event.target.value)}
+          onChange={(event) => onQueryChange(event.target.value)}
           className="h-12"
         />
-        {matches.length === 0 ? (
+        {!query.trim() ? (
+          category ? (
+            <div className="mt-8">
+              <FaqQuestions questions={category.questions} />
+            </div>
+          ) : (
+            <nav aria-label={m.faq_categories_label()} className="mt-8">
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {matches.map(({ slug, title, icon: Icon }) => (
+                  <li key={slug}>
+                    <Link
+                      to="/faq/$category"
+                      params={{ category: slug }}
+                      className="text-primary hover:bg-primary/5 flex h-full items-center gap-4 rounded-lg border p-6 text-lg font-semibold"
+                    >
+                      <span
+                        aria-hidden
+                        className="text-primary flex size-12 shrink-0 items-center justify-center rounded-full bg-[#d1e7f4]"
+                      >
+                        <Icon className="size-6" />
+                      </span>
+                      {title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )
+        ) : matches.length === 0 ? (
           <p role="status" className="text-muted-foreground mt-8">
             {m.faq_no_match()}
           </p>
         ) : (
-          <Accordion
-            type="multiple"
-            value={open}
-            onValueChange={setOpen}
-            className="mt-6"
-          >
-            {matches.map(({ value, title, ordered, entries }) => {
-              const List = ordered ? "ol" : "ul";
-              return (
-                <AccordionItem key={value} value={value}>
-                  <AccordionTrigger className="text-primary text-lg font-semibold">
-                    {title}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-base">
-                    <List
-                      className={`space-y-3 ps-6 ${ordered ? "list-decimal" : "list-disc"}`}
-                    >
-                      {entries.map(({ position, text }) => (
-                        <li key={text} value={ordered ? position : undefined}>
-                          {text}
-                        </li>
-                      ))}
-                    </List>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
+          <div key={query}>
+            {matches.map(({ slug, title, questions }) => (
+              <section key={slug} className="mt-10">
+                {!category && <h2 className="text-2xl font-bold">{title}</h2>}
+                <FaqQuestions questions={questions} expanded />
+              </section>
+            ))}
+          </div>
         )}
       </div>
     </>

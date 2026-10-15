@@ -1,31 +1,31 @@
 import { normalizeSearch } from "@projet-igsn/domain/text/normalize-search";
 
-export type FaqItem = {
-  value: string;
-  title: string;
-  ordered: boolean;
-  entries: string[];
-};
-
-export type FaqMatch = Omit<FaqItem, "entries"> & {
-  entries: { position: number; text: string }[];
-};
+import type { FaqCategory, FaqQuestion } from "./faq-categories.ts";
 
 function containsAll(text: string, words: string[]): boolean {
   const normalized = normalizeSearch(text);
   return words.every((word) => normalized.includes(word));
 }
 
-export function filterFaq(items: FaqItem[], query: string): FaqMatch[] {
+function answerText({ answer }: FaqQuestion): string {
+  return answer
+    .map((block) =>
+      typeof block === "string" ? block : block.items.join("\n"),
+    )
+    .join("\n");
+}
+
+export function filterFaq(
+  categories: FaqCategory[],
+  query: string,
+): FaqCategory[] {
   const words = normalizeSearch(query).split(/\s+/).filter(Boolean);
-  return items.flatMap((item) => {
-    const all = item.entries.map((text, index) => ({
-      position: index + 1,
-      text,
-    }));
-    const entries = containsAll(item.title, words)
-      ? all
-      : all.filter(({ text }) => containsAll(text, words));
-    return entries.length > 0 ? [{ ...item, entries }] : [];
+  return categories.flatMap((category) => {
+    const questions = category.questions.filter(
+      (question) =>
+        containsAll(question.title, words) ||
+        containsAll(answerText(question), words),
+    );
+    return questions.length > 0 ? [{ ...category, questions }] : [];
   });
 }
