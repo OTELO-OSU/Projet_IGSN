@@ -7,17 +7,22 @@ import { page } from "vitest/browser";
 import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { worker } from "../../test/msw.ts";
 import { renderRoute } from "../../test/render-route.tsx";
+import { ORCID_STATE_KEY } from "./use-link-orcid.ts";
 
-vi.mock("react-oidc-context", () => ({
-  useAuth: () => ({
-    isLoading: false,
-    isAuthenticated: true,
-    user: {
-      access_token: "tok",
-      profile: { identity_provider: "renater", name: "Marie Dupont" },
-    },
-  }),
-}));
+const auth = {
+  isLoading: false,
+  isAuthenticated: true,
+  user: {
+    access_token: "tok",
+    profile: { identity_provider: "renater", name: "Marie Dupont" },
+  },
+};
+vi.mock("react-oidc-context", () => ({ useAuth: () => auth }));
+
+beforeEach(() => {
+  auth.user.profile.identity_provider = "renater";
+  sessionStorage.clear();
+});
 
 const USER_ID = "3f2504e0-4f89-41d3-9a0c-0305000000b7";
 
@@ -55,6 +60,7 @@ function fakeApi({
   me?: Partial<CurrentUser>;
 } = {}) {
   const puts: unknown[] = [];
+  let deletes = 0;
   let stored = orcid;
   let myServices = services;
   worker.use(
@@ -72,10 +78,14 @@ function fakeApi({
       HttpResponse.json({ data: manualGroups }),
     ),
     http.put("*/admin/currentUser/orcid", async ({ request }) => {
+      puts.push(await request.json());
       if (conflict) return new HttpResponse(null, { status: 409 });
-      const body = (await request.json()) as { orcid: string | null };
-      puts.push(body);
-      stored = body.orcid;
+      stored = LINKED_ORCID;
+      return HttpResponse.json({ orcid: stored });
+    }),
+    http.delete("*/admin/currentUser/orcid", () => {
+      deletes += 1;
+      stored = null;
       return new HttpResponse(null, { status: 204 });
     }),
     http.get("*/admin/currentUser", () =>
@@ -95,71 +105,113 @@ function fakeApi({
       }),
     ),
   );
-  return { puts };
+  return { puts, deletes: () => deletes };
 }
 
-async function renderProfilePage(api: Parameters<typeof fakeApi>[0] = {}) {
-  const { puts } = fakeApi(api);
-  const { screen } = await renderRoute("/settings/profile");
-  return { screen, puts };
+const LINKED_ORCID = "0000-0002-1825-0097";
+
+async function renderProfilePage(
+  api: Parameters<typeof fakeApi>[0] = {},
+  url = "/settings/profile",
+) {
+  const calls = fakeApi(api);
+  const { screen } = await renderRoute(url);
+  return { screen, ...calls };
 }
 
-const orcidForm = () => page.getByRole("form", { name: "ORCID iD" });
+const orcidSection = () =>
+  page.getByRole("region", { name: "ORCID iD", exact: true });
+const linkButton = () =>
+  page.getByRole("button", { name: "Link my ORCID account" });
+const unlinkButton = () =>
+  page.getByRole("button", { name: "Unlink my ORCID account" });
 
 describe("profile page", () => {
-  it("should show the stored orcid", async () => {
-    await renderProfilePage({ orcid: "0000-0002-1825-0097" });
+  it.each([
+    ["no iD", null, "Link my ORCID account"],
+    ["a linked iD", LINKED_ORCID, "Unlink my ORCID account"],
+  ])("should offer %s its matching orcid action", async (_, orcid, action) => {
+    await renderProfilePage({ orcid });
     await expect
       .element(page.getByRole("heading", { level: 1, name: "Profile" }))
       .toBeVisible();
     await expect
-      .element(orcidForm().getByLabelText(/orcid/i))
-      .toHaveValue("0000-0002-1825-0097");
+      .element(orcidSection().getByRole("button", { name: action }))
+      .toBeVisible();
+    expect(orcidSection().getByRole("button").elements()).toHaveLength(1);
   });
 
-  it("should save a valid orcid", async () => {
-    const { puts } = await renderProfilePage();
-    await orcidForm().getByLabelText(/orcid/i).fill("0000-0002-1825-0097");
-    await orcidForm().getByRole("button", { name: /save/i }).click();
-    await expect.element(page.getByText(/orcid id saved/i)).toBeInTheDocument();
-    expect(puts).toEqual([{ orcid: "0000-0002-1825-0097" }]);
+  it("should link the orcid account returned with the stored state", async () => {
+    sessionStorage.setItem(ORCID_STATE_KEY, "state-1");
+    const { puts } = await renderProfilePage(
+      {},
+      "/settings/profile?code=code-1&state=state-1",
+    );
+    await expect.element(page.getByText("ORCID iD linked")).toBeVisible();
+    await expect.element(orcidSection().getByText(LINKED_ORCID)).toBeVisible();
+    expect(puts).toEqual([{ code: "code-1" }]);
   });
 
-  it("should clear the orcid when the field is emptied", async () => {
-    const { puts } = await renderProfilePage({
-      orcid: "0000-0002-1825-0097",
-    });
-    await orcidForm().getByLabelText(/orcid/i).fill("");
-    await orcidForm().getByRole("button", { name: /save/i }).click();
-    await expect.element(page.getByText(/orcid id saved/i)).toBeInTheDocument();
-    expect(puts).toEqual([{ orcid: null }]);
-  });
-
-  it("should reject a malformed orcid without calling the api", async () => {
-    const { puts } = await renderProfilePage();
-    await orcidForm().getByLabelText(/orcid/i).fill("not-an-orcid");
-    await orcidForm().getByRole("button", { name: /save/i }).click();
-    await expect
-      .element(page.getByRole("alert"))
-      .toHaveTextContent(/invalid orcid/i);
+  it.each([
+    [
+      "a mismatched state",
+      "?code=code-1&state=state-2",
+      "Could not link your ORCID iD",
+    ],
+    [
+      "a cancelled authorization",
+      "?error=access_denied&state=state-1",
+      "ORCID linking cancelled",
+    ],
+    [
+      "a failed authorization",
+      "?error=server_error&state=state-1",
+      "Could not link your ORCID iD",
+    ],
+  ])("should not link on %s", async (_, search, message) => {
+    sessionStorage.setItem(ORCID_STATE_KEY, "state-1");
+    const { puts } = await renderProfilePage({}, `/settings/profile${search}`);
+    await expect.element(page.getByText(message)).toBeVisible();
+    await expect.element(linkButton()).toBeVisible();
     expect(puts).toEqual([]);
   });
 
-  it("should offer a single save button", async () => {
-    await renderProfilePage({ services: [GAIA_HARVESTER] });
-    await expect.element(orcidForm()).toBeVisible();
-    await expect
-      .element(page.getByRole("heading", { name: "Services" }))
-      .toBeVisible();
-    expect(page.getByRole("button", { name: /save/i }).elements()).toHaveLength(
-      1,
+  it("should surface a conflict when another account holds the orcid", async () => {
+    sessionStorage.setItem(ORCID_STATE_KEY, "state-1");
+    await renderProfilePage(
+      { conflict: true },
+      "/settings/profile?code=code-1&state=state-1",
     );
+    await expect
+      .element(page.getByText(/already linked to another account/i))
+      .toBeVisible();
+  });
+
+  it("should unlink the orcid account only once confirmed", async () => {
+    const { deletes } = await renderProfilePage({ orcid: LINKED_ORCID });
+
+    await unlinkButton().click();
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect.element(orcidSection().getByText(LINKED_ORCID)).toBeVisible();
+    expect(deletes()).toBe(0);
+
+    await unlinkButton().click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect.element(page.getByText("ORCID iD unlinked")).toBeVisible();
+    await expect.element(linkButton()).toBeVisible();
+    expect(deletes()).toBe(1);
+  });
+
+  it("should keep a user signed in through orcid from unlinking it", async () => {
+    auth.user.profile.identity_provider = "orcid";
+    await renderProfilePage({ orcid: LINKED_ORCID });
+    await expect.element(unlinkButton()).toBeDisabled();
   });
 
   it.each([
     [
       "ORCID iD",
-      "Your ORCID iD becomes a sign-in method for this account, so make sure it is yours.",
+      "Your ORCID iD becomes a sign-in method for this account. Link it by signing in to ORCID.",
     ],
     [
       "Samples links",
@@ -265,7 +317,7 @@ describe("profile page", () => {
   it("should hide the my-samples link from a pending user", async () => {
     await renderProfilePage({ status: "pending" });
 
-    await expect.element(orcidForm()).toBeVisible();
+    await expect.element(linkButton()).toBeVisible();
     await expect.element(mySamplesInput()).not.toBeInTheDocument();
   });
 
@@ -313,7 +365,7 @@ describe("profile page", () => {
   it("should hide the services section from a pending user", async () => {
     await renderProfilePage({ status: "pending" });
 
-    await expect.element(orcidForm()).toBeVisible();
+    await expect.element(linkButton()).toBeVisible();
     await expect
       .element(page.getByRole("heading", { name: "Services" }))
       .not.toBeInTheDocument();
@@ -338,14 +390,5 @@ describe("profile page", () => {
     await expect
       .element(page.getByRole("button", { name: "Regenerate API key" }))
       .toBeVisible();
-  });
-
-  it("should surface a conflict when another account holds the orcid", async () => {
-    await renderProfilePage({ conflict: true });
-    await orcidForm().getByLabelText(/orcid/i).fill("0000-0002-1825-0097");
-    await orcidForm().getByRole("button", { name: /save/i }).click();
-    await expect
-      .element(page.getByText(/already linked to another account/i))
-      .toBeInTheDocument();
   });
 });

@@ -2,7 +2,7 @@ import type { Kysely } from "kysely";
 
 import { manualGroupsResponseSchema } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { testClient } from "hono/testing";
-import { describe, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 
 import type { DB } from "../db.ts";
 
@@ -59,79 +59,209 @@ describe("currentUser routes", () => {
     });
   });
 
-  pgTest("should set the caller's orcid", async ({ db }) => {
-    // Arrange
-    const client = testClient(createApp(db).app);
-    // Act
-    const res = await client.admin.currentUser.orcid.$put(
-      { json: { orcid: "0000-0002-2012-0099" } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ orcid: "0000-0002-2012-0099" });
-    const me = await client.admin.currentUser.$get(undefined, {
-      headers: authHeader,
-    });
-    expect(await me.json()).toMatchObject({ orcid: "0000-0002-2012-0099" });
-  });
+  describe("ORCID link", () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    const LINKED = "0000-0002-2012-0099";
+    const HOLDER = "holder-7dc@univ-lorraine.fr";
 
-  pgTest("should clear the caller's orcid with null", async ({ db }) => {
-    // Arrange
-    const client = testClient(createApp(db).app);
-    await client.admin.currentUser.orcid.$put(
-      { json: { orcid: "0000-0002-2012-0099" } },
-      { headers: authHeader },
-    );
-    // Act
-    const res = await client.admin.currentUser.orcid.$put(
-      { json: { orcid: null } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ orcid: null });
-  });
-
-  pgTest(
-    "should answer 409 when another user holds the orcid",
-    async ({ db }) => {
-      // Arrange
-      await insertUser(db, "holder-7dc@univ-lorraine.fr", {
-        orcid: "0000-0002-2012-0099",
+    const tokenResponse = (sub: string) =>
+      Response.json({
+        access_token: "access-7dc",
+        id_token: `e30.${Buffer.from(JSON.stringify({ sub })).toString("base64url")}.`,
       });
+
+    const putOrcid = (db: Kysely<DB>, body: object) =>
+      createApp(db).app.request("/admin/currentUser/orcid", {
+        method: "PUT",
+        headers: { "content-type": "application/json", ...authHeader },
+        body: JSON.stringify(body),
+      });
+
+    const storedOrcids = async (db: Kysely<DB>) =>
+      Object.fromEntries(
+        (
+          await db
+            .selectFrom("user")
+            .select(["email", "orcid"])
+            .where("email", "in", [callerEmail, HOLDER])
+            .execute()
+        ).map(({ email, orcid }) => [email, orcid]),
+      );
+
+    beforeEach(() => {
+      fetchMock.mockReset();
+      vi.stubGlobal("fetch", fetchMock);
+      process.env.ADMIN_URL = "http://localhost:3000/admin";
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    pgTest(
+      "should answer the ORCID authorize URL carrying the caller's state",
+      async ({ db }) => {
+        // Arrange
+        process.env.ORCID_LINK_CLIENT_ID = "APP-7DC";
+        process.env.ORCID_LINK_AUTHORIZATION_URL =
+          "https://orcid.org/oauth/authorize";
+        // Act
+        const res = await testClient(
+          createApp(db).app,
+        ).admin.currentUser.orcid.authorization.$get(
+          { query: { state: "state-7dc" } },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({
+          url: "https://orcid.org/oauth/authorize?client_id=APP-7DC&response_type=code&scope=openid&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fadmin%2Fsettings%2Fprofile&state=state-7dc&prompt=login",
+        });
+      },
+    );
+
+    pgTest.for([
+      { case: "a missing state", query: "" },
+      { case: "an oversized state", query: `?state=${"s".repeat(129)}` },
+    ])(
+      "should answer 400 to an authorize URL on $case",
+      async ({ query }, { db }) => {
+        // Act
+        const res = await createApp(db).app.request(
+          `/admin/currentUser/orcid/authorization${query}`,
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(400);
+        expect(await res.json()).toEqual({ error: "Invalid state" });
+      },
+    );
+
+    pgTest(
+      "should link the iD ORCID returns for the exchanged code, uppercased",
+      async ({ db }) => {
+        // Arrange
+        fetchMock.mockResolvedValue(tokenResponse("0000-0002-2012-009x"));
+        // Act
+        const res = await putOrcid(db, { code: "code-7dc" });
+        // Assert
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({ orcid: "0000-0002-2012-009X" });
+        expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+          "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/token",
+          expect.objectContaining({
+            method: "POST",
+            body: new URLSearchParams({
+              client_id: "igsn-broker",
+              client_secret: "mock-orcid-secret",
+              grant_type: "authorization_code",
+              code: "code-7dc",
+              redirect_uri: "http://localhost:3000/admin/settings/profile",
+            }),
+          }),
+        );
+        expect(await storedOrcids(db)).toEqual({
+          [callerEmail]: "0000-0002-2012-009X",
+        });
+      },
+    );
+
+    pgTest(
+      "should answer 409 when another user holds the returned iD",
+      async ({ db }) => {
+        // Arrange
+        await insertUser(db, callerEmail);
+        await insertUser(db, HOLDER, { orcid: LINKED });
+        fetchMock.mockResolvedValue(tokenResponse(LINKED));
+        // Act
+        const res = await putOrcid(db, { code: "code-7dc" });
+        // Assert
+        expect(res.status).toBe(409);
+        expect(await res.json()).toEqual({
+          error: "ORCID already linked to another account",
+        });
+        expect(await storedOrcids(db)).toEqual({
+          [callerEmail]: null,
+          [HOLDER]: LINKED,
+        });
+      },
+    );
+
+    pgTest.for([
+      {
+        case: "ORCID refuses the code",
+        arrange: () =>
+          fetchMock.mockResolvedValue(
+            Response.json({ error: "invalid_grant" }, { status: 400 }),
+          ),
+        status: 400,
+        error: "ORCID refused the authorization code",
+      },
+      {
+        case: "ORCID fails",
+        arrange: () =>
+          fetchMock.mockResolvedValue(new Response(null, { status: 500 })),
+        status: 502,
+        error: "ORCID is unavailable",
+      },
+      {
+        case: "ORCID is unreachable",
+        arrange: () =>
+          fetchMock.mockRejectedValue(new TypeError("fetch failed")),
+        status: 502,
+        error: "ORCID is unavailable",
+      },
+      {
+        case: "the id_token carries no ORCID iD",
+        arrange: () =>
+          fetchMock.mockResolvedValue(tokenResponse("not-an-orcid")),
+        status: 502,
+        error: "ORCID is unavailable",
+      },
+    ])(
+      "should answer $status and keep the stored iD when $case",
+      async ({ arrange, status, error }, { db }) => {
+        // Arrange
+        await insertUser(db, callerEmail, { orcid: LINKED });
+        arrange();
+        const log = vi.spyOn(console, "error").mockImplementation(() => {});
+        // Act
+        const res = await putOrcid(db, { code: "code-7dc" });
+        // Assert
+        expect(res.status).toBe(status);
+        expect(await res.json()).toEqual({ error });
+        expect(await storedOrcids(db)).toEqual({ [callerEmail]: LINKED });
+        expect(JSON.stringify(log.mock.calls)).not.toMatch(
+          /mock-orcid-secret|code-7dc|access-7dc|e30\./,
+        );
+      },
+    );
+
+    pgTest.for([
+      { case: "a typed iD", body: { orcid: LINKED } },
+      { case: "a missing code", body: {} },
+    ])("should answer 400 to a link with $case", async ({ body }, { db }) => {
+      // Act
+      const res = await putOrcid(db, body);
+      // Assert
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({
+        error: "Invalid ORCID authorization code",
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    pgTest("should unlink the caller's iD", async ({ db }) => {
+      // Arrange
+      await insertUser(db, callerEmail, { orcid: LINKED });
       // Act
       const res = await testClient(
         createApp(db).app,
-      ).admin.currentUser.orcid.$put(
-        { json: { orcid: "0000-0002-2012-0099" } },
-        { headers: authHeader },
-      );
+      ).admin.currentUser.orcid.$delete(undefined, { headers: authHeader });
       // Assert
-      expect(res.status).toBe(409);
-      expect(await res.json()).toEqual({
-        error: "ORCID already linked to another account",
-      });
-    },
-  );
-
-  pgTest.for([
-    { case: "a malformed orcid", body: { orcid: "not-an-orcid" } },
-    { case: "a missing orcid field", body: {} },
-    {
-      case: "an unknown extra field",
-      body: { orcid: "0000-0002-2012-0099", admin: true },
-    },
-  ])("should answer 400 on $case", async ({ body }, { db }) => {
-    // Act
-    const res = await createApp(db).app.request("/admin/currentUser/orcid", {
-      method: "PUT",
-      headers: { "content-type": "application/json", ...authHeader },
-      body: JSON.stringify(body),
+      expect(res.status).toBe(204);
+      expect(await storedOrcids(db)).toEqual({ [callerEmail]: null });
     });
-    // Assert
-    expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ error: "Invalid ORCID" });
   });
 
   pgTest.for([
@@ -360,20 +490,22 @@ describe("currentUser routes", () => {
     },
   );
 
-  pgTest(
-    "should answer 401 when Keycloak reports the session revoked",
-    async ({ db }) => {
+  pgTest.for([
+    { method: "PUT", body: JSON.stringify({ code: "code-7dc" }) },
+    { method: "DELETE", body: undefined },
+  ])(
+    "should answer 401 to an ORCID $method when Keycloak reports the session revoked",
+    async ({ method, body }, { db }) => {
       // Arrange
       vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
         c.json({ error: "Unauthorized" }, 401),
       );
       // Act
-      const res = await testClient(
-        createApp(db).app,
-      ).admin.currentUser.orcid.$put(
-        { json: { orcid: "0000-0002-2012-0099" } },
-        { headers: authHeader },
-      );
+      const res = await createApp(db).app.request("/admin/currentUser/orcid", {
+        method,
+        headers: { "content-type": "application/json", ...authHeader },
+        body,
+      });
       // Assert
       expect(res.status).toBe(401);
     },

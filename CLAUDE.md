@@ -51,5 +51,6 @@
 
 - One origin, http://localhost:3000: `frontend` at `/`, `admin` at `/admin`, `api` at `/api`.
 - `keycloak`: http://localhost:8080
+- `orcid-mock` (ORCID linking mock, same accounts as `mock-orcid`): http://localhost:8180
 - `maildev` (mail sink UI): http://localhost:1080
 - `webhook-sink`: logs each `/service` batch webhook call sent to `http://webhook-sink:8080/` (`docker compose -f docker-compose.dev.yml logs -f webhook-sink`).

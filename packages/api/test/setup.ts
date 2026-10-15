@@ -38,7 +38,11 @@ const clearEnvOverrides = () => {
   delete process.env.TRUST_PROXY_HEADERS;
   delete process.env.OIDC_ALLOWED_IDENTITY_PROVIDERS;
   for (const key of Object.keys(process.env)) {
-    if (key.startsWith("RATE_LIMIT_") || key.startsWith("DATACITE_"))
+    if (
+      key.startsWith("RATE_LIMIT_") ||
+      key.startsWith("DATACITE_") ||
+      key.startsWith("ORCID_")
+    )
       delete process.env[key];
   }
 };

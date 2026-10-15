@@ -31,7 +31,6 @@ type SeedUser = SampleOwner & {
   email: string;
   name: string;
   firstname: string;
-  orcid?: string;
   status: UserStatus;
   superAdmin: boolean;
   hasAcceptedCharter?: false;
@@ -57,7 +56,6 @@ const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     email: "marie.dupont@univ-lorraine.fr",
     name: "Dupont",
     firstname: "Marie",
-    orcid: "0000-0001-5109-370X",
     status: "accepted",
     superAdmin: false,
     institutionalOrganization: "04vfs2w97",

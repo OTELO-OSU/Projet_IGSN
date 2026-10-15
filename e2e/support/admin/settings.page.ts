@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import { chooseOption } from "./choose-option.ts";
+import { orcidLoginPage } from "./orcid-login.page.ts";
 import { pickComboboxOption } from "./pick-combobox-option.ts";
 import { chooseUser } from "./service-accounts.page.ts";
 
@@ -34,11 +35,14 @@ export function settingsPage(page: Page) {
         await chooseOption(page)("Group", name);
       return link.inputValue();
     },
-    setOrcid: async (orcid: string) => {
-      const form = page.getByRole("form", { name: "ORCID iD" });
-      await form.getByLabel("ORCID iD").fill(orcid);
-      await form.getByRole("button", { name: "Save" }).click();
-      await expect(page.getByText("ORCID iD saved")).toBeVisible();
+    linkOrcid: async (orcid: string) => {
+      await page.getByRole("button", { name: "Link my ORCID account" }).click();
+      await orcidLoginPage(page).login(orcid, "password");
+      await expect(
+        page
+          .getByRole("region", { name: "ORCID iD", exact: true })
+          .getByText(orcid),
+      ).toBeVisible();
     },
     setInstitution: async (groups: {
       organization: string;

@@ -4,7 +4,7 @@ import { UserManager } from "oidc-client-ts";
 
 export { onSigninCallback } from "@projet-igsn/domain/auth/oidc-settings";
 
-const callbackPath = import.meta.env.BASE_URL + "auth/callback";
+export const callbackPath = import.meta.env.BASE_URL + "auth/callback";
 
 export const userManager = new UserManager(
   oidcSettings({

@@ -151,6 +151,33 @@ const VARS: EnvVar[] = [
     default: "orcid",
   },
   {
+    name: "ORCID_LINK_CLIENT_ID",
+    purpose:
+      "ORCID client the api links a user's ORCID through; it must register `https://igsn.$DOMAIN/admin/settings/profile` as redirect URI.",
+    required: true,
+  },
+  {
+    name: "ORCID_LINK_CLIENT_SECRET",
+    purpose:
+      "Secret of the ORCID client the api links a user's ORCID through; that client must register `https://igsn.$DOMAIN/admin/settings/profile` as redirect URI.",
+    required: true,
+    secret: true,
+  },
+  {
+    name: "ORCID_LINK_AUTHORIZATION_URL",
+    purpose:
+      "ORCID authorize endpoint the api links a user's ORCID through; its client must register `https://igsn.$DOMAIN/admin/settings/profile` as redirect URI.",
+    default: "https://orcid.org/oauth/authorize",
+    placeholder: { preproduction: "https://sandbox.orcid.org/oauth/authorize" },
+  },
+  {
+    name: "ORCID_LINK_TOKEN_URL",
+    purpose:
+      "ORCID token endpoint the api links a user's ORCID through; its client must register `https://igsn.$DOMAIN/admin/settings/profile` as redirect URI.",
+    default: "https://orcid.org/oauth/token",
+    placeholder: { preproduction: "https://sandbox.orcid.org/oauth/token" },
+  },
+  {
     name: "DATACITE_API_HOST",
     purpose:
       "Unset disables DOI registration: samples publish without a DOI; set, publishing answers 502 when DataCite refuses the record.",
