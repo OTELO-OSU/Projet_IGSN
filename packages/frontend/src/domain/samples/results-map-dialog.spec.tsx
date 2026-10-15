@@ -328,6 +328,38 @@ describe("ResultsMapDialog", () => {
     await expect
       .element(screen.getByRole("alert"))
       .toHaveTextContent("The map could not load the results.");
+    await expect
+      .element(screen.getByText("Loading results…"))
+      .not.toBeInTheDocument();
+  });
+
+  it("should hold a placeholder in the results list until its first cards arrive", async () => {
+    let releasePoints = (_response: Response) => {};
+    stubApi({
+      pointsResponse: new Promise((resolve) => {
+        releasePoints = resolve;
+      }),
+    });
+    const screen = await renderWithRouter(
+      <>
+        <style>{".leaflet-container { width: 400px; height: 400px; }"}</style>
+        <ResultsMapDialog open onOpenChange={vi.fn()} params={PARAMS} />
+      </>,
+    );
+    await expect
+      .element(screen.getByText("Loading results…"))
+      .toBeInTheDocument();
+
+    releasePoints(
+      new Response(
+        JSON.stringify({
+          data: { numbers: [42], longitudes: [2], latitudes: [46] },
+        }),
+      ),
+    );
+
+    await expect.element(cardOf(screen)).toBeInTheDocument();
+    expect(screen.getByText("Loading results…").query()).toBeNull();
   });
 
   it.each([

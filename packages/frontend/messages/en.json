@@ -46,6 +46,7 @@
   "results_map_more": "and {count} more",
   "results_map_error": "The map could not load the results.",
   "results_map_loading": "Loading samples on the map…",
+  "results_map_list_loading": "Loading results…",
   "results_map_downloading": "Downloading samples…",
   "results_map_downloading_percent": "Downloading samples… {percent}%",
   "results_map_preparing": "Preparing the map…",

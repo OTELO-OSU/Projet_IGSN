@@ -24,12 +24,39 @@ import {
   ResultsCount,
 } from "#/domain/samples/search-results-view.tsx";
 import { useCardFields } from "#/domain/samples/use-card-fields.ts";
+import { m } from "#/paraglide/messages.js";
+
+const PLACEHOLDER_TITLE_WIDTHS = ["w-3/4", "w-1/2", "w-2/3", "w-3/5"];
 
 function toMapSample(
   sample: CardSample | undefined,
 ): HoveredSample | undefined {
   const position = sample?.location?.position;
   return sample?.igsn && position ? { igsn: sample.igsn, position } : undefined;
+}
+
+function ResultsMapListPlaceholder() {
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="sr-only">{m.results_map_list_loading()}</p>
+      <div
+        aria-hidden
+        className="flex flex-col gap-4 motion-safe:animate-pulse"
+      >
+        <div className="bg-muted h-6 w-28 rounded-md" />
+        {PLACEHOLDER_TITLE_WIDTHS.map((titleWidth) => (
+          <div
+            key={titleWidth}
+            className="flex flex-col gap-3 rounded-lg border p-4"
+          >
+            <div className={`bg-muted h-5 rounded-md ${titleWidth}`} />
+            <div className="bg-muted h-4 w-1/2 rounded-md" />
+            <div className="bg-muted h-4 w-2/5 rounded-md" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function NextPageTrigger({ onReached }: { onReached: () => void }) {
@@ -59,13 +86,14 @@ export function ResultsMapList({
   onHoverSample: (sample: HoveredSample | undefined) => void;
   onLocateSample: (sample: HoveredSample) => void;
 }) {
-  const { data: points } = useMapPoints(filters);
+  const { data: points, isError: isPointsError } = useMapPoints(filters);
   const count =
     points && viewport
       ? countPointsInView(points.data, bboxSchema.parse(viewport))
       : undefined;
   const {
     data,
+    isError: isListError,
     hasNextPage,
     isFetchingNextPage,
     isPlaceholderData,
@@ -92,7 +120,9 @@ export function ResultsMapList({
     if (pinned && pinnedIgsn) focusSampleCard(pinnedIgsn);
   }, [pinned, pinnedIgsn]);
 
-  if (count === undefined || !data) return null;
+  if (count === undefined || !data) {
+    return isPointsError || isListError ? null : <ResultsMapListPlaceholder />;
+  }
   if (data.pages[0]?.data.length === 0 && !pinned) {
     return (
       <p role="status" className="text-muted-foreground text-center">
