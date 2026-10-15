@@ -10,7 +10,7 @@ Accepted.
 
 The search map clustered on the server, so every zoom or pan re-requested `GET /samples/map` and the side list.
 
-At 500,000 published samples a move cost about 3 s zoomed out, though the query itself had dropped from 2.9 s to 0.3 s (`docs/map-benchmark.md`).
+At 500,000 published samples a move cost about 3 s zoomed out, though the query itself had dropped from 2.9 s to 0.3 s.
 
 ## Decision
 
