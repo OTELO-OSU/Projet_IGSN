@@ -484,7 +484,7 @@ describe("countPublishedFacets", () => {
       const params = { ...page, ...filters, material: ROCK };
       const listed = await Promise.all(
         NATURES.map(async (nature) => {
-          const { total } = await listPublishedSamples(db, {
+          const { total = 0 } = await listPublishedSamples(db, {
             ...params,
             nature,
           });

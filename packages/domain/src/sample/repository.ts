@@ -7,7 +7,10 @@ import type { CreateSampleAttachment } from "./attachment/repository.ts";
 import type { SampleEditLock } from "./edit-lock.ts";
 import type { ExportSamplesRequest } from "./export/export-validator.ts";
 import type { SampleLineage } from "./lineage/model.ts";
-import type { SampleMapQuery, SampleMapResponse } from "./map/model.ts";
+import type {
+  SampleMapDetailsResponse,
+  SampleMapPointsQuery,
+} from "./map/model.ts";
 import type { SampleParent } from "./parent/model.ts";
 import type {
   DuplicateCriteria,
@@ -26,6 +29,11 @@ import type { CreateSample, Sample } from "./sample.ts";
 export type ListSamplesResult = {
   data: Sample[];
   total: number;
+};
+
+export type PublicListSamplesResult = {
+  data: Sample[];
+  total?: number;
 };
 
 export type AdminListSamplesResult = {
@@ -76,8 +84,11 @@ export type SampleRepository = {
     userId: string,
     scope: ModerationScope | null,
   ): Promise<SampleParent[]>;
-  listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
-  mapPublished(query: SampleMapQuery): Promise<SampleMapResponse>;
+  listPublished(
+    params: ListSamplesQuery & { withTotal?: boolean },
+  ): Promise<PublicListSamplesResult>;
+  mapPublishedPointsJson(query: SampleMapPointsQuery): Promise<string>;
+  mapPublishedDetails(numbers: number[]): Promise<SampleMapDetailsResponse>;
   countPublishedFacets(params: ListSamplesQuery): Promise<SampleFacetCounts>;
   listExportable(
     request: ExportSamplesRequest,

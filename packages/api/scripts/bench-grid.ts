@@ -121,7 +121,7 @@ for (const [base, baseQuery] of Object.entries(BASES)) {
       ...baseQuery,
       ...Object.fromEntries(FILTERS.slice(0, filters)),
     });
-    const { total: matched } = await listPublishedSamples(db, params);
+    const { total: matched = 0 } = await listPublishedSamples(db, params);
 
     for (const endpoint of endpoints) {
       const call = CALLS[endpoint];

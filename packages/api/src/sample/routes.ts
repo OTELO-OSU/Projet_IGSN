@@ -23,9 +23,10 @@ import {
   validateContactParams,
   validateIgsnAttachmentParams,
   validateIgsnParam,
+  validateMapDetailsQuery,
+  validateMapPointsQuery,
   validatePublicExportQuery,
   validatePublicListQuery,
-  validatePublicMapQuery,
 } from "./validator.ts";
 
 export function createSampleRoutes(
@@ -41,12 +42,23 @@ export function createSampleRoutes(
       );
       const body: PublicListSamplesResponse = {
         data: data.map(toPublicListedSample),
-        meta: { total },
+        meta: total === undefined ? {} : { total },
       };
       return c.json(body);
     })
-    .get("/map", validatePublicMapQuery, async (c) =>
-      c.json(await repository.mapPublished(c.req.valid("query"))),
+    .get("/map/points", validateMapPointsQuery, async (c) => {
+      const json = await repository.mapPublishedPointsJson(
+        c.req.valid("query"),
+      );
+      return c.body(json, 200, {
+        "Content-Type": "application/json",
+        "X-Uncompressed-Length": String(Buffer.byteLength(json)),
+      });
+    })
+    .get("/map/samples", validateMapDetailsQuery, async (c) =>
+      c.json(
+        await repository.mapPublishedDetails(c.req.valid("query").numbers),
+      ),
     )
     .get("/facets", validatePublicListQuery, async (c) => {
       const body: SampleFacetCountsResponse = {

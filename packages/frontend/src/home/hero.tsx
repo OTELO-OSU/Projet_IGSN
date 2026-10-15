@@ -7,9 +7,11 @@ import { StatsCounters } from "./stats-counters.tsx";
 
 export function Hero({
   stats,
+  statsAction,
   children,
 }: {
   stats: Stats | undefined;
+  statsAction: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -28,7 +30,10 @@ export function Hero({
           {m.home_subtitle()}
         </p>
         <div className="mt-4 max-w-3xl">{children}</div>
-        {stats ? <StatsCounters {...stats} /> : null}
+        <div className="divide-primary/20 mt-8 flex flex-wrap items-center gap-y-4 divide-x">
+          {stats ? <StatsCounters {...stats} /> : null}
+          <div className="ps-10 first:ps-0">{statsAction}</div>
+        </div>
       </div>
     </div>
   );

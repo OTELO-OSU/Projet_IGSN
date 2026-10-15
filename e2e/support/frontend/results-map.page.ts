@@ -8,10 +8,10 @@ export function resultsMapPage(page: Page) {
     name: "Search results on the map",
   });
   const map = dialog.getByRole("region", { name: "Map" });
+  const isPointsRequest = (url: string) =>
+    new URL(url).pathname === "/api/samples/map/points";
   const waitForMap = () =>
-    page.waitForResponse((response) =>
-      response.url().includes("/api/samples/map"),
-    );
+    page.waitForResponse((response) => isPointsRequest(response.url()));
 
   const card = (name: string) =>
     dialog.getByRole("listitem").filter({ hasText: name });
@@ -54,6 +54,15 @@ export function resultsMapPage(page: Page) {
       ).toBeVisible(),
     expectMarkedSampleCount: (count: number) =>
       expect.poll(markedSampleCount).toBe(count),
+    expectEveryMarkedSampleCounted: async () => {
+      await expect.poll(markedSampleCount).toBeGreaterThan(0);
+      const count = await markedSampleCount();
+      await expect(
+        dialog.getByText(count === 1 ? "1 result" : `${count} results`, {
+          exact: true,
+        }),
+      ).toBeVisible();
+    },
     expectMarker: (name: string) =>
       expect(map.getByRole("button", { name, exact: true })).toBeVisible(),
     expectMarkerTooltip: async (name: string, igsn: string) => {

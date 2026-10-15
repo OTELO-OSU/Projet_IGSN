@@ -37,7 +37,8 @@ import {
   listPublicSeriesLinkCandidatesByIgsns,
   listSeriesLinkCandidates,
 } from "./service/list-series-link-candidates.ts";
-import { mapPublishedSamples } from "./service/map-sample.ts";
+import { mapPublishedPointsJson } from "./service/map-points.ts";
+import { mapPublishedDetails } from "./service/map-sample-details.ts";
 import { markParentsForSynchronization } from "./service/mark-parents-for-synchronization.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import {
@@ -68,7 +69,8 @@ export function createSampleRepository(
     searchEligibleSeries: tx(searchEligibleSeries),
     isModerated: tx(isSampleModerated),
     listPublished: tx(listPublishedSamples),
-    mapPublished: tx(mapPublishedSamples),
+    mapPublishedPointsJson: tx(mapPublishedPointsJson),
+    mapPublishedDetails: tx(mapPublishedDetails),
     countPublishedFacets: tx(countPublishedFacets),
     listExportable: tx(listExportableSamples),
     get: tx(getSample),

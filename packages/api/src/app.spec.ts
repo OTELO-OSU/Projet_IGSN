@@ -6,6 +6,7 @@ import {
   AUTHENTICATED_USER_BUDGET,
   CONTACT_MAIL_IP_BUDGET,
   MAP_IP_BUDGET,
+  MAP_POINTS_IP_BUDGET,
   IMPORT_TEMPLATE_USER_BUDGET,
   MAIL_REQUEST_USER_BUDGET,
   PUBLIC_IP_BUDGET,
@@ -240,17 +241,20 @@ describe("app", () => {
     });
 
     pgTest(
-      "should give map reads their own budget, apart from the public one",
+      "should give map reads their own budgets, apart from the public one",
       async ({ db }) => {
         const app = createApp(db).app;
         const get = (path: string, ip: string) =>
           app.request(path, { headers: { "X-Real-IP": ip } });
-        const mapFrom = (ip: string) => get("/samples/map", ip);
+        const pointsFrom = (ip: string) => get("/samples/map/points", ip);
+        const detailsFrom = (ip: string) =>
+          get("/samples/map/samples?numbers=1", ip);
         const mapListFrom = (ip: string) =>
           get("/samples?viewport=-10,40,10,50", ip);
 
         await spend(() => get("/samples", "10.0.0.5"), PUBLIC_IP_BUDGET.points);
-        expect((await mapFrom("10.0.0.5")).status).not.toBe(429);
+        expect((await pointsFrom("10.0.0.5")).status).not.toBe(429);
+        expect((await detailsFrom("10.0.0.5")).status).not.toBe(429);
         expect((await get("/samples?viewport=x", "10.0.0.5")).status).toBe(429);
         expect(
           (
@@ -261,10 +265,15 @@ describe("app", () => {
           ).status,
         ).toBe(429);
 
-        await spend(() => mapFrom("10.0.0.6"), MAP_IP_BUDGET.points - 1);
-        await spend(() => mapListFrom("10.0.0.6"), 1);
-        expect((await mapFrom("10.0.0.6")).status).toBe(429);
-        expect((await get("/samples", "10.0.0.6")).status).toBe(200);
+        await spend(() => pointsFrom("10.0.0.6"), MAP_POINTS_IP_BUDGET.points);
+        expect((await pointsFrom("10.0.0.6")).status).toBe(429);
+        expect((await detailsFrom("10.0.0.6")).status).toBe(200);
+
+        await spend(() => detailsFrom("10.0.0.7"), MAP_IP_BUDGET.points - 1);
+        await spend(() => mapListFrom("10.0.0.7"), 1);
+        expect((await detailsFrom("10.0.0.7")).status).toBe(429);
+        expect((await pointsFrom("10.0.0.7")).status).toBe(200);
+        expect((await get("/samples", "10.0.0.7")).status).toBe(200);
       },
     );
 
@@ -465,6 +474,7 @@ describe("app", () => {
         "RateLimit-Limit",
         "RateLimit-Remaining",
         "RateLimit-Reset",
+        "X-Uncompressed-Length",
       ]);
     });
 

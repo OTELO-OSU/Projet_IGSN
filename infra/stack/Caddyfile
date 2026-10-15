@@ -23,6 +23,7 @@
 
 :80 {
 	import sechdrs
+	encode zstd gzip
 	redir /admin /admin/
 	redir /api /api/
 	handle_path /api/* {

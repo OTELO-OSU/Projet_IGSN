@@ -14,6 +14,7 @@ import { FACET_VALUES } from "./bench-lib.ts";
 import { seedMockUsers } from "./seed.ts";
 
 const BATCH_SIZE = 1000;
+const CONCURRENCY = 8;
 
 const ROCK_NAMES = [
   "Granite",
@@ -81,10 +82,8 @@ function benchSample(id: string) {
   };
 }
 
-for (let offset = 0; offset < count; offset += BATCH_SIZE) {
-  const ids = Array.from({ length: Math.min(BATCH_SIZE, count - offset) }, () =>
-    uuidv7(),
-  );
+async function seedBatch(size: number) {
+  const ids = Array.from({ length: size }, () => uuidv7());
   await db.transaction().execute(async (trx) => {
     await trx
       .insertInto("location")
@@ -134,7 +133,21 @@ for (let offset = 0; offset < count; offset += BATCH_SIZE) {
         .execute();
     }
   });
-  console.info(`seeded ${offset + ids.length}/${count} bench samples`);
 }
+
+const batchSizes = Array.from(
+  { length: Math.ceil(count / BATCH_SIZE) },
+  (_, index) => Math.min(BATCH_SIZE, count - index * BATCH_SIZE),
+);
+let seeded = 0;
+await Promise.all(
+  Array.from({ length: CONCURRENCY }, async (_, worker) => {
+    for (let index = worker; index < batchSizes.length; index += CONCURRENCY) {
+      await seedBatch(batchSizes[index]!);
+      seeded += batchSizes[index]!;
+      console.info(`seeded ${seeded}/${count} bench samples`);
+    }
+  }),
+);
 
 await db.destroy();

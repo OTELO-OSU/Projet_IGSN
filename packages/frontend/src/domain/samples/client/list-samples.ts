@@ -16,10 +16,14 @@ export type ListSamplesParams = {
   filters?: SampleFilters;
   bbox?: string;
   viewport?: string;
+  withTotal?: false;
 };
-export type ListSamplesResult = { data: PublicListedSample[]; total: number };
+export type ListSamplesResult = { data: PublicListedSample[]; total?: number };
 
-export type SearchFilters = Omit<ListSamplesParams, "page" | "perPage">;
+export type SearchFilters = Omit<
+  ListSamplesParams,
+  "page" | "perPage" | "withTotal"
+>;
 
 export function searchFilterParams({
   search,
@@ -40,13 +44,14 @@ export function searchFilterParams({
 }
 
 export async function listSamples(
-  { page, perPage, ...filters }: ListSamplesParams,
+  { page, perPage, withTotal, ...filters }: ListSamplesParams,
   fetchFn: typeof fetch = apiFetch,
 ): Promise<ListSamplesResult> {
   const url = new URL("samples", baseApiUrl);
   url.search = searchFilterParams(filters).toString();
   url.searchParams.set("page", String(page));
   url.searchParams.set("perPage", String(perPage));
+  if (withTotal === false) url.searchParams.set("withTotal", "false");
 
   const res = await fetchFn(url);
   if (!res.ok) {

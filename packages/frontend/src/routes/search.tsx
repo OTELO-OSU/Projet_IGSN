@@ -149,12 +149,13 @@ function Results({
   const navigate = Route.useNavigate();
   const { data } = useListSamples(params);
   const { fields, saveFields } = useCardFields();
-  const pageCount = Math.max(1, Math.ceil(data.total / params.perPage));
+  const total = data.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / params.perPage));
 
   return (
     <SearchResultsView
       samples={data.data}
-      total={data.total}
+      total={total}
       query={params.search}
       page={params.page}
       pageCount={pageCount}
@@ -168,7 +169,7 @@ function Results({
         navigate({ search: (prev) => ({ ...prev, perPage, page: 1 }) })
       }
       onFieldsChange={saveFields}
-      download={<DownloadResultsLink filters={params} total={data.total} />}
+      download={<DownloadResultsLink filters={params} total={total} />}
       actions={actions}
     />
   );

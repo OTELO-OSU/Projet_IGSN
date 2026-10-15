@@ -23,6 +23,7 @@ export default defineConfig({
       "@xyflow/react",
       "@projet-igsn/design-system > embla-carousel-react",
       "qrcode.react",
+      "supercluster",
     ],
   },
   test: {

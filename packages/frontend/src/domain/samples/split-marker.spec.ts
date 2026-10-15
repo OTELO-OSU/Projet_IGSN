@@ -1,4 +1,4 @@
-import type { SampleMapCluster } from "@projet-igsn/domain/sample/map/model";
+import type { MapCluster } from "./map-cluster-index.ts";
 
 import { splitOrigin } from "./split-marker.tsx";
 
@@ -6,7 +6,7 @@ const group = (
   longitude: number,
   latitude: number,
   count: number,
-): SampleMapCluster => ({
+): MapCluster => ({
   longitude,
   latitude,
   count,

@@ -17,7 +17,7 @@ export async function searchExportResponse(
     page: 1,
     perPage: searchExportLimit,
   });
-  if (total > searchExportLimit) {
+  if ((total ?? Infinity) > searchExportLimit) {
     throw new HTTPException(422, {
       message: `Cannot export more than ${searchExportLimit} samples`,
     });

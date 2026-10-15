@@ -10,14 +10,17 @@ import {
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
-import { sampleMapQuerySchema } from "@projet-igsn/domain/sample/map/model";
+import {
+  sampleMapDetailsQuerySchema,
+  sampleMapPointsQuerySchema,
+} from "@projet-igsn/domain/sample/map/model";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   checkDuplicatesBodySchema,
   contactSampleOwnerBodySchema,
   DEFAULT_PAGE_SIZE,
   listSamplesQuerySchema,
-  MAP_LIST_SIZE,
+  MAP_LIST_PAGE_SIZE,
   PAGE_SIZES,
   pageSizeSchema,
   requestSampleDeletionBodySchema,
@@ -157,7 +160,11 @@ const publicListSamplesQuerySchema = listSamplesQuerySchema
     availabilityStatus: true,
   })
   .extend({
-    perPage: pageSizeSchema(DEFAULT_PAGE_SIZE, [...PAGE_SIZES, MAP_LIST_SIZE]),
+    perPage: pageSizeSchema(DEFAULT_PAGE_SIZE, [
+      ...PAGE_SIZES,
+      MAP_LIST_PAGE_SIZE,
+    ]),
+    withTotal: z.stringbool().optional(),
   });
 
 export const validatePublicListQuery = validator("query", (value, c) => {
@@ -174,9 +181,15 @@ export const validatePublicExportQuery = zodValidator(
   "Invalid query parameters",
 );
 
-export const validatePublicMapQuery = zodValidator(
+export const validateMapPointsQuery = zodValidator(
   "query",
-  sampleMapQuerySchema,
+  sampleMapPointsQuerySchema,
+  "Invalid query parameters",
+);
+
+export const validateMapDetailsQuery = zodValidator(
+  "query",
+  sampleMapDetailsQuerySchema,
   "Invalid query parameters",
 );
 

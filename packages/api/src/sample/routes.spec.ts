@@ -1,9 +1,8 @@
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 
 import {
+  MAP_LIST_PAGE_SIZE,
   publicListSamplesResponseSchema,
-  MAP_LIST_SIZE,
-  PAGE_SIZES,
   sampleFacetCountsResponseSchema,
   sampleResponseSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
@@ -17,8 +16,6 @@ import { provisionUser } from "../tests/provision-user.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
 
 const LONGEST_TOKEN = "⑽.😀".repeat(8);
-
-const MAX_PAGE_SIZE = Math.max(...PAGE_SIZES);
 
 const authHeader = { Authorization: "Bearer test-token" };
 
@@ -144,7 +141,7 @@ describe("public sample routes", () => {
     await db
       .insertInto("sample")
       .values(
-        Array.from({ length: MAX_PAGE_SIZE + 1 }, (_, index) => ({
+        Array.from({ length: MAP_LIST_PAGE_SIZE + 1 }, (_, index) => ({
           id: crypto.randomUUID(),
           name: `Sample ${index}`,
           igsn: `CNRS${String(index).padStart(10, "0")}`,
@@ -156,11 +153,29 @@ describe("public sample routes", () => {
     const client = testClient(createApp(db).app);
     // Act
     const res = await client.samples.$get({
-      query: { page: "1", perPage: String(MAP_LIST_SIZE) },
+      query: { page: "1", perPage: String(MAP_LIST_PAGE_SIZE) },
     });
     // Assert
     const { data } = publicListSamplesResponseSchema.parse(await res.json());
-    expect(data).toHaveLength(MAX_PAGE_SIZE + 1);
+    expect(data).toHaveLength(MAP_LIST_PAGE_SIZE);
+  });
+
+  pgTest("should omit the total when withTotal is false", async ({ db }) => {
+    // Arrange
+    const client = await acceptedClient(db);
+    await createPublishedSample(client, "Grès de Fontainebleau");
+    // Act
+    const res = await client.samples.$get({
+      query: { page: "1", perPage: "10", withTotal: false },
+    });
+    // Assert
+    const { data, meta } = publicListSamplesResponseSchema.parse(
+      await res.json(),
+    );
+    expect({ names: data.map(({ name }) => name), meta }).toEqual({
+      names: ["Grès de Fontainebleau"],
+      meta: {},
+    });
   });
 
   pgTest(
