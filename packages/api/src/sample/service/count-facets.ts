@@ -11,11 +11,13 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import {
+  facetValueCode,
   INDEXED_FIELD,
   indexedFacetFilter,
   type LinkedAccounts,
   matchesAccountName,
   personFacetValues,
+  storedFacetValue,
 } from "./facet-filter.ts";
 import { publishedScope, sampleFilters } from "./list-sample.ts";
 import {
@@ -75,7 +77,12 @@ export function countPublishedFacets(
   const active = COUNTED_FACETS.flatMap((facet) => {
     const value = values[facet.key];
     return typeof value === "string"
-      ? [{ key: facet.key, pick: indexedFacetFilter(facet, value) }]
+      ? [
+          {
+            key: facet.key,
+            pick: indexedFacetFilter(facet, storedFacetValue(facet.key, value)),
+          },
+        ]
       : [];
   });
   const counts = COUNTED_FACETS.map((facet) =>
@@ -108,10 +115,15 @@ export function countPublishedFacets(
     return Object.fromEntries(
       COUNTED_FACETS.map((facet) => [
         facet.key,
-        Object.fromEntries(
-          (rows[0]?.[facet.key]?.buckets ?? []).flatMap(({ key, doc_count }) =>
-            key === null ? [] : [[key, doc_count]],
-          ),
+        (rows[0]?.[facet.key]?.buckets ?? []).reduce<Record<string, number>>(
+          (byCode, { key, doc_count }) => {
+            if (key !== null) {
+              const code = facetValueCode(facet.key, key);
+              byCode[code] = (byCode[code] ?? 0) + doc_count;
+            }
+            return byCode;
+          },
+          {},
         ),
       ]),
     );

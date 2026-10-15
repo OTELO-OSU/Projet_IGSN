@@ -24,6 +24,14 @@ describe("setInstitutionalGroupsSchema", () => {
         institutionalLaboratory: "UMR7327",
       },
     },
+    {
+      rule: "a laboratory stored under a former code",
+      groups: {
+        institutionalOrganization: "02feahw73",
+        institutionalOsu: "OVSQ",
+        institutionalLaboratory: "UPS2074",
+      },
+    },
   ])("should accept $rule", ({ groups }) => {
     expect(parse(groups).success).toBe(true);
   });
@@ -54,6 +62,24 @@ describe("setInstitutionalGroupsSchema", () => {
         institutionalLaboratory: "UMR7327",
       },
       path: "institutionalOsu",
+    },
+    {
+      rule: "an OSU RNSR id",
+      groups: {
+        institutionalOrganization: ORLEANS,
+        institutionalOsu: "200810873N",
+        institutionalLaboratory: "UMR7327",
+      },
+      path: "institutionalOsu",
+    },
+    {
+      rule: "a laboratory RNSR id",
+      groups: {
+        institutionalOrganization: ORLEANS,
+        institutionalOsu: "OSUC",
+        institutionalLaboratory: "201220213Y",
+      },
+      path: "institutionalLaboratory",
     },
   ])("should reject $rule on $path", ({ groups, path }) => {
     const result = parse(groups);

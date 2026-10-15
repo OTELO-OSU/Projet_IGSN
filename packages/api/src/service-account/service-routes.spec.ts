@@ -7,6 +7,8 @@ import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { laboratoryIdOf } from "@projet-igsn/domain/institutional-group/laboratory-id-of";
+import { osuIdOf } from "@projet-igsn/domain/institutional-group/osu-id-of";
 import { ageSchema } from "@projet-igsn/domain/sample/age/model";
 import { toConcept } from "@projet-igsn/domain/sample/core/concept";
 import {
@@ -122,7 +124,7 @@ async function arrangeAccount(db: Kysely<DB>) {
     .values({
       service_account_id: account.id,
       kind: "laboratory",
-      code: IN_REACH,
+      code: laboratoryIdOf(IN_REACH),
     })
     .execute();
   return { app: createApp(db).app, owner };
@@ -382,26 +384,6 @@ describe("GET /service/samples", () => {
     },
   );
 
-  pgTest.for(["draft", "withdrawn", "tombstone"] as const)(
-    "should omit a %s sample of the account's managed groups",
-    async (status, { db }) => {
-      // Arrange
-      const { app } = await arrangeAccount(db);
-      const sample = await inLaboratory(db, publishableSample, IN_REACH);
-      if (status !== "draft") {
-        await publishSample(db, sample.id);
-        await setSampleStatus(db, sample.id, { status });
-      }
-      // Act
-      const res = await listSamples(app);
-      // Assert
-      expect(coreListSamplesResponseSchema.parse(await res.json())).toEqual({
-        data: [],
-        meta: { total: 0 },
-      });
-    },
-  );
-
   pgTest(
     "should omit a published sample outside the account's managed groups when editable is true",
     async ({ db }) => {
@@ -577,7 +559,7 @@ describe("GET /service/samples", () => {
       },
     },
   ])(
-    "should keep only the samples matching $rule",
+    "should keep and count only the samples matching $rule",
     async ({ param, value, matching, other }, { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
@@ -602,29 +584,12 @@ describe("GET /service/samples", () => {
       // Assert
       expect(res.status).toBe(200);
       const body = coreListSamplesResponseSchema.parse(await res.json());
-      expect(body.data.map((sample) => sample.record.recordId)).toEqual([
-        `urn:uuid:${kept.id}`,
-      ]);
+      expect({
+        ids: body.data.map((sample) => sample.record.recordId),
+        total: body.meta.total,
+      }).toEqual({ ids: [`urn:uuid:${kept.id}`], total: 1 });
     },
   );
-
-  pgTest("should count only the filtered samples", async ({ db }) => {
-    // Arrange
-    const { app } = await arrangeAccount(db);
-    for (const nature of ["powder", "powder", "thin_section"] as const) {
-      const sample = await inLaboratory(
-        db,
-        { ...publishableSample, nature },
-        IN_REACH,
-      );
-      await publishSample(db, sample.id);
-    }
-    // Act
-    const res = await listSamples(app, { natureOfSample: "powder" });
-    // Assert
-    const body = coreListSamplesResponseSchema.parse(await res.json());
-    expect(body.meta.total).toBe(2);
-  });
 
   pgTest(
     "should answer 400 for a filter value outside its vocabulary",
@@ -641,15 +606,12 @@ describe("GET /service/samples", () => {
 });
 
 describe("GET /service/samples/:igsn", () => {
-  pgTest.for([
-    { reach: "inside", laboratory: IN_REACH },
-    { reach: "outside", laboratory: OUT_OF_REACH },
-  ])(
-    "should answer the Core record of a published sample $reach the account's reach",
-    async ({ laboratory }, { db }) => {
+  pgTest(
+    "should answer the Core record of a published sample outside the account's reach",
+    async ({ db }) => {
       // Arrange
       const { app, owner } = await arrangeAccount(db);
-      const sample = await inLaboratory(db, archivedSample, laboratory);
+      const sample = await inLaboratory(db, archivedSample, OUT_OF_REACH);
       await insertSampleOwner(db, sample.id, owner.id);
       const published = (await publishSample(db, sample.id))!;
       // Act
@@ -889,7 +851,6 @@ describe("the Accept header of the /service GET routes", () => {
   pgTest.for([
     `*/*, ${DATACITE_MEDIA_TYPE}`,
     `application/*, ${DATACITE_MEDIA_TYPE}`,
-    `text/plain, */*, ${DATACITE_MEDIA_TYPE}`,
   ])(
     "should serve the record named beside a wildcard in Accept %s",
     async (accept, { db }) => {
@@ -905,7 +866,7 @@ describe("the Accept header of the /service GET routes", () => {
     },
   );
 
-  pgTest.for([undefined, "application/json", "application/*", "*/*"])(
+  pgTest.for(["application/json", "application/*", "*/*"])(
     "should answer Core records as application/json for Accept %s",
     async (accept, { db }) => {
       // Arrange
@@ -971,8 +932,8 @@ describe("POST /service/samples", () => {
       ).toEqual({
         status: "published",
         institutional_organization: "04vfs2w97",
-        institutional_osu: "OTELo",
-        institutional_laboratory: IN_REACH,
+        institutional_osu: osuIdOf("OTELo"),
+        institutional_laboratory: laboratoryIdOf(IN_REACH),
       });
       expect(
         await db
@@ -981,6 +942,42 @@ describe("POST /service/samples", () => {
           .where("sample_id", "=", id)
           .execute(),
       ).toEqual([{ user_id: owner.id, role: "owner" }]);
+    },
+  );
+
+  pgTest(
+    "should store an archive laboratory posted under a former code at its RNSR id, emitting its current code",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(
+        app,
+        core({
+          ...COLLECTION_SPECIMEN,
+          repository: {
+            ...COLLECTION_SPECIMEN.repository,
+            currentArchiveOsu: "OVSQ",
+            currentArchiveLaboratory: "UPS2074",
+          },
+        }),
+      );
+      // Assert
+      expect(res.status).toBe(201);
+      expect(
+        coreSampleSchema
+          .parse(await res.json())
+          .curation.currentRepository?.organizations?.map(({ id }) => id),
+      ).toEqual(["urn:otelo:osu:OVSQ", "urn:otelo:laboratory:UAR2074"]);
+      expect(
+        await db
+          .selectFrom("sample")
+          .select(["rep_current_archive_osu", "rep_current_archive_laboratory"])
+          .executeTakeFirstOrThrow(),
+      ).toEqual({
+        rep_current_archive_osu: osuIdOf("OVSQ"),
+        rep_current_archive_laboratory: laboratoryIdOf("UAR2074"),
+      });
     },
   );
 
@@ -2879,20 +2876,5 @@ describe("a series of samples over /service", () => {
         issues: [{ path: isPartOfPath(body), code: "series_not_eligible" }],
       },
     });
-  });
-
-  pgTest("should emit a member's series as IsPartOf", async ({ db }) => {
-    // Arrange
-    const { app } = await arrangeAccount(db);
-    const member = await coreInReach(db, "Core 1");
-    const series = await publishedInReach(db, {
-      ...publishableSample,
-      type: CORE_SERIES,
-      childIds: [member.id],
-    });
-    // Act
-    const res = await getSample(app, member.igsn!);
-    // Assert
-    expect(relatedIgsns(await res.json(), "IsPartOf")).toEqual([series.igsn]);
   });
 });

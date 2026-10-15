@@ -137,12 +137,12 @@ export function coreFilterFields() {
         "ROR id of the organisme recorded on the sample when it was created.",
     }),
     affiliationOsu: osuCodeSchema.optional().meta({
-      enum: OSUS.map((o) => o.code),
+      enum: OSUS.flatMap((o) => [o.code, ...(o.formerCodes ?? [])]),
       description:
         "Code of the OSU recorded on the sample when it was created.",
     }),
     affiliationLaboratory: laboratoryCodeSchema.optional().meta({
-      enum: LABORATORIES.map((l) => l.code),
+      enum: LABORATORIES.flatMap((l) => [l.code, ...(l.formerCodes ?? [])]),
       description:
         "Code of the laboratory recorded on the sample when it was created.",
     }),

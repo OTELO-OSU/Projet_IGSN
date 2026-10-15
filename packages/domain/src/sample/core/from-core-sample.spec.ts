@@ -195,7 +195,10 @@ describe("fromCoreSample", () => {
         ...RESEARCH_PROJECT_SAMPLE_RECORD.curation,
         currentRepository: {
           organizations: [
-            { id: "urn:otelo:osu:OASU", name: "OASU (OASU)" },
+            {
+              id: "urn:otelo:osu:OASU",
+              name: "Observatoire aquitain des sciences de l'univers (OASU)",
+            },
             { id: "urn:otelo:laboratory:UMR5805", name: "EPOC" },
           ],
           collectionName: "Lorraine granites",

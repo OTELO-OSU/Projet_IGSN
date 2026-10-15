@@ -1,13 +1,24 @@
 import type { ContactSample } from "@projet-igsn/domain/user-sample/repository";
 
+import { laboratoryCodesWithSuccessors } from "@projet-igsn/domain/institutional-group/laboratory-codes-with-successors";
+
 import type { DB } from "../db.ts";
 
+import {
+  institutionIdOf,
+  laboratoryIdsOf,
+} from "../institutional-group/stored-institution.ts";
 import { type Transactional } from "../transaction.ts";
 
 type InstitutionalGroup = {
   kind: DB["user_managed_institutional_group"]["kind"];
   code: string;
 };
+
+const groupIdsOf = (kind: InstitutionalGroup["kind"], code: string) =>
+  kind === "laboratory"
+    ? laboratoryIdsOf(laboratoryCodesWithSuccessors(code))
+    : [institutionIdOf(kind, code)];
 
 function institutionalGroups(sample: ContactSample): InstitutionalGroup[] {
   return (
@@ -16,7 +27,11 @@ function institutionalGroups(sample: ContactSample): InstitutionalGroup[] {
       { kind: "osu", code: sample.institutionalOsu },
       { kind: "laboratory", code: sample.institutionalLaboratory },
     ] as const
-  ).flatMap(({ kind, code }) => (code === null ? [] : [{ kind, code }]));
+  ).flatMap(({ kind, code }) =>
+    code === null
+      ? []
+      : groupIdsOf(kind, code).map((id) => ({ kind, code: id })),
+  );
 }
 
 async function contactableOwner(

@@ -183,7 +183,7 @@ describe("a Core record mapped to iSamples", () => {
         label: "partiallyConsumed",
         access_constraints: ["available"],
         curation_location:
-          "OASU (OASU), Environnements et paléoenvironnements océaniques et continentaux (EPOC), Lorraine granites",
+          "Observatoire aquitain des sciences de l'univers (OASU), Environnements et paléoenvironnements océaniques et continentaux (EPOC), Lorraine granites",
         responsibility: [],
       },
       related_resource: [

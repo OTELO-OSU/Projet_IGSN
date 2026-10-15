@@ -26,13 +26,23 @@ describe("createRepositorySchema", () => {
     ).toBe(true);
   });
 
+  it("should accept a laboratory of the archiving OSU under a former code", () => {
+    expect(
+      createRepositorySchema.safeParse({
+        ...REPOSITORY,
+        currentArchiveOsu: "OVSQ",
+        currentArchiveLaboratory: "UPS2074",
+      }).success,
+    ).toBe(true);
+  });
+
   it.each([
-    { rule: "an unknown OSU", currentArchiveOsu: "nope" },
-    { rule: "an unknown laboratory", currentArchiveLaboratory: "nope" },
     {
       rule: "a laboratory of another OSU",
       currentArchiveLaboratory: "UMR5805",
     },
+    { rule: "an OSU RNSR id", currentArchiveOsu: "200719584L" },
+    { rule: "a laboratory RNSR id", currentArchiveLaboratory: "201320566C" },
   ])("should reject $rule", (archive) => {
     expect(
       createRepositorySchema.safeParse({ ...REPOSITORY, ...archive }).success,

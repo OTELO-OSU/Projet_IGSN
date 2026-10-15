@@ -6,6 +6,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../../db.ts";
 
+import { storedInstitutions } from "../../institutional-group/stored-institution.ts";
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
 import { inheritParentCollectionDate } from "./inherit-parent-collection-date.ts";
@@ -36,14 +37,15 @@ export async function insertSampleRows(
   input: CreateSample,
   groups?: InstitutionalGroups,
 ): Promise<string> {
+  const stored = groups && storedInstitutions(groups);
   const row = await db
     .insertInto("sample")
     .values({
       id: uuidv7(),
       ...sampleColumns(input),
-      institutional_organization: groups?.institutionalOrganization ?? null,
-      institutional_osu: groups?.institutionalOsu ?? null,
-      institutional_laboratory: groups?.institutionalLaboratory ?? null,
+      institutional_organization: stored?.institutionalOrganization ?? null,
+      institutional_osu: stored?.institutionalOsu ?? null,
+      institutional_laboratory: stored?.institutionalLaboratory ?? null,
     })
     .returning("id")
     .executeTakeFirstOrThrow();

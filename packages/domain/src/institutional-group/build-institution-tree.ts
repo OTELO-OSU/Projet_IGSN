@@ -1,5 +1,6 @@
 import { filterLaboratoriesByOrgAndOsu } from "./filter-laboratories-by-org-and-osu.ts";
 import { filterOrganizationsWithLaboratory } from "./filter-organizations-with-laboratory.ts";
+import { isOfferedLaboratory } from "./is-offered-laboratory.ts";
 
 type InstitutionTreeOrganization = {
   ror: string;
@@ -10,7 +11,7 @@ export function buildInstitutionTree(): InstitutionTreeOrganization[] {
   return filterOrganizationsWithLaboratory().map(({ ror }) => {
     const laboratories = filterLaboratoriesByOrgAndOsu({
       organizationRor: ror,
-    });
+    }).filter((laboratory) => isOfferedLaboratory(laboratory));
     const codes = new Set<string | null>(laboratories.map(({ osu }) => osu));
 
     return {

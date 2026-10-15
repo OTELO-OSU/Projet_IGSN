@@ -2,6 +2,8 @@ import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { DateRange } from "@projet-igsn/domain/sample/date-range";
 import type { Selectable } from "kysely";
 
+import { laboratoryCodeOf } from "@projet-igsn/domain/institutional-group/laboratory-code-of";
+import { osuCodeOf } from "@projet-igsn/domain/institutional-group/osu-code-of";
 import { compareMineralClassifications } from "@projet-igsn/domain/sample/mineral/compare-mineral-classifications";
 import { compareProcessSteps } from "@projet-igsn/domain/sample/process-step/compare-process-steps";
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
@@ -195,8 +197,11 @@ function toScientificContext(row: SampleRow) {
 
 function toRepository(row: Selectable<DB["sample"]>) {
   return prune({
-    currentArchiveOsu: row.rep_current_archive_osu,
-    currentArchiveLaboratory: row.rep_current_archive_laboratory,
+    currentArchiveOsu:
+      row.rep_current_archive_osu && osuCodeOf(row.rep_current_archive_osu),
+    currentArchiveLaboratory:
+      row.rep_current_archive_laboratory &&
+      laboratoryCodeOf(row.rep_current_archive_laboratory),
     currentArchiveContactFirstname: row.rep_current_archive_contact_firstname,
     currentArchiveContactLastname: row.rep_current_archive_contact_lastname,
     currentArchiveContactEmail: row.rep_current_archive_contact_email,
@@ -375,8 +380,10 @@ export function toSample(row: SampleRow): Sample {
     series: row.series ?? null,
     hasSubSamples: row.hasSubSamples,
     institutionalOrganization: row.institutional_organization,
-    institutionalOsu: row.institutional_osu,
-    institutionalLaboratory: row.institutional_laboratory,
+    institutionalOsu: row.institutional_osu && osuCodeOf(row.institutional_osu),
+    institutionalLaboratory:
+      row.institutional_laboratory &&
+      laboratoryCodeOf(row.institutional_laboratory),
     status: row.status,
     synchronizationStatus: row.synchronization_status,
     synchronizationError: row.synchronization_error,

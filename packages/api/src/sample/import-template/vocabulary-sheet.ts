@@ -1,5 +1,6 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 
+import { isOfferedLaboratory } from "@projet-igsn/domain/institutional-group/is-offered-laboratory";
 import {
   laboratoryLabel,
   organizationLabel,
@@ -77,6 +78,7 @@ export type VocabularyBlock = {
   id: string;
   title: string;
   rows: readonly VocabularyRow[];
+  retiredRows?: readonly VocabularyRow[];
 };
 
 export type BlockPlacement = {
@@ -266,12 +268,25 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
     OSUS.map((osu) => osu.code),
     osuLabel,
   ),
-  flat(
-    "laboratory",
-    "UMR",
-    LABORATORIES.map((laboratory) => laboratory.code),
-    laboratoryLabel,
-  ),
+  {
+    ...flat(
+      "laboratory",
+      "UMR",
+      LABORATORIES.filter((laboratory) => isOfferedLaboratory(laboratory)).map(
+        (laboratory) => laboratory.code,
+      ),
+      laboratoryLabel,
+    ),
+    retiredRows: LABORATORIES.filter(
+      (laboratory) => !isOfferedLaboratory(laboratory),
+    ).map(
+      ({ code }): VocabularyRow => [
+        code,
+        `${laboratoryLabel(code)} - ${code}`,
+        "",
+      ],
+    ),
+  },
   flat(
     "provenance_status",
     "Provenance status",

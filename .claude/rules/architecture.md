@@ -19,12 +19,20 @@
 - `user/managed-laboratory-codes.ts` is deliberately not that path: its organisme -> OSU widening reaches other organismes' laboratories, which is right for a manager's own reach but wrong for the moderation institution filter.
 - An OSU spans several organismes, so the moderation institution filter names the organisme too (`osu:<ror>/<code>`) and resolves to that organisme's labos alone.
 - The admin group lists filter the static `domain` catalogs client-side, but their members come from `GET /admin/users`, filtered in SQL by `institutionalOrganization` / `institutionalOsu` / `institutionalLaboratory`; that same response also carries each user's manual groups (`AdminUser.manualGroups`), unrelated to this catalog.
-- The admin users list offers the same `InstitutionTreeFilter` but keeps `institution` in the URL alone, mapping it onto those three params in `admin/src/users/institution-user-params.ts`, since a user row records its own codes and needs no labo resolution.
+- The admin users list offers the same `InstitutionTreeFilter` but keeps `institution` in the URL alone, mapping it onto those three params in `admin/src/users/institution-user-params.ts`, since a user row records its own codes, a laboratory widening only to the laboratories it replaced.
 - `GET /admin/users/institutional-counts` counts those same recorded codes in one grouped query, so an OSU shared across organismes reports one total.
 - The OSU only narrows, so no OSU means any labo of the organisme, OSU-bound included.
 - A submitted OSU MUST belong to the submitted organisme, so a co-tutelle user picking the other organisme records no OSU.
 - `osu.ts` and `laboratory.ts` are generated from the `sync-data/` CSV export by `domain/scripts/sync-institutions.ts`, shaped like `institutional-group/organization.ts`.
-- A sample snapshots the three codes at creation, never after, and they stay out of `createSampleSchema`.
+- `domain/scripts/sync-rnsr.ts` then refreshes both catalogs from RNSR by `id`: names (`PINNED_LABORATORY_NAMES` and `PINNED_OSU_NAMES` in `pinned-rnsr-names.ts` keeping curated ones), a requalified code (the old one joining `formerCodes`) and a laboratory successor (added, the old entry taking `replacedBy`); see `docs/sync-data.md`.
+- Each laboratory and OSU is keyed by its RNSR number, or `local:<code>` when RNSR has none, and the database stores that id, never a code; see ADR 0061.
+- The api persistence layer alone translates, `laboratoryCodeOf`/`osuCodeOf` on read, `laboratoryIdOf`/`osuIdOf` on write and in SQL filters, both accepting a former code.
+- Every layer above it speaks codes, the outside contract included: the `/service` Core URNs, public search links, the data.gouv CSV, the xlsx template and admin links.
+- No laboratory, OSU or organisme, no former code, and no `organizationRors` link, is ever removed from these catalogs, since stored ids and old codes must keep resolving.
+- A merged or renumbered laboratory RNSR records as a new structure keeps its old entry with `replacedBy` (a laboratory id), resolving everywhere but hidden where a new choice is offered: `MANAGED_LABORATORY_ITEMS`, `buildInstitutionTree`, the own-institution form and the archive lab picker.
+- `laboratoryCodesWithPredecessors` widens a directly managed or filtered laboratory to the current codes of the laboratories it replaced, in `managedLaboratoryCodes`, `institutionLaboratories` and the admin users list filter.
+- `laboratoryCodesWithSuccessors` lets a successor's manager manage a replaced laboratory, in `managesGroup` (`api/src/institutional-group/manages-group.ts`, every "who still manages this group" query) and the contact form's recipients.
+- A sample snapshots the three institutions at creation, never after, and they stay out of `createSampleSchema`.
 - A sample also carries manual groups its owner picks and edits, frozen once published; see ADR 0025.
 - Moderation reach reads the sample's own codes and groups (`api/src/sample/service/moderated-sample-where.ts`), but the user row for a user (`api/src/user/moderation-scope-where.ts`); see ADR 0030.
 - `api/src/institutional-group/` is that entity's first repository (managers, active-manager counts); `api/src/user/orphaned-groups-of-user.ts` and the two repositories' `listWithoutActiveManager` methods are the single "who still manages this group" queries, shared by the orphan-group mail, the pending-users digest recap and the group lists; see ADR 0030.

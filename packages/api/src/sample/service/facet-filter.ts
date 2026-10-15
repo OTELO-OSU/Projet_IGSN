@@ -1,9 +1,14 @@
+import type { InstitutionalGroupKind } from "@projet-igsn/domain/institutional-group/model";
 import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 
 import { numericAgeToAnnum } from "@projet-igsn/domain/sample/age/numeric-age-to-annum";
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { type Expression, sql, type SqlBool } from "kysely";
 
+import {
+  institutionCodeOf,
+  institutionIdOf,
+} from "../../institutional-group/stored-institution.ts";
 import { likePattern } from "../../like-pattern.ts";
 import { unaccented } from "../../unaccented.ts";
 import { matchesToken, tokenFilters } from "./search-filter.ts";
@@ -18,6 +23,21 @@ export const FACET_COLUMN: Record<string, string> = {
   institutionalOrganization: "institutional_organization",
   institutionalOsu: "institutional_osu",
   institutionalLaboratory: "institutional_laboratory",
+};
+
+const INSTITUTION_FACET_KIND: Record<string, InstitutionalGroupKind> = {
+  institutionalOsu: "osu",
+  institutionalLaboratory: "laboratory",
+};
+
+export const storedFacetValue = (key: string, value: string): string => {
+  const kind = INSTITUTION_FACET_KIND[key];
+  return kind ? institutionIdOf(kind, value) : value;
+};
+
+export const facetValueCode = (key: string, stored: string): string => {
+  const kind = INSTITUTION_FACET_KIND[key];
+  return kind ? institutionCodeOf(kind, stored) : stored;
 };
 
 export const PERSON_FACET_COLUMNS: Record<
@@ -154,8 +174,9 @@ export function facetFilters(
 
   return [
     ...SAMPLE_FACETS.flatMap((facet) => {
-      const value = values[facet.key];
-      if (typeof value !== "string") return [];
+      const submitted = values[facet.key];
+      if (typeof submitted !== "string") return [];
+      const value = storedFacetValue(facet.key, submitted);
       const filter =
         params.search !== undefined && INDEXED_FIELD[facet.key]
           ? indexedFacetFilter(facet, value)

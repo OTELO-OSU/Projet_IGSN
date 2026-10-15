@@ -15,6 +15,7 @@ const noop = () => {};
 
 async function renderRepositorySection(
   onSubmit: (value: CreateSample) => void = noop,
+  repository: { currentArchiveLaboratory?: string } = {},
 ) {
   const screen = await render(
     <SampleForm
@@ -26,6 +27,7 @@ async function renderRepositorySection(
         material: null,
         collectionMethod: null,
         collectionMethodDescription: null,
+        repository,
       }}
       primaryAction={{ kind: "submit", label: "Create", onSubmit }}
     />,
@@ -156,5 +158,31 @@ describe("SampleRepositoryFields", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "UMR" }))
       .toHaveTextContent(laboratoryLabel("UMR7327"));
+  });
+
+  it("should not offer a replaced laboratory", async () => {
+    const screen = await renderRepositorySection();
+
+    await screen.getByRole("combobox", { name: "UMR" }).click();
+    await screen.getByPlaceholder(/^Search/).fill("LIRA");
+
+    await expect
+      .element(screen.getByRole("option", { name: laboratoryLabel("UMR8254") }))
+      .toBeVisible();
+    expect(
+      screen
+        .getByRole("option", { name: laboratoryLabel("UMR8109") })
+        .elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should keep showing a stored replaced laboratory", async () => {
+    const screen = await renderRepositorySection(noop, {
+      currentArchiveLaboratory: "UMR8109",
+    });
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "UMR" }))
+      .toHaveTextContent(laboratoryLabel("UMR8109"));
   });
 });

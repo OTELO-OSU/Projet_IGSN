@@ -5,6 +5,8 @@ import { expressionBuilder } from "kysely";
 
 import type { DB } from "../../db.ts";
 
+import { laboratoryIdsOf } from "../../institutional-group/stored-institution.ts";
+
 export function moderatedSampleWhere(
   scope: ModerationScope,
 ): Expression<SqlBool> {
@@ -15,7 +17,11 @@ export function moderatedSampleWhere(
   const reach: Expression<SqlBool>[] = [];
   if (scope.managedLaboratories.length > 0) {
     reach.push(
-      eb("sample.institutional_laboratory", "in", scope.managedLaboratories),
+      eb(
+        "sample.institutional_laboratory",
+        "in",
+        laboratoryIdsOf(scope.managedLaboratories),
+      ),
     );
   }
   if (scope.managedManualGroupIds.length > 0) {

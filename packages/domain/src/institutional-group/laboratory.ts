@@ -1,17 +1,22 @@
 import { z } from "zod";
 
-// Generated from a CSV export; do not edit by hand for bulk changes. Refresh
-// with: pnpm --filter @projet-igsn/domain sync-institutions
+// Generated from a CSV export, then refreshed from RNSR; do not edit by hand
+// for bulk changes. Refresh with: pnpm --filter @projet-igsn/domain
+// sync-institutions (CSV export) or sync-rnsr (RNSR)
 export type Laboratory = {
+  id: string;
   code: string;
+  formerCodes?: readonly string[];
   acronym: string;
   name: string;
   osu: string | null;
   organizationRors: readonly string[];
+  replacedBy?: string;
 };
 
 export const LABORATORIES: readonly Laboratory[] = [
   {
+    id: "200615287V",
     code: "EA4038",
     acronym: "LGPM",
     name: "Laboratoire de Génie et Procédés des Matériaux",
@@ -19,6 +24,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["03xjwb503"],
   },
   {
+    id: "200119846X",
     code: "FR2424",
     acronym: "Roscoff",
     name: "Station biologique de Roscoff",
@@ -26,13 +32,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
+    id: "200710692W",
     code: "FR2952",
     acronym: "IPRA",
-    name: "Institut Pluridisciplinaire de recherche appliquée en génie pétrolier",
+    name: "Institut Pluridisciplinaire de Recherche Appliquée",
     osu: null,
     organizationRors: ["02feahw73", "01frn9647"],
   },
   {
+    id: "201522729V",
     code: "FR3724",
     acronym: "OOB",
     name: "Observatoire océanologique de Banyuls sur Mer",
@@ -40,6 +48,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
+    id: "201622338R",
     code: "FR3761",
     acronym: "IMEV",
     name: "Institut de la Mer de Villefranche",
@@ -47,6 +56,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
+    id: "200610636P",
     code: "FR636",
     acronym: "IPSL",
     name: "Institut Pierre-Simon-Laplace",
@@ -63,23 +73,27 @@ export const LABORATORIES: readonly Laboratory[] = [
     ],
   },
   {
-    code: "UAR 2050",
+    id: "202524628R",
+    code: "UAR2050",
+    formerCodes: ["UAR 2050"],
     acronym: "UNIDIA",
-    name: "UNité d’Ingénierie et de Développements Instrumentaux pour l’Astrophysique",
+    name: "UNité d'Ingénierie et de Développements Instrumentaux pour l'Astrophysique",
     osu: "OBSPM",
     organizationRors: ["02feahw73", "029nkcm90"],
   },
   {
+    id: "200810872M",
     code: "UAR3113",
     acronym: "IUEM",
     name: "Institut Universitaire Européen de la Mer",
-    osu: null,
+    osu: "IUEM",
     organizationRors: ["02feahw73", "05q3vnk25"],
   },
   {
+    id: "201420664E",
     code: "UAR3281",
     acronym: "OSUNA",
-    name: "Unité Mixte de Service Observatoire des Sciences de l'Univers Nantes Atlantique",
+    name: "Observatoire des Sciences de l'Univers Nantes Atlantique",
     osu: "OSUNA",
     organizationRors: [
       "02feahw73",
@@ -90,20 +104,23 @@ export const LABORATORIES: readonly Laboratory[] = [
     ],
   },
   {
+    id: "201220900V",
     code: "UAR3470",
     acronym: "PYTHEAS",
-    name: "Institut PYTHEAS",
+    name: "Institut Pythéas",
     osu: "PYTHEAS",
     organizationRors: ["02feahw73", "035xkbk20", "003vg9w96"],
   },
   {
+    id: "199519805D",
     code: "UAR704",
     acronym: "ORN",
-    name: "Station de Radioastronomie de Nançay",
+    name: "Observatoire Radioastronomique de Nançay",
     osu: "OBSPM",
     organizationRors: ["02feahw73", "014zrew76", "029nkcm90"],
   },
   {
+    id: "201019744X",
     code: "UMI3351",
     acronym: "IFAECI",
     name: "Institut Franco-Argentin d'études sur le climat et ses impacts",
@@ -111,41 +128,51 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "05q3vnk25"],
   },
   {
-    code: "UMI3376",
+    id: "201119743S",
+    code: "IRL3376",
+    formerCodes: ["UMI3376"],
     acronym: "TAKUVIK",
     name: "TAKUVIK",
     osu: null,
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
-    code: "UMI3386",
+    id: "201119742R",
+    code: "IRL3386",
+    formerCodes: ["UMI3386"],
     acronym: "LFCA",
-    name: "Laboratoire Franco-Chilien d'Astronomie",
+    name: "Laboratoire Franco-Chilien d'astronomie",
     osu: null,
     organizationRors: ["02feahw73"],
   },
   {
-    code: "UMR 8254",
+    id: "202524644H",
+    code: "UMR8254",
+    formerCodes: ["UMR 8254"],
     acronym: "LIRA",
-    name: "Laboratoire d’Instrumentation et de Recherche en Astrophysique",
+    name: "Laboratoire d'instrumentation et de recherche en astrophysique",
     osu: "OBSPM",
     organizationRors: ["02feahw73", "02en5vm52", "05f82e368", "029nkcm90"],
   },
   {
-    code: "UMR 8262",
+    id: "202524635Y",
+    code: "UMR8262",
+    formerCodes: ["UMR 8262"],
     acronym: "LUX",
-    name: "Laboratoire d’étude de l’Univers et des phénomènes eXtrèmes",
+    name: "Laboratoire d'étude de l'Univers et des phénomènes eXtrèmes",
     osu: "OBSPM",
     organizationRors: ["02feahw73", "02en5vm52", "029nkcm90"],
   },
   {
+    id: "199917981D",
     code: "UMR1114",
     acronym: "EMMAH",
-    name: "Laboratoire ( UMR mixte Université / INRA)",
+    name: "Environnement Méditerranéen et Modélisation des Agro-Hydrosystèmes",
     osu: null,
     organizationRors: ["003vg9w96"],
   },
   {
+    id: "201320566C",
     code: "UMR3589",
     acronym: "CNRM",
     name: "Centre National de Recherches Météorologiques",
@@ -153,6 +180,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "0233st365"],
   },
   {
+    id: "201722374A",
     code: "UMR5001",
     acronym: "IGE",
     name: "Institut des Géosciences de l'Environnement",
@@ -160,6 +188,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02rx3b187", "003vg9w96", "05q3vnk25"],
   },
   {
+    id: "199911795E",
     code: "UMR5110",
     acronym: "CEFREM",
     name: "Centre de formation et de recherche sur les environnements méditerranéens",
@@ -167,6 +196,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "03am2jy38"],
   },
   {
+    id: "200317531X",
     code: "UMR5126",
     acronym: "CESBIO",
     name: "Centre d'études spatiales de la biosphère",
@@ -174,6 +204,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04h1h0y33", "01ahyrz84", "05q3vnk25"],
   },
   {
+    id: "200311828Y",
     code: "UMR5150",
     acronym: "LFC-R",
     name: "Laboratoire des fluides complexes et leurs réservoirs",
@@ -181,6 +212,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "01frn9647"],
   },
   {
+    id: "200311864M",
     code: "UMR5193",
     acronym: "LISST",
     name: "LABORATOIRE INTERDISCIPLINAIRE SOLIDARITES, SOCIETES, TERRITOIRES",
@@ -188,6 +220,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04ezk3x31"],
   },
   {
+    id: "199512012H",
     code: "UMR5574",
     acronym: "CRAL",
     name: "Centre de Recherche Astrophysique de Lyon",
@@ -195,13 +228,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "029brtt94", "04zmssz18"],
   },
   {
+    id: "200311865N",
     code: "UMR5194",
     acronym: "PACTE",
-    name: "POLITIQUES PUBLIQUES, ACTION POLITIQUE, TERRITOIRES",
+    name: "Pacte - Laboratoire de sciences sociales",
     osu: null,
     organizationRors: ["02feahw73", "02rx3b187"],
   },
   {
+    id: "200511874P",
     code: "UMR5204",
     acronym: "EDYTEM",
     name: "ENVIRONNEMENTS, DYNAMIQUES ET TERRITOIRES DE LA MONTAGNE",
@@ -209,6 +244,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04gqg1a07"],
   },
   {
+    id: "200511875R",
     code: "UMR5205",
     acronym: "LIRIS",
     name: "Laboratoire d'Informatique en Image et Systèmes d'Information",
@@ -216,13 +252,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "029brtt94", "03rth4p18"],
   },
   {
+    id: "200711882P",
     code: "UMR5213",
     acronym: "LAPLACE",
-    name: "Laboratoire Plasma et Conversion d’Energie",
+    name: "Laboratoire Plasma et Conversion d'Energie",
     osu: null,
     organizationRors: ["02feahw73", "01ahyrz84"],
   },
   {
+    id: "200711908T",
     code: "UMR5243",
     acronym: "GEO MONTP",
     name: "Géosciences Montpellier",
@@ -230,6 +268,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "051escj72", "02ryfmr77"],
   },
   {
+    id: "200711921G",
     code: "UMR5256",
     acronym: "IRCELYON",
     name: "INSTITUT DE RECHERCHES SUR LA CATALYSE ET L'ENVIRONNEMENT DE LYON",
@@ -237,6 +276,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "029brtt94"],
   },
   {
+    id: "200711926M",
     code: "UMR5263",
     acronym: "CLLE",
     name: "COGNITION, LANGUES, LANGAGE, ERGONOMIE",
@@ -244,6 +284,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04ezk3x31"],
   },
   {
+    id: "201119432D",
     code: "UMR5274",
     acronym: "IPAG",
     name: "Institut de Planétologie et d'Astrophysique de Grenoble",
@@ -251,6 +292,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02rx3b187"],
   },
   {
+    id: "201119454C",
     code: "UMR5275",
     acronym: "ISTerre",
     name: "Institut des Sciences de la Terre",
@@ -264,13 +306,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     ],
   },
   {
+    id: "201119400U",
     code: "UMR5276",
     acronym: "LGL-TPE",
-    name: "Laboratoire de géologie de Lyon : Terre, Planètes, Environnement",
+    name: "Laboratoire de géologie de Lyon : Terre, planètes et environnement",
     osu: "OSUL",
     organizationRors: ["02feahw73", "029brtt94", "04yznqr36", "04zmssz18"],
   },
   {
+    id: "201119477C",
     code: "UMR5277",
     acronym: "IRAP",
     name: "Institut de Recherche en Astrophysique et Planétologie",
@@ -278,13 +322,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04h1h0y33", "01ahyrz84"],
   },
   {
+    id: "201119459H",
     code: "UMR5299",
     acronym: "LUPM",
-    name: "Laboratoire Univers et Particules Montpellier",
+    name: "Laboratoire Univers et Particules de Montpellier",
     osu: "OREME",
     organizationRors: ["02feahw73", "051escj72"],
   },
   {
+    id: "201220448D",
     code: "UMR5302",
     acronym: "RAPSODEE",
     name: "CENTRE DE RECHERCHE D'ALBI EN GENIE DES PROCEDES DES SOLIDES DIVISES, DE L'ENERGIE ET DE L'ENVIRONNEMENT",
@@ -292,6 +338,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73"],
   },
   {
+    id: "201622384R",
     code: "UMR5318",
     acronym: "CECI",
     name: "Climat, Environnement, Couplages et Incertitudes",
@@ -299,6 +346,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73"],
   },
   {
+    id: "199512000V",
     code: "UMR5560",
     acronym: "LAERO",
     name: "Laboratoire d'aérologie",
@@ -306,6 +354,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "01ahyrz84"],
   },
   {
+    id: "201119478D",
     code: "UMR5563",
     acronym: "GET",
     name: "Géosciences environnement Toulouse",
@@ -313,6 +362,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "01ahyrz84", "05q3vnk25"],
   },
   {
+    id: "200317685P",
     code: "UMR5566",
     acronym: "LEGOS",
     name: "Laboratoire d'études en Géophysique et océanographie spatiales",
@@ -320,13 +370,16 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04h1h0y33", "01ahyrz84", "05q3vnk25"],
   },
   {
-    code: "UMR5569",
+    id: "199512007C",
+    code: "UMR5151",
+    formerCodes: ["UMR5569"],
     acronym: "HSM",
-    name: "Hydrosciences Montpellier",
+    name: "HydroSciences Montpellier",
     osu: "OREME",
     organizationRors: ["02feahw73", "051escj72", "05q3vnk25"],
   },
   {
+    id: "199512032E",
     code: "UMR5602",
     acronym: "GEODE",
     name: "GEOGRAPHIE DE L'ENVIRONNEMENT",
@@ -334,6 +387,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04ezk3x31"],
   },
   {
+    id: "199712084C",
     code: "UMR5804",
     acronym: "LAB",
     name: "Laboratoire d'astrophysique de Bordeaux",
@@ -341,13 +395,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "057qpr032"],
   },
   {
+    id: "200918434C",
     code: "UMR8190",
     acronym: "LATMOS",
-    name: 'Laboratoire"Atmosphères, Milieux, Observations Spatiales"',
+    name: 'Laboratoire "Atmosphères, Milieux, Observations Spatiales"',
     osu: "OVSQ",
     organizationRors: ["02feahw73", "02en5vm52", "03mkjjy25"],
   },
   {
+    id: "199512085M",
     code: "UMR5805",
     acronym: "EPOC",
     name: "Environnements et paléoenvironnements océaniques et continentaux",
@@ -355,13 +411,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "057qpr032"],
   },
   {
+    id: "200810873N",
     code: "UAR3116",
     acronym: "OSUC",
-    name: "Observatoire des Sciences de l'Univers en région Centre",
+    name: "Observatoire des Sciences de l'Univers en région Centre-Val de Loire",
     osu: "OSUC",
     organizationRors: ["02feahw73", "014zrew76"],
   },
   {
+    id: "200012116Z",
     code: "UMR6016",
     acronym: "LAMP",
     name: "Laboratoire de météorologie physique",
@@ -369,6 +427,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "01a8ajp46"],
   },
   {
+    id: "200012185Z",
     code: "UMR6112",
     acronym: "LPG",
     name: "Laboratoire de Planétologie et Géosciences",
@@ -376,6 +435,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "01mtcc283", "03gnr7b55", "04yrqp957"],
   },
   {
+    id: "200012191F",
     code: "UMR6118",
     acronym: "GeoRen",
     name: "Géosciences Rennes",
@@ -383,6 +443,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "015m7wh34"],
   },
   {
+    id: "200012210B",
     code: "UMR6143",
     acronym: "M2C",
     name: "Laboratoire de Morphodynamique continentale et côtière",
@@ -390,20 +451,23 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "051kpcy16", "03nhjew95"],
   },
   {
+    id: "200212224H",
     code: "UMR6164",
     acronym: "IETR",
-    name: "INSTITUT D'ELECTRONIQUE ET DE TELECOMMUNICATION DE RENNES",
+    name: "Institut d'Electronique et des Technologies du numéRique",
     osu: "OSERen",
     organizationRors: ["02feahw73", "03gnr7b55", "015m7wh34", "03rxtdc22"],
   },
   {
+    id: "200712259Z",
     code: "UMR6213",
     acronym: "UTINAM",
-    name: "Institut UTINAM (Univers, Transport, Interfaces Nanostructures, Atmosphère et Environnement, Molécules)",
+    name: "Institut UTINAM – Univers, Théorie, Interfaces, Nanostructures, Atmosphère et environnement, Molécules",
     osu: "THETA",
     organizationRors: ["02feahw73", "03pcc9z86"],
   },
   {
+    id: "200812285Y",
     code: "UMR6249",
     acronym: "CHRONO-ENV",
     name: "Chrono-environnement",
@@ -411,6 +475,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "03pcc9z86"],
   },
   {
+    id: "200812287A",
     code: "UMR6251",
     acronym: "IPR",
     name: "Institut de Physique de Rennes",
@@ -418,13 +483,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "015m7wh34"],
   },
   {
+    id: "200812294H",
     code: "UMR6266",
     acronym: "IDEES",
-    name: "Identité et Différenciation de l'Espace, de l'Environnement et des Sociétés",
+    name: "Identité et différenciation de l'espace, de l'environnement et des sociétés",
     osu: null,
     organizationRors: ["02feahw73", "05v509s40", "051kpcy16", "03nhjew95"],
   },
   {
+    id: "201220340L",
     code: "UMR6294",
     acronym: "LOMC",
     name: "Laboratoire d'ondes et milieux complexes",
@@ -432,13 +499,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "05v509s40"],
   },
   {
+    id: "199612297N",
     code: "UMR6502",
     acronym: "IMN",
-    name: "INSTITUT DES MATERIAUX JEAN ROUXEL",
+    name: "Institut des matériaux de Nantes Jean Rouxel",
     osu: null,
     organizationRors: ["02feahw73", "03gnr7b55"],
   },
   {
+    id: "200816947R",
     code: "UMR6523",
     acronym: "LOPS",
     name: "LABORATOIRE D'OCEANOGRAPHIE PHYSIQUE ET SPATIALE",
@@ -446,6 +515,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "044jxhp58", "05q3vnk25"],
   },
   {
+    id: "200817617U",
     code: "UMR6524",
     acronym: "LMV",
     name: "Laboratoire Magmas et volcans",
@@ -453,6 +523,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "01a8ajp46", "04yznqr36", "05q3vnk25"],
   },
   {
+    id: "199612326V",
     code: "UMR6538",
     acronym: "GEO-OCEAN",
     name: "Laboratoire Géosciences Océan",
@@ -460,6 +531,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "044jxhp58"],
   },
   {
+    id: "200816948S",
     code: "UMR6539",
     acronym: "LEMAR",
     name: "Laboratoire des sciences de l'environnement marin",
@@ -467,6 +539,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "044jxhp58", "05q3vnk25"],
   },
   {
+    id: "199612339J",
     code: "UMR6553",
     acronym: "ECOBIO",
     name: "Ecosystèmes, biodiversité, évolution",
@@ -474,13 +547,16 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "015m7wh34"],
   },
   {
+    id: "local:UMR6554",
     code: "UMR6554",
     acronym: "IDEES CAEN",
-    name: "IDEES CAEN",
+    name: "IDEES Caen (site de l'UMR IDEES)",
     osu: null,
     organizationRors: ["02feahw73", "051kpcy16", "05v509s40", "01m84wm78"],
+    replacedBy: "200812294H",
   },
   {
+    id: "200112481S",
     code: "UMR7093",
     acronym: "LOV",
     name: "Laboratoire d'océanographie de Villefranche",
@@ -488,6 +564,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
+    id: "200112483U",
     code: "UMR7095",
     acronym: "IAP",
     name: "Institut d'Astrophysique de Paris",
@@ -495,6 +572,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
+    id: "200512529B",
     code: "UMR7144",
     acronym: "AD2M",
     name: "Adaptation et diversité en milieu marin",
@@ -502,6 +580,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
+    id: "200512539M",
     code: "UMR7154",
     acronym: "IPGP",
     name: "Institut de physique du globe de Paris",
@@ -509,13 +588,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "05f82e368", "004gzqz66"],
   },
   {
+    id: "200919203N",
     code: "UMR7158",
     acronym: "AIM",
-    name: "Astrophysique, Instrumentation et Modélisation, de Paris-Saclay",
+    name: "Astrophysique, Instrumentation, Modélisation",
     osu: "OSUPS",
     organizationRors: ["02feahw73", "05f82e368", "00jjx8s55"],
   },
   {
+    id: "200918490N",
     code: "UMR7159",
     acronym: "LOCEAN",
     name: "Laboratoire d'Océanographie et du Climat : Expérimentations et Approches Numériques",
@@ -523,6 +604,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52", "05q3vnk25", "03wkt5x30"],
   },
   {
+    id: "200512546V",
     code: "UMR7164",
     acronym: "APC",
     name: "Astroparticule et Cosmologie",
@@ -530,6 +612,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "05f82e368", "00jjx8s55", "029nkcm90"],
   },
   {
+    id: "200918450V",
     code: "UMR7193",
     acronym: "iSTeP",
     name: "Institut des Sciences de la Terre Paris",
@@ -537,6 +620,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "043htjv09", "02en5vm52"],
   },
   {
+    id: "200918564U",
     code: "UMR7202",
     acronym: "LMCM",
     name: "Laboratoire de Minéralogie et Cosmochimie du Muséum",
@@ -544,7 +628,23 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["03wkt5x30"],
   },
   {
+    id: "200919362L",
     code: "UMR7208",
+    acronym: "BOREA",
+    name: "Biologie des organismes et écosystèmes aquatiques",
+    osu: "Ecce Terra",
+    organizationRors: [
+      "02feahw73",
+      "02en5vm52",
+      "05q3vnk25",
+      "03wkt5x30",
+      "02ryfmr77",
+    ],
+    replacedBy: "200924698L",
+  },
+  {
+    id: "200924698L",
+    code: "UMR8067",
     acronym: "BOREA",
     name: "Biologie des organismes et écosystèmes aquatiques",
     osu: "Ecce Terra",
@@ -557,6 +657,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     ],
   },
   {
+    id: "201220434N",
     code: "UMR7250",
     acronym: "ARTEMIS",
     name: "Astrophysique Relativiste, Théories, Expériences, Métrologie, Instrumentation, Signaux",
@@ -564,6 +665,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "019tgvf94", "039fj2469"],
   },
   {
+    id: "201220407J",
     code: "UMR7266",
     acronym: "LIENS",
     name: "Littoral, Environnement et Sociétés",
@@ -571,6 +673,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04mv1z119"],
   },
   {
+    id: "201220398Z",
     code: "UMR7285",
     acronym: "IC2MP",
     name: "Institut de Chimie des Milieux et des Matériaux de Poitiers",
@@ -578,6 +681,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04xhy8q59"],
   },
   {
+    id: "201220431K",
     code: "UMR7293",
     acronym: "Lagrange",
     name: "Laboratoire Joseph-Louis Lagrange",
@@ -585,13 +689,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "019tgvf94", "039fj2469"],
   },
   {
+    id: "201220349W",
     code: "UMR7294",
     acronym: "MIO",
-    name: "Institut Méditerranéen d'Océanographie",
+    name: "Institut Méditerranéen d'Océanologie",
     osu: "PYTHEAS",
     organizationRors: ["02feahw73", "035xkbk20", "02m9kbe37", "05q3vnk25"],
   },
   {
+    id: "201220240C",
     code: "UMR7300",
     acronym: "ESPACE",
     name: "Etudes des structures, des processus d'adaptation et des changements de l'espace",
@@ -599,6 +705,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "035xkbk20", "019tgvf94"],
   },
   {
+    id: "201220274P",
     code: "UMR7326",
     acronym: "LAM",
     name: "Laboratoire d'Astrophysique de Marseille",
@@ -606,6 +713,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "035xkbk20", "04h1h0y33"],
   },
   {
+    id: "201220213Y",
     code: "UMR7327",
     acronym: "ISTO",
     name: "Institut des Sciences de la Terre d'Orléans",
@@ -613,6 +721,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "05hnb7x64", "014zrew76"],
   },
   {
+    id: "201220223J",
     code: "UMR7328",
     acronym: "LPC2E",
     name: "Laboratoire de physique et chimie de l'environnement et de l'Espace",
@@ -620,6 +729,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04h1h0y33", "014zrew76"],
   },
   {
+    id: "200816914E",
     code: "UMR7329",
     acronym: "GEOAZUR",
     name: "Géoazur",
@@ -627,13 +737,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "019tgvf94", "05q3vnk25", "039fj2469"],
   },
   {
+    id: "201220322S",
     code: "UMR7330",
     acronym: "CEREGE",
-    name: "Centre européen de recherche et d'enseignement de géosciences de l'environnement",
+    name: "Centre de Recherche et d'Enseignement des Géosciences de l'Environnement",
     osu: "PYTHEAS",
     organizationRors: ["02feahw73", "035xkbk20", "003vg9w96", "05q3vnk25"],
   },
   {
+    id: "201220207S",
     code: "UMR7331",
     acronym: "GSMA",
     name: "Groupe de spectrométrie moléculaire et atmosphérique",
@@ -641,6 +753,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "03hypw319"],
   },
   {
+    id: "201320574L",
     code: "UMR7358",
     acronym: "CRPG",
     name: "Centre de recherches pétrographiques et géochimiques",
@@ -648,6 +761,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04vfs2w97"],
   },
   {
+    id: "201320575M",
     code: "UMR7359",
     acronym: "GEORESSOURCES",
     name: "GéoRessources",
@@ -655,6 +769,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04vfs2w97"],
   },
   {
+    id: "201320576N",
     code: "UMR7360",
     acronym: "LIEC",
     name: "Laboratoire Interdisciplinaire des Environnements continentaux",
@@ -662,6 +777,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04vfs2w97"],
   },
   {
+    id: "201420642F",
     code: "UMR7372",
     acronym: "CEBC",
     name: "Centre d'études biologiques de Chizé",
@@ -669,6 +785,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04mv1z119"],
   },
   {
+    id: "199712602R",
     code: "UMR7550",
     acronym: "OBAS",
     name: "Observatoire astronomique de Strasbourg",
@@ -676,20 +793,23 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "00pg6eq24"],
   },
   {
+    id: "199412629H",
     code: "UMR7583",
     acronym: "LISA",
-    name: "Laboratoire inter-universitaire des systèmes atmosphèriques",
+    name: "Laboratoire inter-universitaire des systèmes atmosphériques",
     osu: "EFLUVE",
     organizationRors: ["02feahw73", "05f82e368", "05ggc9x40"],
   },
   {
+    id: "199712636C",
     code: "UMR7590",
     acronym: "IMPMC",
-    name: "Institut de minéralogie et de physique des milieux condensés",
+    name: "Institut de Minéralogie, de Physique des Matériaux et de Cosmochimie",
     osu: "Ecce Terra",
     organizationRors: ["02feahw73", "02en5vm52", "03wkt5x30"],
   },
   {
+    id: "199712653W",
     code: "UMR7608",
     acronym: "FAST",
     name: "Fluides, Automatique et Systèmes Thermiques",
@@ -697,6 +817,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "03xjwb503"],
   },
   {
+    id: "199712666K",
     code: "UMR7621",
     acronym: "LOMIC",
     name: "Laboratoire d'océanographie microbienne",
@@ -704,6 +825,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
+    id: "201019049S",
     code: "UMR7648",
     acronym: "LPP",
     name: "Laboratoire de physique des plasmas",
@@ -711,13 +833,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52", "03xjwb503", "029nkcm90"],
   },
   {
+    id: "201922973T",
     code: "UMR8023",
     acronym: "LPENS",
-    name: "Laboratoire de Physique de l’École normale supérieure",
+    name: "Laboratoire de physique de l'ENS",
     osu: null,
     organizationRors: ["02feahw73", "02en5vm52", "05f82e368"],
   },
   {
+    id: "200212762T",
     code: "UMR8105",
     acronym: "LACy",
     name: "Laboratoire de l'Atmosphère et des Cyclones",
@@ -725,6 +849,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "0233st365"],
   },
   {
+    id: "200212766X",
     code: "UMR8109",
     acronym: "LIRA",
     name: "Laboratoire d'Etudes Spatiales et d'Instrumentation en Astrophysique",
@@ -736,15 +861,18 @@ export const LABORATORIES: readonly Laboratory[] = [
       "013cjyk83",
       "029nkcm90",
     ],
+    replacedBy: "202524644H",
   },
   {
+    id: "200412804E",
     code: "UMR8148",
     acronym: "GEOPS",
-    name: "Géosciences Paris-Sud",
+    name: "Géosciences Paris-Saclay",
     osu: "OSUPS",
     organizationRors: ["02feahw73", "03xjwb503"],
   },
   {
+    id: "200812834V",
     code: "UMR8187",
     acronym: "LOG",
     name: "Laboratoire d'océanologie et de géosciences",
@@ -752,6 +880,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02kzqn938", "02gdcg342"],
   },
   {
+    id: "200611689J",
     code: "UMR8212",
     acronym: "LSCE",
     name: "Laboratoire des sciences du climat et de l'environnement",
@@ -759,6 +888,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "00jjx8s55", "03mkjjy25"],
   },
   {
+    id: "201220423B",
     code: "UMR8217",
     acronym: "Géosystèmes",
     name: "Géosystèmes",
@@ -766,6 +896,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02kzqn938", "01gyxrk03"],
   },
   {
+    id: "201420753B",
     code: "UMR8247",
     acronym: "IRCP",
     name: "Institut de Recherche de Chimie Paris",
@@ -773,6 +904,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73"],
   },
   {
+    id: "202524639C",
     code: "UMR8255",
     acronym: "LTE",
     name: "Laboratoire Temps Espace",
@@ -780,13 +912,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52", "02kzqn938", "029nkcm90"],
   },
   {
+    id: "199812847C",
     code: "UMR8518",
     acronym: "LOA",
-    name: "Laboratoire d'optique atmosphèrique",
+    name: "Laboratoire d'optique atmosphérique",
     osu: null,
     organizationRors: ["02feahw73", "02kzqn938"],
   },
   {
+    id: "199812866Y",
     code: "UMR8538",
     acronym: "LABORATOIRE DE GÉOLOGIE DE L'ENS",
     name: "Laboratoire de Géologie de l'Ecole Normale Supérieure",
@@ -794,6 +928,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73"],
   },
   {
+    id: "199812867Z",
     code: "UMR8539",
     acronym: "LMD",
     name: "Laboratoire de météorologie dynamique",
@@ -801,6 +936,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02en5vm52"],
   },
   {
+    id: "199812942F",
     code: "UMR8617",
     acronym: "IAS",
     name: "Institut d'astrophysique spatiale",
@@ -808,6 +944,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "03xjwb503"],
   },
   {
+    id: "201521249L",
     code: "UMR9189",
     acronym: "CRIStAL",
     name: "Centre de Recherche en Informatique, Signal, et Automatique de Lille",
@@ -815,13 +952,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02kzqn938"],
   },
   {
+    id: "201521701C",
     code: "UMR9220",
     acronym: "ENTROPIE",
-    name: "Ecologie Marine Tropicale des Océans Pacifique et Indien",
+    name: "Ecologie marine tropicale dans les Océans Pacifique et Indien",
     osu: "OSU-Réunion",
     organizationRors: ["044jxhp58", "05q3vnk25"],
   },
   {
+    id: "200610854B",
     code: "UAR2201",
     acronym: "OP",
     name: "Observatoire de Paris",
@@ -829,6 +968,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "013cjyk83", "029nkcm90"],
   },
   {
+    id: "200410855L",
     code: "UAR2202",
     acronym: "OCA",
     name: "Observatoire de la Côte d'Azur",
@@ -836,6 +976,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "019tgvf94", "039fj2469"],
   },
   {
+    id: "200310864A",
     code: "UAR2567",
     acronym: "OASU",
     name: "Observatoire aquitain des sciences de l'univers",
@@ -843,6 +984,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04mv1z119", "057qpr032", "003vg9w96"],
   },
   {
+    id: "200320524A",
     code: "UAR2572",
     acronym: "LMC14",
     name: "Laboratoire de mesure du carbone 14",
@@ -850,6 +992,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "00jjx8s55", "05q3vnk25"],
   },
   {
+    id: "200420526Y",
     code: "UAR2859",
     acronym: "SAFIRE",
     name: "Service des Avions Français Instrumentés pour la Recherche en Environnement",
@@ -857,13 +1000,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04h1h0y33", "0233st365"],
   },
   {
+    id: "200620527R",
     code: "UAR2877",
     acronym: "ICARE",
-    name: "ICARE",
+    name: "Centre de données et Services ICARE",
     osu: null,
     organizationRors: ["02feahw73", "04h1h0y33", "02kzqn938"],
   },
   {
+    id: "201120530X",
     code: "UAR3245",
     acronym: "THETA",
     name: "Terre-Homme-Environnement-Temps-Astronomie",
@@ -871,27 +1016,31 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "03k1bsr36", "03pcc9z86"],
   },
   {
+    id: "200919527R",
     code: "UAR3282",
     acronym: "OREME",
-    name: "Observatoire de REcherche Méditerranéen de l'Environnement",
+    name: "Observatoire de Recherche Montpelliérain de l'Environnement",
     osu: "OREME",
     organizationRors: ["02feahw73", "051escj72", "003vg9w96", "05q3vnk25"],
   },
   {
+    id: "201020686W",
     code: "UAR3342",
     acronym: "OVSQ",
-    name: "Unité mixte de service de l'OSU-OVSQ",
+    name: "Observatoire des sciences de l'univers de l'UVSQ",
     osu: "OVSQ",
     organizationRors: ["02feahw73", "03mkjjy25"],
   },
   {
+    id: "201220716V",
     code: "UAR3343",
     acronym: "OSERen",
-    name: "Unité mixte de service pour l'Observatoire de Rennes",
+    name: "Observatoire des Sciences de l'Environnement de Rennes",
     osu: "OSERen",
     organizationRors: ["02feahw73", "01m84wm78", "015m7wh34"],
   },
   {
+    id: "201020888R",
     code: "UAR3365",
     acronym: "OSU-Réunion",
     name: "Unité mixte de service de l'OSU de la Réunion",
@@ -899,16 +1048,18 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "05q3vnk25", "0233st365"],
   },
   {
+    id: "201220893M",
     code: "UAR3454",
     acronym: "IPGP",
-    name: "Unité mixte de service de de l'Institut de Physique du Globe de Paris",
+    name: "Unité mixte de service de l'Institut de physique du globe de Paris",
     osu: "IPGP",
     organizationRors: ["02feahw73", "004gzqz66"],
   },
   {
+    id: "201220920S",
     code: "UAR3455",
     acronym: "Ecce Terra",
-    name: "Observatoire des sciences de l'Univers Ecce-Terra",
+    name: "Observatoire des sciences de l'Univers Paris-Centre Ecce Terra",
     osu: "Ecce Terra",
     organizationRors: [
       "02feahw73",
@@ -919,13 +1070,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     ],
   },
   {
+    id: "201220901W",
     code: "UAR3538",
     acronym: "LSBB",
-    name: "Laboratoire sous terrain à Bas Bruit",
+    name: "Laboratoire souterrain à bas bruit",
     osu: null,
     organizationRors: ["02feahw73"],
   },
   {
+    id: "201320582V",
     code: "UAR3562",
     acronym: "OTELo",
     name: "Observatoire Terre et Environnement de Lorraine",
@@ -933,13 +1086,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04vfs2w97"],
   },
   {
+    id: "201320583W",
     code: "UAR3563",
     acronym: "EFLUVE",
-    name: 'Unité mixte de service"Enveloppes fluides : de la ville à l\'exobiologie"',
+    name: "Enveloppes fluides : de la ville à l'exobiologie",
     osu: "EFLUVE",
     organizationRors: ["02feahw73", "05f82e368", "05ggc9x40"],
   },
   {
+    id: "201521823K",
     code: "UAR3721",
     acronym: "OSUL",
     name: "Observatoire de Lyon",
@@ -947,13 +1102,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "029brtt94", "04zmssz18"],
   },
   {
+    id: "199320515J",
     code: "UAR830",
     acronym: "EOST",
-    name: "Ecole et Observatoire des sciences de la Terre de Strasbourg",
+    name: "École et observatoire des sciences de la Terre de Strasbourg",
     osu: "EOST",
     organizationRors: ["02feahw73", "00pg6eq24"],
   },
   {
+    id: "200719584L",
     code: "UAR831",
     acronym: "OMP",
     name: "Observatoire midi-Pyrénées",
@@ -967,6 +1124,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     ],
   },
   {
+    id: "200310841A",
     code: "UAR832",
     acronym: "OSUG",
     name: "Observatoire des Sciences de l'Univers de Grenoble",
@@ -974,6 +1132,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "02rx3b187", "003vg9w96", "05q3vnk25"],
   },
   {
+    id: "200810842E",
     code: "UAR833",
     acronym: "OPGC",
     name: "Observatoire de physique du globe de Clermont-Ferrand",
@@ -981,6 +1140,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "01a8ajp46"],
   },
   {
+    id: "200017654U",
     code: "UPR3079",
     acronym: "CEMHTI",
     name: "Conditions Extrêmes et Matériaux : Haute température et Irradiation",
@@ -988,6 +1148,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73"],
   },
   {
+    id: "198318600W",
     code: "UPR3266",
     acronym: "GANIL",
     name: "Grand accélérateur national d'ions lourds",
@@ -995,6 +1156,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "00jjx8s55"],
   },
   {
+    id: "201019365K",
     code: "UPR3346",
     acronym: "Pprime",
     name: "Institut P' : Recherche et Ingénierie en Matériaux, Mécanique et Energétique",
@@ -1002,6 +1164,7 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73", "04xhy8q59"],
   },
   {
+    id: "196717612S",
     code: "UPR4301",
     acronym: "CBM",
     name: "Centre de biophysique moléculaire",
@@ -1009,44 +1172,55 @@ export const LABORATORIES: readonly Laboratory[] = [
     organizationRors: ["02feahw73"],
   },
   {
-    code: "UPR8641",
+    id: "196817561G",
+    code: "UMR5031",
+    formerCodes: ["UPR8641"],
     acronym: "CRPP",
-    name: "CENTRE DE RECHERCHE PAUL PASCAL",
+    name: "Centre de Recherche Paul Pascal",
     osu: null,
     organizationRors: ["02feahw73", "057qpr032"],
   },
   {
-    code: "UPS2074",
+    id: "199921733G",
+    code: "UAR2074",
+    formerCodes: ["UPS2074"],
     acronym: "IRAM",
     name: "Institut de Radio Astronomie Millimétrique",
     osu: "OVSQ",
     organizationRors: ["02feahw73"],
   },
   {
-    code: "UPS2776",
+    id: "200421737P",
+    code: "UAR2276",
+    formerCodes: ["UPS2776"],
     acronym: "POUCHET",
-    name: "POUCHET",
+    name: "Pouchet",
     osu: null,
     organizationRors: ["02feahw73"],
   },
   {
-    code: "UPS2928",
+    id: "200521739M",
+    code: "UAR2928",
+    formerCodes: ["UPS2928"],
     acronym: "IPEV",
     name: "Institut Polaire Français Paul Emile Victor",
     osu: null,
     organizationRors: ["02feahw73"],
   },
   {
-    code: "UPS855",
+    id: "199521753W",
+    code: "UAR855",
+    formerCodes: ["UPS855"],
     acronym: "DT-INSU",
     name: "Division technique de l'INSU",
     osu: null,
     organizationRors: ["02feahw73"],
   },
   {
+    id: "201019121V",
     code: "USR3278",
     acronym: "CRIOBE",
-    name: "Centre de recherche insulaire et observatoire de l'environnement",
+    name: "Centre de Recherches Insulaires et Observatoire de l'Environnement",
     osu: null,
     organizationRors: ["02feahw73", "03am2jy38"],
   },

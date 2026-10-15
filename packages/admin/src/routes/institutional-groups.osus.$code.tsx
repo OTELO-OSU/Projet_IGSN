@@ -1,5 +1,5 @@
+import { findOsu } from "@projet-igsn/domain/institutional-group/find-osu";
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
-import { OSUS } from "@projet-igsn/domain/institutional-group/osu";
 import { listUsersQuerySchema } from "@projet-igsn/domain/user/user-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -22,7 +22,7 @@ function OsuDetailPage() {
   const { page, perPage } = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const osu = OSUS.find((candidate) => candidate.code === code);
+  const osu = findOsu(code);
   if (!osu) {
     return <p role="alert">{m.group_not_found()}</p>;
   }

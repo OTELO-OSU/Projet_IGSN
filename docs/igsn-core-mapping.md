@@ -216,6 +216,8 @@ A `bbox` covering more than a quarter of the Earth's surface (`MAX_SEARCH_BBOX_W
 
 Every controlled vocabulary (nature, texture, the four hierarchies, ROR/OSU/laboratory codes, numeric age unit) is published as a full OpenAPI `enum` in the served document.
 
+OSU and laboratory codes, in an affiliation URN or a filter, stay codes though the database stores an RNSR id. A former code (`urn:otelo:laboratory:UPS2074`) is still accepted on input and read back under the current one (`UAR2074`). This is internal, not a deviation; see ADR [0061](adr/0061-labs-and-osus-stored-by-rnsr-id.md).
+
 `status`, `sort`, `order`, `ownership`, `ownerId` and `institution` are deliberately not exposed: the list stays published-only, ordered by IGSN, and unscoped by ownership beyond `editable`.
 
 | Core param                | internal param              | Core location                                                                                                                |

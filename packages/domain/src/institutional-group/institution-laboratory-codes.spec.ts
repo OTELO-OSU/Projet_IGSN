@@ -19,9 +19,15 @@ describe("institutionLaboratoryCodes", () => {
     },
   );
 
-  it("should resolve a laboratory to that code alone", () => {
-    expect(institutionLaboratoryCodes("laboratory:FR636")).toEqual(["FR636"]);
-  });
+  it.each([
+    ["laboratory:UMR8254", ["UMR8254", "UMR8109"]],
+    ["laboratory:UPS2074", ["UAR2074"]],
+  ])(
+    "should resolve %s to the current codes of it and those it replaced",
+    (filter, expected) => {
+      expect(institutionLaboratoryCodes(filter)).toEqual(expected);
+    },
+  );
 
   it("should resolve an invalid filter to no laboratory", () => {
     expect(institutionLaboratoryCodes("laboratory:UMR9999")).toEqual([]);

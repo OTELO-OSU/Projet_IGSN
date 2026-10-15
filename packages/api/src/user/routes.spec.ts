@@ -15,6 +15,7 @@ import { describe, expect, vi } from "vitest";
 
 import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
+import { institutionCodes } from "../institutional-group/stored-institution.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
 import { insertUser } from "../tests/insert-user.ts";
@@ -432,17 +433,19 @@ const insertMember = (
     .values({ group_id: groupId, user_id: userId })
     .execute();
 
-const readGroups = (db: Parameters<typeof createApp>[0], id: string) =>
-  db
-    .selectFrom("user")
-    .select([
-      "institutional_organization as institutionalOrganization",
-      "institutional_osu as institutionalOsu",
-      "institutional_laboratory as institutionalLaboratory",
-      "status",
-    ])
-    .where("id", "=", id)
-    .executeTakeFirstOrThrow();
+const readGroups = async (db: Parameters<typeof createApp>[0], id: string) =>
+  institutionCodes(
+    await db
+      .selectFrom("user")
+      .select([
+        "institutional_organization as institutionalOrganization",
+        "institutional_osu as institutionalOsu",
+        "institutional_laboratory as institutionalLaboratory",
+        "status",
+      ])
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow(),
+  );
 
 const insertResearchers = (db: Parameters<typeof createApp>[0]) =>
   db
@@ -1311,6 +1314,43 @@ describe("admin user routes", () => {
     );
 
     pgTest(
+      "should mail the orphaned laboratories in code order",
+      async ({ db }) => {
+        // Arrange
+        await insertResearchers(db);
+        await moderateInstitution(
+          db,
+          ACCEPTED_ID,
+          { kind: "laboratory", code: "UMR8105" },
+          { kind: "laboratory", code: "UMR7358" },
+        );
+        const { client, sendMail } = await asSuperAdminWithMail(db);
+        // Act
+        const res = await client.admin.users[":id"].$put(
+          {
+            param: { id: ACCEPTED_ID },
+            json: update({
+              status: "rejected",
+              managedGroups: {
+                ...NO_MANAGED_GROUPS,
+                laboratories: ["UMR8105", "UMR7358"],
+              },
+            }),
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(2));
+        expect(
+          sendMail.mock.calls.map(
+            ([mail]) => /laboratories\/(\w+)/.exec(mail.text)?.[1],
+          ),
+        ).toEqual(["UMR7358", "UMR8105"]);
+      },
+    );
+
+    pgTest(
       "should send nothing when another accepted manager remains",
       async ({ db }) => {
         // Arrange
@@ -1339,6 +1379,47 @@ describe("admin user routes", () => {
         // Assert
         expect(res.status).toBe(200);
         expect(sendMail).not.toHaveBeenCalled();
+      },
+    );
+
+    pgTest(
+      "should leave out a replaced laboratory whose successor keeps an accepted manager",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+        await insertResearchers(db);
+        await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
+        await moderateInstitution(db, ACCEPTED_ID, {
+          kind: "laboratory",
+          code: "UMR8109",
+        });
+        const peer = await insertUser(db, "peer-eb4@univ-lorraine.fr");
+        await moderateInstitution(db, peer.id, {
+          kind: "laboratory",
+          code: "UMR8254",
+        });
+        const { client, sendMail } = await asSuperAdminWithMail(db);
+        // Act
+        const res = await client.admin.users[":id"].$put(
+          {
+            param: { id: ACCEPTED_ID },
+            json: update({
+              status: "rejected",
+              managedGroups: {
+                ...NO_MANAGED_GROUPS,
+                laboratories: ["UMR8109"],
+                manualGroupIds: [MASSIF],
+              },
+            }),
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+        expect(sendMail.mock.lastCall![0].text).toContain(
+          `/manual-groups/${MASSIF}`,
+        );
       },
     );
 
@@ -2046,6 +2127,33 @@ describe("admin institutional counts route", () => {
         osus: { OTELo: 1, OSUG: 1 },
         laboratories: { UMR7358: 2, UMR5275: 1 },
       });
+    },
+  );
+
+  pgTest(
+    "should add up the users of a laboratory stored under its id and under its raw code",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "alice-c81@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const raw = await insertUser(db, "bruno-c81@univ-lorraine.fr");
+      await db
+        .updateTable("user")
+        .set({ institutional_laboratory: "UMR7358" })
+        .where("id", "=", raw.id)
+        .execute();
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users["institutional-counts"].$get(
+        {},
+        { headers: authHeader },
+      );
+      // Assert
+      const body = institutionalGroupCountsResponseSchema.parse(
+        await res.json(),
+      );
+      expect(body.data.laboratories).toEqual({ UMR7358: 2 });
     },
   );
 

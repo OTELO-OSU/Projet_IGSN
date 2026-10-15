@@ -1,3 +1,4 @@
+import { findOsu } from "./find-osu.ts";
 import { type Laboratory, LABORATORIES } from "./laboratory.ts";
 
 export function filterLaboratoriesByOrgAndOsu({
@@ -7,10 +8,11 @@ export function filterLaboratoriesByOrgAndOsu({
   organizationRor?: string;
   osu?: string | null;
 }): Laboratory[] {
+  const osuCode = osu == null ? osu : (findOsu(osu)?.code ?? osu);
   return LABORATORIES.filter(
     (laboratory) =>
       (organizationRor == null ||
         laboratory.organizationRors.includes(organizationRor)) &&
-      (osu == null || laboratory.osu === osu),
+      (osuCode == null || laboratory.osu === osuCode),
   );
 }

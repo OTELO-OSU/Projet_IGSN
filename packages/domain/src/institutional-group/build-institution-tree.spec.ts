@@ -14,4 +14,13 @@ describe("buildInstitutionTree", () => {
       ],
     });
   });
+
+  it("should offer the replacing laboratory but not the one it replaced", () => {
+    const offered = buildInstitutionTree().flatMap(({ osus }) =>
+      osus.flatMap(({ laboratories }) => laboratories),
+    );
+
+    expect(offered).toContain("UMR8254");
+    expect(offered).not.toContain("UMR8109");
+  });
 });

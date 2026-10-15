@@ -4,13 +4,13 @@ import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope"
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { ExpressionBuilder, Kysely, Transaction } from "kysely";
 
+import { laboratoryCodeOf } from "@projet-igsn/domain/institutional-group/laboratory-code-of";
+import { laboratoryCodesWithPredecessors } from "@projet-igsn/domain/institutional-group/laboratory-codes-with-predecessors";
+import { osuIdOf } from "@projet-igsn/domain/institutional-group/osu-id-of";
 import { canBecomeSuperAdmin } from "@projet-igsn/domain/user/can-become-super-admin";
 import { canSetSuperAdmin } from "@projet-igsn/domain/user/can-set-super-admin";
 import { isSpaceManager } from "@projet-igsn/domain/user/is-space-manager";
-import {
-  knownManagedCodes,
-  NO_MANAGED_GROUPS,
-} from "@projet-igsn/domain/user/managed-groups";
+import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { userSchema } from "@projet-igsn/domain/user/model";
 import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { userManagementRights } from "@projet-igsn/domain/user/user-management-rights";
@@ -26,8 +26,14 @@ import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
+import {
+  institutionCodes,
+  laboratoryIdsOf,
+  storedInstitutions,
+} from "../institutional-group/stored-institution.ts";
 import { likePattern } from "../like-pattern.ts";
 import {
+  knownManagedGroupCodes,
   managedGroupsOf,
   replaceManagedGroups,
   USER_MANAGED_GROUP_TABLES,
@@ -87,10 +93,14 @@ const orphanedGroupsOnLeavingAccepted = (
     ? orphanedGroupsOfUser(trx, id)
     : Promise.resolve([]);
 
-const toAdminUser = (row: { managedGroups: ManagedGroups }) =>
+const toAdminUser = (
+  row: Parameters<typeof institutionCodes>[0] & {
+    managedGroups: ManagedGroups;
+  },
+) =>
   adminUserSchema.parse({
-    ...row,
-    managedGroups: knownManagedCodes(row.managedGroups),
+    ...institutionCodes(row),
+    managedGroups: knownManagedGroupCodes(row.managedGroups),
   });
 
 // ponytail: one write per admin request; read first and write only on a change if the write volume ever matters.
@@ -117,7 +127,7 @@ const lockUserInScope = async (
       ? new HTTPException(404, { message: "User not found" })
       : new HTTPException(403, { message: "Forbidden" });
   }
-  return row;
+  return institutionCodes(row);
 };
 
 export function createUserRepository(db: Kysely<DB>): UserRepository {
@@ -132,7 +142,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           )
           .returning(USER_COLUMNS)
           .executeTakeFirstOrThrow();
-        return userSchema.parse(row);
+        return userSchema.parse(institutionCodes(row));
       }),
     list: (
       {
@@ -155,9 +165,17 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
             eb.and({
               status,
               institutional_organization: institutionalOrganization,
-              institutional_osu: institutionalOsu,
-              institutional_laboratory: institutionalLaboratory,
+              institutional_osu: institutionalOsu && osuIdOf(institutionalOsu),
             }),
+          )
+          .$if(institutionalLaboratory !== undefined, (qb) =>
+            qb.where(
+              "institutional_laboratory",
+              "in",
+              laboratoryIdsOf(
+                laboratoryCodesWithPredecessors(institutionalLaboratory!),
+              ),
+            ),
           )
           .where((eb) => eb.and(moderationScopeWhere(eb, scope)))
           .$if(search !== undefined, (qb) =>
@@ -196,7 +214,9 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .select((eb) => eb.fn.countAll<number>().as("count"))
           .executeTakeFirstOrThrow();
         return {
-          data: rows.map((row) => listedUserSchema.parse(row)),
+          data: rows.map((row) =>
+            listedUserSchema.parse(institutionCodes(row)),
+          ),
           total: Number(count),
         };
       }),
@@ -222,7 +242,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .where("id", "=", userId)
           .where("status", "=", "accepted")
           .executeTakeFirst();
-        return knownManagedCodes(row?.managedGroups ?? NO_MANAGED_GROUPS);
+        return knownManagedGroupCodes(row?.managedGroups ?? NO_MANAGED_GROUPS);
       }),
     listPublicUsers: (include) =>
       withTransaction(db, async (trx) => {
@@ -249,8 +269,8 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
         return rows.map((row) => publicUserSchema.parse(row));
       }),
     listPending: () =>
-      withTransaction(db, (trx) =>
-        trx
+      withTransaction(db, async (trx) => {
+        const rows = await trx
           .selectFrom("user")
           .select([
             "email",
@@ -265,8 +285,14 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .where("super_admin", "=", false)
           .orderBy("created_at", "asc")
           .orderBy("email", "asc")
-          .execute(),
-      ),
+          .execute();
+        return rows.map((row) => ({
+          ...row,
+          institutionalLaboratory:
+            row.institutionalLaboratory &&
+            laboratoryCodeOf(row.institutionalLaboratory),
+        }));
+      }),
     // ponytail: reads every accepted row to filter managers in JS; prefilter on the two managed tables in SQL if it grows.
     listSpaceManagers: () =>
       withTransaction(db, async (trx) => {
@@ -282,7 +308,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .map(({ id, email, managedGroups: groups }) => ({
             id,
             email,
-            groups: knownManagedCodes(groups),
+            groups: knownManagedGroupCodes(groups),
           }))
           .filter(({ groups }) => isSpaceManager(groups));
       }),
@@ -334,14 +360,15 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
             submitted.managedGroups,
           );
         }
+        const stored = storedInstitutions(user);
         await trx
           .updateTable("user")
           .set({
-            status: user.status,
+            status: stored.status,
             super_admin: superAdmin,
-            institutional_organization: user.institutionalOrganization,
-            institutional_osu: user.institutionalOsu,
-            institutional_laboratory: user.institutionalLaboratory,
+            institutional_organization: stored.institutionalOrganization,
+            institutional_osu: stored.institutionalOsu,
+            institutional_laboratory: stored.institutionalLaboratory,
           })
           .where("id", "=", id)
           .execute();
@@ -417,10 +444,14 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .returning(USER_COLUMNS)
           .executeTakeFirst(),
       );
-      return row ? userSchema.parse(row) : null;
+      return row ? userSchema.parse(institutionCodes(row)) : null;
     },
-    setInstitutionalGroups: (userId, groups) => {
-      const osu = groups.institutionalOsu ?? null;
+    setInstitutionalGroups: (userId, submitted) => {
+      const groups = storedInstitutions({
+        ...submitted,
+        institutionalOsu: submitted.institutionalOsu ?? null,
+      });
+      const osu = groups.institutionalOsu;
       return withTransaction(db, async (trx) => {
         const previous = await trx
           .selectFrom("user")
@@ -493,7 +524,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .where("orcid", "=", orcid.toUpperCase())
           .executeTakeFirst(),
       );
-      return row && userSchema.parse(row);
+      return row && userSchema.parse(institutionCodes(row));
     },
   };
 }

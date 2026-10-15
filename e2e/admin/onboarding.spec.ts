@@ -55,7 +55,7 @@ test.describe("onboarding", () => {
     await settings.openGroups();
     await settings.setInstitution({
       organization: "Université Grenoble Alpes",
-      osu: "Observatoire des Sciences de l’Univers de Grenoble",
+      osu: "Observatoire des sciences de l'univers de Grenoble",
       laboratory: "ISTerre",
     });
 

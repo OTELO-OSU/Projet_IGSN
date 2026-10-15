@@ -3,6 +3,8 @@ import type { Expression, ExpressionBuilder, SqlBool } from "kysely";
 
 import type { DB } from "../db.ts";
 
+import { laboratoryIdsOf } from "../institutional-group/stored-institution.ts";
+
 export function moderationScopeWhere(
   eb: ExpressionBuilder<DB, "user">,
   scope: ModerationScope,
@@ -11,7 +13,11 @@ export function moderationScopeWhere(
   const { callerId, managedLaboratories } = scope;
   return [
     managedLaboratories.length > 0
-      ? eb("user.institutional_laboratory", "in", managedLaboratories)
+      ? eb(
+          "user.institutional_laboratory",
+          "in",
+          laboratoryIdsOf(managedLaboratories),
+        )
       : eb.lit(false),
     eb("user.id", "!=", callerId),
     eb("user.super_admin", "=", false),

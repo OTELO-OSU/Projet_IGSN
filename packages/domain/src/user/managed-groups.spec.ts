@@ -31,6 +31,15 @@ describe("managedGroupsSchema", () => {
     });
   });
 
+  it("should accept a former laboratory code as its current code", () => {
+    expect(
+      managedGroupsSchema.parse({
+        ...NO_MANAGED_GROUPS,
+        laboratories: ["UPS2074"],
+      }),
+    ).toEqual({ ...NO_MANAGED_GROUPS, laboratories: ["UAR2074"] });
+  });
+
   it("should collapse duplicates", () => {
     expect(
       managedGroupsSchema.parse({

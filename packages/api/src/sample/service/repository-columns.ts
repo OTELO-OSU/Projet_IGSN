@@ -1,10 +1,15 @@
 import type { Repository } from "@projet-igsn/domain/sample/repository/model";
 
+import { laboratoryIdOf } from "@projet-igsn/domain/institutional-group/laboratory-id-of";
+import { osuIdOf } from "@projet-igsn/domain/institutional-group/osu-id-of";
+
 export function repositoryColumns(repository: Repository | null | undefined) {
+  const osu = repository?.currentArchiveOsu;
+  const laboratory = repository?.currentArchiveLaboratory;
   return {
-    rep_current_archive_osu: repository?.currentArchiveOsu ?? null,
+    rep_current_archive_osu: osu == null ? null : osuIdOf(osu),
     rep_current_archive_laboratory:
-      repository?.currentArchiveLaboratory ?? null,
+      laboratory == null ? null : laboratoryIdOf(laboratory),
     rep_current_archive_contact_firstname:
       repository?.currentArchiveContactFirstname ?? null,
     rep_current_archive_contact_lastname:

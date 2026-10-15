@@ -21,14 +21,19 @@ function codesOf(rows: (typeof VOCABULARY_BLOCKS)[number]["rows"]): Codes {
   return byParent;
 }
 
+const rowsOf = (block: (typeof VOCABULARY_BLOCKS)[number]) => [
+  ...(block.retiredRows ?? []),
+  ...block.rows,
+];
+
 const CODES = new Map(
-  VOCABULARY_BLOCKS.map((block) => [block.id, codesOf(block.rows)]),
+  VOCABULARY_BLOCKS.map((block) => [block.id, codesOf(rowsOf(block))]),
 );
 
 const LABELS = new Map(
   VOCABULARY_BLOCKS.map((block) => [
     block.id,
-    new Map(block.rows.map(([key, label, path]) => [path || key, label])),
+    new Map(rowsOf(block).map(([key, label, path]) => [path || key, label])),
   ]),
 );
 

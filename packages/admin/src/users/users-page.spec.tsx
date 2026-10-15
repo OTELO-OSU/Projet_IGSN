@@ -234,7 +234,10 @@ describe("UsersPage", () => {
       .getByLabelText("Search institutions")
       .fill("Université d'Orléans");
     await screen
-      .getByRole("button", { name: "OSUC (OSUC)", exact: true })
+      .getByRole("button", {
+        name: "Observatoire des sciences de l'univers en région Centre-Val de Loire (OSUC)",
+        exact: true,
+      })
       .click();
 
     await expect

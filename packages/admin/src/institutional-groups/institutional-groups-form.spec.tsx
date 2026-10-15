@@ -110,4 +110,41 @@ describe("InstitutionalGroupsForm", () => {
       .element(page.getByRole("combobox", { name: /Laboratory/ }))
       .toHaveTextContent("Select a laboratory");
   });
+
+  it("should not offer a replaced laboratory", async () => {
+    await render(<InstitutionalGroupsForm save={save} />);
+    await pick(/Organization/, "CNRS", /\(CNRS\)$/);
+    await pick(/OSU/, "OBSPM", /\(OBSPM\)/);
+
+    await page.getByRole("combobox", { name: /Laboratory/ }).click();
+    await page.getByPlaceholder(/^Search/).fill("LIRA");
+
+    await expect
+      .element(
+        page.getByRole("option", {
+          name: /instrumentation et de recherche en astrophysique/,
+        }),
+      )
+      .toBeVisible();
+    expect(
+      page.getByRole("option", { name: /Etudes Spatiales/ }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should keep showing a stored replaced laboratory", async () => {
+    await render(
+      <InstitutionalGroupsForm
+        groups={{
+          institutionalOrganization: "02feahw73",
+          institutionalOsu: "OBSPM",
+          institutionalLaboratory: "UMR8109",
+        }}
+        save={save}
+      />,
+    );
+
+    await expect
+      .element(page.getByRole("combobox", { name: /Laboratory/ }))
+      .toHaveTextContent(/\(LIRA\)/);
+  });
 });
