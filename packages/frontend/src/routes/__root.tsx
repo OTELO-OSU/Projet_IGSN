@@ -14,9 +14,10 @@ import type { MyRouterContext } from "../router-context";
 
 import { onSigninCallback, userManager } from "../auth/oidc-config.ts";
 import { OpenDataLink } from "../domain/samples/open-data-link.tsx";
+import { FRONTEND_URL } from "../frontend-url.ts";
 import { SiteHeader } from "../header/site-header.tsx";
 import { m } from "../paraglide/messages.js";
-import { getLocale, localizeHref } from "../paraglide/runtime.js";
+import { getLocale, locales, localizeHref } from "../paraglide/runtime.js";
 import "../styles.css";
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -38,7 +39,18 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       links: [
         {
           rel: "canonical",
-          href: localizeHref(path, { locale: "en" }),
+          href: new URL(localizeHref(path), FRONTEND_URL).href,
+        },
+        ...locales.map((locale) => ({
+          rel: "alternate",
+          hrefLang: locale,
+          href: new URL(localizeHref(path, { locale }), FRONTEND_URL).href,
+        })),
+        {
+          rel: "alternate",
+          hrefLang: "x-default",
+          href: new URL(localizeHref(path, { locale: "en" }), FRONTEND_URL)
+            .href,
         },
         {
           rel: "icon",
@@ -68,20 +80,21 @@ function RootLayout() {
         <Toaster />
 
         <footer className="mt-16 pb-10">
-          <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 pt-10">
-            <span aria-hidden className="bg-border h-px flex-1" />
-            <ExternalLink href="https://www.cnrs.fr/" className="shrink-0">
+          <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] grid-rows-[2.5rem_auto] gap-x-6 gap-y-2 px-6 pt-10">
+            <span aria-hidden className="bg-border h-px self-end" />
+            <ExternalLink
+              href="https://www.cnrs.fr/"
+              className="row-span-2 self-start"
+            >
               <img
                 src={`${import.meta.env.BASE_URL}logo-cnrs.svg`}
                 alt={m.footer_logo_cnrs()}
                 className="h-20 w-auto"
               />
             </ExternalLink>
-            <span aria-hidden className="bg-border h-px flex-1" />
-          </div>
-          <div className="mx-auto mt-4 flex max-w-6xl flex-col items-start gap-2 ps-6 pe-8 md:-mt-8 lg:flex-row lg:flex-wrap lg:gap-x-4">
-            <OpenDataLink className="text-primary text-sm font-medium no-underline underline-offset-4 hover:underline" />
-            <div className="flex flex-col items-start gap-2 lg:ms-auto lg:flex-row lg:flex-wrap lg:gap-x-4">
+            <span aria-hidden className="bg-border h-px self-end" />
+            <OpenDataLink className="text-primary col-span-3 self-start text-sm font-medium no-underline underline-offset-4 hover:underline lg:col-span-1 lg:col-start-1 lg:row-start-2" />
+            <div className="col-span-3 flex flex-col items-start gap-2 self-start lg:col-span-1 lg:col-start-3 lg:row-start-2 lg:flex-row lg:flex-wrap lg:justify-end lg:gap-x-4 lg:pe-2">
               <Link
                 to="/legal-notice"
                 className="text-primary text-sm font-medium underline-offset-4 hover:underline"

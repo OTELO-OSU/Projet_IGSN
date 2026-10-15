@@ -140,4 +140,4 @@ The answers to "How does the search find samples?" describe rules set in the cod
 3. Run `pnpm test packages/frontend/src/faq packages/frontend/src/routes/faq`. The page tests look for the 7 category titles and the texts "How do I link my ORCID to my IGSN account?", "How do I sign in?", "through the RENATER identity federation", "Back to all questions" and "No question matches your search.": if you reword one of them, update [packages/frontend/src/faq/faq.spec.tsx](../packages/frontend/src/faq/faq.spec.tsx) or [packages/frontend/src/routes/faq/-$category.spec.tsx](../packages/frontend/src/routes/faq/-$category.spec.tsx) the same way.
 4. Run `pnpm fmt:apply` to tidy the formatting.
 
-The site is in English only today, so `en.json` is the one text file to edit.
+The site ships in English and French, so edit the same keys in `en.json` and `fr.json`, or the key-parity spec fails.

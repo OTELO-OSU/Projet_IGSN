@@ -5,6 +5,7 @@ import { MenuIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { AuthControls } from "#/auth/auth-controls.tsx";
+import { LocaleSwitch } from "#/i18n/locale-switch.tsx";
 import { m } from "#/paraglide/messages.js";
 
 import { NAV_LINK_CLASS } from "./nav-link-class.ts";
@@ -88,6 +89,7 @@ export function SiteHeader() {
           </nav>
           <AuthControls />
         </div>
+        <LocaleSwitch />
       </div>
     </header>
   );

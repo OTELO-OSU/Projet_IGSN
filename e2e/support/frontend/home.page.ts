@@ -5,6 +5,21 @@ import { frontendUrl } from "../urls";
 export function homePage(page: Page) {
   return {
     goto: () => page.goto(frontendUrl),
+    gotoLocale: (locale: string) => page.goto(`${frontendUrl}/${locale}`),
+    expectLocale: async (locale: string, title: string) => {
+      await page.waitForURL((url) => url.pathname.startsWith(`/${locale}`));
+      await expect(page.getByRole("heading", { name: title })).toBeVisible();
+      await expect(page.locator("html")).toHaveAttribute("lang", locale);
+    },
+    switchLocale: async (name: string) => {
+      const from = new URL(page.url()).pathname;
+      await expect(async () => {
+        await page.getByRole("button", { name }).click();
+        await page.waitForURL((url) => url.pathname !== from, {
+          timeout: 2_000,
+        });
+      }).toPass({ timeout: 20_000 });
+    },
     mapAllSamples: async () => {
       const loaded = page.waitForResponse(
         (response) =>

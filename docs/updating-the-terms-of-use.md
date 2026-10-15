@@ -35,4 +35,4 @@ This needs a developer: the lines are listed by key in `charter.tsx`, and the li
 2. Run `make dev` and open http://localhost:3000/terms-of-use.
 3. Run `pnpm fmt:apply` to tidy the formatting.
 
-The site is in English only today, so `en.json` is the one text file to edit.
+The site ships in English and French, so edit the same keys in `en.json` and `fr.json`, or the key-parity spec fails.
