@@ -17,6 +17,7 @@
     "import:legacy": "node scripts/import-legacy.ts"
   },
   "dependencies": {
+    "@faker-js/faker": "catalog:",
     "@hono/node-server": "catalog:",
     "@hono/swagger-ui": "catalog:",
     "@hono/zod-openapi": "catalog:",
@@ -38,7 +39,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@faker-js/faker": "catalog:",
     "@kysely-vitest/postgres": "catalog:",
     "@types/mjml": "catalog:",
     "@types/node": "catalog:",
