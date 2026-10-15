@@ -894,6 +894,15 @@ export const LABORATORIES: readonly Laboratory[] = [
     name: "Géosystèmes",
     osu: null,
     organizationRors: ["02feahw73", "02kzqn938", "01gyxrk03"],
+    replacedBy: "201521251N",
+  },
+  {
+    id: "201521251N",
+    code: "UMR8198",
+    acronym: "UMR8198",
+    name: "EVO ECO PALEO - Evolution, Ecologie, Paléontologie",
+    osu: null,
+    organizationRors: ["02feahw73", "02kzqn938", "01gyxrk03"],
   },
   {
     id: "201420753B",
