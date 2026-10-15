@@ -28,19 +28,15 @@ describe("contactSampleOwner", () => {
     },
   );
 
-  it("should resolve to sent when the api accepts the message", async () => {
-    const { fetch } = stubFetch(undefined, 204);
+  it.each([
+    [204, "sent"],
+    [409, "no_recipient"],
+    [429, "rate_limited"],
+  ])("should resolve a %i response to %s", async (status, result) => {
+    const { fetch } = stubFetch(undefined, status);
 
     await expect(contactSampleOwner(igsn, "owner", body, fetch)).resolves.toBe(
-      "sent",
-    );
-  });
-
-  it("should resolve to no_recipient when the owner cannot be contacted", async () => {
-    const { fetch } = stubFetch({ error: "No recipient" }, 409);
-
-    await expect(contactSampleOwner(igsn, "owner", body, fetch)).resolves.toBe(
-      "no_recipient",
+      result,
     );
   });
 

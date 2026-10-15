@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { z } from "zod";
 
 import { appUrl } from "./app-url.ts";
 import { createApp } from "./app.ts";
@@ -29,6 +30,7 @@ const frontendUrl = appUrl("FRONTEND_URL");
 const { app } = createApp(db, {
   frontendUrl,
   mail: { sendMail, adminUrl, frontendUrl },
+  contactEmail: z.email().parse(process.env.CONTACT_EMAIL),
 });
 schedulePendingUsersDigest(() => {
   void sendPendingUsersDigest(

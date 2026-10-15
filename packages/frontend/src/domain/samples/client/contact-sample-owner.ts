@@ -14,7 +14,7 @@ export async function contactSampleOwner(
   recipient: ContactRecipient,
   body: ContactSampleOwnerBody,
   fetchFn: typeof fetch = apiFetch,
-): Promise<"sent" | "no_recipient"> {
+): Promise<"sent" | "no_recipient" | "rate_limited"> {
   const res = await fetchFn(
     new URL(`samples/${igsn}/${CONTACT_PATH[recipient]}`, baseApiUrl),
     {
@@ -25,6 +25,9 @@ export async function contactSampleOwner(
   );
   if (res.status === 409) {
     return "no_recipient";
+  }
+  if (res.status === 429) {
+    return "rate_limited";
   }
   if (!res.ok) {
     throw new Error(

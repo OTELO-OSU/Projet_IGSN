@@ -69,6 +69,7 @@ services:
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost
+      CONTACT_EMAIL: contact@igsn.localhost
       DATACITE_API_HOST: http://datacite:8080
       DATACITE_API_KEY: dev
       DATACITE_DOI_PREFIX: "10.70113"
