@@ -182,12 +182,11 @@ describe("SampleListPage", () => {
         const tree = screen.getByRole("dialog");
         await tree.getByRole("button", { name: "Show Coring" }).click();
         await tree
-          .getByRole("button", { name: "Coring", exact: true })
-          .nth(1)
+          .getByRole("button", { name: "BoxCorer", exact: true })
           .click();
       },
-      "collectionMethod=coring.coring",
-      { collectionMethod: "coring.coring" },
+      "collectionMethod=coring.box_corer",
+      { collectionMethod: "coring.box_corer" },
     ],
     [
       "status",
