@@ -16,7 +16,7 @@ describe("collectionMethodSchema", () => {
   });
 
   it.each([
-    "coring.piston_corer.piston_corer",
+    "coring.piston_corer",
     "coring.piston_corer.giant",
     "coring.piston_corer.stationary_piston",
     "coring.rock_corer",
@@ -33,7 +33,11 @@ describe("collectionMethodSchema", () => {
     "Coring",
     "coring.piston_corer.rock_corer",
     "coring.piston_corer.hollow_auger_corer",
-    "coring.piston_corer.piston_corer.piston_corer",
+    "coring.coring",
+    "coring.gravity_corer.gravity_corer",
+    "coring.piston_corer.piston_corer",
+    "dredging.dredging",
+    "grab.grab",
   ])("should reject %s", (input) => {
     expect(collectionMethodSchema.safeParse(input).success).toBe(false);
   });
@@ -55,6 +59,15 @@ describe("COLLECTION_METHODS", () => {
         !COLLECTION_METHODS.includes(path.split(".").slice(0, -1).join(".")),
     );
     expect(orphans).toEqual([]);
+  });
+
+  it("should never repeat a segment as its own child", () => {
+    const selfChildren = COLLECTION_METHODS.filter((path) =>
+      path
+        .split(".")
+        .some((segment, index, segments) => segment === segments[index - 1]),
+    );
+    expect(selfChildren).toEqual([]);
   });
 });
 

@@ -782,7 +782,7 @@ const PUBLISHED: DemoRow[] = [
     type: "individual_sample",
     material:
       "rock_and_sediment.sediment.physico_chemical.precipitates.evaporitic",
-    collectionMethod: "grab.grab",
+    collectionMethod: "grab",
     location: {
       position: point(38.5, 21.0),
       verticalPositions: [bathy(1800)],

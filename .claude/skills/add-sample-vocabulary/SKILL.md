@@ -97,7 +97,7 @@ A node can list itself as a child (`X > X`) when a childless dotted override key
 
 `expandPaths` resolves each node by the longest matching suffix, so `x.x` hits the childless leaf and stops. Without it the walk cycles and throws `Path tree cycle` at import, reddening every spec. Labels still key by the last segment.
 
-No vocabulary uses this today: Core alone is the valid stop, `core` being `optional: true`.
+- No vocabulary uses a self-child: when a parent is itself a valid answer, mark it `optional: true` instead, as `core` and the collection-method parents do.
 
 ## Strunz-Mindat minerals
 
