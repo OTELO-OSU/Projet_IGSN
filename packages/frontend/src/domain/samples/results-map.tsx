@@ -364,12 +364,21 @@ function FocusSample({
 }) {
   const map = useMap();
   const pending = useRef<HoveredSample>(undefined);
+  const isMoving = useRef(false);
+  useMapEvents({
+    movestart() {
+      isMoving.current = true;
+    },
+    moveend() {
+      isMoving.current = false;
+    },
+  });
   useEffect(() => {
     pending.current = sample;
   }, [sample]);
   useEffect(() => {
     const target = pending.current;
-    if (!target || !clusters) return;
+    if (!target || !clusters || isMoving.current) return;
     const point = highlightPoint(target.position, L.latLngBounds(WORLD_BOUNDS));
     const animate = !prefersReducedMotion();
     const cluster =

@@ -3,6 +3,7 @@ import type {
   SampleMapPointsResponse,
 } from "@projet-igsn/domain/sample/map/model";
 
+import L from "leaflet";
 import { vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
@@ -355,6 +356,31 @@ describe("ResultsMap", () => {
         ),
       { timeout: 3000 },
     );
+  });
+
+  it("should let the zoom into a located sample's cluster finish when marker details arrive during it", async () => {
+    let releaseDetails = () => {};
+    stubApi({
+      detailsArrive: new Promise((resolve) => {
+        releaseDetails = resolve;
+      }),
+    });
+    const flyTo = vi.spyOn(L.Map.prototype, "flyTo");
+    const { screen } = await renderMap({
+      points: pointsOf([...CLUSTER_POINTS, GRANITE_POINT]),
+      centered: {
+        igsn: BASALT.igsn,
+        position: { type: "point", latitude: 46, longitude: 3 },
+      },
+    });
+    await vi.waitFor(() => expect(flyTo).toHaveBeenCalled());
+
+    releaseDetails();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Granite 7" }))
+      .toBeInTheDocument();
+    expect(flyTo).toHaveBeenCalledOnce();
   });
 
   it("should keep samples at one spot in one cluster at max zoom, listing ten and counting the rest", async () => {
