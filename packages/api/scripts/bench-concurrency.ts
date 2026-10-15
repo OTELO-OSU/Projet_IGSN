@@ -26,11 +26,6 @@ const { values } = parseArgs({
   },
 });
 const endpoints = parseEndpoints(values.endpoints);
-if (endpoints.includes("map")) {
-  throw new Error(
-    "the map endpoint is not part of the bench:concurrency mix: time map with bench:grid",
-  );
-}
 mkdirSync(values.out, { recursive: true });
 
 async function send(

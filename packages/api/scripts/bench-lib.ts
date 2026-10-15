@@ -106,7 +106,6 @@ export function appendCsv(
 export const ENDPOINT_PATHS = {
   list: "samples",
   facets: "samples/facets",
-  map: "samples/map/points",
 } as const;
 
 export type Endpoint = keyof typeof ENDPOINT_PATHS;
