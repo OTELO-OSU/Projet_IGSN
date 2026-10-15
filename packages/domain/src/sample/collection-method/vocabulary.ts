@@ -8,7 +8,6 @@ const collectionMethodTree = {
     optional: true,
     searchable: true,
     choices: [
-      "coring",
       "box_corer",
       "camera_mounted",
       "drill_corer",
@@ -29,11 +28,9 @@ const collectionMethodTree = {
       "hollow_auger_corer",
     ],
   },
-  "coring.coring": { label: "coring" },
   gravity_corer: {
     optional: true,
     choices: [
-      "gravity_corer",
       "giant",
       "pilot",
       "free_fall_corer",
@@ -43,24 +40,20 @@ const collectionMethodTree = {
       "freeze_corer",
     ],
   },
-  "gravity_corer.gravity_corer": { label: "gravity_corer" },
   piston_corer: {
     optional: true,
-    choices: ["piston_corer", "giant", "stationary_piston"],
+    choices: ["giant", "stationary_piston"],
   },
-  "piston_corer.piston_corer": { label: "piston_corer" },
   dredging: {
     optional: true,
     searchable: true,
-    choices: ["dredging", "chain_bag", "chain_bag_dredge"],
+    choices: ["chain_bag", "chain_bag_dredge"],
   },
-  "dredging.dredging": { label: "dredging" },
   grab: {
     optional: true,
     searchable: true,
-    choices: ["grab", "hov", "rov"],
+    choices: ["hov", "rov"],
   },
-  "grab.grab": { label: "grab" },
   blasting: { searchable: true },
   camera_sled_camera_tow: { searchable: true },
   experimental_apparatus: { searchable: true },
