@@ -79,7 +79,7 @@ describe("RequestSampleDeletionDialog", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent(
-        "Your request was sent to the super admin and is being processed.",
+        "Your request was sent to the admin and is being processed.",
       );
     expect(screen.getByRole("dialog").elements()).toHaveLength(0);
     expect(reasons).toEqual(["The sample was destroyed by mistake."]);

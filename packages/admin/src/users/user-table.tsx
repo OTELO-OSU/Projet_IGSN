@@ -56,6 +56,7 @@ const columns: ColumnDef<ListedUser>[] = [
   {
     id: "superAdmin",
     header: () => m.user_super_admin(),
+    meta: { className: "text-center" },
     cell: ({ row }) => (row.original.superAdmin ? <SuperAdminMark /> : null),
   },
   {

@@ -289,12 +289,12 @@ describe("UsersPage", () => {
       .element(
         screen
           .getByRole("row", { name: /user4@univ-lorraine\.fr/ })
-          .getByRole("img", { name: "Super admin" }),
+          .getByRole("img", { name: "Admin" }),
       )
       .toBeVisible();
-    expect(
-      screen.getByRole("img", { name: "Super admin" }).elements(),
-    ).toHaveLength(1);
+    expect(screen.getByRole("img", { name: "Admin" }).elements()).toHaveLength(
+      1,
+    );
   });
 
   it("should page through the list from the server", async () => {
