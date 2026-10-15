@@ -100,6 +100,12 @@ function RootLayout() {
               >
                 {m.footer_terms_of_use()}
               </Link>
+              <Link
+                to="/contact"
+                className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+              >
+                {m.footer_contact()}
+              </Link>
             </div>
           </div>
         </footer>

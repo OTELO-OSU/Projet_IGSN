@@ -10,10 +10,12 @@ import {
   ChevronDownIcon,
   CircleUserIcon,
   LogOut,
+  MailIcon,
   UserIcon,
   UsersRoundIcon,
 } from "lucide-react";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 
 import { SignOutButton } from "./auth/sign-out-button.tsx";
@@ -51,6 +53,12 @@ export function UserMenu({ onSignOut }: { onSignOut: () => void }) {
             <UsersRoundIcon />
             {m.nav_groups()}
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href={`${FRONTEND_URL}/contact`}>
+            <MailIcon />
+            {m.nav_contact()}
+          </a>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onSignOut}>
           <LogOut />

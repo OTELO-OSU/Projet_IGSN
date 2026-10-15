@@ -1,6 +1,8 @@
+import type { ContactAdminBody } from "@projet-igsn/domain/contact/contact-validator";
 import type { ContactSampleOwnerBody } from "@projet-igsn/domain/sample/sample-validator";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
+import { contactAdminBodySchema } from "@projet-igsn/domain/contact/contact-validator";
 import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
 import { contactSampleOwnerBodySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { useState } from "react";
@@ -12,27 +14,65 @@ const ISSUE_MESSAGE: Record<string, () => string> = {
   too_big: () => m.contact_field_too_long(),
 };
 
-const validate = zodFieldErrors(contactSampleOwnerBodySchema, (issue) =>
-  (ISSUE_MESSAGE[issue.code] ?? (() => m.field_required()))(),
+const messageOf = (issue: { code: string }) =>
+  (ISSUE_MESSAGE[issue.code] ?? (() => m.field_required()))();
+
+const validateOwnerBody = zodFieldErrors(
+  contactSampleOwnerBodySchema,
+  messageOf,
+);
+const validateAdminBody = zodFieldErrors(contactAdminBodySchema, messageOf);
+
+type ContactResult = "sent" | "no_recipient" | "rate_limited";
+
+type ContactOwnerFormProps = {
+  title: string;
+  noRecipientMessage?: string;
+} & (
+  | {
+      withSubject?: false;
+      onSend: (body: ContactSampleOwnerBody) => Promise<ContactResult>;
+    }
+  | {
+      withSubject: true;
+      onSend: (body: ContactAdminBody) => Promise<ContactResult>;
+    }
 );
 
-export function ContactOwnerForm({
-  title,
-  noRecipientMessage,
-  onSend,
-}: {
-  title: string;
-  noRecipientMessage: string;
-  onSend: (body: ContactSampleOwnerBody) => Promise<"sent" | "no_recipient">;
-}) {
+const ownerBodyOf = ({
+  subject: _subject,
+  ...body
+}: ContactAdminBody): ContactSampleOwnerBody => body;
+
+export function ContactOwnerForm(props: ContactOwnerFormProps) {
+  const { title, noRecipientMessage = "" } = props;
   const [statusMessage, setStatusMessage] = useState("");
   const form = useAppForm({
-    defaultValues: { name: "", firstname: "", email: "", message: "" },
-    validators: { onSubmit: validate },
+    defaultValues: {
+      subject: "",
+      name: "",
+      firstname: "",
+      email: "",
+      message: "",
+    },
+    validators: {
+      onSubmit: ({ value }) =>
+        props.withSubject
+          ? validateAdminBody({ value })
+          : validateOwnerBody({ value: ownerBodyOf(value) }),
+    },
     onSubmit: async ({ value }) => {
       try {
-        const result = await onSend(value);
-        setStatusMessage(result === "no_recipient" ? noRecipientMessage : "");
+        const result = await (props.withSubject
+          ? props.onSend(value)
+          : props.onSend(ownerBodyOf(value)));
+        setStatusMessage(
+          {
+            sent: "",
+            no_recipient: noRecipientMessage,
+            rate_limited: m.contact_rate_limited(),
+          }[result],
+        );
       } catch {
         setStatusMessage(m.contact_error());
       }
@@ -66,6 +106,13 @@ export function ContactOwnerForm({
             <field.TextField label={m.contact_field_email()} isFullWidth />
           )}
         </form.AppField>
+        {props.withSubject ? (
+          <form.AppField name="subject">
+            {(field) => (
+              <field.TextField label={m.contact_field_subject()} isFullWidth />
+            )}
+          </form.AppField>
+        ) : null}
         <form.AppField name="message">
           {(field) => (
             <field.TextField

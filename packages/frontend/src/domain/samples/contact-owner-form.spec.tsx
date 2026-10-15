@@ -37,20 +37,26 @@ describe("ContactOwnerForm", () => {
     await expect.element(screen.getByRole("status")).toHaveTextContent("");
   });
 
-  it("should tell the visitor when the owner cannot be contacted", async () => {
-    const screen = await render(
-      <ContactOwnerForm
-        {...labels}
-        onSend={vi.fn().mockResolvedValue("no_recipient")}
-      />,
-    );
+  it.each([
+    ["no_recipient", "The owner of this record cannot be contacted."],
+    ["rate_limited", "Too many messages, try again later."],
+  ])(
+    "should tell the visitor why a %s message was not sent",
+    async (result, message) => {
+      const screen = await render(
+        <ContactOwnerForm
+          {...labels}
+          onSend={vi.fn().mockResolvedValue(result)}
+        />,
+      );
 
-    await fillAndSend();
+      await fillAndSend();
 
-    await expect
-      .element(screen.getByRole("status"))
-      .toHaveTextContent("The owner of this record cannot be contacted.");
-  });
+      await expect
+        .element(screen.getByRole("status"))
+        .toHaveTextContent(message);
+    },
+  );
 
   it("should show a generic error when sending fails", async () => {
     const screen = await render(

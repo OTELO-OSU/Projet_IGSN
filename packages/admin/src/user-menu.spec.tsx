@@ -2,6 +2,8 @@ import type * as Router from "@tanstack/react-router";
 
 import { HttpResponse, http } from "msw";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
+
 import { fakeCurrentUser } from "../test/fake-current-user.ts";
 import { worker } from "../test/msw.ts";
 import { render } from "../test/render.tsx";
@@ -47,6 +49,17 @@ describe("UserMenu", () => {
     await expect
       .element(screen.getByRole("menuitem", { name: "Sign out" }))
       .toBeVisible();
+  });
+
+  it("should link the public contact page", async () => {
+    fakeCurrentUser();
+
+    const screen = await render(<UserMenu onSignOut={vi.fn()} />);
+    await screen.getByRole("button", { name: /Marie Dupont/ }).click();
+
+    await expect
+      .element(screen.getByRole("menuitem", { name: "Contact" }))
+      .toHaveAttribute("href", `${FRONTEND_URL}/contact`);
   });
 
   it("should sign the user out when they choose sign out", async () => {

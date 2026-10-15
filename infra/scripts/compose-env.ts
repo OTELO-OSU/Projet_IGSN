@@ -92,6 +92,12 @@ const VARS: EnvVar[] = [
     purpose: "From display name, admin-audience mail.",
   },
   {
+    name: "CONTACT_EMAIL",
+    purpose:
+      "Platform mailbox receiving the public contact form; the api refuses to boot without it.",
+    required: true,
+  },
+  {
     name: "SAMPLE_SEARCH_FUZZY_THRESHOLD",
     purpose: "pg_trgm similarity threshold of the person facets, in (0,1].",
     default: "0.8",

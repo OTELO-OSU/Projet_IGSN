@@ -11,6 +11,7 @@ import type { SendMail } from "./mail/send-mail.ts";
 import { attachmentsDir as defaultAttachmentsDir } from "./attachments-dir.ts";
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import { createContactRoutes } from "./contact/routes.ts";
 import { dataCiteConfig } from "./datacite/config.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
 import { createInstitutionalGroupRoutes } from "./institutional-group/routes.ts";
@@ -61,10 +62,12 @@ export function createApp(
     attachmentsDir = defaultAttachmentsDir,
     frontendUrl = "http://localhost:3000/",
     mail,
+    contactEmail,
   }: {
     attachmentsDir?: string;
     frontendUrl?: string;
     mail?: { sendMail: SendMail; adminUrl: string; frontendUrl: string };
+    contactEmail?: string;
   } = {},
 ) {
   const corsOrigins = (process.env.CORS_ORIGINS ?? "")
@@ -138,6 +141,10 @@ export function createApp(
         mail,
       ),
     );
+
+  const contactRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip", CONTACT_MAIL_IP_BUDGET))
+    .route("/", createContactRoutes(mail, contactEmail));
 
   const publicManualGroupRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
@@ -291,6 +298,7 @@ export function createApp(
     })
     .get("/", (c) => c.json({ message: "OK" }))
     .route("/samples", publicSampleRoutes)
+    .route("/contact", contactRoutes)
     .route("/manual-groups", publicManualGroupRoutes)
     .route("/stats", publicStatsRoutes)
     .route("/users", publicUserRoutes)

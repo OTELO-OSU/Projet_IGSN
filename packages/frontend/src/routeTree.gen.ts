@@ -16,6 +16,7 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as ManifestDotjsonRouteImport } from './routes/manifest[.]json'
 import { Route as LegalNoticeRouteImport } from './routes/legal-notice'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FaqIndexRouteImport } from './routes/faq/index'
 import { Route as SamplesIgsnRouteImport } from './routes/samples/$igsn'
@@ -56,6 +57,11 @@ const LegalNoticeRoute = LegalNoticeRouteImport.update({
   path: '/legal-notice',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -79,6 +85,7 @@ const FaqCategoryRoute = FaqCategoryRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/legal-notice': typeof LegalNoticeRoute
   '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/legal-notice': typeof LegalNoticeRoute
   '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/contact': typeof ContactRoute
   '/legal-notice': typeof LegalNoticeRoute
   '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/contact'
     | '/legal-notice'
     | '/manifest.json'
     | '/partners'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/contact'
     | '/legal-notice'
     | '/manifest.json'
     | '/partners'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/contact'
     | '/legal-notice'
     | '/manifest.json'
     | '/partners'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ContactRoute: typeof ContactRoute
   LegalNoticeRoute: typeof LegalNoticeRoute
   ManifestDotjsonRoute: typeof ManifestDotjsonRoute
   PartnersRoute: typeof PartnersRoute
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalNoticeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -257,6 +277,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ContactRoute: ContactRoute,
   LegalNoticeRoute: LegalNoticeRoute,
   ManifestDotjsonRoute: ManifestDotjsonRoute,
   PartnersRoute: PartnersRoute,
