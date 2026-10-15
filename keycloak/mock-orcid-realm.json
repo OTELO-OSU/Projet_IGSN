@@ -23,7 +23,8 @@
       "clientAuthenticatorType": "client-secret",
       "standardFlowEnabled": true,
       "redirectUris": [
-        "${ORCID_BROKER_REDIRECT_URI:http://localhost:8080/realms/igsn/broker/orcid/endpoint}"
+        "${ORCID_BROKER_REDIRECT_URI:http://localhost:8080/realms/igsn/broker/orcid/endpoint}",
+        "${ADMIN_REDIRECT_URI:http://localhost:3000/admin/*}"
       ],
       "attributes": {
         "post.logout.redirect.uris": "${ORCID_BROKER_REDIRECT_URI:http://localhost:8080/realms/igsn/broker/orcid/endpoint}/logout_response"
@@ -32,6 +33,7 @@
   ],
   "users": [
     {
+      "id": "0000-0002-1825-0097",
       "username": "0000-0002-1825-0097",
       "enabled": true,
       "firstName": "Sophie",
@@ -47,7 +49,8 @@
       "emailVerified": true
     },
     {
-      "username": "0000-0001-5109-370X",
+      "id": "0009-0009-1586-1878",
+      "username": "0009-0009-1586-1878",
       "enabled": true,
       "firstName": "Marie",
       "lastName": "Dupont",
@@ -62,6 +65,7 @@
       "emailVerified": true
     },
     {
+      "id": "0000-0002-1694-2333",
       "username": "0000-0002-1694-2333",
       "enabled": true,
       "firstName": "Jean",

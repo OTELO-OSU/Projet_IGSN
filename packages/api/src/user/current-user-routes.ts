@@ -4,6 +4,7 @@ import type {
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
+import type { OrcidAuthorization } from "@projet-igsn/domain/user/orcid";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
 import { managedLaboratoryCodes } from "@projet-igsn/domain/user/managed-laboratory-codes";
@@ -14,10 +15,15 @@ import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { validateManualGroupIdParam } from "../manual-group/validator.ts";
+import {
+  exchangeOrcidCode,
+  orcidAuthorizationUrl,
+} from "./orcid-authorization.ts";
 import { sendGroupsWithoutManagerMail } from "./send-groups-without-manager-mail.ts";
 import {
+  validateLinkOrcidBody,
+  validateOrcidAuthorizationQuery,
   validateSetInstitutionalGroupsBody,
-  validateSetOrcidBody,
 } from "./validator.ts";
 
 export function createCurrentUserRoutes(
@@ -50,10 +56,16 @@ export function createCurrentUserRoutes(
       };
       return c.json(currentUser);
     })
-    .put("/orcid", requireActiveSession, validateSetOrcidBody, async (c) => {
+    .get("/orcid/authorization", validateOrcidAuthorizationQuery, (c) => {
+      const body: OrcidAuthorization = {
+        url: orcidAuthorizationUrl(c.req.valid("query").state),
+      };
+      return c.json(body);
+    })
+    .put("/orcid", requireActiveSession, validateLinkOrcidBody, async (c) => {
       const updated = await users.setOrcid(
         c.get("user").id,
-        c.req.valid("json").orcid,
+        await exchangeOrcidCode(c.req.valid("json").code),
       );
       if (!updated) {
         return c.json(
@@ -62,6 +74,10 @@ export function createCurrentUserRoutes(
         );
       }
       return c.json({ orcid: updated.orcid });
+    })
+    .delete("/orcid", requireActiveSession, async (c) => {
+      await users.setOrcid(c.get("user").id, null);
+      return c.body(null, 204);
     })
     .put(
       "/institutional-groups",

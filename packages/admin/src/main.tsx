@@ -6,6 +6,7 @@ import { AuthProvider } from "react-oidc-context";
 
 import "./styles.css";
 import {
+  callbackPath,
   matchSignoutCallback,
   onSigninCallback,
   onSignoutCallback,
@@ -36,6 +37,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthProvider
       userManager={userManager}
+      skipSigninCallback={window.location.pathname !== callbackPath}
       onSigninCallback={onSigninCallback}
       matchSignoutCallback={matchSignoutCallback}
       onSignoutCallback={onSignoutCallback}

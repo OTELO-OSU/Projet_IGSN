@@ -22,6 +22,7 @@ import { CenteredScreen } from "./centered-screen.tsx";
 import { CharterGate } from "./charter-gate.tsx";
 import { IdentityGate } from "./identity-gate.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
+import { isOrcidSession } from "./is-orcid-session.ts";
 
 export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();
@@ -72,16 +73,11 @@ export function AuthGate({ children }: { children?: ReactNode }) {
     );
   }
 
-  const identityProvider = auth.user?.profile.identity_provider;
-  const isOrcid =
-    typeof identityProvider === "string" &&
-    identityProvider.toLowerCase() ===
-      (
-        import.meta.env.VITE_OIDC_ORCID_IDENTITY_PROVIDER || "orcid"
-      ).toLowerCase();
-
   return (
-    <IdentityGate isOrcid={isOrcid} onSignOut={signOut}>
+    <IdentityGate
+      isOrcid={isOrcidSession(auth.user?.profile.identity_provider)}
+      onSignOut={signOut}
+    >
       <CharterGate onSignOut={signOut}>
         <InstitutionalGroupsGate onSignOut={signOut}>
           <AppLayout onSignOut={signOut}>{children}</AppLayout>

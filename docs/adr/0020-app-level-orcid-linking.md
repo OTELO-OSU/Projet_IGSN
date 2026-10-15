@@ -22,5 +22,21 @@ The link is a nullable, unique `orcid` column on the `user` table.
 
 ## Consequences
 
-- Squatting risk, accepted by the product owner: anyone can declare an ORCID iD they do not own and thereby receive that iD's future logins. Verified ownership (an ORCID OAuth round-trip, or a Keycloak federated identity) is the known upgrade path.
+- Squatting risk, accepted by the product owner: anyone can declare an ORCID iD they do not own and thereby receive that iD's future logins. Verified ownership (an ORCID OAuth round-trip, or a Keycloak federated identity) is the known upgrade path. Closed for new links by the 2026-10-15 amendment.
 - The Keycloak account created by an ORCID first-broker-login stays an empty shell; identity lives in the institution-provisioned local user row.
+
+## Amendment 2026-10-15: the link is verified through an ORCID round-trip
+
+The free-text declaration and its accepted squatting risk no longer hold for new links; the column, the strict ORCID sign-in lookup and the 409 on a taken iD stand.
+
+- Profile (`/settings/profile`) takes no typed iD: "Link my ORCID account" sends the user to ORCID (`scope=openid`, `prompt=login`), the `state` kept in the tab's sessionStorage and checked on return, and ORCID redirects back to `ADMIN_URL/settings/profile`.
+- `GET /admin/currentUser/orcid/authorization?state=` answers `{ url }`.
+- `PUT /admin/currentUser/orcid` takes `{ code }`: the api exchanges it with its own confidential ORCID client (`client_secret_post`) and stores the id_token `sub` through `orcidSchema`.
+- The `sub` is read unsigned straight from the token endpoint, which OIDC Core 3.1.3.7 allows.
+- Errors: 409 iD held elsewhere, 400 ORCID refused the code, 502 ORCID down or bad `sub`.
+- `DELETE /admin/currentUser/orcid` unlinks (204).
+- Both writes keep `requireActiveSession`.
+- Unlink is disabled in the UI only while the session itself came through ORCID.
+- iDs typed before this change are kept, unverified until unlinked and relinked.
+- The api reads its own `ORCID_LINK_CLIENT_ID`, `ORCID_LINK_CLIENT_SECRET`, `ORCID_LINK_AUTHORIZATION_URL` and `ORCID_LINK_TOKEN_URL`, apart from the Keycloak broker's `ORCID_*`, so dev links through real ORCID while the broker stays on the local mock.
+- Each ORCID client must register the admin `/settings/profile` URL as a redirect URI.

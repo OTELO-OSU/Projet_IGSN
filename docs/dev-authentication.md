@@ -45,22 +45,26 @@
 - Like real ORCID, the mock releases no email: accounts carry a placeholder one only so their own realm asks nothing at login, and the `openid profile` broker scope never releases it.
 - The `orcid` broker's custom first-broker-login flow creates the shell account silently, since the api's orcid lookup alone decides app access (ADR 0020).
 - To test against real ORCID (sandbox or prod), register an app with redirect URI `http://localhost:8080/realms/igsn/broker/orcid/endpoint` and set the `ORCID_*` vars in `.env`, the same vars prod sets.
+- Linking from Profile reads its own `ORCID_LINK_*` vars, defaulting to a second mock, the `orcid-mock` Keycloak at http://localhost:8180, which imports the same `mock-orcid` realm and so the same accounts.
+- ORCID sign-in and linking never share a mock session, as on orcid.org, so each asks for its own login.
+- Set `ORCID_LINK_*` in `.env` to link through real ORCID instead (redirect URI `http://localhost:3000/admin/settings/profile`), the broker staying on the mock.
+- The mock realm pins each user's id to their iD, so the linking `sub` is the iD, and its `igsn-broker` client also accepts `${ADMIN_REDIRECT_URI}`.
 
 ### Test identities
 
 - Every user shares one password, `KEYCLOAK_PASSWORD` (dev/e2e default `password`).
-- The three people with an ORCID iD are the same accounts on both providers, so an ORCID login can link to an existing institution account.
+- The three people with a mock ORCID iD are the same accounts on both providers, so an ORCID login can link to an existing institution account.
 
 | Person         | Institution login (SAML) | ORCID iD              |
 | -------------- | ------------------------ | --------------------- |
-| Marie Dupont   | `marie.dupont`           | `0000-0001-5109-370X` |
+| Marie Dupont   | `marie.dupont`           | `0009-0009-1586-1878` |
 | Jean Martin    | `jean.martin`            | `0000-0002-1694-2333` |
 | Sophie Bernard | `sophie.bernard`         | `0000-0002-1825-0097` |
 | Pierre Durand  | `pierre.durand`          | none                  |
 | Camille Petit  | `camille.petit`          | none                  |
 | Luc Moreau     | `luc.moreau`             | none                  |
 
-- An ORCID sign-in only reaches the app once an account declared that iD: sign in through the institution first, set it on the Profile settings page, and the ORCID login then resolves to the same account (ADR 0020).
+- No seeded user carries an ORCID iD: sign in through the institution first, click "Link my ORCID account" on the Profile settings page, and the ORCID login then resolves to the same account (ADR 0020).
 - Every seed gives each sample exactly one owner, and the api adopts it by matching the token's email on first sign-in (ADR 0019).
 - `make db-seed` and the E2E reset name that owner in the seed data, and Luc Moreau owns none there, so ownership isolation stays testable.
 - The demo set round-robins over the database's `accepted` users instead, so it seeds any environment: there Luc Moreau and Nadia Leroy do own samples, and the pending Théo Roux none.

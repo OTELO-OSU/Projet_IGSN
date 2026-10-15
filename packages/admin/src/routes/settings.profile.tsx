@@ -1,20 +1,27 @@
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { frontendSearchUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { MyServiceAccounts } from "#/service-accounts/my-service-accounts.tsx";
 import { GroupSamplesLink } from "#/settings/group-samples-link.tsx";
-import { OrcidSettingsForm } from "#/settings/orcid-settings-form.tsx";
+import { OrcidLink } from "#/settings/orcid-link.tsx";
 import { ShareLink } from "#/settings/share-link.tsx";
 
 export const Route = createFileRoute("/settings/profile")({
+  validateSearch: z.object({
+    code: z.string().optional(),
+    state: z.string().optional(),
+    error: z.string().optional(),
+  }),
   component: ProfilePage,
 });
 
 function ProfilePage() {
   const { data, isError } = useCurrentUser();
+  const orcidReturn = Route.useSearch();
 
   return (
     <div className="flex flex-col gap-6 pb-16">
@@ -27,7 +34,7 @@ function ProfilePage() {
             title={m.field_orcid()}
             description={m.settings_orcid_hint()}
           >
-            <OrcidSettingsForm orcid={data.orcid} />
+            <OrcidLink orcid={data.orcid} orcidReturn={orcidReturn} />
           </FormSection>
           {data.status === "accepted" && (
             <>

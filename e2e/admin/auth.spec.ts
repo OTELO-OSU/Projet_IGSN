@@ -73,11 +73,10 @@ test.describe("authentication", () => {
 
     const settings = settingsPage(page);
     await settings.openProfile();
-    await settings.setOrcid("0000-0001-5109-370X");
+    await settings.linkOrcid("0009-0009-1586-1878");
 
     await admin.signOut();
     await keycloakLoginPage(page).chooseOrcid();
-    await orcidLoginPage(page).login("0000-0001-5109-370X", "password");
 
     await admin.expectSignedIn();
     await admin.expectUserName("Marie Dupont");

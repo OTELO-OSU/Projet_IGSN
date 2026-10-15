@@ -31,6 +31,22 @@ services:
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
 
+  orcid-mock:
+    image: quay.io/keycloak/keycloak:26.6
+    container_name: orcid-mock
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
+      KC_HTTP_PORT: "8180"
+      KC_HOSTNAME: http://localhost:8180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./keycloak/mock-orcid-realm.json:/opt/keycloak/data/import/mock-orcid-realm.json:ro
+
   saml-idp:
     image: kenchan0130/simplesamlphp
     container_name: saml-idp
@@ -202,6 +218,10 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
       OIDC_ALLOWED_IDENTITY_PROVIDERS: "${OIDC_ALLOWED_IDENTITY_PROVIDERS:-renater,orcid}"
       OIDC_ORCID_IDENTITY_PROVIDER: "${OIDC_ORCID_IDENTITY_PROVIDER:-orcid}"
+      ORCID_LINK_CLIENT_ID: ${ORCID_LINK_CLIENT_ID:-igsn-broker}
+      ORCID_LINK_CLIENT_SECRET: ${ORCID_LINK_CLIENT_SECRET:-mock-orcid-secret}
+      ORCID_LINK_AUTHORIZATION_URL: ${ORCID_LINK_AUTHORIZATION_URL:-http://localhost:8180/realms/mock-orcid/protocol/openid-connect/auth}
+      ORCID_LINK_TOKEN_URL: ${ORCID_LINK_TOKEN_URL:-http://orcid-mock:8180/realms/mock-orcid/protocol/openid-connect/token}
       CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
       ADMIN_URL: "http://localhost:3000/admin"
       FRONTEND_URL: "http://localhost:3000"

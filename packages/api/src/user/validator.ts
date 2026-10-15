@@ -2,7 +2,6 @@ import { setInstitutionalGroupsSchema } from "@projet-igsn/domain/institutional-
 import { MAX_MANUAL_GROUP_MANAGERS } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
 import { userStatusSchema } from "@projet-igsn/domain/user/model";
-import { orcidSchema } from "@projet-igsn/domain/user/orcid";
 import {
   listPublicUsersQuerySchema,
   listUsersQuerySchema,
@@ -36,12 +35,27 @@ export const validateSearchUsersQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
-const setOrcidSchema = z.object({ orcid: orcidSchema.nullable() }).strict();
+const orcidAuthorizationQuerySchema = z.strictObject({
+  state: z.string().min(1).max(128),
+});
 
-export const validateSetOrcidBody = validator("json", (value, c) => {
-  const parsed = setOrcidSchema.safeParse(value);
+export const validateOrcidAuthorizationQuery = validator(
+  "query",
+  (value, c) => {
+    const parsed = orcidAuthorizationQuerySchema.safeParse(value);
+    if (!parsed.success) {
+      return c.json({ error: "Invalid state" }, 400);
+    }
+    return parsed.data;
+  },
+);
+
+const linkOrcidSchema = z.strictObject({ code: z.string().min(1) });
+
+export const validateLinkOrcidBody = validator("json", (value, c) => {
+  const parsed = linkOrcidSchema.safeParse(value);
   if (!parsed.success) {
-    return c.json({ error: "Invalid ORCID" }, 400);
+    return c.json({ error: "Invalid ORCID authorization code" }, 400);
   }
   return parsed.data;
 });
