@@ -136,6 +136,17 @@ async function panRight(fetchSpy: FetchSpy) {
   );
 }
 
+async function scrollToLastCard(screen: Screen, fetchSpy: FetchSpy) {
+  const listed = listRequests(fetchSpy).length;
+  let isAtTop = false;
+  await vi.waitFor(() => {
+    isAtTop = !isAtTop;
+    if (isAtTop) window.scrollTo(0, 0);
+    else cards(screen).elements().at(-1)?.scrollIntoView();
+    expect(listRequests(fetchSpy).length).toBeGreaterThan(listed);
+  });
+}
+
 const afterLayout = () =>
   new Promise((resolve) =>
     requestAnimationFrame(() => requestAnimationFrame(resolve)),
@@ -415,7 +426,7 @@ describe("ResultsMapDialog", () => {
     });
     await expect.poll(() => cards(screen).elements()).toHaveLength(20);
 
-    cards(screen).elements().at(-1)?.scrollIntoView();
+    await scrollToLastCard(screen, fetchSpy);
 
     await expect.poll(() => cards(screen).elements()).toHaveLength(25);
     cards(screen).elements().at(-1)?.scrollIntoView();
@@ -427,13 +438,13 @@ describe("ResultsMapDialog", () => {
   });
 
   it("should list a sample once when a later page repeats it", async () => {
-    const { screen } = await renderOpenDialog({
+    const { screen, fetchSpy } = await renderOpenDialog({
       points: FRANCE_POINTS(25),
       pages: [page(1, 20), [...page(20, 1), ...page(21, 4)]],
     });
     await expect.poll(() => cards(screen).elements()).toHaveLength(20);
 
-    cards(screen).elements().at(-1)?.scrollIntoView();
+    await scrollToLastCard(screen, fetchSpy);
 
     await expect
       .element(screen.getByRole("heading", { name: "Sample 24" }))
@@ -485,7 +496,7 @@ describe("ResultsMapDialog", () => {
       .toHaveAttribute("aria-current", "true");
     expect(sampleRequests(fetchSpy)).toHaveLength(1);
 
-    cards(screen).elements().at(-1)?.scrollIntoView();
+    await scrollToLastCard(screen, fetchSpy);
 
     await vi.waitFor(() => expect(listRequests(fetchSpy)).toHaveLength(2));
     await afterLayout();

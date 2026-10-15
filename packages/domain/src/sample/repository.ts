@@ -10,7 +10,6 @@ import type { SampleLineage } from "./lineage/model.ts";
 import type {
   SampleMapDetailsResponse,
   SampleMapPointsQuery,
-  SampleMapPointsResponse,
 } from "./map/model.ts";
 import type { SampleParent } from "./parent/model.ts";
 import type {
@@ -88,9 +87,7 @@ export type SampleRepository = {
   listPublished(
     params: ListSamplesQuery & { withTotal?: boolean },
   ): Promise<PublicListSamplesResult>;
-  mapPublishedPoints(
-    query: SampleMapPointsQuery,
-  ): Promise<SampleMapPointsResponse>;
+  mapPublishedPointsJson(query: SampleMapPointsQuery): Promise<string>;
   mapPublishedDetails(numbers: number[]): Promise<SampleMapDetailsResponse>;
   countPublishedFacets(params: ListSamplesQuery): Promise<SampleFacetCounts>;
   listExportable(

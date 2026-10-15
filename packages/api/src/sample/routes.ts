@@ -47,8 +47,8 @@ export function createSampleRoutes(
       return c.json(body);
     })
     .get("/map/points", validateMapPointsQuery, async (c) => {
-      const json = JSON.stringify(
-        await repository.mapPublishedPoints(c.req.valid("query")),
+      const json = await repository.mapPublishedPointsJson(
+        c.req.valid("query"),
       );
       return c.body(json, 200, {
         "Content-Type": "application/json",

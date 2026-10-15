@@ -32,6 +32,6 @@ At 500,000 published samples a move cost about 3 s zoomed out, though the query 
 
 - The payload grows with the sample count, 4.9 MB gzip at 500,000.
 - The count is by point while the list matches whole shapes, so a partly visible area can be listed under a "0 results" header.
-- One points request holds about 80 MB of api heap at 500,000, so 20 concurrent requests from one IP could reach about 1.5 GB.
+- One points request peaks at up to 60 MB of api heap at 500,000, Postgres building the response as one JSON text, so 20 concurrent requests from one IP could reach about 1.2 GB.
 - Follow-up when volume nears 500,000: cache the unfiltered response or cap concurrency.
 - Markers appear about 4 s after the points arrive at 500,000, the index build running in the worker.

@@ -1,4 +1,7 @@
-import { sampleMapPointsQuerySchema } from "@projet-igsn/domain/sample/map/model";
+import {
+  sampleMapPointsQuerySchema,
+  sampleMapPointsResponseSchema,
+} from "@projet-igsn/domain/sample/map/model";
 import {
   type ListSamplesQuery,
   listSamplesQuerySchema,
@@ -18,7 +21,7 @@ import type { Transactional } from "../src/transaction.ts";
 import { dbConfig } from "../src/db-config.ts";
 import { countPublishedFacets } from "../src/sample/service/count-facets.ts";
 import { listPublishedSamples } from "../src/sample/service/list-sample.ts";
-import { mapPublishedPoints } from "../src/sample/service/map-points.ts";
+import { mapPublishedPointsJson } from "../src/sample/service/map-points.ts";
 import {
   appendCsv,
   type CsvCell,
@@ -216,11 +219,12 @@ if (endpoints.includes("map")) {
     const params = sampleMapPointsQuerySchema.parse(
       Object.fromEntries(FILTERS.slice(0, filters)),
     );
-    const response = await mapPublishedPoints(db, params);
-    const matched = response.data.numbers.length;
+    const json = await mapPublishedPointsJson(db, params);
+    const matched = sampleMapPointsResponseSchema.parse(JSON.parse(json)).data
+      .numbers.length;
 
     await measure({
-      call: mapPublishedPoints,
+      call: mapPublishedPointsJson,
       params,
       base: "map-points",
       filters,
@@ -229,9 +233,9 @@ if (endpoints.includes("map")) {
     });
     console.info(`${values.size} map-points +${filters}: ${matched} matched`);
     if (filters === 0) {
-      const json = Buffer.from(JSON.stringify(response));
+      const payload = Buffer.from(json);
       console.info(
-        `${values.size} map-points payload: ${json.byteLength} bytes raw, ${gzipSync(json).byteLength} bytes gzip`,
+        `${values.size} map-points payload: ${payload.byteLength} bytes raw, ${gzipSync(payload).byteLength} bytes gzip`,
       );
     }
   }

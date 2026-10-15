@@ -1,7 +1,10 @@
 import type { Location } from "@projet-igsn/domain/sample/location/model";
-import type { SampleMapPointsQuery } from "@projet-igsn/domain/sample/map/model";
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 
+import {
+  type SampleMapPointsQuery,
+  sampleMapPointsResponseSchema,
+} from "@projet-igsn/domain/sample/map/model";
 import { sql } from "kysely";
 import { describe, expect } from "vitest";
 
@@ -10,7 +13,7 @@ import type { Transactional } from "../../transaction.ts";
 
 import { pgTest } from "../../tests/pg-test.ts";
 import { insertSample } from "./insert-sample.ts";
-import { mapPublishedPoints } from "./map-points.ts";
+import { mapPublishedPointsJson } from "./map-points.ts";
 import { publishSample } from "./publish-sample.ts";
 
 type Position = NonNullable<Location["position"]>;
@@ -57,7 +60,9 @@ async function pointsOf(
   db: Transactional<DB>,
   query: SampleMapPointsQuery = {},
 ) {
-  const { data } = await mapPublishedPoints(db, query);
+  const { data } = sampleMapPointsResponseSchema.parse(
+    JSON.parse(await mapPublishedPointsJson(db, query)),
+  );
   return data.numbers
     .map((number, index) => ({
       number,
@@ -67,7 +72,7 @@ async function pointsOf(
     .toSorted((left, right) => left.number - right.number);
 }
 
-describe("mapPublishedPoints", () => {
+describe("mapPublishedPointsJson", () => {
   pgTest(
     "should return every published, located, matching sample as rounded columns",
     async ({ db }) => {

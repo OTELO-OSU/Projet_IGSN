@@ -9,13 +9,13 @@ The sections up to "Reproducing" measure the removed `GET /samples/map`, before 
 - **Setup:** the dev stack, 500,000 uniform samples, headless Chromium 1400x900.
 - **Before:** server proximity clusters (`46314aac`) re-requested `GET /samples/map` and the side list (500 full cards, total count) on every zoom or pan, about 3 s per move zoomed out.
 - **Points request:** one `GET /samples/map/points` per filter set, 697 ms and 5.1 MB zstd over the wire (11.9 MB raw, 4.9 MB gzip), the query alone 363 to 432 ms.
-- **Assembly:** rows become columns in JS, 35% faster than `array_agg`.
+- **Assembly:** Postgres builds the response as one JSON text (`json_build_object` over `array_agg`), 360 ms against 420 ms for rows turned into columns in JS.
 - **In the browser:** `JSON.parse` 35 ms, zod parse 51 ms, Supercluster index build (radius 40, extent 256, maxZoom 18) 3,049 ms.
 - **Worker:** built on the main thread the index froze the page 3.1 s, and in a Web Worker (`1aec6dc8`) the longest main-thread task while opening is 206 ms.
 - **Each zoom or pan:** no points request, clusters redraw in about 50 ms after the zoom animation, and the side list loads 20 cards (`withTotal=false`) in 0.4 to 0.5 s.
 - **Single markers:** names come from `GET /samples/map/samples?numbers=`, at most 500 per call.
 - **First markers:** about 7 s after page load on the dev (unminified) build, 2.3 s for the page and points and 4 s for the index build in the worker.
-- **Memory:** one points request holds about 80 MB of api heap, so 20 concurrent from one IP could reach about 1.5 GB, and a cache of the unfiltered response or a concurrency cap is the follow-up if real volume nears 500,000.
+- **Memory:** one points request peaks at 12 to 60 MB of api heap, against 95 to 120 MB when JS assembled the rows, and a cache of the unfiltered response or a concurrency cap is the follow-up if real volume nears 500,000.
 - **Side list count:** points whose own position is in view, while the list matches whole shapes, so a partly visible area can be listed under a "0 results" header.
 
 ## Summary
