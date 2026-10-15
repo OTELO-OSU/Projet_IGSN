@@ -2,6 +2,7 @@ import type { Sample } from "../sample.ts";
 import type { CoreAgentRole, CoreSample } from "./core-sample-schema.ts";
 import type { CoreSampleBody } from "./core-sample-schema.ts";
 
+import { organizationLabel } from "../../institutional-group/label.ts";
 import { pathSegment } from "../path/segment.ts";
 import { sampleSchema } from "../sample.ts";
 import {
@@ -148,7 +149,7 @@ const RIGHTS_HOLDERS: CoreAgentRole[] = [
   {
     agent: {
       id: "https://ror.org/03fd77x13",
-      name: "Institut national de physique nucléaire et de physique des particules (CNRS - IN2P3)",
+      name: organizationLabel("03fd77x13"),
       agentType: "Organization",
     },
     roles: ["SampleOwner"],
@@ -156,7 +157,7 @@ const RIGHTS_HOLDERS: CoreAgentRole[] = [
   {
     agent: {
       id: "https://ror.org/02cte4b68",
-      name: "Institut national de chimie (CNRS - INC)",
+      name: organizationLabel("02cte4b68"),
       agentType: "Organization",
     },
     roles: ["SampleOwner"],

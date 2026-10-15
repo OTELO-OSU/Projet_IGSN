@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { organizationLabel } from "../../institutional-group/label.ts";
 import { core, corePaths } from "../core/core-paths-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
@@ -93,10 +94,9 @@ const PUBLISHER = {
   schemeUri: "https://ror.org",
 };
 
-const IN2P3_NAME =
-  "Institut national de physique nucléaire et de physique des particules (CNRS - IN2P3)";
+const IN2P3_NAME = organizationLabel("03fd77x13");
 
-const INC_NAME = "Institut national de chimie (CNRS - INC)";
+const INC_NAME = organizationLabel("02cte4b68");
 
 const RIGHTS_LIST = [
   {
