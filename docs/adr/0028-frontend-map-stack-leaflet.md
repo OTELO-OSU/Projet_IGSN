@@ -6,6 +6,8 @@ Date: 2026-07-22
 
 Accepted. Realizes the map-draw phase ADR 0014 anticipated.
 
+Partly superseded by [ADR 0062](0062-openfreemap-vector-basemap.md): the OSM raster tile source and the MapLibre GL rejection no longer hold, Leaflet itself stays.
+
 ## Context
 
 The public frontend location search lets a reader draw a rectangle on a world map and search published samples whose stored location falls in that box. This needed an interactive map and a tile source, and the repo had no map library, so the user explicitly approved a map dependency for this feature.

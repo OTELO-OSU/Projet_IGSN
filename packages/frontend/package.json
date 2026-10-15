@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@inlang/paraglide-js": "catalog:",
+    "@maplibre/maplibre-gl-leaflet": "catalog:",
     "@projet-igsn/design-system": "workspace:*",
     "@projet-igsn/domain": "workspace:*",
     "@tanstack/react-form": "catalog:",
@@ -25,6 +26,7 @@
     "@xyflow/react": "catalog:",
     "leaflet": "catalog:",
     "lucide-react": "catalog:",
+    "maplibre-gl": "catalog:",
     "nitro": "catalog:",
     "oidc-client-ts": "catalog:",
     "qrcode.react": "catalog:",

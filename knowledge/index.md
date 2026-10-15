@@ -44,7 +44,7 @@ okf_version: "0.2"
 - [Free-text sample search semantics](sample-search.md) - Tokens AND inside the ParadeDB index, wildcards anchor at whitespace-word edges, 5+ character tokens are typo-tolerant at Levenshtein distance 1, all escaping done in SQL after unaccent.
 - [Frontend i18n by localized URL](frontend-url-i18n.md) - The public frontend localizes by URL with paraglide's url strategy on TanStack Start; admin is exempt.
 - [Legacy IGSN dump import](legacy-import.md) - An idempotent script upserts ~24,910 legacy samples as published rows keeping their CNRS/TOAE identifiers, skipping any row carrying a value it cannot map.
-- [Map bounding-box search with Leaflet](map-search-leaflet.md) - Leaflet plus react-leaflet over OSM raster tiles; a drawn rectangle rides the bbox query param into an ST_MakeEnvelope filter.
+- [Map bounding-box search with Leaflet](map-search-leaflet.md) - Leaflet plus react-leaflet over OpenFreeMap vector tiles; a drawn rectangle rides the bbox query param into an ST_MakeEnvelope filter.
 - [Outbound mail and notifications](mail-notifications.md) - The api sends invitation, moderated-edit, orphan-group and weekly digest mails, rendered twice as text and MJML with i18next copy.
 - [Public contributor identities](public-contributor-directory.md) - GET /users publicly names accepted users holding a published sample, powering a shareable per-person filter on the public list.
 - [Public search facets registry](search-facets.md) - SAMPLE_FACETS in domain is the single source of truth for public sample-list filters; the admin lists take their own params instead.

@@ -19,9 +19,11 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       "@inlang/paraglide-js/urlpattern-polyfill",
+      "@maplibre/maplibre-gl-leaflet",
       "@tanstack/react-query",
       "@xyflow/react",
       "@projet-igsn/design-system > embla-carousel-react",
+      "maplibre-gl",
       "qrcode.react",
       "supercluster",
     ],
