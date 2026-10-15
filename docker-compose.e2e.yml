@@ -70,6 +70,8 @@ services:
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost
       CONTACT_EMAIL: contact@igsn.localhost
+      CAPTCHA_HMAC_SECRET: dev-captcha-hmac-secret-not-for-production
+      CAPTCHA_COST: "1000"
       DATACITE_API_HOST: http://datacite:8080
       DATACITE_API_KEY: dev
       DATACITE_DOI_PREFIX: "10.70113"

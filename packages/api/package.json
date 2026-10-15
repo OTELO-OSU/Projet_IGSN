@@ -23,6 +23,7 @@
     "@projet-igsn/domain": "workspace:*",
     "@tus/file-store": "catalog:",
     "@tus/server": "catalog:",
+    "altcha-lib": "catalog:",
     "croner": "catalog:",
     "exceljs": "catalog:",
     "hono": "catalog:",

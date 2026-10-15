@@ -14,6 +14,7 @@ import { insertUser } from "../tests/insert-user.ts";
 import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
+import { solvedCaptchaCookie } from "../tests/solved-captcha-cookie.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
@@ -59,11 +60,18 @@ function arrangeApp(db: Db) {
   const sendMail = vi.fn<SendMail>().mockResolvedValue(undefined);
   const { app } = createApp(db, {
     mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+    captcha: {
+      secret: "contact-routes-spec-captcha-secret-0123456789",
+      cost: 1,
+    },
   });
-  const post = (path: string, body: ContactSampleOwnerBody) =>
+  const post = async (path: string, body: ContactSampleOwnerBody) =>
     app.request(`/samples/${path}`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        cookie: await solvedCaptchaCookie(app),
+      },
       body: JSON.stringify(body),
     });
   const contact = (igsn: string, body: ContactSampleOwnerBody = visitor) =>
