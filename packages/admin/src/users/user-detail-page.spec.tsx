@@ -597,8 +597,8 @@ describe("UserDetailPage", () => {
   });
 
   it.each([
-    ["granted", false, "Grant super admin rights?"],
-    ["revoked", true, "Revoke super admin rights?"],
+    ["granted", false, "Grant admin rights?"],
+    ["revoked", true, "Revoke admin rights?"],
   ] as const)(
     "should save the super admin role %s only once the warning is confirmed",
     async (_case, superAdmin, title) => {
@@ -607,7 +607,7 @@ describe("UserDetailPage", () => {
         superAdmin,
       });
 
-      await screen.getByRole("switch", { name: "Super admin" }).click();
+      await screen.getByRole("switch", { name: "Admin" }).click();
       await screen.getByRole("button", { name: "Save" }).click();
 
       await expect
@@ -635,12 +635,12 @@ describe("UserDetailPage", () => {
     [
       "their own account",
       { status: "accepted", caller: { superAdmin: true, id: USER_ID } },
-      "You cannot remove your own super admin rights.",
+      "You cannot remove your own admin rights.",
     ],
     [
       "an account that is not active",
       { status: "pending" },
-      "Only an active account can become super admin.",
+      "Only an active account can become admin.",
     ],
   ] as const)(
     "should keep a super admin from changing the role of %s",
@@ -648,7 +648,7 @@ describe("UserDetailPage", () => {
       const { screen } = await renderUserPage(options);
 
       await expect
-        .element(screen.getByRole("switch", { name: "Super admin" }))
+        .element(screen.getByRole("switch", { name: "Admin" }))
         .toBeDisabled();
       await expect.element(screen.getByText(hint)).toBeVisible();
     },
@@ -661,7 +661,7 @@ describe("UserDetailPage", () => {
       .element(
         screen
           .getByRole("heading", { level: 1 })
-          .getByRole("img", { name: "Super admin" }),
+          .getByRole("img", { name: "Admin" }),
       )
       .toBeVisible();
   });

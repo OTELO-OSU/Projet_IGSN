@@ -11,8 +11,16 @@ export function SuperAdminMark() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span role="img" tabIndex={0} aria-label={m.user_super_admin()}>
-          <ShieldCheckIcon aria-hidden="true" className="size-4" />
+        <span
+          role="img"
+          tabIndex={0}
+          aria-label={m.user_super_admin()}
+          className="text-tertiary inline-flex"
+        >
+          <ShieldCheckIcon
+            aria-hidden="true"
+            className="size-6 fill-current stroke-white"
+          />
         </span>
       </TooltipTrigger>
       <TooltipContent>{m.user_super_admin()}</TooltipContent>

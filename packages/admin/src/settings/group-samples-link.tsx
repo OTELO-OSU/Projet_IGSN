@@ -18,7 +18,7 @@ export function GroupSamplesLink() {
   if (groups.length === 0) return null;
 
   return (
-    <>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
       {!onlyGroup && (
         <div className="grid gap-2">
           <Label htmlFor={id}>{m.settings_group_samples_group()}</Label>
@@ -40,10 +40,14 @@ export function GroupSamplesLink() {
       )}
       {groupId && (
         <ShareLink
-          label={m.settings_group_samples_link()}
+          label={
+            onlyGroup
+              ? m.settings_group_samples_link_named({ name: onlyGroup.name })
+              : m.settings_group_samples_link()
+          }
           link={frontendSearchUrl({ manualGroup: groupId })}
         />
       )}
-    </>
+    </div>
   );
 }

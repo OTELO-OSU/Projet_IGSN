@@ -243,11 +243,11 @@ describe("profile page", () => {
       );
   });
 
-  it("should offer the only group's samples link with no group to pick", async () => {
+  it("should offer the only group's samples link, named after it, with no group to pick", async () => {
     await renderProfilePage({ manualGroups: [BASALT_TEAM] });
 
     await expect
-      .element(groupSamplesInput())
+      .element(page.getByRole("textbox", { name: "Basalt team samples link" }))
       .toHaveValue(
         `http://localhost:3000/search?manualGroup=${BASALT_TEAM.id}`,
       );

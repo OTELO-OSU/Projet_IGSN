@@ -254,9 +254,7 @@ describe("ManualGroupsPage", () => {
     await screen.getByRole("button", { name: "Send the request" }).click();
 
     await expect
-      .element(
-        screen.getByText("Request for Andesite lab sent to the super admins"),
-      )
+      .element(screen.getByText("Request for Andesite lab sent to the admins"))
       .toBeVisible();
     expect(requestedGroups).toEqual([
       { name: "Andesite lab", managerIds: [JEAN.id] },

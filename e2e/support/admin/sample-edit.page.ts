@@ -120,7 +120,7 @@ export function sampleEditPage(page: Page) {
     expectDeletionRequestSent: () =>
       expect(
         page.getByText(
-          "Your request was sent to the super admin and is being processed.",
+          "Your request was sent to the admin and is being processed.",
         ),
       ).toBeVisible(),
     expectDeletionRequestRefused: async () => {

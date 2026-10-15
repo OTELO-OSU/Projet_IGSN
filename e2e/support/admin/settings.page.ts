@@ -23,7 +23,9 @@ export function settingsPage(page: Page) {
     openProfile: () => openFromUserMenu("Profile"),
     openGroups: () => openFromUserMenu("Groups"),
     groupSamplesLink: async (name: string) => {
-      const link = page.getByRole("textbox", { name: "Group samples link" });
+      const link = page
+        .getByRole("textbox", { name: "Group samples link" })
+        .or(page.getByRole("textbox", { name: `${name} samples link` }));
       const groupPicker = page.getByRole("combobox", {
         name: "Group",
         exact: true,
@@ -95,7 +97,7 @@ export function settingsPage(page: Page) {
       await requestDialog.getByRole("button", { name: "Send request" }).click();
       await expect(
         page.getByText(
-          "Your request was sent to the super admin and is being processed.",
+          "Your request was sent to the admin and is being processed.",
         ),
       ).toBeVisible();
     },
