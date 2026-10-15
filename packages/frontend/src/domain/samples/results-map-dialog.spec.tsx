@@ -484,17 +484,37 @@ describe("ResultsMapDialog", () => {
     expect(cards(screen).elements()).toHaveLength(24);
   });
 
-  it("should mark a loaded sample's card current and focus it when its marker is clicked, fetching nothing", async () => {
-    const { screen, fetchSpy } = await renderOpenDialog();
-    const card = cardOf(screen);
-    await expect.element(card).toBeInTheDocument();
+  it("should pin a loaded sample's card current and focused atop the list when its marker is clicked", async () => {
+    const { screen } = await renderOpenDialog({
+      pages: [[...page(7, 2), BASALT]],
+    });
+    await expect.poll(() => cards(screen).elements()).toHaveLength(3);
 
     await markerOf(screen).click();
 
-    await expect.element(card).toHaveAttribute("aria-current", "true");
-    await expect.element(card).toHaveFocus();
-    expect(cardOf(screen).elements()).toHaveLength(1);
-    expect(sampleRequests(fetchSpy)).toHaveLength(0);
+    await expect
+      .element(cardOf(screen))
+      .toHaveAttribute("aria-current", "true");
+    await expect.element(cardOf(screen)).toHaveFocus();
+    expect(
+      cards(screen)
+        .elements()
+        .map(({ textContent }) => textContent),
+    ).toEqual(["Basalt 42", "Sample 7", "Sample 8"]);
+  });
+
+  it("should keep a marker's pinned card atop the list once the map moves its sample out of view", async () => {
+    const { screen, fetchSpy } = await renderOpenDialog({
+      pages: [page(7, 1)],
+    });
+    await markerOf(screen).click();
+    await expect.element(cardOf(screen)).toBeInTheDocument();
+
+    await panRight(fetchSpy);
+    await afterLayout();
+
+    expect(cards(screen).elements()[0]).toHaveTextContent("Basalt 42");
+    expect(cardOf(screen).element()).toHaveAttribute("aria-current", "true");
   });
 
   it("should pin a sample's card current and focused atop the list when its marker is clicked before its page is loaded", async () => {

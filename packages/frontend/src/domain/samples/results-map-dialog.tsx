@@ -26,7 +26,6 @@ import {
 import { pointsExtent } from "#/domain/samples/map-point-bounds.ts";
 import { MapProgress } from "#/domain/samples/map-progress.tsx";
 import { ResultsMapList } from "#/domain/samples/results-map-list.tsx";
-import { focusSampleCard } from "#/domain/samples/sample-list.tsx";
 import { m } from "#/paraglide/messages.js";
 
 const PROGRESS_DELAY_MS = 500;
@@ -115,7 +114,7 @@ function ResultsMapContent({
 
   function selectSample(sample?: HoveredSample) {
     setSelected(sample);
-    if (sample && !focusSampleCard(sample.igsn)) setPinnedIgsn(sample.igsn);
+    setPinnedIgsn(sample?.igsn);
   }
 
   return (

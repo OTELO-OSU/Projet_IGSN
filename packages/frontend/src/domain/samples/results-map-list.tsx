@@ -113,7 +113,11 @@ export function ResultsMapList({
     enabled: pinnedIgsn !== undefined,
   });
   const pinned: CardSample | undefined =
-    pinnedData?.status === "published" ? pinnedData : undefined;
+    pinnedData?.status === "published"
+      ? pinnedData
+      : data?.pages
+          .flatMap((page) => page.data)
+          .find(({ igsn }) => pinnedIgsn !== undefined && igsn === pinnedIgsn);
   const { fields, saveFields } = useCardFields();
 
   useEffect(() => {
