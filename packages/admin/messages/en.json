@@ -226,7 +226,7 @@
   "name_placeholder": "Field-assigned name, e.g. LAV14_221B; CS02-006B…",
   "field_name_required": "Name is required",
   "field_local_id": "Local name",
-  "local_id_placeholder": "Local/internal sample name, e.g. LAB-2024-001; Shelf-4 Drawer-12…",
+  "local_id_placeholder": "Local/internal sample ID, e.g. LAB-2024-001; Shelf-4 Drawer-12…",
   "field_local_id_description": "Local name description",
   "field_nature": "Nature",
   "field_igsn": "IGSN",

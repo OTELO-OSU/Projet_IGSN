@@ -16,9 +16,10 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as ManifestDotjsonRouteImport } from './routes/manifest[.]json'
 import { Route as LegalNoticeRouteImport } from './routes/legal-notice'
-import { Route as FaqRouteImport } from './routes/faq'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FaqIndexRouteImport } from './routes/faq/index'
 import { Route as SamplesIgsnRouteImport } from './routes/samples/$igsn'
+import { Route as FaqCategoryRouteImport } from './routes/faq/$category'
 
 const TombstoneRoute = TombstoneRouteImport.update({
   id: '/tombstone',
@@ -55,14 +56,14 @@ const LegalNoticeRoute = LegalNoticeRouteImport.update({
   path: '/legal-notice',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqIndexRoute = FaqIndexRouteImport.update({
+  id: '/faq/',
+  path: '/faq/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SamplesIgsnRoute = SamplesIgsnRouteImport.update({
@@ -70,10 +71,14 @@ const SamplesIgsnRoute = SamplesIgsnRouteImport.update({
   path: '/samples/$igsn',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FaqCategoryRoute = FaqCategoryRouteImport.update({
+  id: '/faq/$category',
+  path: '/faq/$category',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/faq': typeof FaqRoute
   '/legal-notice': typeof LegalNoticeRoute
   '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
@@ -81,11 +86,12 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/terms-of-use': typeof TermsOfUseRoute
   '/tombstone': typeof TombstoneRoute
+  '/faq/$category': typeof FaqCategoryRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
+  '/faq/': typeof FaqIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/faq': typeof FaqRoute
   '/legal-notice': typeof LegalNoticeRoute
   '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
@@ -93,12 +99,13 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/terms-of-use': typeof TermsOfUseRoute
   '/tombstone': typeof TombstoneRoute
+  '/faq/$category': typeof FaqCategoryRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
+  '/faq': typeof FaqIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/faq': typeof FaqRoute
   '/legal-notice': typeof LegalNoticeRoute
   '/manifest.json': typeof ManifestDotjsonRoute
   '/partners': typeof PartnersRoute
@@ -106,13 +113,14 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/terms-of-use': typeof TermsOfUseRoute
   '/tombstone': typeof TombstoneRoute
+  '/faq/$category': typeof FaqCategoryRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
+  '/faq/': typeof FaqIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/faq'
     | '/legal-notice'
     | '/manifest.json'
     | '/partners'
@@ -120,11 +128,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/terms-of-use'
     | '/tombstone'
+    | '/faq/$category'
     | '/samples/$igsn'
+    | '/faq/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/faq'
     | '/legal-notice'
     | '/manifest.json'
     | '/partners'
@@ -132,11 +141,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/terms-of-use'
     | '/tombstone'
+    | '/faq/$category'
     | '/samples/$igsn'
+    | '/faq'
   id:
     | '__root__'
     | '/'
-    | '/faq'
     | '/legal-notice'
     | '/manifest.json'
     | '/partners'
@@ -144,12 +154,13 @@ export interface FileRouteTypes {
     | '/search'
     | '/terms-of-use'
     | '/tombstone'
+    | '/faq/$category'
     | '/samples/$igsn'
+    | '/faq/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  FaqRoute: typeof FaqRoute
   LegalNoticeRoute: typeof LegalNoticeRoute
   ManifestDotjsonRoute: typeof ManifestDotjsonRoute
   PartnersRoute: typeof PartnersRoute
@@ -157,7 +168,9 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   TermsOfUseRoute: typeof TermsOfUseRoute
   TombstoneRoute: typeof TombstoneRoute
+  FaqCategoryRoute: typeof FaqCategoryRoute
   SamplesIgsnRoute: typeof SamplesIgsnRoute
+  FaqIndexRoute: typeof FaqIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -211,18 +224,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalNoticeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq/': {
+      id: '/faq/'
+      path: '/faq'
+      fullPath: '/faq/'
+      preLoaderRoute: typeof FaqIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/samples/$igsn': {
@@ -232,12 +245,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SamplesIgsnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/faq/$category': {
+      id: '/faq/$category'
+      path: '/faq/$category'
+      fullPath: '/faq/$category'
+      preLoaderRoute: typeof FaqCategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  FaqRoute: FaqRoute,
   LegalNoticeRoute: LegalNoticeRoute,
   ManifestDotjsonRoute: ManifestDotjsonRoute,
   PartnersRoute: PartnersRoute,
@@ -245,7 +264,9 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   TermsOfUseRoute: TermsOfUseRoute,
   TombstoneRoute: TombstoneRoute,
+  FaqCategoryRoute: FaqCategoryRoute,
   SamplesIgsnRoute: SamplesIgsnRoute,
+  FaqIndexRoute: FaqIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -7,8 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { AuthControls } from "#/auth/auth-controls.tsx";
 import { m } from "#/paraglide/messages.js";
 
-const NAV_LINK_CLASS =
-  "text-primary data-[status=active]:decoration-primary flex min-h-11 items-center font-medium underline-offset-8 data-[status=active]:underline data-[status=active]:decoration-2 md:min-h-0";
+import { NAV_LINK_CLASS } from "./nav-link-class.ts";
 
 const MENU_ID = "site-menu";
 

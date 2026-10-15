@@ -1,57 +1,66 @@
+import { InfoIcon } from "lucide-react";
 import { describe, expect, it } from "vitest";
+
+import type { FaqCategory } from "./faq-categories.ts";
 
 import { filterFaq } from "./filter-faq.ts";
 
-const ITEMS = [
-  {
-    value: "steps",
-    title: "How do I search?",
-    ordered: true,
-    entries: ["Type a word.", "Draw an area on the map."],
-  },
-  {
-    value: "rules",
-    title: "What are the rules?",
-    ordered: false,
-    entries: [
-      "Accents do not matter: rhone finds Rhône.",
-      "Words of 5 letters tolerate one typo.",
-      "Only published samples are listed.",
-    ],
-  },
-];
+const IGSN = {
+  value: "igsn",
+  title: "What is an IGSN?",
+  answer: ["A persistent identifier."],
+};
+const ORCID = {
+  value: "orcid",
+  title: "How do I link my account?",
+  answer: [
+    "Open your profile.",
+    { ordered: false, items: ["Add your ORCID iD.", "Authorise the app."] },
+  ],
+};
+const DEPOSIT = {
+  value: "deposit",
+  title: "Where is the dépôt?",
+  answer: ["In the lab."],
+};
+const GENERAL = {
+  slug: "general",
+  title: "General",
+  icon: InfoIcon,
+  questions: [IGSN, ORCID],
+};
+const USAGE = {
+  slug: "usage",
+  title: "Using an IGSN",
+  icon: InfoIcon,
+  questions: [DEPOSIT],
+};
+const CATEGORIES: FaqCategory[] = [GENERAL, USAGE];
 
 describe("filterFaq", () => {
-  it("should keep only the entries holding every word, ignoring case and accents, with their position", () => {
-    expect(filterFaq(ITEMS, "  RHÔNE accents ")).toEqual([
-      {
-        value: "rules",
-        title: "What are the rules?",
-        ordered: false,
-        entries: [
-          { position: 1, text: "Accents do not matter: rhone finds Rhône." },
-        ],
-      },
-    ]);
-  });
-
-  it("should keep every entry of an item whose title matches", () => {
-    expect(filterFaq(ITEMS, "how search")).toEqual([
-      {
-        value: "steps",
-        title: "How do I search?",
-        ordered: true,
-        entries: [
-          { position: 1, text: "Type a word." },
-          { position: 2, text: "Draw an area on the map." },
-        ],
-      },
-    ]);
-  });
-
-  it("should keep every item for a blank query", () => {
-    expect(filterFaq(ITEMS, " ").map(({ entries }) => entries.length)).toEqual([
-      2, 3,
-    ]);
+  it.each([
+    {
+      rule: "a title holding every word",
+      query: "what igsn",
+      expected: [{ ...GENERAL, questions: [IGSN] }],
+    },
+    {
+      rule: "an answer holding every word across its blocks",
+      query: "profile authorise",
+      expected: [{ ...GENERAL, questions: [ORCID] }],
+    },
+    {
+      rule: "a match ignoring case and accents",
+      query: " DEPOT ",
+      expected: [USAGE],
+    },
+    {
+      rule: "nothing when one word is missing",
+      query: "orcid zzz",
+      expected: [],
+    },
+    { rule: "everything for a blank query", query: "  ", expected: CATEGORIES },
+  ])("should keep $rule, dropping empty categories", ({ query, expected }) => {
+    expect(filterFaq(CATEGORIES, query)).toEqual(expected);
   });
 });
