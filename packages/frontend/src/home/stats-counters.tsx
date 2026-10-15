@@ -25,7 +25,7 @@ export function StatsCounters({ samples, users }: Stats) {
   return (
     <ul
       aria-label={m.home_stats_label()}
-      className="divide-primary/20 mt-8 flex flex-wrap gap-y-4 divide-x"
+      className="divide-primary/20 flex flex-wrap gap-y-4 divide-x pe-10"
     >
       {counters.map(({ key, Icon, value, label }) => (
         <li

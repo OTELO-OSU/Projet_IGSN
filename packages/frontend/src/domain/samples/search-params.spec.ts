@@ -145,6 +145,10 @@ describe("searchQueryParams", () => {
     expect(searchQueryParams({ page: 1 })).toBeUndefined();
   });
 
+  it("should not search when only the map is open", () => {
+    expect(searchQueryParams({ map: true, page: 1 })).toBeUndefined();
+  });
+
   it("should not search on engines that are open but unfilled", () => {
     expect(searchQueryParams({ q: "", bbox: "", page: 1 })).toBeUndefined();
   });

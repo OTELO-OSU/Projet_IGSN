@@ -13,7 +13,7 @@ import type { MyRouterContext } from "#/router-context.ts";
 import { stubAuth } from "../../test/stub-auth.tsx";
 import { Route as HomeRoute } from "./index.tsx";
 
-function renderHome(stats: () => Promise<Response>) {
+async function renderHome(stats: () => Promise<Response>, initialEntry = "/") {
   vi.stubGlobal("fetch", stats);
   const rootRoute = createRootRouteWithContext<MyRouterContext>()();
   const homeRoute = createRoute({
@@ -27,15 +27,16 @@ function renderHome(stats: () => Promise<Response>) {
   const router = createRouter({
     routeTree: rootRoute.addChildren([homeRoute]),
     context: { queryClient },
-    history: createMemoryHistory({ initialEntries: ["/"] }),
+    history: createMemoryHistory({ initialEntries: [initialEntry] }),
   });
-  return render(
+  const screen = await render(
     stubAuth(
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>,
     ),
   );
+  return Object.assign(screen, { router });
 }
 
 const json =
@@ -74,5 +75,43 @@ describe("home page", () => {
     await expect
       .element(screen.getByText(/samples declared/))
       .not.toBeInTheDocument();
+  });
+
+  it("should link to the map of every sample", async () => {
+    const screen = await renderHome(json({}, 500));
+
+    await expect
+      .element(
+        screen.getByRole("link", { name: "Browse all samples on a map" }),
+      )
+      .toHaveAttribute("href", "/?map=true");
+  });
+
+  it("should open the map of every sample over the home page", async () => {
+    const screen = await renderHome(json({}, 500), "/?map=true");
+
+    await expect
+      .element(
+        screen.getByRole("dialog", { name: "Search results on the map" }),
+      )
+      .toBeVisible();
+    expect(screen.router.state.location.pathname).toBe("/");
+  });
+
+  it("should drop the map from the URL when its dialog closes", async () => {
+    const screen = await renderHome(json({}, 500), "/?map=true");
+
+    await screen.getByRole("button", { name: "Close" }).click();
+    await expect.poll(() => screen.router.state.location.search).toEqual({});
+  });
+
+  it("should warn that the map of every sample can be slow to load", async () => {
+    const screen = await renderHome(json({}, 500));
+
+    await expect
+      .element(
+        screen.getByRole("link", { name: "Browse all samples on a map" }),
+      )
+      .toHaveAccessibleDescription("Loading every sample can take a while.");
   });
 });

@@ -77,7 +77,7 @@ export type DuplicateConflict = z.infer<typeof duplicateConflictSchema>;
 
 export const PAGE_SIZES = [10, 25, 50] as const;
 export const DEFAULT_PAGE_SIZE = 25;
-export const MAP_LIST_SIZE = 500;
+export const MAP_LIST_PAGE_SIZE = 20;
 
 export const bboxSchema = z.string().transform((value, ctx) => {
   const parts = value.split(",").map(Number);
@@ -180,7 +180,7 @@ export type PublicListedSample = z.infer<typeof publicListedSampleSchema>;
 
 export const publicListSamplesResponseSchema = z.object({
   data: z.array(publicListedSampleSchema),
-  meta: z.object({ total: z.number() }),
+  meta: z.object({ total: z.number().optional() }),
 });
 
 export type PublicListSamplesResponse = z.infer<

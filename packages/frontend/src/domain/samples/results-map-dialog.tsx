@@ -7,21 +7,29 @@ import {
 } from "@projet-igsn/design-system/components/ui/dialog";
 import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { MapIcon } from "lucide-react";
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 
-import type {
-  ListSamplesParams,
-  SearchFilters,
-} from "#/domain/samples/client/list-samples.ts";
 import type {
   HoveredSample,
   MapViewport,
 } from "#/domain/samples/results-map.tsx";
 
-import { useMapSamples } from "#/domain/samples/hook/map-samples.ts";
+import {
+  type ListSamplesParams,
+  type SearchFilters,
+  searchFilterParams,
+} from "#/domain/samples/client/list-samples.ts";
+import {
+  useMapPoints,
+  useMapPointsDownloadPercent,
+} from "#/domain/samples/hook/map-points.ts";
+import { pointsExtent } from "#/domain/samples/map-point-bounds.ts";
+import { MapProgress } from "#/domain/samples/map-progress.tsx";
 import { ResultsMapList } from "#/domain/samples/results-map-list.tsx";
 import { focusSampleCard } from "#/domain/samples/sample-list.tsx";
 import { m } from "#/paraglide/messages.js";
+
+const PROGRESS_DELAY_MS = 500;
 
 const ResultsMap = lazy(() =>
   import("#/domain/samples/results-map.tsx").then((module) => ({
@@ -29,46 +37,68 @@ const ResultsMap = lazy(() =>
   })),
 );
 
-const WHOLE_WORLD = "-180,-90,180,90";
-const OPENING_ZOOM = 2;
-
 function MapPane({
   filters,
-  viewport,
   highlighted,
   centered,
   onViewportChange,
   onSelectSample,
 }: {
   filters: SearchFilters;
-  viewport: MapViewport;
   highlighted?: HoveredSample;
   centered?: HoveredSample;
   onViewportChange: (viewport: MapViewport) => void;
   onSelectSample: (sample?: HoveredSample) => void;
 }) {
-  const { data, isError } = useMapSamples({
-    ...filters,
-    viewport: viewport.bbox,
-    zoom: viewport.zoom,
-  });
+  const { data, isError, isFetchedAfterMount } = useMapPoints(filters);
+  const percent = useMapPointsDownloadPercent(filters);
+  const hasCriteria = searchFilterParams(filters).size > 0;
+  const [delayElapsed, setDelayElapsed] = useState(!hasCriteria);
+  useEffect(() => {
+    const timer = setTimeout(() => setDelayElapsed(true), PROGRESS_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  const showProgress = delayElapsed && (!data || isFetchedAfterMount);
 
   if (isError) {
     return <p role="alert">{m.results_map_error()}</p>;
   }
-  if (!data) return null;
   return (
-    <Suspense fallback={null}>
-      <ResultsMap
-        clusters={data.data}
-        fitTo={filters.bbox ? bboxSchema.parse(filters.bbox) : data.meta.extent}
-        highlighted={highlighted}
-        centered={centered}
-        filters={filters}
-        onViewportChange={onViewportChange}
-        onSelectSample={onSelectSample}
-      />
-    </Suspense>
+    <div className="relative h-full">
+      {data ? (
+        <Suspense
+          fallback={
+            showProgress ? (
+              <MapProgress label={m.results_map_preparing()} />
+            ) : null
+          }
+        >
+          <ResultsMap
+            points={data.data}
+            showProgress={showProgress}
+            fitTo={
+              filters.bbox
+                ? bboxSchema.parse(filters.bbox)
+                : pointsExtent(data.data)
+            }
+            highlighted={highlighted}
+            centered={centered}
+            filters={filters}
+            onViewportChange={onViewportChange}
+            onSelectSample={onSelectSample}
+          />
+        </Suspense>
+      ) : showProgress ? (
+        <MapProgress
+          label={
+            percent === undefined
+              ? m.results_map_downloading()
+              : m.results_map_downloading_percent({ percent })
+          }
+          percent={percent}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -77,16 +107,15 @@ function ResultsMapContent({
 }: {
   params: ListSamplesParams;
 }) {
-  const [viewport, setViewport] = useState<MapViewport>({
-    bbox: filters.bbox ?? WHOLE_WORLD,
-    zoom: OPENING_ZOOM,
-  });
+  const [viewport, setViewport] = useState<MapViewport>();
   const [highlighted, setHighlighted] = useState<HoveredSample>();
   const [selected, setSelected] = useState<HoveredSample>();
   const [centered, setCentered] = useState<HoveredSample>();
+  const [pinnedIgsn, setPinnedIgsn] = useState<string>();
 
   function selectSample(sample?: HoveredSample) {
-    setSelected(sample && focusSampleCard(sample.igsn) ? sample : undefined);
+    setSelected(sample);
+    if (sample && !focusSampleCard(sample.igsn)) setPinnedIgsn(sample.igsn);
   }
 
   return (
@@ -97,8 +126,10 @@ function ResultsMapContent({
       <div className="grid min-h-0 flex-1 grid-rows-2 gap-4 md:grid-cols-[1fr_3fr] md:grid-rows-1">
         <div className="row-start-2 min-h-0 overflow-y-auto px-2 pb-3 motion-safe:scroll-smooth md:row-start-1">
           <ResultsMapList
-            filters={{ ...filters, viewport: viewport.bbox }}
+            filters={filters}
+            viewport={viewport?.bbox}
             selectedIgsn={selected?.igsn}
+            pinnedIgsn={pinnedIgsn === selected?.igsn ? pinnedIgsn : undefined}
             onHoverSample={setHighlighted}
             onLocateSample={(sample) => {
               setSelected(sample);
@@ -112,7 +143,6 @@ function ResultsMapContent({
         >
           <MapPane
             filters={filters}
-            viewport={viewport}
             highlighted={highlighted ?? selected}
             centered={centered}
             onViewportChange={setViewport}

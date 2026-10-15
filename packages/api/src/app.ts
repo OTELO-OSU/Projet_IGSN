@@ -21,6 +21,7 @@ import {
   CONTACT_MAIL_IP_BUDGET,
   EXPORT_IP_BUDGET,
   MAP_IP_BUDGET,
+  MAP_POINTS_IP_BUDGET,
   IMPORT_TEMPLATE_USER_BUDGET,
   MAIL_REQUEST_USER_BUDGET,
   UPLOAD_USER_BUDGET,
@@ -108,14 +109,21 @@ export function createApp(
 
   const publicRateLimit = rateLimit(rateLimitConfig, "ip");
   const mapRateLimit = rateLimit(rateLimitConfig, "ip", MAP_IP_BUDGET);
+  const mapPointsRateLimit = rateLimit(
+    rateLimitConfig,
+    "ip",
+    MAP_POINTS_IP_BUDGET,
+  );
   const publicSampleRoutes = new Hono<RateLimitEnv>()
-    .use("*", (c, next) =>
-      c.req.path.endsWith("/samples/map") ||
-      (c.req.path.endsWith("/samples") &&
-        bboxSchema.safeParse(c.req.query("viewport")).success)
+    .use("*", (c, next) => {
+      if (c.req.path.endsWith("/samples/map/points"))
+        return mapPointsRateLimit(c, next);
+      return c.req.path.endsWith("/samples/map/samples") ||
+        (c.req.path.endsWith("/samples") &&
+          bboxSchema.safeParse(c.req.query("viewport")).success)
         ? mapRateLimit(c, next)
-        : publicRateLimit(c, next),
-    )
+        : publicRateLimit(c, next);
+    })
     .use(
       "/:igsn/contact/*",
       rateLimit(rateLimitConfig, "ip", CONTACT_MAIL_IP_BUDGET),
@@ -270,6 +278,7 @@ export function createApp(
           "RateLimit-Limit",
           "RateLimit-Remaining",
           "RateLimit-Reset",
+          "X-Uncompressed-Length",
         ],
       }),
     )

@@ -33,6 +33,7 @@
     "react-dom": "catalog:",
     "react-leaflet": "catalog:",
     "react-oidc-context": "catalog:",
+    "supercluster": "catalog:",
     "tailwindcss": "catalog:",
     "zod": "catalog:"
   },

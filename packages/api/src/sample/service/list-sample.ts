@@ -2,6 +2,7 @@ import type { ExportSamplesRequest } from "@projet-igsn/domain/sample/export/exp
 import type {
   AdminListSamplesResult,
   ListSamplesResult,
+  PublicListSamplesResult,
 } from "@projet-igsn/domain/sample/repository";
 import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
@@ -116,12 +117,13 @@ const lifecycleOrder = sql`array_position(${sql.val(
   sampleStatusSchema.options,
 )}::text[], status)`;
 
-async function listSamplesWhere(
+async function listSamplesWhere<Counted extends boolean = true>(
   db: Transactional<DB>,
   params: ListSamplesQuery,
   scope: Expression<SqlBool>[],
   withOwner = false,
   searchBuilder = searchFilters,
+  withTotal = true as Counted,
 ) {
   const { page, perPage, search, sort, order = "asc" } = params;
 
@@ -145,7 +147,7 @@ async function listSamplesWhere(
       .select((eb) => [
         "sample.id",
         "sample.updated_at",
-        eb.fn.countAll<string>().over().as("total"),
+        ...(withTotal ? [eb.fn.countAll<string>().over().as("total")] : []),
       ])
       .$if(sort === "status", (qb) =>
         qb
@@ -169,7 +171,7 @@ async function listSamplesWhere(
       .selectFrom(pageKeys.as("page"))
       .innerJoin("sample", "sample.id", "page.id")
       .selectAll("sample")
-      .select("page.total")
+      .$if(withTotal, (qb) => qb.select("page.total"))
       .select(sampleLocationQuery)
       .select(sampleRelationsQuery)
       .select(sampleProcessStepsQuery)
@@ -194,20 +196,23 @@ async function listSamplesWhere(
       .orderBy("page.id", "desc")
       .execute();
 
-    const total =
-      rows[0]?.total ??
-      (offset === 0
-        ? 0
-        : (
-            await matching()
-              .select((eb) => eb.fn.countAll<string>().as("count"))
-              .executeTakeFirstOrThrow()
-          ).count);
+    const total = withTotal
+      ? Number(
+          rows[0]?.total ??
+            (offset === 0
+              ? 0
+              : (
+                  await matching()
+                    .select((eb) => eb.fn.countAll<string>().as("count"))
+                    .executeTakeFirstOrThrow()
+                ).count),
+        )
+      : undefined;
 
     return {
       data: rows.map((row) => toSample(row)),
       owners: new Map(rows.map((row) => [row.id, row.owner])),
-      total: Number(total),
+      total: total as Counted extends true ? number : number | undefined,
     };
   });
 }
@@ -299,16 +304,17 @@ export function listPublishedSamplesForService(
 
 export async function listPublishedSamples(
   db: Transactional<DB>,
-  params: ListSamplesQuery,
-): Promise<ListSamplesResult> {
+  params: ListSamplesQuery & { withTotal?: boolean },
+): Promise<PublicListSamplesResult> {
   const { data, total } = await listSamplesWhere(
     db,
     params,
     publishedScope(params),
     false,
     publicSearchFilters,
+    params.withTotal ?? true,
   );
-  return { data, total };
+  return total === undefined ? { data } : { data, total };
 }
 
 const isOutside = (root: string) =>

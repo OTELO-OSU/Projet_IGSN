@@ -79,11 +79,12 @@ describe("parseEndpoints", () => {
     { value: "list,facets", expected: ["list", "facets"] },
     { value: "list facets", expected: ["list", "facets"] },
     { value: "facets", expected: ["facets"] },
+    { value: "map", expected: ["map"] },
   ])("should read $value", ({ value, expected }) => {
     expect(parseEndpoints(value)).toEqual(expected);
   });
 
-  it.each(["", "list,map"])("should reject %j", (value) => {
+  it.each(["", "list,tiles"])("should reject %j", (value) => {
     expect(() => parseEndpoints(value)).toThrow(/--endpoints/);
   });
 });

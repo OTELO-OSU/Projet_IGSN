@@ -1,8 +1,9 @@
-import type { SampleMapCluster } from "@projet-igsn/domain/sample/map/model";
 import type L from "leaflet";
 
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { Marker } from "react-leaflet";
+
+import type { MapCluster } from "#/domain/samples/map-cluster-index.ts";
 
 import { prefersReducedMotion } from "#/prefers-reduced-motion.ts";
 
@@ -10,8 +11,8 @@ const SPLIT_MS = 300;
 const EXTENT_PAD_DEGREES = 1e-6;
 
 export function splitOrigin(
-  previous: SampleMapCluster[],
-  { longitude, latitude, count }: SampleMapCluster,
+  previous: MapCluster[],
+  { longitude, latitude, count }: MapCluster,
 ): L.LatLngTuple | undefined {
   const parent = previous.find(
     (cluster) =>
@@ -27,10 +28,12 @@ export function splitOrigin(
 export function SplitMarker({
   from,
   position,
+  label,
   ...props
 }: ComponentProps<typeof Marker> & {
   from?: () => L.LatLngTuple | undefined;
   position: L.LatLngTuple;
+  label?: string;
 }) {
   const markerRef = useRef<L.Marker>(null);
   const [origin, setOrigin] = useState(() =>
@@ -55,6 +58,11 @@ export function SplitMarker({
     });
     return () => cancelAnimationFrame(frame);
   }, [origin]);
+
+  useEffect(() => {
+    if (label)
+      markerRef.current?.getElement()?.setAttribute("aria-label", label);
+  }, [label]);
 
   return <Marker ref={markerRef} position={origin ?? position} {...props} />;
 }

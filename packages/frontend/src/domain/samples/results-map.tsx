@@ -1,72 +1,67 @@
 import "leaflet/dist/leaflet.css";
 import type { Location } from "@projet-igsn/domain/sample/location/model";
-import type { SampleMapCluster } from "@projet-igsn/domain/sample/map/model";
+import type { SampleMapDetail } from "@projet-igsn/domain/sample/map/model";
 import type { Bbox } from "@projet-igsn/domain/sample/sample-validator";
 
 import { Link } from "@tanstack/react-router";
 import L from "leaflet";
-import { Fragment, Suspense, useEffect, useRef, useState } from "react";
-import {
-  MapContainer,
-  Polyline,
-  Popup,
-  Rectangle,
-  Tooltip,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { MapContainer, Popup, useMap, useMapEvents } from "react-leaflet";
 
 import type { SearchFilters } from "#/domain/samples/client/list-samples.ts";
+import type {
+  MapCluster,
+  MapPoints,
+} from "#/domain/samples/map-cluster-index.ts";
 
 import { useListSamples } from "#/domain/samples/hook/list-samples.ts";
+import { useMapSampleDetails } from "#/domain/samples/hook/map-sample-details.ts";
+import {
+  MAP_OVERLAY_CLASS,
+  MapProgress,
+} from "#/domain/samples/map-progress.tsx";
+import {
+  HIGHLIGHT_CLASS,
+  MARKER_CLASS,
+  SampleMarker,
+} from "#/domain/samples/map-sample-marker.tsx";
 import {
   OsmTileLayer,
   WORLD_BOUNDS,
-  areaHalves,
   formatBbox,
   singleBoundsOrWorld,
   toBoundsList,
 } from "#/domain/samples/search-location-map.tsx";
 import { SplitMarker, splitOrigin } from "#/domain/samples/split-marker.tsx";
+import { useMapClusters } from "#/domain/samples/use-map-clusters.ts";
 import { m } from "#/paraglide/messages.js";
 import { prefersReducedMotion } from "#/prefers-reduced-motion.ts";
 
 export type MapViewport = { bbox: string; zoom: number };
 type Position = NonNullable<Location["position"]>;
 export type HoveredSample = { igsn: string; position: Position };
+type ShownCluster = MapCluster & { sample?: SampleMapDetail };
 
 const MAX_ZOOM = 18;
+const MIN_BUBBLE_PX = 24;
+const MAX_BUBBLE_PX = 64;
+const BUBBLE_PX_PER_DIGIT = 8;
 const CLUSTER_PAGE_SIZE = 10;
 const CLUSTER_PAD_DEGREES = 1e-4;
-const MOVE_DEBOUNCE_MS = 500;
-const MIN_SHAPE_PX = 24;
-const SHAPE_STYLE = { color: "#013a68", weight: 2, fillOpacity: 0.15 };
-const HIGHLIGHTED_SHAPE_STYLE = {
-  color: "#c05f39",
-  weight: 3,
-  fillOpacity: 0.25,
-};
-
-const MARKER_CLASS = "rounded-full border-2 border-white shadow";
-const HIGHLIGHT_CLASS = "bg-tertiary ring-4 ring-tertiary/60";
-const SAMPLE_ICON = L.divIcon({
-  className: `${MARKER_CLASS} bg-primary`,
-  iconSize: [16, 16],
-});
-const HIGHLIGHTED_ICON = L.divIcon({
-  className: `${MARKER_CLASS} ${HIGHLIGHT_CLASS}`,
-  iconSize: [22, 22],
-});
 
 const clusterIcons = new Map<string, L.DivIcon>();
-function clusterIcon(count: number, isHighlighted: boolean): L.DivIcon {
-  const key = `${count}:${isHighlighted}`;
+function clusterIcon(
+  count: number,
+  isHighlighted: boolean,
+  sizePx: number,
+): L.DivIcon {
+  const key = `${count}:${isHighlighted}:${sizePx}`;
   let icon = clusterIcons.get(key);
   if (!icon) {
     icon = L.divIcon({
       className: `${MARKER_CLASS} text-xs font-semibold text-white ${isHighlighted ? HIGHLIGHT_CLASS : "bg-primary"}`,
       html: `<span aria-hidden="true" class="flex size-full items-center justify-center">${count}</span>`,
-      iconSize: [32, 32],
+      iconSize: [sizePx, sizePx],
     });
     clusterIcons.set(key, icon);
   }
@@ -75,6 +70,15 @@ function clusterIcon(count: number, isHighlighted: boolean): L.DivIcon {
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
+
+const bubbleSizePx = (count: number, maxCount: number) =>
+  Math.round(
+    clamp(
+      MAX_BUBBLE_PX * Math.sqrt(count / maxCount),
+      Math.max(MIN_BUBBLE_PX, BUBBLE_PX_PER_DIGIT * (String(count).length + 1)),
+      MAX_BUBBLE_PX,
+    ),
+  );
 
 // ponytail: a dateline-crossing area is not clipped, and a line takes its midpoint unclipped.
 function highlightPoint(
@@ -115,7 +119,7 @@ function highlightPoint(
 }
 
 function highlightedClusterIndex(
-  clusters: SampleMapCluster[],
+  clusters: ShownCluster[],
   highlighted: HoveredSample,
   bounds: L.LatLngBounds,
 ): number {
@@ -124,67 +128,23 @@ function highlightedClusterIndex(
   }
   const point = L.latLng(highlightPoint(highlighted.position, bounds));
   return clusters.findIndex(
-    ({ sample, extent }) =>
-      !sample && extentBounds(extent).pad(0.01).contains(point),
+    ({ count, extent }) =>
+      count > 1 && extentBounds(extent).pad(0.01).contains(point),
   );
-}
-
-const lineEnds = (
-  line: Extract<Position, { type: "line" }>,
-): [L.LatLngTuple, L.LatLngTuple] => [
-  [line.startLatitude, line.startLongitude],
-  [line.endLatitude, line.endLongitude],
-];
-
-function outlineSizePx(map: L.Map, position: Position): number {
-  const spans =
-    position.type === "line"
-      ? [lineEnds(position)]
-      : position.type === "area"
-        ? (areaHalves(position) as [L.LatLngTuple, L.LatLngTuple][])
-        : [];
-  return Math.max(
-    0,
-    ...spans.map(([from, to]) => {
-      const a = map.latLngToContainerPoint(from);
-      const b = map.latLngToContainerPoint(to);
-      return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
-    }),
-  );
-}
-
-function SampleOutline({
-  position,
-  isHighlighted,
-}: {
-  position: Position;
-  isHighlighted: boolean;
-}) {
-  const map = useMap();
-  if (outlineSizePx(map, position) < MIN_SHAPE_PX) return null;
-  const pathOptions = isHighlighted ? HIGHLIGHTED_SHAPE_STYLE : SHAPE_STYLE;
-  if (position.type === "line") {
-    return (
-      <Polyline
-        positions={lineEnds(position)}
-        pathOptions={pathOptions}
-        interactive={false}
-      />
-    );
-  }
-  if (position.type !== "area") return null;
-  return areaHalves(position).map((bounds) => (
-    <Rectangle
-      key={JSON.stringify(bounds)}
-      bounds={bounds}
-      pathOptions={pathOptions}
-      interactive={false}
-    />
-  ));
 }
 
 const extentBounds = ({ west, south, east, north }: Bbox) =>
   L.latLngBounds([south, west], [north, east]);
+
+const boundsOf = (map: L.Map): Bbox => {
+  const bounds = map.getBounds();
+  return {
+    west: bounds.getWest(),
+    south: bounds.getSouth(),
+    east: bounds.getEast(),
+    north: bounds.getNorth(),
+  };
+};
 
 const viewportOf = (map: L.Map): MapViewport => {
   const bounds = map.getBounds();
@@ -216,7 +176,7 @@ function ClusterSamples({
     page: 1,
     perPage: CLUSTER_PAGE_SIZE,
   });
-  const rest = data.total - data.data.length;
+  const rest = (data.total ?? 0) - data.data.length;
   return (
     <>
       <ul>
@@ -237,45 +197,31 @@ function ClusterSamples({
 
 function Clusters({
   clusters,
+  zoom,
   highlighted,
   filters,
-  onViewportChange,
   onSelectSample,
 }: {
-  clusters: SampleMapCluster[];
+  clusters: ShownCluster[];
+  zoom: number;
   highlighted?: HoveredSample;
   filters: SearchFilters;
-  onViewportChange: (viewport: MapViewport) => void;
   onSelectSample: (sample?: HoveredSample) => void;
 }) {
   const map = useMap();
-  const [zoom, setZoom] = useState(() => map.getZoom());
   const [shown, setShown] = useState({
     clusters,
-    previous: [] as SampleMapCluster[],
+    previous: [] as ShownCluster[],
   });
   if (shown.clusters !== clusters) {
     setShown({ clusters, previous: shown.clusters });
   }
   const previous =
     shown.clusters === clusters ? shown.previous : shown.clusters;
-  const moveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(moveTimer.current), []);
-  useMapEvents({
-    click() {
-      onSelectSample();
-    },
-    moveend() {
-      setZoom(map.getZoom());
-      clearTimeout(moveTimer.current);
-      moveTimer.current = setTimeout(
-        () => onViewportChange(viewportOf(map)),
-        MOVE_DEBOUNCE_MS,
-      );
-    },
-  });
-  useEffect(() => onViewportChange(viewportOf(map)), [map]);
   const atMaxZoom = zoom >= map.getMaxZoom();
+  const maxCount = Math.max(
+    ...clusters.filter(({ count }) => count > 1).map(({ count }) => count),
+  );
   const highlightedCluster = highlighted
     ? highlightedClusterIndex(clusters, highlighted, map.getBounds())
     : -1;
@@ -283,72 +229,47 @@ function Clusters({
   return (
     <>
       {clusters.map((cluster, index) => {
-        const { longitude, latitude, count, extent, sample } = cluster;
+        const { longitude, latitude, count, extent, number, sample } = cluster;
         const splitFrom = () => splitOrigin(previous, cluster);
-        if (sample) {
-          const isHighlighted = sample.igsn === highlighted?.igsn;
-          const selection = {
-            igsn: sample.igsn,
-            position: sample.position ?? {
-              type: "point" as const,
-              latitude,
-              longitude,
-            },
-          };
+        if (number !== undefined) {
           return (
-            <Fragment key={sample.igsn}>
-              {sample.position ? (
-                <SampleOutline
-                  position={sample.position}
-                  isHighlighted={isHighlighted}
-                />
-              ) : null}
-              <SplitMarker
-                from={splitFrom}
-                position={[latitude, longitude]}
-                icon={isHighlighted ? HIGHLIGHTED_ICON : SAMPLE_ICON}
-                zIndexOffset={isHighlighted ? 1000 : 0}
-                eventHandlers={{
-                  add: ({ target }) =>
-                    target
-                      .getElement()
-                      ?.setAttribute("aria-label", sample.name),
-                  click: () => onSelectSample(selection),
-                  keypress: ({ originalEvent }) => {
-                    if (originalEvent.key === "Enter")
-                      onSelectSample(selection);
-                  },
-                }}
-              >
-                <Tooltip>
-                  <p className="text-base font-semibold">{sample.name}</p>
-                  <p className="text-muted-foreground font-mono text-xs">
-                    {sample.igsn}
-                  </p>
-                </Tooltip>
-              </SplitMarker>
-            </Fragment>
+            <SampleMarker
+              key={number}
+              longitude={longitude}
+              latitude={latitude}
+              sample={sample}
+              isHighlighted={
+                sample !== undefined && sample.igsn === highlighted?.igsn
+              }
+              from={splitFrom}
+              onSelect={onSelectSample}
+            />
           );
         }
         const isHighlighted = index === highlightedCluster;
+        const zoomToExtent = () =>
+          map.flyToBounds(extentBounds(extent), {
+            animate: !prefersReducedMotion(),
+          });
+        const zoomHandlers = {
+          click: zoomToExtent,
+          keypress: ({ originalEvent }: L.LeafletKeyboardEvent) => {
+            if (originalEvent.key === "Enter") zoomToExtent();
+          },
+        };
         return (
           <SplitMarker
             key={`${longitude},${latitude}`}
             from={splitFrom}
             position={[latitude, longitude]}
             title={m.results_map_cluster({ count })}
-            icon={clusterIcon(count, isHighlighted)}
+            icon={clusterIcon(
+              count,
+              isHighlighted,
+              bubbleSizePx(count, maxCount),
+            )}
             zIndexOffset={isHighlighted ? 1000 : 0}
-            eventHandlers={
-              atMaxZoom
-                ? undefined
-                : {
-                    click: () =>
-                      map.flyToBounds(extentBounds(extent), {
-                        animate: !prefersReducedMotion(),
-                      }),
-                  }
-            }
+            eventHandlers={atMaxZoom ? undefined : zoomHandlers}
           >
             {atMaxZoom ? (
               <Popup>
@@ -364,12 +285,82 @@ function Clusters({
   );
 }
 
+function ClusterLayers({
+  points,
+  centered,
+  showProgress,
+  onViewportChange,
+  onSelectSample,
+  ...layers
+}: {
+  points: MapPoints;
+  showProgress?: boolean;
+  highlighted?: HoveredSample;
+  centered?: HoveredSample;
+  filters: SearchFilters;
+  onViewportChange: (viewport: MapViewport) => void;
+  onSelectSample: (sample?: HoveredSample) => void;
+}) {
+  const map = useMap();
+  const [view, setView] = useState(() => ({
+    bbox: boundsOf(map),
+    zoom: map.getZoom(),
+  }));
+  useMapEvents({
+    click() {
+      onSelectSample();
+    },
+    moveend() {
+      setView({ bbox: boundsOf(map), zoom: map.getZoom() });
+      onViewportChange(viewportOf(map));
+    },
+  });
+  useEffect(() => onViewportChange(viewportOf(map)), [map]);
+  const { clusters, isError } = useMapClusters(points, MAX_ZOOM, view);
+  const details = useMapSampleDetails(
+    (clusters ?? []).flatMap(({ number }) =>
+      number === undefined ? [] : [number],
+    ),
+  );
+  const shown = clusters?.map(
+    (cluster): ShownCluster => ({
+      ...cluster,
+      sample:
+        cluster.number === undefined ? undefined : details.get(cluster.number),
+    }),
+  );
+
+  return (
+    <>
+      {shown ? (
+        <Clusters
+          clusters={shown}
+          zoom={view.zoom}
+          onSelectSample={onSelectSample}
+          {...layers}
+        />
+      ) : isError ? (
+        <p role="alert" className={MAP_OVERLAY_CLASS}>
+          {m.results_map_error()}
+        </p>
+      ) : showProgress ? (
+        <MapProgress label={m.results_map_preparing()} />
+      ) : (
+        <p role="status" className={MAP_OVERLAY_CLASS}>
+          {m.results_map_loading()}
+        </p>
+      )}
+      <FocusSample sample={centered} clusters={shown} />
+    </>
+  );
+}
+
 function FocusSample({
   sample,
   clusters,
 }: {
   sample?: HoveredSample;
-  clusters: SampleMapCluster[];
+  clusters?: ShownCluster[];
 }) {
   const map = useMap();
   const pending = useRef<HoveredSample>(undefined);
@@ -378,7 +369,7 @@ function FocusSample({
   }, [sample]);
   useEffect(() => {
     const target = pending.current;
-    if (!target) return;
+    if (!target || !clusters) return;
     const point = highlightPoint(target.position, L.latLngBounds(WORLD_BOUNDS));
     const animate = !prefersReducedMotion();
     const cluster =
@@ -400,11 +391,11 @@ function FocusSample({
 
 export function ResultsMap({
   fitTo,
-  centered,
   ...layers
 }: {
-  clusters: SampleMapCluster[];
+  points: MapPoints;
   fitTo: Bbox | null;
+  showProgress?: boolean;
   highlighted?: HoveredSample;
   centered?: HoveredSample;
   filters: SearchFilters;
@@ -421,8 +412,7 @@ export function ResultsMap({
       className="z-0 h-full w-full rounded-md"
     >
       <OsmTileLayer />
-      <Clusters {...layers} />
-      <FocusSample sample={centered} clusters={layers.clusters} />
+      <ClusterLayers {...layers} />
     </MapContainer>
   );
 }
