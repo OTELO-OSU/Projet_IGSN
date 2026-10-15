@@ -2,11 +2,11 @@ import {
   BotIcon,
   EyeIcon,
   FilePlusIcon,
-  FingerprintIcon,
   GitForkIcon,
   InfoIcon,
   KeyRoundIcon,
   type LucideIcon,
+  QuoteIcon,
 } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
@@ -205,7 +205,7 @@ export function faqCategories(): FaqCategory[] {
     {
       slug: "usage",
       title: m.faq_category_usage(),
-      icon: FingerprintIcon,
+      icon: QuoteIcon,
       questions: [
         {
           value: "find-by-igsn",
