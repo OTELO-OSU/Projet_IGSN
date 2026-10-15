@@ -1,3 +1,8 @@
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "../../packages/domain/src/institutional-group/label";
 import { charterPage } from "../support/admin/charter.page";
 import { institutionalGroupsPage } from "../support/admin/institutional-groups.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
@@ -39,9 +44,9 @@ test.describe("onboarding", () => {
     await charter.expectNotShown();
 
     await groups.declare({
-      organization: "Université de Lorraine",
-      osu: "Observatoire Terre et Environnement de Lorraine",
-      laboratory: "Centre de recherches pétrographiques et géochimiques",
+      organization: organizationLabel("04vfs2w97"),
+      osu: osuLabel("OTELo"),
+      laboratory: laboratoryLabel("UMR7358"),
     });
 
     await list.expectVisible();
@@ -54,9 +59,9 @@ test.describe("onboarding", () => {
 
     await settings.openGroups();
     await settings.setInstitution({
-      organization: "Université Grenoble Alpes",
-      osu: "Observatoire des sciences de l'univers de Grenoble",
-      laboratory: "ISTerre",
+      organization: organizationLabel("02rx3b187"),
+      osu: osuLabel("OSUG"),
+      laboratory: laboratoryLabel("UMR5275"),
     });
 
     await page.reload();

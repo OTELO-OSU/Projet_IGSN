@@ -1,3 +1,7 @@
+import {
+  laboratoryLabel,
+  organizationLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { page } from "vitest/browser";
@@ -84,10 +88,12 @@ describe("groups page", () => {
       .toBeVisible();
     await expect
       .element(institution.getByRole("combobox", { name: /organization/i }))
-      .toHaveTextContent(/Lorraine/);
+      .toHaveTextContent(organizationLabel("04vfs2w97"));
 
     await institution.getByRole("combobox", { name: /laboratory/i }).click();
-    await page.getByRole("option", { name: /GéoRessources/ }).click();
+    await page
+      .getByRole("option", { name: laboratoryLabel("UMR7359") })
+      .click();
     await institution.getByRole("button", { name: /save/i }).click();
     await expect
       .element(page.getByRole("heading", { name: /change your institution/i }))

@@ -1,3 +1,4 @@
+import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
@@ -38,8 +39,8 @@ function fakeApi() {
   );
 }
 
-const LORRAINE = "Université de Lorraine";
-const CNRS = "Centre National de la Recherche Scientifique (CNRS)";
+const LORRAINE = organizationLabel("04vfs2w97");
+const CNRS = organizationLabel("02feahw73");
 
 describe("OsusPage", () => {
   it("should keep only the OSUs of the chosen organization", async () => {

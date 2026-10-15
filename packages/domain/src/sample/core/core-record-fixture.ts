@@ -2,6 +2,11 @@ import type { Sample } from "../sample.ts";
 import type { CoreAgentRole, CoreSample } from "./core-sample-schema.ts";
 import type { CoreSampleBody } from "./core-sample-schema.ts";
 
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "../../institutional-group/label.ts";
 import { pathSegment } from "../path/segment.ts";
 import { sampleSchema } from "../sample.ts";
 import {
@@ -14,8 +19,7 @@ import { fromCoreSample } from "./from-core-sample.ts";
 
 export const FRONTEND_URL = "https://igsn.example.org/";
 
-export const ORGANIZATION_NAME =
-  "Centre National de la Recherche Scientifique (CNRS)";
+export const ORGANIZATION_NAME = organizationLabel("02feahw73");
 
 const ORGANIZATION_URI = "https://ror.org/02feahw73";
 
@@ -125,10 +129,10 @@ const CREATOR: CoreAgentRole = {
     agentType: "Person",
     affiliations: [
       { id: ORGANIZATION_URI, name: ORGANIZATION_NAME },
-      { id: "urn:otelo:osu:OMP", name: "Observatoire Midi-Pyrénées (OMP)" },
+      { id: "urn:otelo:osu:OMP", name: osuLabel("OMP") },
       {
         id: "urn:otelo:laboratory:UMR3589",
-        name: "Centre National de Recherches Météorologiques (CNRM)",
+        name: laboratoryLabel("UMR3589"),
       },
     ],
   },
@@ -148,7 +152,7 @@ const RIGHTS_HOLDERS: CoreAgentRole[] = [
   {
     agent: {
       id: "https://ror.org/03fd77x13",
-      name: "Institut national de physique nucléaire et de physique des particules (CNRS - IN2P3)",
+      name: organizationLabel("03fd77x13"),
       agentType: "Organization",
     },
     roles: ["SampleOwner"],
@@ -156,7 +160,7 @@ const RIGHTS_HOLDERS: CoreAgentRole[] = [
   {
     agent: {
       id: "https://ror.org/02cte4b68",
-      name: "Institut national de chimie (CNRS - INC)",
+      name: organizationLabel("02cte4b68"),
       agentType: "Organization",
     },
     roles: ["SampleOwner"],
@@ -302,11 +306,11 @@ export const RESEARCH_PROJECT_SAMPLE_RECORD: CoreSample = {
       organizations: [
         {
           id: "urn:otelo:osu:OASU",
-          name: "Observatoire aquitain des sciences de l'univers (OASU)",
+          name: osuLabel("OASU"),
         },
         {
           id: "urn:otelo:laboratory:UMR5805",
-          name: "Environnements et paléoenvironnements océaniques et continentaux (EPOC)",
+          name: laboratoryLabel("UMR5805"),
         },
       ],
       collectionName: "Lorraine granites",

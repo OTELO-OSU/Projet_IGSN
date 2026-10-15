@@ -1,3 +1,8 @@
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { vi } from "vitest";
 import { page } from "vitest/browser";
 
@@ -11,9 +16,9 @@ vi.mock("react-oidc-context", () => ({
 
 const save = { mutate: () => {}, isPending: false };
 
-const pick = async (field: RegExp, search: string, option: RegExp) => {
+const pick = async (field: RegExp, option: string) => {
   await page.getByRole("combobox", { name: field }).click();
-  await page.getByPlaceholder(/^Search/).fill(search);
+  await page.getByPlaceholder(/^Search/).fill(option);
   await page.getByRole("option", { name: option }).click();
 };
 
@@ -21,7 +26,7 @@ describe("InstitutionalGroupsForm", () => {
   it("should offer only the OSUs of the picked organization", async () => {
     await render(<InstitutionalGroupsForm save={save} />);
 
-    await pick(/Organization/, "Lorraine", /Université de Lorraine/);
+    await pick(/Organization/, organizationLabel("04vfs2w97"));
     await page.getByRole("combobox", { name: /OSU/ }).click();
 
     await expect
@@ -34,7 +39,7 @@ describe("InstitutionalGroupsForm", () => {
 
   it("should narrow the laboratories to the OSU once one is picked", async () => {
     await render(<InstitutionalGroupsForm save={save} />);
-    await pick(/Organization/, "Orléans", /Université d'Orléans/);
+    await pick(/Organization/, organizationLabel("014zrew76"));
 
     await page.getByRole("combobox", { name: /Laboratory/ }).click();
     await expect
@@ -42,7 +47,7 @@ describe("InstitutionalGroupsForm", () => {
       .toBeVisible();
     await page.getByRole("option", { name: /\(ISTO\)/ }).click();
 
-    await pick(/OSU/, "OSUC", /OSUC/);
+    await pick(/OSU/, osuLabel("OSUC"));
     await page.getByRole("combobox", { name: /Laboratory/ }).click();
     await expect
       .element(page.getByRole("option", { name: /\(ISTO\)/ }))
@@ -68,7 +73,7 @@ describe("InstitutionalGroupsForm", () => {
       <InstitutionalGroupsForm groups={CALLER_GROUPS} save={save} />,
     );
 
-    await pick(/Organization/, "Orléans", /Université d'Orléans/);
+    await pick(/Organization/, organizationLabel("014zrew76"));
     await page.getByRole("button", { name: /save/i }).click();
 
     await expect
@@ -86,8 +91,8 @@ describe("InstitutionalGroupsForm", () => {
       <InstitutionalGroupsForm groups={CALLER_GROUPS} save={save} />,
     );
 
-    await pick(/Organization/, "Orléans", /Université d'Orléans/);
-    await pick(/Laboratory/, "ISTO", /\(ISTO\)/);
+    await pick(/Organization/, organizationLabel("014zrew76"));
+    await pick(/Laboratory/, laboratoryLabel("UMR7327"));
     await page.getByRole("button", { name: /save/i }).click();
 
     await expect
@@ -97,11 +102,11 @@ describe("InstitutionalGroupsForm", () => {
 
   it("should clear the OSU and laboratory when the organization changes", async () => {
     await render(<InstitutionalGroupsForm save={save} />);
-    await pick(/Organization/, "Lorraine", /Université de Lorraine/);
-    await pick(/OSU/, "OTELo", /OTELo/);
-    await pick(/Laboratory/, "CRPG", /CRPG/);
+    await pick(/Organization/, organizationLabel("04vfs2w97"));
+    await pick(/OSU/, osuLabel("OTELo"));
+    await pick(/Laboratory/, laboratoryLabel("UMR7358"));
 
-    await pick(/Organization/, "Orléans", /Université d'Orléans/);
+    await pick(/Organization/, organizationLabel("014zrew76"));
 
     await expect
       .element(page.getByRole("combobox", { name: /OSU/ }))
@@ -113,8 +118,8 @@ describe("InstitutionalGroupsForm", () => {
 
   it("should not offer a replaced laboratory", async () => {
     await render(<InstitutionalGroupsForm save={save} />);
-    await pick(/Organization/, "CNRS", /\(CNRS\)$/);
-    await pick(/OSU/, "OBSPM", /\(OBSPM\)/);
+    await pick(/Organization/, organizationLabel("02feahw73"));
+    await pick(/OSU/, osuLabel("OBSPM"));
 
     await page.getByRole("combobox", { name: /Laboratory/ }).click();
     await page.getByPlaceholder(/^Search/).fill("LIRA");

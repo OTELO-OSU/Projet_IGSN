@@ -2,6 +2,7 @@ import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { SampleFacetCounts } from "@projet-igsn/domain/sample/sample-validator";
 import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 
+import { laboratoryLabel } from "@projet-igsn/domain/institutional-group/label";
 import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { render } from "vitest-browser-react";
@@ -296,7 +297,7 @@ describe("SampleFacets", () => {
     await screen.getByRole("combobox", { name: "Laboratory" }).click();
 
     await expect
-      .element(screen.getByRole("option", { name: /GéoRessources/ }))
+      .element(screen.getByRole("option", { name: laboratoryLabel("UMR7359") }))
       .toBeVisible();
     expect(screen.getByRole("option", { name: /ISTerre/ }).elements()).toEqual(
       [],
@@ -309,9 +310,13 @@ describe("SampleFacets", () => {
     });
 
     const combobox = screen.getByRole("combobox", { name: "Laboratory" });
-    await expect.element(combobox).toHaveTextContent(/GéoRessources/);
+    await expect
+      .element(combobox)
+      .toHaveTextContent(laboratoryLabel("UMR7359"));
     await combobox.click();
-    await screen.getByRole("option", { name: /GéoRessources/ }).click();
+    await screen
+      .getByRole("option", { name: laboratoryLabel("UMR7359") })
+      .click();
 
     expect(onChange).toHaveBeenCalledWith("institutionalLaboratory", undefined);
   });

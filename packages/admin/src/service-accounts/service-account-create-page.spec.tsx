@@ -1,3 +1,4 @@
+import { managedLaboratoryLabel } from "@projet-igsn/domain/institutional-group/managed-group-items";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
@@ -52,8 +53,7 @@ const ACCOUNT = {
   hasApiKey: false,
 };
 
-const CRPG =
-  "Centre de recherches pétrographiques et géochimiques (CRPG) (UMR7358)";
+const CRPG = managedLaboratoryLabel("UMR7358");
 
 function fakeApi() {
   const posts: unknown[] = [];

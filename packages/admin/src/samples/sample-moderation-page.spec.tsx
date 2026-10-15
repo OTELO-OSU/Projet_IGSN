@@ -1,3 +1,5 @@
+import { findLaboratory } from "@projet-igsn/domain/institutional-group/find-laboratory";
+import { laboratoryLabel } from "@projet-igsn/domain/institutional-group/label";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { page } from "vitest/browser";
@@ -152,9 +154,9 @@ describe("SampleModerationPage", () => {
         await screen.getByRole("combobox", { name: "Institution" }).click();
         await screen
           .getByLabelText("Search institutions")
-          .fill("GéoRessources");
+          .fill(findLaboratory("UMR7359")!.name);
         await screen
-          .getByRole("button", { name: "GéoRessources (GEORESSOURCES)" })
+          .getByRole("button", { name: laboratoryLabel("UMR7359") })
           .first()
           .click();
       },

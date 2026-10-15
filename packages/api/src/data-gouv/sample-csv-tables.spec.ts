@@ -1,5 +1,10 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { RESEARCH_PROJECT_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { describe, expect, it } from "vitest";
 
@@ -144,23 +149,17 @@ describe("sampleCsvTables", () => {
   it("should name the current archive's OSU and laboratory beside their codes", () => {
     expect(sampleRecordOf(SAMPLE)).toMatchObject({
       repository_current_archive_osu: "OASU",
-      repository_current_archive_osu_name:
-        "Observatoire aquitain des sciences de l'univers (OASU)",
+      repository_current_archive_osu_name: osuLabel("OASU"),
       repository_current_archive_laboratory: "UMR5805",
-      repository_current_archive_laboratory_name:
-        "Environnements et paléoenvironnements océaniques et continentaux (EPOC)",
+      repository_current_archive_laboratory_name: laboratoryLabel("UMR5805"),
     });
   });
 
   it("should key child rows by the sample igsn, naming each organization beside its ROR", () => {
     expect(tablesOf([SAMPLE])["rights-holders.csv"]).toEqual([
       ["igsn", "repository_rights_holder", "repository_rights_holder_name"],
-      [
-        IGSN,
-        "03fd77x13",
-        "Institut national de physique nucléaire et de physique des particules (CNRS - IN2P3)",
-      ],
-      [IGSN, "02cte4b68", "Institut national de chimie (CNRS - INC)"],
+      [IGSN, "03fd77x13", organizationLabel("03fd77x13")],
+      [IGSN, "02cte4b68", organizationLabel("02cte4b68")],
     ]);
   });
 
