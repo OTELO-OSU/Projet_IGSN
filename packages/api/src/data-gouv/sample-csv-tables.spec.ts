@@ -144,7 +144,8 @@ describe("sampleCsvTables", () => {
   it("should name the current archive's OSU and laboratory beside their codes", () => {
     expect(sampleRecordOf(SAMPLE)).toMatchObject({
       repository_current_archive_osu: "OASU",
-      repository_current_archive_osu_name: "OASU (OASU)",
+      repository_current_archive_osu_name:
+        "Observatoire aquitain des sciences de l'univers (OASU)",
       repository_current_archive_laboratory: "UMR5805",
       repository_current_archive_laboratory_name:
         "Environnements et paléoenvironnements océaniques et continentaux (EPOC)",

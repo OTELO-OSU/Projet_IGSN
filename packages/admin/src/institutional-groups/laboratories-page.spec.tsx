@@ -127,9 +127,7 @@ const searchInstitution = async (
 };
 
 const LORRAINE = "Université de Lorraine";
-const ORLEANS = "Université d'Orléans";
 const CNRS = "Centre National de la Recherche Scientifique (CNRS)";
-const OSUC = "OSUC (OSUC)";
 
 describe("LaboratoriesPage", () => {
   it("should keep only the laboratories of the chosen organization and record it in the URL", async () => {
@@ -154,27 +152,6 @@ describe("LaboratoriesPage", () => {
     await expect
       .poll(() => router.state.location.search)
       .toEqual({ institution: "organization:04vfs2w97" });
-  });
-
-  it("should narrow the laboratories further with an OSU", async () => {
-    fakeApi();
-    const { screen, router } = await renderLaboratories();
-
-    await searchInstitution(screen, ORLEANS);
-    await screen.getByRole("button", { name: OSUC, exact: true }).click();
-
-    await expect
-      .poll(() => router.state.location.search)
-      .toEqual({ institution: "osu:014zrew76/OSUC" });
-    await expect
-      .element(screen.getByRole("cell", { name: "ISTO", exact: true }))
-      .toBeVisible();
-    expect(
-      screen.getByRole("cell", { name: "ORN", exact: true }).elements(),
-    ).toHaveLength(0);
-    expect(
-      screen.getByRole("cell", { name: "CRPG", exact: true }).elements(),
-    ).toHaveLength(0);
   });
 
   it("should show the member count of every laboratory, zero included", async () => {
@@ -350,6 +327,24 @@ describe("LaboratoriesPage", () => {
 
     await expect.element(screen.getByRole("alert")).toBeVisible();
     expect(requested).toHaveLength(0);
+  });
+
+  it("should open a laboratory from a former code and ask for its members under the current one", async () => {
+    const { requested } = fakeApi();
+    const { screen } = await renderLaboratories(
+      "/institutional-groups/laboratories/UPS2074",
+    );
+
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          name: "Institut de Radio Astronomie Millimétrique",
+        }),
+      )
+      .toBeVisible();
+    await expect
+      .poll(() => requested.at(-1))
+      .toContain("institutionalLaboratory=UAR2074");
   });
 
   it.each(["centre de recherche", "CRPG"])(

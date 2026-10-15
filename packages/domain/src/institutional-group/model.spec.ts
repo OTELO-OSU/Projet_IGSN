@@ -7,6 +7,7 @@ describe("institutionalGroupRefSchema", () => {
     ["organization", { kind: "organization", code: "05hnb7x64" }],
     ["osu", { kind: "osu", code: "OSUNA" }],
     ["laboratory", { kind: "laboratory", code: "UMR7327" }],
+    ["former laboratory", { kind: "laboratory", code: "UPS2074" }],
   ])("should accept a known %s code", (_case, ref) => {
     expect(institutionalGroupRefSchema.parse(ref)).toEqual(ref);
   });

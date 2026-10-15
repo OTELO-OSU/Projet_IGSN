@@ -1,5 +1,6 @@
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { filterLaboratoriesByOrgAndOsu } from "@projet-igsn/domain/institutional-group/filter-laboratories-by-org-and-osu";
+import { isOfferedLaboratory } from "@projet-igsn/domain/institutional-group/is-offered-laboratory";
 import { laboratoryLabel } from "@projet-igsn/domain/institutional-group/label";
 import {
   ALL_ORGANIZATION_ITEMS,
@@ -41,7 +42,9 @@ export function SampleRepositoryFields() {
               <field.ComboboxField
                 label={m.field_archive_laboratory()}
                 items={toItems(
-                  filterLaboratoriesByOrgAndOsu({ osu }),
+                  filterLaboratoriesByOrgAndOsu({ osu }).filter((laboratory) =>
+                    isOfferedLaboratory(laboratory, field.state.value),
+                  ),
                   laboratoryLabel,
                 )}
                 placeholder={m.laboratory_placeholder()}

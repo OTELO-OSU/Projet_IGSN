@@ -2,6 +2,7 @@ import type { UserStatus } from "@projet-igsn/domain/user/model";
 
 import type { DB } from "../db.ts";
 
+import { storedInstitutions } from "../institutional-group/stored-institution.ts";
 import { type Transactional } from "../transaction.ts";
 
 export function insertUser(
@@ -21,6 +22,10 @@ export function insertUser(
     charterAcceptedAt?: Date | null;
   } = {},
 ): Promise<{ id: string }> {
+  const stored = storedInstitutions({
+    institutionalOsu: overrides.institutionalOsu ?? null,
+    institutionalLaboratory: overrides.institutionalLaboratory ?? null,
+  });
   return db
     .insertInto("user")
     .values({
@@ -33,8 +38,8 @@ export function insertUser(
       super_admin: overrides.superAdmin,
       created_at: overrides.createdAt,
       institutional_organization: overrides.institutionalOrganization ?? null,
-      institutional_osu: overrides.institutionalOsu ?? null,
-      institutional_laboratory: overrides.institutionalLaboratory ?? null,
+      institutional_osu: stored.institutionalOsu,
+      institutional_laboratory: stored.institutionalLaboratory,
       charter_accepted_at:
         overrides.charterAcceptedAt === undefined
           ? new Date()

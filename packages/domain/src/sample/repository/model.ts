@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { filterLaboratoriesByOrgAndOsu } from "../../institutional-group/filter-laboratories-by-org-and-osu.ts";
+import { findLaboratory } from "../../institutional-group/find-laboratory.ts";
 import { laboratoryCodeSchema } from "../../institutional-group/laboratory.ts";
 import { isKnownInstitutionalCode } from "../../institutional-group/model.ts";
 import { osuCodeSchema } from "../../institutional-group/osu.ts";
@@ -31,7 +32,7 @@ export const createRepositorySchema = repositorySchema.superRefine(
     if (
       laboratory != null &&
       !filterLaboratoriesByOrgAndOsu({ osu }).some(
-        (candidate) => candidate.code === laboratory,
+        (candidate) => candidate.id === findLaboratory(laboratory)?.id,
       )
     ) {
       ctx.addIssue({

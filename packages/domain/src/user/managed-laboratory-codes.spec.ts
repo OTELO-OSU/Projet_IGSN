@@ -21,9 +21,14 @@ describe("managedLaboratoryCodes", () => {
       expected: ["UAR3281", "UMR6112"],
     },
     {
-      scope: "a laboratory",
-      groups: { laboratories: ["UMR7154"] },
-      expected: ["UMR7154"],
+      scope: "a laboratory, to the codes it replaced too",
+      groups: { laboratories: ["UMR8254"] },
+      expected: ["UMR8109", "UMR8254"],
+    },
+    {
+      scope: "a laboratory held under a former code",
+      groups: { laboratories: ["UPS2074"] },
+      expected: ["UAR2074"],
     },
     {
       scope: "an organization and one of its laboratories",

@@ -1,12 +1,18 @@
 import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 import type { Transaction } from "kysely";
 
-import { MANAGED_GROUP_KINDS } from "@projet-igsn/domain/user/managed-groups";
+import { laboratoryCodeOf } from "@projet-igsn/domain/institutional-group/laboratory-code-of";
+import { osuCodeOf } from "@projet-igsn/domain/institutional-group/osu-code-of";
+import {
+  knownManagedCodes,
+  MANAGED_GROUP_KINDS,
+} from "@projet-igsn/domain/user/managed-groups";
 import { sql } from "kysely";
 import { jsonBuildObject } from "kysely/helpers/postgres";
 
 import type { DB } from "./db.ts";
 
+import { institutionIdOf } from "./institutional-group/stored-institution.ts";
 import { assertManualGroupsExist } from "./manual-group/manual-groups-by-ids.ts";
 
 type ManagedGroupTables = {
@@ -53,6 +59,14 @@ export const managedGroupsOf = (
   }).as("managedGroups");
 };
 
+export function knownManagedGroupCodes(stored: ManagedGroups): ManagedGroups {
+  return knownManagedCodes({
+    ...stored,
+    osus: stored.osus.map(osuCodeOf).toSorted(),
+    laboratories: stored.laboratories.map(laboratoryCodeOf).toSorted(),
+  });
+}
+
 export async function replaceManagedGroups(
   trx: Transaction<DB>,
   tables: ManagedGroupTables,
@@ -64,7 +78,9 @@ export async function replaceManagedGroups(
   const institutional = sql.table(tables.institutional);
   const manual = sql.table(tables.manual);
   const codeRows = MANAGED_GROUP_KINDS.flatMap(([key, kind]) =>
-    groups[key].map((code) => sql`(${ownerId}, ${kind}, ${code})`),
+    [...new Set(groups[key].map((code) => institutionIdOf(kind, code)))].map(
+      (id) => sql`(${ownerId}, ${kind}, ${id})`,
+    ),
   );
   const groupRows = groups.manualGroupIds.map(
     (groupId) => sql`(${ownerId}, ${groupId})`,

@@ -1,9 +1,9 @@
 import {
+  laboratoryLabel,
   laboratoryShortLabel,
   organizationLabel,
   organizationShortLabel,
 } from "./label.ts";
-import { LABORATORIES } from "./laboratory.ts";
 import { ORGANIZATIONS } from "./organization.ts";
 
 const withAcronym = ORGANIZATIONS.find(
@@ -46,12 +46,16 @@ describe("organizationShortLabel", () => {
 });
 
 describe("laboratoryShortLabel", () => {
-  it("should render the acronym of a known laboratory", () => {
-    const laboratory = LABORATORIES[0]!;
-    expect(laboratoryShortLabel(laboratory.code)).toBe(laboratory.acronym);
-  });
-
   it("should fall back to the raw code when the laboratory is unknown", () => {
     expect(laboratoryShortLabel("UMR0000")).toBe("UMR0000");
+  });
+});
+
+describe("laboratoryLabel", () => {
+  it("should label a former code as the laboratory it now belongs to", () => {
+    expect([
+      laboratoryLabel("UPS2074"),
+      laboratoryShortLabel("UPS2074"),
+    ]).toEqual([laboratoryLabel("UAR2074"), "IRAM"]);
   });
 });

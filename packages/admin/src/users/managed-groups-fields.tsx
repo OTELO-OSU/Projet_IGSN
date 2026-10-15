@@ -7,6 +7,7 @@ import {
   MANAGED_LABORATORY_ITEMS,
   MANAGED_ORGANIZATION_ITEMS,
   MANAGED_OSU_ITEMS,
+  managedLaboratoryLabel,
   withGranted,
 } from "@projet-igsn/domain/institutional-group/managed-group-items";
 
@@ -44,7 +45,11 @@ export function ManagedGroupsFields({
     {
       name: "managedGroups.laboratories",
       label: m.field_managed_laboratories(),
-      items: MANAGED_LABORATORY_ITEMS,
+      items: withGranted(
+        MANAGED_LABORATORY_ITEMS,
+        granted.laboratories,
+        managedLaboratoryLabel,
+      ),
       placeholder: m.laboratory_placeholder(),
       emptyText: m.laboratory_empty(),
     },

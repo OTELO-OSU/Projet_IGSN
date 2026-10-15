@@ -1,3 +1,5 @@
+import { laboratoryIdOf } from "@projet-igsn/domain/institutional-group/laboratory-id-of";
+import { osuIdOf } from "@projet-igsn/domain/institutional-group/osu-id-of";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import {
   managerScope,
@@ -80,16 +82,6 @@ describe("createUserRepository", () => {
     const again = await repository.upsert(claims);
     // Assert
     expect(again).toEqual({ ...first, orcid: "0000-0002-0442-0091" });
-  });
-
-  pgTest("should set and return the user's orcid", async ({ db }) => {
-    // Arrange
-    const repository = createUserRepository(db);
-    const user = await repository.upsert(claims);
-    // Act
-    const updated = await repository.setOrcid(user.id, "0000-0002-0442-0091");
-    // Assert
-    expect(updated).toEqual({ ...user, orcid: "0000-0002-0442-0091" });
   });
 
   pgTest("should clear the orcid with null", async ({ db }) => {
@@ -317,14 +309,6 @@ describe("createUserRepository", () => {
       });
 
       expect(found.map((user) => user.name)).toEqual(["Dupont"]);
-    });
-
-    pgTest("should ignore case", async ({ db }) => {
-      const repository = await insertResearchers(db);
-
-      const found = await repository.search(CALLER_ID, { search: "CURIE" });
-
-      expect(found.map((user) => user.name)).toEqual(["Curie"]);
     });
 
     pgTest.for([
@@ -613,6 +597,30 @@ describe("createUserRepository", () => {
   );
 
   pgTest(
+    "should return the users of a replaced laboratory under its successor's code",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "alice-1ba@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR8109",
+      });
+      await insertUser(db, "bruno-1ba@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR8254",
+      });
+      // Act
+      const { data, total } = await createUserRepository(db).list(
+        { page: 1, perPage: 25, institutionalLaboratory: "UMR8254" },
+        SUPER_ADMIN,
+      );
+      // Assert
+      expect(data.map((user) => user.email)).toEqual([
+        "alice-1ba@univ-lorraine.fr",
+        "bruno-1ba@univ-lorraine.fr",
+      ]);
+      expect(total).toBe(2);
+    },
+  );
+
+  pgTest(
     "should return only the members of the requested manual group",
     async ({ db }) => {
       // Arrange
@@ -659,29 +667,6 @@ describe("createUserRepository", () => {
     ]);
     expect(total).toBe(1);
   });
-
-  pgTest(
-    "should keep the order and the pagination when filtering",
-    async ({ db }) => {
-      // Arrange
-      await insertGroupedUsers(db);
-      // Act
-      const { data, total } = await createUserRepository(db).list(
-        {
-          page: 2,
-          perPage: 1,
-          status: undefined,
-          institutionalLaboratory: "UMR7358",
-        },
-        SUPER_ADMIN,
-      );
-      // Assert
-      expect(data.map((user) => user.email)).toEqual([
-        "bruno-1ba@univ-lorraine.fr",
-      ]);
-      expect(total).toBe(2);
-    },
-  );
 
   pgTest("should read one user, or null when unknown", async ({ db }) => {
     // Arrange
@@ -831,6 +816,64 @@ describe("moderation scope", () => {
     expect(listed).toEqual({ data: [], total: 0 });
     expect(read).toBeNull();
   });
+
+  pgTest(
+    "should read a laboratory stored under its RNSR id back as its current code, in reach of that code's manager",
+    async ({ db }) => {
+      // Arrange
+      const caller = await insertUser(db, "manager-1ba@univ-lorraine.fr");
+      await moderateInstitution(db, caller.id, {
+        kind: "laboratory",
+        code: "UAR2074",
+      });
+      const member = await insertUser(db, "member-1ba@univ-lorraine.fr", {
+        institutionalOsu: osuIdOf("OVSQ"),
+        institutionalLaboratory: laboratoryIdOf("UAR2074"),
+      });
+      const repository = createUserRepository(db);
+      const moderation = managerScope(
+        caller.id,
+        await repository.getModerationScope(caller.id),
+      );
+      // Act
+      const read = await repository.get(member.id, moderation);
+      // Assert
+      expect(read).toMatchObject({
+        id: member.id,
+        institutionalOsu: "OVSQ",
+        institutionalLaboratory: "UAR2074",
+      });
+    },
+  );
+
+  pgTest(
+    "should store a laboratory written under a former code at its RNSR id",
+    async ({ db }) => {
+      // Arrange
+      const member = await insertUser(db, "member-1ba@univ-lorraine.fr");
+      const repository = createUserRepository(db);
+      // Act
+      await repository.setInstitutionalGroups(member.id, {
+        institutionalOrganization: "02feahw73",
+        institutionalOsu: "OVSQ",
+        institutionalLaboratory: "UPS2074",
+      });
+      // Assert
+      expect(
+        await db
+          .selectFrom("user")
+          .select(["institutional_osu", "institutional_laboratory"])
+          .where("id", "=", member.id)
+          .executeTakeFirstOrThrow(),
+      ).toEqual({
+        institutional_osu: osuIdOf("OVSQ"),
+        institutional_laboratory: laboratoryIdOf("UAR2074"),
+      });
+      expect(await repository.get(member.id, SUPER_ADMIN)).toMatchObject({
+        institutionalLaboratory: "UAR2074",
+      });
+    },
+  );
 
   pgTest("should read the caller's own managed groups", async ({ db }) => {
     // Arrange

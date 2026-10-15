@@ -49,12 +49,14 @@ describe("import template vocabulary sheet", () => {
   it("should keep every label unique within its parent group, so the importer can reverse it", () => {
     const collisions = VOCABULARY_BLOCKS.flatMap((block) => {
       const seen = new Set<string>();
-      return block.rows.flatMap(([key, label]) => {
-        const group = `${block.id}|${isHierarchy(block) ? key : ""}|${label}`;
-        if (seen.has(group)) return [group];
-        seen.add(group);
-        return [];
-      });
+      return [...block.rows, ...(block.retiredRows ?? [])].flatMap(
+        ([key, label]) => {
+          const group = `${block.id}|${isHierarchy(block) ? key : ""}|${label}`;
+          if (seen.has(group)) return [group];
+          seen.add(group);
+          return [];
+        },
+      );
     });
 
     expect(collisions).toEqual([]);

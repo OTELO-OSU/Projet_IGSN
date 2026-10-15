@@ -3,6 +3,7 @@ import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-grou
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { filterLaboratoriesByOrgAndOsu } from "@projet-igsn/domain/institutional-group/filter-laboratories-by-org-and-osu";
 import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
+import { isOfferedLaboratory } from "@projet-igsn/domain/institutional-group/is-offered-laboratory";
 import {
   laboratoryLabel,
   osuLabel,
@@ -81,7 +82,9 @@ export function InstitutionalGroupsFields({
                           filterLaboratoriesByOrgAndOsu({
                             organizationRor: ror,
                             osu,
-                          }),
+                          }).filter((laboratory) =>
+                            isOfferedLaboratory(laboratory, field.state.value),
+                          ),
                           laboratoryLabel,
                         )
                   }

@@ -50,6 +50,7 @@ type Options = {
   failGet?: boolean;
   manualGroups?: { id: string; name: string; canDetach: boolean }[];
   managedManualGroupIds?: string[];
+  managedLaboratories?: string[];
   caller?: Partial<CurrentUser>;
   superAdmin?: boolean;
 };
@@ -83,6 +84,7 @@ function fakeApi({
   failGet = false,
   manualGroups = [BASALT],
   managedManualGroupIds = [],
+  managedLaboratories = [],
   caller = { superAdmin: true },
   superAdmin = false,
 }: Options) {
@@ -97,6 +99,7 @@ function fakeApi({
     manualGroups,
     managedGroups: {
       ...NO_MANAGED_GROUPS,
+      laboratories: managedLaboratories,
       manualGroupIds: managedManualGroupIds,
     },
     ...CALLER_GROUPS,
@@ -662,6 +665,21 @@ describe("UserDetailPage", () => {
         screen
           .getByRole("heading", { level: 1 })
           .getByRole("img", { name: "Super admin" }),
+      )
+      .toBeVisible();
+  });
+
+  it("should keep a granted laboratory since replaced removable under its name", async () => {
+    const { screen } = await renderUserPage({
+      status: "accepted",
+      managedLaboratories: ["UMR8109"],
+    });
+
+    await expect
+      .element(
+        screen.getByRole("button", {
+          name: "Remove Laboratoire d'Etudes Spatiales et d'Instrumentation en Astrophysique (LIRA) (UMR8109)",
+        }),
       )
       .toBeVisible();
   });

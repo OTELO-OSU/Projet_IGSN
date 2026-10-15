@@ -55,6 +55,12 @@ describe("coreFilterFields", () => {
       false,
     );
   });
+
+  it("should document a former laboratory code the filter accepts", () => {
+    expect(coreFilterFields().affiliationLaboratory.meta()?.enum).toContain(
+      "UPS2074",
+    );
+  });
 });
 
 describe("toListSamplesQuery", () => {

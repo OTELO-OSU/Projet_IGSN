@@ -1,6 +1,8 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 
+import { laboratoryIdOf } from "@projet-igsn/domain/institutional-group/laboratory-id-of";
+import { osuIdOf } from "@projet-igsn/domain/institutional-group/osu-id-of";
 import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { describe, expect } from "vitest";
 
@@ -278,6 +280,56 @@ describe("countPublishedFacets", () => {
       contributor: { [owner.id]: 2 },
     });
   });
+
+  pgTest(
+    "should key the institutional counts by code and filter on a former code",
+    async ({ db }) => {
+      // Arrange
+      const sample = await insertSample(db, draft, {
+        institutionalOrganization: "02feahw73",
+        institutionalOsu: osuIdOf("OVSQ"),
+        institutionalLaboratory: laboratoryIdOf("UAR2074"),
+      });
+      await publishSample(db, sample.id);
+      await insertPublished(db);
+      // Act
+      const { institutionalOsu, institutionalLaboratory } =
+        await countPublishedFacets(db, {
+          ...page,
+          institutionalLaboratory: "UPS2074",
+        });
+      // Assert
+      expect({ institutionalOsu, institutionalLaboratory }).toEqual({
+        institutionalOsu: { OVSQ: 1 },
+        institutionalLaboratory: { UAR2074: 1 },
+      });
+    },
+  );
+
+  pgTest(
+    "should add up the samples of a laboratory stored under its id and under its raw code",
+    async ({ db }) => {
+      // Arrange
+      const groups = {
+        institutionalOrganization: "02feahw73",
+        institutionalOsu: null,
+        institutionalLaboratory: "UAR2074",
+      };
+      const stored = await insertSample(db, draft, groups);
+      const raw = await insertSample(db, draft, groups);
+      await db
+        .updateTable("sample")
+        .set({ institutional_laboratory: "UAR2074" })
+        .where("id", "=", raw.id)
+        .execute();
+      await publishSample(db, stored.id);
+      await publishSample(db, raw.id);
+      // Act
+      const { institutionalLaboratory } = await countPublishedFacets(db, page);
+      // Assert
+      expect(institutionalLaboratory).toEqual({ UAR2074: 2 });
+    },
+  );
 
   pgTest("should ignore a facet's own filter in its counts", async ({ db }) => {
     // Arrange

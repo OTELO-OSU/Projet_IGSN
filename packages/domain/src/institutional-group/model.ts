@@ -27,8 +27,15 @@ export type InstitutionalGroupKind = z.infer<
 
 const CODES_BY_KIND: Record<InstitutionalGroupKind, Set<string>> = {
   organization: new Set(ORGANIZATIONS.map(({ ror }) => ror)),
-  osu: new Set(OSUS.map(({ code }) => code)),
-  laboratory: new Set(LABORATORIES.map(({ code }) => code)),
+  osu: new Set(
+    OSUS.flatMap(({ code, formerCodes = [] }) => [code, ...formerCodes]),
+  ),
+  laboratory: new Set(
+    LABORATORIES.flatMap(({ code, formerCodes = [] }) => [
+      code,
+      ...formerCodes,
+    ]),
+  ),
 };
 
 export function isKnownInstitutionalCode(

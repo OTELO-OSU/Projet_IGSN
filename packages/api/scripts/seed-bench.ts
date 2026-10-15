@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import { LABORATORIES } from "@projet-igsn/domain/institutional-group/laboratory";
 import { ORGANIZATIONS } from "@projet-igsn/domain/institutional-group/organization";
+import { osuIdOf } from "@projet-igsn/domain/institutional-group/osu-id-of";
 import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { TEXTURES } from "@projet-igsn/domain/sample/texture/vocabulary";
 import { sql } from "kysely";
@@ -75,8 +76,8 @@ function benchSample(id: string) {
     institutional_organization: faker.helpers.arrayElement(
       laboratory.organizationRors,
     ),
-    institutional_osu: laboratory.osu,
-    institutional_laboratory: laboratory.code,
+    institutional_osu: laboratory.osu && osuIdOf(laboratory.osu),
+    institutional_laboratory: laboratory.id,
   };
 }
 

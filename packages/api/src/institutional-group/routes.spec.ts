@@ -16,6 +16,7 @@ import { insertUser } from "../tests/insert-user.ts";
 import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
+import { institutionCodeOf } from "./stored-institution.ts";
 
 const LABORATORY = { kind: "laboratory", code: "UMR7358" } as const;
 const UNKNOWN_USER = "01890a5d-ac96-774b-841c-b302099a9099";
@@ -65,7 +66,10 @@ const managedCodes = async (db: Db, userId: string) => {
     .select(["kind", "code"])
     .where("user_id", "=", userId)
     .execute();
-  return rows;
+  return rows.map(({ kind, code }) => ({
+    kind,
+    code: institutionCodeOf(kind, code),
+  }));
 };
 
 describe("admin institutional group routes", () => {
@@ -210,6 +214,30 @@ describe("admin institutional group routes", () => {
       },
     });
   });
+
+  pgTest(
+    "should add up the managers of a laboratory stored under its id and under its raw code",
+    async ({ db }) => {
+      // Arrange
+      const curie = await insertUser(db, "marie.curie-9d2@univ-lorraine.fr");
+      const dupont = await insertUser(db, "pierre.dupont-9d2@univ-lorraine.fr");
+      await moderateInstitution(db, curie.id, LABORATORY);
+      await db
+        .insertInto("user_managed_institutional_group")
+        .values({ user_id: dupont.id, kind: "laboratory", code: "UMR7358" })
+        .execute();
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["institutional-groups"][
+        "manager-counts"
+      ].$get(undefined, { headers: authHeader });
+      // Assert
+      expect(
+        institutionalGroupCountsResponseSchema.parse(await res.json()).data
+          .laboratories,
+      ).toEqual({ UMR7358: 2 });
+    },
+  );
 
   pgTest.for([
     { case: "an unknown kind", path: "team/UMR7358" },

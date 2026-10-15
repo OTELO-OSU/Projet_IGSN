@@ -218,6 +218,31 @@ describe("POST /samples/:igsn/contact", () => {
     },
   );
 
+  pgTest(
+    "should mail the managers of the successor of its replaced laboratory",
+    async ({ db }) => {
+      // Arrange
+      const { sendMail, contact } = arrangeApp(db);
+      const sample = await publish(db, {
+        institution: { ...INSTITUTION, institutionalLaboratory: "UMR8109" },
+      });
+      const owner = await insertUser(db, "owner-819@univ-lorraine.fr");
+      await insertSampleOwner(db, sample.id, owner.id);
+      const manager = await insertUser(db, "manager-819@univ-lorraine.fr");
+      await moderateInstitution(db, manager.id, {
+        kind: "laboratory",
+        code: "UMR8254",
+      });
+      // Act
+      const res = await contact(sample.igsn!);
+      // Assert
+      expect(res.status).toBe(204);
+      expect(sendMail.mock.lastCall![0].to).toEqual([
+        "manager-819@univ-lorraine.fr",
+      ]);
+    },
+  );
+
   pgTest.for([
     [
       "its owner was rejected and it has no manager",

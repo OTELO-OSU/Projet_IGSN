@@ -3,6 +3,7 @@ import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { Kysely, Selectable } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { laboratoryIdOf } from "@projet-igsn/domain/institutional-group/laboratory-id-of";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { publishedEditSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import { publishBlockerSchema } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
@@ -19,6 +20,10 @@ import { z } from "zod";
 import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
+import {
+  institutionIdOf,
+  storedInstitutions,
+} from "../src/institutional-group/stored-institution.ts";
 import { deleteOrphanLocations } from "../src/sample/service/delete-orphan-locations.ts";
 import { replaceLocationVerticalPositions } from "../src/sample/service/replace-location-vertical-positions.ts";
 import { sampleColumns } from "../src/sample/service/sample-columns.ts";
@@ -206,12 +211,25 @@ async function seedManagedGroups(
   await db.deleteFrom("user_managed_manual_group").execute();
   await db
     .insertInto("user_managed_institutional_group")
-    .values([
-      { user_id: ownerIds.marie, kind: "osu", code: "OTELo" },
-      { user_id: ownerIds.sophie, kind: "organization", code: "04vfs2w97" },
-      { user_id: ownerIds.sophie, kind: "laboratory", code: "UMR7327" },
-      { user_id: ownerIds.camille, kind: "osu", code: "OSUC" },
-    ])
+    .values(
+      [
+        { user_id: ownerIds.marie, kind: "osu" as const, code: "OTELo" },
+        {
+          user_id: ownerIds.sophie,
+          kind: "organization" as const,
+          code: "04vfs2w97",
+        },
+        {
+          user_id: ownerIds.sophie,
+          kind: "laboratory" as const,
+          code: "UMR7327",
+        },
+        { user_id: ownerIds.camille, kind: "osu" as const, code: "OSUC" },
+      ].map((grant) => ({
+        ...grant,
+        code: institutionIdOf(grant.kind, grant.code),
+      })),
+    )
     .onConflict((oc) => oc.doNothing())
     .execute();
   await db
@@ -252,7 +270,7 @@ async function seedServiceAccounts(
     .values({
       service_account_id: MOCK_SERVICE_ACCOUNT.id,
       kind: "laboratory",
-      code: "UMR7358",
+      code: laboratoryIdOf("UMR7358"),
     })
     .onConflict((oc) => oc.doNothing())
     .execute();
@@ -315,14 +333,20 @@ async function seedOwners(
           manualGroups: _manualGroups,
           hasAcceptedCharter = true,
           ...owner
-        }) => ({
-          ...owner,
-          super_admin: superAdmin,
-          charter_accepted_at: hasAcceptedCharter ? new Date() : null,
-          institutional_organization: institutionalOrganization,
-          institutional_osu: institutionalOsu,
-          institutional_laboratory: institutionalLaboratory,
-        }),
+        }) => {
+          const stored = storedInstitutions({
+            institutionalOsu,
+            institutionalLaboratory,
+          });
+          return {
+            ...owner,
+            super_admin: superAdmin,
+            charter_accepted_at: hasAcceptedCharter ? new Date() : null,
+            institutional_organization: institutionalOrganization,
+            institutional_osu: stored.institutionalOsu,
+            institutional_laboratory: stored.institutionalLaboratory,
+          };
+        },
       ),
     )
     .onConflict((oc) =>
@@ -412,6 +436,7 @@ export async function insertSamples(
           ...create
         }) => {
           const permanent = hasPermanentIgsn({ status });
+          const stored = storedInstitutions(owner);
           return {
             id,
             status,
@@ -428,8 +453,8 @@ export async function insertSamples(
               : null,
             ...sampleColumns({ ...create, type: create.type ?? null }),
             institutional_organization: owner.institutionalOrganization,
-            institutional_osu: owner.institutionalOsu,
-            institutional_laboratory: owner.institutionalLaboratory,
+            institutional_osu: stored.institutionalOsu,
+            institutional_laboratory: stored.institutionalLaboratory,
           };
         },
       ),

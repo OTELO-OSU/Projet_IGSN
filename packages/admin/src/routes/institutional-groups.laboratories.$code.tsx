@@ -1,8 +1,8 @@
+import { findLaboratory } from "@projet-igsn/domain/institutional-group/find-laboratory";
 import {
   organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
-import { LABORATORIES } from "@projet-igsn/domain/institutional-group/laboratory";
 import { listUsersQuerySchema } from "@projet-igsn/domain/user/user-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -27,7 +27,7 @@ function LaboratoryDetailPage() {
   const { page, perPage } = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const laboratory = LABORATORIES.find((candidate) => candidate.code === code);
+  const laboratory = findLaboratory(code);
   if (!laboratory) {
     return <p role="alert">{m.group_not_found()}</p>;
   }

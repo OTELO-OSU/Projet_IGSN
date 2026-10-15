@@ -10,7 +10,8 @@
   "scripts": {
     "material-tree": "node scripts/dump-material-tree.ts",
     "material-tree:json": "node scripts/dump-material-json.ts",
-    "sync-institutions": "node scripts/sync-institutions.ts"
+    "sync-institutions": "node scripts/sync-institutions.ts",
+    "sync-rnsr": "node scripts/sync-rnsr.ts"
   },
   "dependencies": {
     "json-diff-ts": "catalog:",

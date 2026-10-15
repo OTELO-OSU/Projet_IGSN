@@ -6,6 +6,7 @@ import { type ExpressionBuilder, sql, type SqlBool } from "kysely";
 
 import type { DB } from "../db.ts";
 
+import { laboratoryIdsOf } from "../institutional-group/stored-institution.ts";
 import { likePattern } from "../like-pattern.ts";
 import { type Transactional } from "../transaction.ts";
 import { unaccented } from "../unaccented.ts";
@@ -21,7 +22,11 @@ const inManagedGroups = (
 ) =>
   eb.or([
     managedLaboratories.length > 0
-      ? eb("user.institutional_laboratory", "in", managedLaboratories)
+      ? eb(
+          "user.institutional_laboratory",
+          "in",
+          laboratoryIdsOf(managedLaboratories),
+        )
       : eb.lit(false),
     managedManualGroupIds.length > 0
       ? eb.exists(

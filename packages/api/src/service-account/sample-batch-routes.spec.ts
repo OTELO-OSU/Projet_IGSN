@@ -3,6 +3,8 @@ import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { laboratoryIdOf } from "@projet-igsn/domain/institutional-group/laboratory-id-of";
+import { osuIdOf } from "@projet-igsn/domain/institutional-group/osu-id-of";
 import { toParentIdentifierType } from "@projet-igsn/domain/sample/core/core-relation-schema";
 import { COLLECTION_SPECIMEN } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { SUB_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-variant-fixture";
@@ -67,7 +69,7 @@ async function arrangeAccount(db: Kysely<DB>) {
     .values({
       service_account_id: account.id,
       kind: "laboratory",
-      code: IN_REACH,
+      code: laboratoryIdOf(IN_REACH),
     })
     .execute();
   return { app: createApp(db).app, owner };
@@ -243,8 +245,8 @@ describe("POST /service/samples/batch", () => {
           name,
           status: "draft",
           institutional_organization: "04vfs2w97",
-          institutional_osu: "OTELo",
-          institutional_laboratory: IN_REACH,
+          institutional_osu: osuIdOf("OTELo"),
+          institutional_laboratory: laboratoryIdOf(IN_REACH),
           user_id: owner.id,
           role: "owner",
         })),

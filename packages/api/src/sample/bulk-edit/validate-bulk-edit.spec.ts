@@ -2,6 +2,7 @@ import type { SampleProcessStep } from "@projet-igsn/domain/sample/process-step/
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
+import { laboratoryLabel } from "@projet-igsn/domain/institutional-group/label";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import ExcelJS from "exceljs";
 import { describe, expect } from "vitest";
@@ -14,6 +15,7 @@ import { readSample } from "../../tests/read-sample.ts";
 import { publishableSample } from "../../tests/sample-fixtures.ts";
 import { SHEETS } from "../import-template/columns.ts";
 import {
+  columnOf,
   deleteColumn,
   fill,
   sheetOf,
@@ -201,6 +203,35 @@ describe("validateBulkEdit", () => {
       expect({ issues, localId: samples[0]?.input.localId }).toEqual({
         issues: [],
         localId: undefined,
+      });
+    },
+    30_000,
+  );
+
+  pgTest(
+    "should export a replaced archive laboratory under its label and re-import it unchanged",
+    async ({ db }) => {
+      const sample = await published(db, {
+        ...STORED,
+        repository: {
+          ...STORED.repository,
+          currentArchiveOsu: "OBSPM",
+          currentArchiveLaboratory: "UMR8109",
+        },
+      });
+      const book = await exported([sample]);
+      const sheet = sheetOf(book, SHEETS.samples);
+
+      const { issues, samples } = await validated(db, book, [sample]);
+
+      expect({
+        cell: sheet.getCell(ROW, columnOf(sheet, "Current archive UMR")).text,
+        issues,
+        laboratory: samples[0]?.input.repository?.currentArchiveLaboratory,
+      }).toEqual({
+        cell: expect.stringContaining(laboratoryLabel("UMR8109")),
+        issues: [],
+        laboratory: "UMR8109",
       });
     },
     30_000,

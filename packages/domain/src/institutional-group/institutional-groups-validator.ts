@@ -4,6 +4,8 @@ import type { InstitutionalGroups } from "./model.ts";
 
 import { filterLaboratoriesByOrgAndOsu } from "./filter-laboratories-by-org-and-osu.ts";
 import { filterOsusByOrg } from "./filter-osus-by-org.ts";
+import { findLaboratory } from "./find-laboratory.ts";
+import { findOsu } from "./find-osu.ts";
 import { laboratoryCodeSchema } from "./laboratory.ts";
 import { organizationRorSchema } from "./organization.ts";
 import { osuCodeSchema } from "./osu.ts";
@@ -27,7 +29,10 @@ function institutionalGroupIssues(
 ): InstitutionalGroupIssue[] {
   const { institutionalOrganization: ror, institutionalOsu: osu } = groups;
 
-  if (osu != null && !filterOsusByOrg(ror).some((o) => o.code === osu)) {
+  if (
+    osu != null &&
+    !filterOsusByOrg(ror).some((o) => o.id === findOsu(osu)?.id)
+  ) {
     return [
       {
         path: "institutionalOsu",
@@ -38,7 +43,8 @@ function institutionalGroupIssues(
 
   if (
     !filterLaboratoriesByOrgAndOsu({ organizationRor: ror, osu }).some(
-      (laboratory) => laboratory.code === groups.institutionalLaboratory,
+      (laboratory) =>
+        laboratory.id === findLaboratory(groups.institutionalLaboratory)?.id,
     )
   ) {
     return [

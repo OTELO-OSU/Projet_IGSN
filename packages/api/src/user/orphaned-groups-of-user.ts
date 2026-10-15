@@ -4,6 +4,8 @@ import type { Transaction } from "kysely";
 import type { DB } from "../db.ts";
 
 import { institutionalGroupLabel } from "../institutional-group/institutional-group-label.ts";
+import { managesGroup } from "../institutional-group/manages-group.ts";
+import { institutionCodeOf } from "../institutional-group/stored-institution.ts";
 
 export async function orphanedGroupsOfUser(
   trx: Transaction<DB>,
@@ -49,25 +51,29 @@ export async function orphanedGroupsOfUser(
               "=",
               "user_managed_institutional_group.kind",
             )
-            .whereRef(
-              "manager.code",
-              "=",
-              "user_managed_institutional_group.code",
+            .where(
+              managesGroup(eb.ref("user_managed_institutional_group.code")),
             )
             .where("active.status", "=", "accepted"),
         ),
       ),
     )
-    .orderBy("kind", "asc")
-    .orderBy("code", "asc")
     .execute();
 
   return [
     ...manual.map(
       ({ id, name }): OrphanedGroup => ({ kind: "manual", id, name }),
     ),
-    ...institutional.map(
-      (ref): OrphanedGroup => ({ ...ref, name: institutionalGroupLabel(ref) }),
-    ),
+    ...institutional
+      .map(({ kind, code }) => ({ kind, code: institutionCodeOf(kind, code) }))
+      .toSorted(
+        (a, b) => a.kind.localeCompare(b.kind) || a.code.localeCompare(b.code),
+      )
+      .map(
+        (ref): OrphanedGroup => ({
+          ...ref,
+          name: institutionalGroupLabel(ref),
+        }),
+      ),
   ];
 }

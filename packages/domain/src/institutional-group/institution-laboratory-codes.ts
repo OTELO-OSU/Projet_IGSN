@@ -2,14 +2,15 @@ import type { Laboratory } from "./laboratory.ts";
 
 import { filterLaboratoriesByOrgAndOsu } from "./filter-laboratories-by-org-and-osu.ts";
 import { parseInstitutionFilter } from "./institution-filter.ts";
+import { laboratoryCodesWithPredecessors } from "./laboratory-codes-with-predecessors.ts";
 import { LABORATORIES } from "./laboratory.ts";
 
 export function institutionLaboratories(filter: string): Laboratory[] {
   const parsed = parseInstitutionFilter(filter);
   if (parsed === null) return [];
   if (parsed.kind === "laboratory") {
-    const laboratory = LABORATORIES.find(({ code }) => code === parsed.code);
-    return laboratory ? [laboratory] : [];
+    const codes = laboratoryCodesWithPredecessors(parsed.code);
+    return LABORATORIES.filter(({ code }) => codes.includes(code));
   }
 
   return filterLaboratoriesByOrgAndOsu(

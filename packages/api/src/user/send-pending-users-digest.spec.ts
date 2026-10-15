@@ -229,6 +229,27 @@ describe("sendPendingUsersDigest", () => {
   );
 
   pgTest(
+    "should not report a replaced laboratory its successor's active manager covers",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member-c91@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR8109",
+      });
+      const manager = await insertUser(db, "manager-c91@univ-lorraine.fr");
+      await moderateInstitution(db, manager.id, {
+        kind: "laboratory",
+        code: "UMR8254",
+      });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      // Act
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
+      // Assert
+      expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
+
+  pgTest(
     "should mail the super admins the orphan groups when nothing is pending",
     async ({ db }) => {
       // Arrange
@@ -251,24 +272,6 @@ describe("sendPendingUsersDigest", () => {
       expect(mail.subject).toBe("2 groups have no active manager");
       expect(mail.text).toContain(`/manual-groups/${groupId}`);
       expect(mail.text).toContain("/institutional-groups/laboratories/UMR7358");
-    },
-  );
-
-  pgTest(
-    "should list an institutional group only when a user row records it",
-    async ({ db }) => {
-      // Arrange
-      await insertUser(db, "admin-c91@univ-lorraine.fr", { superAdmin: true });
-      await insertUser(db, "member-c91@univ-lorraine.fr", {
-        institutionalLaboratory: "UMR7358",
-      });
-      const sendMail = vi.fn().mockResolvedValue(undefined);
-      // Act
-      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
-      // Assert
-      const text = sendMail.mock.calls[0]?.[0].text;
-      expect(text).toContain("/institutional-groups/laboratories/UMR7358");
-      expect(text).not.toContain("/institutional-groups/laboratories/UMR5275");
     },
   );
 

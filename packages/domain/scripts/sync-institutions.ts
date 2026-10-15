@@ -8,12 +8,11 @@ import {
   type Laboratory,
 } from "../src/institutional-group/laboratory.ts";
 import { ORGANIZATIONS } from "../src/institutional-group/organization.ts";
-import { OSUS, type Osu } from "../src/institutional-group/osu.ts";
-import {
-  emitLaboratories,
-  emitOsus,
-  emitRemovedInstitutionsMigration,
-} from "./emit-institutions.ts";
+import { OSUS } from "../src/institutional-group/osu.ts";
+import { emitLaboratories, emitOsus } from "./emit-institutions.ts";
+import { fetchRnsrRecords } from "./fetch-rnsr-records.ts";
+import { type Exported, mergeInstitutions } from "./merge-institutions.ts";
+import { normalizeCode } from "./merge-rnsr.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -97,7 +96,7 @@ assertKeys(
   laboratoryRows.map((row) => row.code ?? ""),
 );
 
-const laboratories: Laboratory[] = [];
+const laboratories: Exported<Laboratory>[] = [];
 for (const row of laboratoryRows) {
   const id = row["#ID"] ?? "";
   const code = row.code ?? "";
@@ -133,7 +132,7 @@ for (const row of laboratoryRows) {
   laboratories.push({ code, acronym, name, osu, organizationRors });
 }
 
-const osus: Osu[] = osuRows.map((row) => ({
+const osus = osuRows.map((row) => ({
   code: row.acronym ?? "",
   name: row.name ?? "",
   organizationRors: [
@@ -145,34 +144,44 @@ const osus: Osu[] = osuRows.map((row) => ({
   ],
 }));
 
-writeFileSync(join(HERE, "../src/institutional-group/osu.ts"), emitOsus(osus));
+const records = await fetchRnsrRecords();
+const uniqueRnsrId = (matches: typeof records) =>
+  matches.length === 1 ? matches[0]?.numero_national_de_structure : undefined;
+const laboratoryRnsrId = (code: string) =>
+  uniqueRnsrId(
+    records.filter((record) =>
+      (record.label_numero ?? []).some(
+        (label) => normalizeCode(label) === normalizeCode(code),
+      ),
+    ),
+  );
+const osuRnsrId = (code: string) => {
+  const ownUnit = laboratories.find(
+    (laboratory) =>
+      laboratory.acronym === code && /^(UAR|UMS|UPS)/.test(laboratory.code),
+  );
+  return (
+    (ownUnit && laboratoryRnsrId(ownUnit.code)) ??
+    uniqueRnsrId(records.filter((record) => record.sigle === code))
+  );
+};
+
+const merged = mergeInstitutions(
+  { laboratories: LABORATORIES, osus: OSUS },
+  { laboratories, osus },
+  { laboratory: laboratoryRnsrId, osu: osuRnsrId },
+);
+for (const note of merged.notes) process.stderr.write(`${note}\n`);
+
+writeFileSync(
+  join(HERE, "../src/institutional-group/osu.ts"),
+  emitOsus(merged.osus),
+);
 writeFileSync(
   join(HERE, "../src/institutional-group/laboratory.ts"),
-  emitLaboratories(laboratories),
+  emitLaboratories(merged.laboratories),
 );
 
 process.stderr.write(
-  `wrote ${laboratories.length} laboratories and ${osus.length} OSUs\n`,
+  `wrote ${merged.laboratories.length} laboratories and ${merged.osus.length} OSUs\n`,
 );
-
-const removedLaboratories = LABORATORIES.filter(
-  (previous) => !laboratories.some(({ code }) => code === previous.code),
-).map(({ code }) => code);
-const removedOsus = OSUS.filter(
-  (previous) => !osus.some(({ code }) => code === previous.code),
-).map(({ code }) => code);
-
-if (removedLaboratories.length > 0 || removedOsus.length > 0) {
-  const stamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
-  const migration = `${stamp}-clear-removed-institutions.ts`;
-  writeFileSync(
-    join(HERE, "../../api/migrations", migration),
-    emitRemovedInstitutionsMigration({
-      laboratories: removedLaboratories,
-      osus: removedOsus,
-    }),
-  );
-  process.stderr.write(
-    `dropped ${[...removedLaboratories, ...removedOsus].join(", ")}, cleared by migrations/${migration}\n`,
-  );
-}

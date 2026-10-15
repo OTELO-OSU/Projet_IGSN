@@ -5,6 +5,7 @@ import { sql } from "kysely";
 
 import type { DB } from "../db.ts";
 
+import { institutionCodeOf } from "../institutional-group/stored-institution.ts";
 import { type Transactional, withTransaction } from "../transaction.ts";
 import { moderationScopeWhere } from "./moderation-scope-where.ts";
 
@@ -36,9 +37,12 @@ export function countUsersByInstitutionalGroup(
       if (organization !== null) {
         counts.organizations[organization] = Number(count);
       } else if (osu !== null) {
-        counts.osus[osu] = Number(count);
+        const code = institutionCodeOf("osu", osu);
+        counts.osus[code] = (counts.osus[code] ?? 0) + Number(count);
       } else if (laboratory !== null) {
-        counts.laboratories[laboratory] = Number(count);
+        const code = institutionCodeOf("laboratory", laboratory);
+        counts.laboratories[code] =
+          (counts.laboratories[code] ?? 0) + Number(count);
       }
     }
     return counts;

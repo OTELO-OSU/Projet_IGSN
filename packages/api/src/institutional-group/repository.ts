@@ -14,6 +14,8 @@ import { HTTPException } from "hono/http-exception";
 import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
+import { managesGroup } from "./manages-group.ts";
+import { institutionCodeOf, institutionIdOf } from "./stored-institution.ts";
 
 const KINDS = {
   organization: ["institutional_organization", "organizations"],
@@ -32,7 +34,7 @@ const hasActiveManager = (
       .innerJoin("user as active", "active.id", "manager.user_id")
       .select("manager.code")
       .where("manager.kind", "=", kind)
-      .whereRef("manager.code", "=", `user.${column}`)
+      .where(managesGroup(eb.ref(`user.${column}`)))
       .where("active.status", "=", "accepted"),
   );
 
@@ -58,7 +60,11 @@ export function createInstitutionalGroupRepository(
             "user.status",
           ])
           .where("user_managed_institutional_group.kind", "=", kind)
-          .where("user_managed_institutional_group.code", "=", code)
+          .where(
+            "user_managed_institutional_group.code",
+            "=",
+            institutionIdOf(kind, code),
+          )
           .orderBy("user.email", "asc")
           .execute();
         return rows.map((row) => groupManagerSchema.parse(row));
@@ -78,7 +84,7 @@ export function createInstitutionalGroupRepository(
         }
         await trx
           .insertInto("user_managed_institutional_group")
-          .values({ user_id: userId, kind, code })
+          .values({ user_id: userId, kind, code: institutionIdOf(kind, code) })
           .onConflict((oc) => oc.doNothing())
           .execute();
       }),
@@ -88,7 +94,7 @@ export function createInstitutionalGroupRepository(
           .deleteFrom("user_managed_institutional_group")
           .where("user_id", "=", userId)
           .where("kind", "=", kind)
-          .where("code", "=", code)
+          .where("code", "=", institutionIdOf(kind, code))
           .executeTakeFirst();
         if (numDeletedRows === 0n) {
           throw new HTTPException(404, { message: "Manager not found" });
@@ -120,7 +126,9 @@ export function createInstitutionalGroupRepository(
           laboratories: {},
         };
         for (const { kind, code, count } of rows) {
-          counts[KINDS[kind][1]][code] = Number(count);
+          const byCode = counts[KINDS[kind][1]];
+          const key = institutionCodeOf(kind, code);
+          byCode[key] = (byCode[key] ?? 0) + Number(count);
         }
         return counts;
       }),
@@ -135,14 +143,15 @@ export function createInstitutionalGroupRepository(
               .distinct()
               .where(column, "is not", null)
               .where((eb) => eb.not(hasActiveManager(eb, kind, column)))
-              .orderBy(`${column} asc`)
               .execute();
-            return rows.map(
-              ({ code }): InstitutionalGroupRef => ({
-                kind,
-                code: code!,
-              }),
-            );
+            return rows
+              .map(
+                ({ code }): InstitutionalGroupRef => ({
+                  kind,
+                  code: institutionCodeOf(kind, code!),
+                }),
+              )
+              .toSorted((a, b) => a.code.localeCompare(b.code));
           }),
         );
         return perKind.flat();

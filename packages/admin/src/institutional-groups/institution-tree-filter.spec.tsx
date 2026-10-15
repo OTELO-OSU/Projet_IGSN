@@ -5,8 +5,8 @@ import { InstitutionTreeFilter } from "./institution-tree-filter.tsx";
 
 const LORRAINE = "Université de Lorraine";
 const AMU = "Aix-Marseille Université (AMU)";
-const PYTHEAS = "Institut PYTHEAS (PYTHEAS)";
-const MIO = "Institut Méditerranéen d'Océanographie (MIO)";
+const PYTHEAS = "Institut Pythéas (PYTHEAS)";
+const MIO = "Institut Méditerranéen d'Océanologie (MIO)";
 const OTELO = "Observatoire Terre et Environnement de Lorraine (OTELo)";
 const GEORESSOURCES = "GéoRessources (GEORESSOURCES)";
 const CRPG = "Centre de recherches pétrographiques et géochimiques (CRPG)";

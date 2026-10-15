@@ -1,6 +1,6 @@
-import { LABORATORIES } from "./laboratory.ts";
+import { findLaboratory } from "./find-laboratory.ts";
+import { findOsu } from "./find-osu.ts";
 import { ORGANIZATIONS } from "./organization.ts";
-import { OSUS } from "./osu.ts";
 
 const labelByRor = new Map(
   ORGANIZATIONS.map((organization) => [
@@ -21,17 +21,15 @@ export function organizationShortLabel(ror: string): string {
 }
 
 export function osuLabel(code: string): string {
-  const osu = OSUS.find((candidate) => candidate.code === code);
+  const osu = findOsu(code);
   return osu ? `${osu.name} (${osu.code})` : code;
 }
 
 export function laboratoryLabel(code: string): string {
-  const laboratory = LABORATORIES.find((candidate) => candidate.code === code);
+  const laboratory = findLaboratory(code);
   return laboratory ? `${laboratory.name} (${laboratory.acronym})` : code;
 }
 
 export function laboratoryShortLabel(code: string): string {
-  return (
-    LABORATORIES.find((candidate) => candidate.code === code)?.acronym ?? code
-  );
+  return findLaboratory(code)?.acronym ?? code;
 }

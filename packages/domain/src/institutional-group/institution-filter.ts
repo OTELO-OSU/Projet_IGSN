@@ -1,8 +1,7 @@
 import { z } from "zod";
 
 import { filterLaboratoriesByOrgAndOsu } from "./filter-laboratories-by-org-and-osu.ts";
-import { LABORATORIES } from "./laboratory.ts";
-import { ORGANIZATIONS } from "./organization.ts";
+import { isKnownInstitutionalCode } from "./model.ts";
 
 const institutionKindSchema = z.enum(["organization", "osu", "laboratory"]);
 
@@ -12,11 +11,6 @@ type InstitutionFilter =
   | { kind: "laboratory"; code: string }
   | { kind: "organization"; code: string }
   | { kind: "osu"; code: string; organizationRor: string };
-
-const CODES_BY_KIND: Record<"organization" | "laboratory", Set<string>> = {
-  organization: new Set(ORGANIZATIONS.map(({ ror }) => ror)),
-  laboratory: new Set(LABORATORIES.map(({ code }) => code)),
-};
 
 function parseOsuFilter(value: string): InstitutionFilter | null {
   const separator = value.indexOf("/");
@@ -40,7 +34,9 @@ export function parseInstitutionFilter(
   const code = value.slice(separator + 1);
   if (kind.data === "osu") return parseOsuFilter(code);
 
-  return CODES_BY_KIND[kind.data].has(code) ? { kind: kind.data, code } : null;
+  return isKnownInstitutionalCode(kind.data, code)
+    ? { kind: kind.data, code }
+    : null;
 }
 
 export function formatInstitutionFilter(filter: InstitutionFilter): string {

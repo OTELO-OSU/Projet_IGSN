@@ -300,7 +300,10 @@ export const RESEARCH_PROJECT_SAMPLE_RECORD: CoreSample = {
     availabilityStatus: "available",
     currentRepository: {
       organizations: [
-        { id: "urn:otelo:osu:OASU", name: "OASU (OASU)" },
+        {
+          id: "urn:otelo:osu:OASU",
+          name: "Observatoire aquitain des sciences de l'univers (OASU)",
+        },
         {
           id: "urn:otelo:laboratory:UMR5805",
           name: "Environnements et paléoenvironnements océaniques et continentaux (EPOC)",

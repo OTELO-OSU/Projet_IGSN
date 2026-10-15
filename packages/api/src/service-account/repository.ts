@@ -4,14 +4,15 @@ import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 import type { Kysely } from "kysely";
 
 import { serviceAccountSchema } from "@projet-igsn/domain/service-account/model";
-import { knownManagedCodes } from "@projet-igsn/domain/user/managed-groups";
 import { HTTPException } from "hono/http-exception";
 import { jsonObjectFrom } from "kysely/helpers/postgres";
 import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
+import { institutionCodes } from "../institutional-group/stored-institution.ts";
 import {
+  knownManagedGroupCodes,
   managedGroupsOf,
   replaceManagedGroups,
   SERVICE_ACCOUNT_MANAGED_GROUP_TABLES,
@@ -57,10 +58,14 @@ const selectAccounts = (trx: Transactional<DB>) =>
       eb("api_key_hash", "is not", null).$castTo<boolean>().as("hasApiKey"),
     ]);
 
-const toServiceAccount = (row: { managedGroups: ManagedGroups }) =>
+const toServiceAccount = (row: {
+  managedGroups: ManagedGroups;
+  institutionalOsu: string | null;
+  institutionalLaboratory: string | null;
+}) =>
   serviceAccountSchema.parse({
-    ...row,
-    managedGroups: knownManagedCodes(row.managedGroups),
+    ...institutionCodes(row),
+    managedGroups: knownManagedGroupCodes(row.managedGroups),
   });
 
 const accountRow = ({ name, ownerId, sampleOwnerId }: ServiceAccountBody) => ({
