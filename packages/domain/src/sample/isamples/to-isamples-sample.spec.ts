@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { laboratoryLabel, osuLabel } from "../../institutional-group/label.ts";
 import { toConcept } from "../core/concept.ts";
 import { core, corePaths } from "../core/core-paths-fixture.ts";
 import { ORGANIZATION_NAME } from "../core/core-record-fixture.ts";
@@ -182,8 +183,7 @@ describe("a Core record mapped to iSamples", () => {
       curation: {
         label: "partiallyConsumed",
         access_constraints: ["available"],
-        curation_location:
-          "Observatoire aquitain des sciences de l'univers (OASU), Environnements et paléoenvironnements océaniques et continentaux (EPOC), Lorraine granites",
+        curation_location: `${osuLabel("OASU")}, ${laboratoryLabel("UMR5805")}, Lorraine granites`,
         responsibility: [],
       },
       related_resource: [

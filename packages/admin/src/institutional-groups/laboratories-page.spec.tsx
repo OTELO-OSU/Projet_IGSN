@@ -1,3 +1,8 @@
+import { findLaboratory } from "@projet-igsn/domain/institutional-group/find-laboratory";
+import {
+  organizationLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
@@ -126,8 +131,8 @@ const searchInstitution = async (
   await screen.getByLabelText("Search institutions").fill(term);
 };
 
-const LORRAINE = "Université de Lorraine";
-const CNRS = "Centre National de la Recherche Scientifique (CNRS)";
+const LORRAINE = organizationLabel("04vfs2w97");
+const CNRS = organizationLabel("02feahw73");
 
 describe("LaboratoriesPage", () => {
   it("should keep only the laboratories of the chosen organization and record it in the URL", async () => {
@@ -186,17 +191,11 @@ describe("LaboratoriesPage", () => {
     await expect
       .element(
         screen.getByRole("heading", {
-          name: "Centre de recherches pétrographiques et géochimiques",
+          name: findLaboratory("UMR7358")!.name,
         }),
       )
       .toBeVisible();
-    await expect
-      .element(
-        screen.getByText(
-          "Observatoire Terre et Environnement de Lorraine (OTELo)",
-        ),
-      )
-      .toBeVisible();
+    await expect.element(screen.getByText(osuLabel("OTELo"))).toBeVisible();
     await expect
       .element(screen.getByRole("definition").getByText(LORRAINE))
       .toBeVisible();
@@ -246,7 +245,7 @@ describe("LaboratoriesPage", () => {
     await expect
       .element(
         screen.getByRole("heading", {
-          name: "Centre de recherches pétrographiques et géochimiques",
+          name: findLaboratory("UMR7358")!.name,
         }),
       )
       .toBeVisible();
@@ -338,7 +337,7 @@ describe("LaboratoriesPage", () => {
     await expect
       .element(
         screen.getByRole("heading", {
-          name: "Institut de Radio Astronomie Millimétrique",
+          name: findLaboratory("UAR2074")!.name,
         }),
       )
       .toBeVisible();

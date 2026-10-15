@@ -1,3 +1,4 @@
+import { findLaboratory } from "../../packages/domain/src/institutional-group/find-laboratory";
 import { adminPage } from "../support/admin/admin.page";
 import { serviceAccountPage } from "../support/admin/service-accounts.page";
 import { settingsPage } from "../support/admin/settings.page";
@@ -12,7 +13,7 @@ import { adminUrl, frontendUrl } from "../support/urls";
 
 const MANUAL_GROUP = "ANR CritMet";
 const REASON = "We harvest our laboratory samples every night.";
-const MARIE_LABORATORY = "Centre de recherches pétrographiques et géochimiques";
+const MARIE_LABORATORY = findLaboratory("UMR7358")!.name;
 const SAMPLES_URL = `${frontendUrl}/api/service/samples`;
 const BATCHES_URL = `${frontendUrl}/api/service/batches`;
 

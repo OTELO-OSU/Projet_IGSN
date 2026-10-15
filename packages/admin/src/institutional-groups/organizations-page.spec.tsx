@@ -1,3 +1,4 @@
+import { ORGANIZATIONS } from "@projet-igsn/domain/institutional-group/organization";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
@@ -39,8 +40,10 @@ function fakeApi() {
   );
 }
 
-const LORRAINE = "Université de Lorraine";
-const CNRS = "Centre National de la Recherche Scientifique";
+const nameOf = (ror: string) =>
+  ORGANIZATIONS.find((organization) => organization.ror === ror)!.name;
+const LORRAINE = nameOf("04vfs2w97");
+const CNRS = nameOf("02feahw73");
 
 describe("OrganizationsPage", () => {
   it("should show the active manager count of every organization, zero warned", async () => {

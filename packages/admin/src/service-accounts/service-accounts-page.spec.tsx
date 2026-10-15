@@ -1,3 +1,7 @@
+import {
+  laboratoryShortLabel,
+  organizationShortLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
@@ -62,7 +66,9 @@ describe("ServiceAccountsPage", () => {
       .toBeVisible();
     await expect
       .element(
-        screen.getByRole("cell", { name: "Université de Lorraine CRPG" }),
+        screen.getByRole("cell", {
+          name: `${organizationShortLabel("04vfs2w97")} ${laboratoryShortLabel("UMR7358")}`,
+        }),
       )
       .toBeVisible();
     await expect

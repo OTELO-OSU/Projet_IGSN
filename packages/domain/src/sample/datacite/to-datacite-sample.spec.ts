@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { organizationLabel } from "../../institutional-group/label.ts";
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "../../institutional-group/label.ts";
 import { core, corePaths } from "../core/core-paths-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
@@ -78,7 +82,7 @@ const DROPPED_CORE_PATHS = [
   "extensions.fieldwork",
 ];
 
-const ORGANIZATION_NAME = "Centre National de la Recherche Scientifique (CNRS)";
+const ORGANIZATION_NAME = organizationLabel("02feahw73");
 
 const ORGANIZATION_AFFILIATION = {
   name: ORGANIZATION_NAME,
@@ -140,8 +144,8 @@ describe("a Core record mapped to DataCite", () => {
           nameType: "Personal",
           affiliation: [
             ORGANIZATION_AFFILIATION,
-            { name: "Observatoire Midi-Pyrénées (OMP)" },
-            { name: "Centre National de Recherches Météorologiques (CNRM)" },
+            { name: osuLabel("OMP") },
+            { name: laboratoryLabel("UMR3589") },
           ],
         },
       ],
@@ -265,7 +269,7 @@ describe("a Core record mapped to DataCite", () => {
       ],
       fundingReferences: [
         {
-          funderName: "Centre National de la Recherche Scientifique (CNRS)",
+          funderName: ORGANIZATION_NAME,
           funderIdentifier: "https://ror.org/02feahw73",
           funderIdentifierType: "ROR",
           awardNumber: "ANR grant 2023",
@@ -292,7 +296,7 @@ describe("a Core record mapped to DataCite", () => {
           nameType: "Personal",
           affiliation: [
             ORGANIZATION_AFFILIATION,
-            { name: "Centre National de Recherches Météorologiques (CNRM)" },
+            { name: laboratoryLabel("UMR3589") },
           ],
         },
       ],

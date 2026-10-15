@@ -1,5 +1,7 @@
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
 
+import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
+import { managedLaboratoryLabel } from "@projet-igsn/domain/institutional-group/managed-group-items";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -56,9 +58,8 @@ type Options = {
 };
 
 const OFF_CATALOG_ID = "3f2504e0-4f89-41d3-9a0c-0305000000ff";
-const LORRAINE = "Université de Lorraine (04vfs2w97)";
-const CRPG =
-  "Centre de recherches pétrographiques et géochimiques (CRPG) (UMR7358)";
+const LORRAINE = `${organizationLabel("04vfs2w97")} (04vfs2w97)`;
+const CRPG = managedLaboratoryLabel("UMR7358");
 const INSTITUTION_MANAGER: Partial<CurrentUser> = {
   superAdmin: false,
   managedLaboratories: [CALLER_GROUPS.institutionalLaboratory],
@@ -177,9 +178,9 @@ const clearOrganization = async (
     .click();
   await screen
     .getByPlaceholder("Search organizations...")
-    .fill("Université de Lorraine");
+    .fill(organizationLabel("04vfs2w97"));
   await screen
-    .getByRole("option", { name: "Université de Lorraine", exact: true })
+    .getByRole("option", { name: organizationLabel("04vfs2w97"), exact: true })
     .click();
 };
 
@@ -236,7 +237,7 @@ describe("UserDetailPage", () => {
     const { screen } = await renderUserPage();
 
     await expect
-      .element(screen.getByText("Université de Lorraine"))
+      .element(screen.getByText(organizationLabel("04vfs2w97")))
       .toBeVisible();
     await expect.element(screen.getByText(/\(OTELo\)/)).toBeVisible();
     await expect.element(screen.getByText(/\(CRPG\)/)).toBeVisible();
@@ -568,7 +569,7 @@ describe("UserDetailPage", () => {
       .click();
     await screen
       .getByPlaceholder(MODERATION_SEARCH)
-      .fill("Université de Lorraine");
+      .fill(organizationLabel("04vfs2w97"));
     await screen.getByRole("option", { name: LORRAINE }).click();
     await screen.getByRole("button", { name: "Save" }).click();
 
@@ -678,7 +679,7 @@ describe("UserDetailPage", () => {
     await expect
       .element(
         screen.getByRole("button", {
-          name: "Remove Laboratoire d'Etudes Spatiales et d'Instrumentation en Astrophysique (LIRA) (UMR8109)",
+          name: `Remove ${managedLaboratoryLabel("UMR8109")}`,
         }),
       )
       .toBeVisible();

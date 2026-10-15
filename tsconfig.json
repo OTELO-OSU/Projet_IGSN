@@ -1,6 +1,16 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["vitest.config.ts", "playwright.config.ts", "e2e/**/*.ts"],
+  "include": [
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "e2e/**/*.ts",
+    "packages/domain/src/institutional-group/label.ts",
+    "packages/domain/src/institutional-group/find-laboratory.ts",
+    "packages/domain/src/institutional-group/find-osu.ts",
+    "packages/domain/src/institutional-group/laboratory.ts",
+    "packages/domain/src/institutional-group/osu.ts",
+    "packages/domain/src/institutional-group/organization.ts"
+  ],
   "compilerOptions": {
     "types": ["node"]
   }

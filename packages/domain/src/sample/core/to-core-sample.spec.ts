@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { laboratoryLabel, osuLabel } from "../../institutional-group/label.ts";
 import {
   FRONTEND_URL,
+  ORGANIZATION_NAME,
   RESEARCH_PROJECT_SAMPLE_RECORD,
 } from "./core-record-fixture.ts";
 import {
@@ -90,12 +92,12 @@ describe("toCoreSample", () => {
         affiliations: [
           {
             id: "https://ror.org/02feahw73",
-            name: "Centre National de la Recherche Scientifique (CNRS)",
+            name: ORGANIZATION_NAME,
           },
-          { id: "urn:otelo:osu:OMP", name: "Observatoire Midi-Pyrénées (OMP)" },
+          { id: "urn:otelo:osu:OMP", name: osuLabel("OMP") },
           {
             id: "urn:otelo:laboratory:UMR3589",
-            name: "Centre National de Recherches Météorologiques (CNRM)",
+            name: laboratoryLabel("UMR3589"),
           },
         ],
       },

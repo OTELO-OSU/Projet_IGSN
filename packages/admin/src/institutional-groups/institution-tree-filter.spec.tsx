@@ -1,17 +1,23 @@
+import { findLaboratory } from "@projet-igsn/domain/institutional-group/find-laboratory";
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { vi } from "vitest";
 
 import { render } from "../../test/render.tsx";
 import { InstitutionTreeFilter } from "./institution-tree-filter.tsx";
 
-const LORRAINE = "Université de Lorraine";
-const AMU = "Aix-Marseille Université (AMU)";
-const PYTHEAS = "Institut Pythéas (PYTHEAS)";
-const MIO = "Institut Méditerranéen d'Océanologie (MIO)";
-const OTELO = "Observatoire Terre et Environnement de Lorraine (OTELo)";
-const GEORESSOURCES = "GéoRessources (GEORESSOURCES)";
-const CRPG = "Centre de recherches pétrographiques et géochimiques (CRPG)";
-const LA_ROCHELLE = "La Rochelle Université";
-const CHIZE = "Centre d'études biologiques de Chizé (CEBC)";
+const LORRAINE = organizationLabel("04vfs2w97");
+const AMU = organizationLabel("035xkbk20");
+const PYTHEAS = osuLabel("PYTHEAS");
+const MIO = laboratoryLabel("UMR7294");
+const OTELO = osuLabel("OTELo");
+const GEORESSOURCES = laboratoryLabel("UMR7359");
+const CRPG = laboratoryLabel("UMR7358");
+const LA_ROCHELLE = organizationLabel("04mv1z119");
+const CHIZE = laboratoryLabel("UMR7372");
 const STANDALONE = "Standalone Research Units";
 const SEARCH_LABEL = "Search institutions";
 
@@ -68,7 +74,9 @@ describe("InstitutionTreeFilter", () => {
   it("should keep a matching laboratory with its OSU and organization, and drop the rest", async () => {
     const { screen } = await openFilter();
 
-    await screen.getByLabelText(SEARCH_LABEL).fill("GéoRessources");
+    await screen
+      .getByLabelText(SEARCH_LABEL)
+      .fill(findLaboratory("UMR7359")!.name);
 
     await expect
       .element(screen.getByRole("button", { name: LORRAINE, exact: true }))
@@ -116,7 +124,9 @@ describe("InstitutionTreeFilter", () => {
   it("should emit the same laboratory value whichever parent it is picked under", async () => {
     const { screen, onChange } = await openFilter();
 
-    await screen.getByLabelText(SEARCH_LABEL).fill("GéoRessources");
+    await screen
+      .getByLabelText(SEARCH_LABEL)
+      .fill(findLaboratory("UMR7359")!.name);
     const laboratory = screen.getByRole("button", {
       name: GEORESSOURCES,
       exact: true,

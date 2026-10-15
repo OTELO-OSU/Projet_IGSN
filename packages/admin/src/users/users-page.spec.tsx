@@ -1,3 +1,9 @@
+import {
+  laboratoryShortLabel,
+  organizationLabel,
+  organizationShortLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -155,7 +161,7 @@ describe("UsersPage", () => {
     await expect
       .element(
         screen.getByRole("cell", {
-          name: "Université de Lorraine OTELo CRPG",
+          name: `${organizationShortLabel("04vfs2w97")} OTELo ${laboratoryShortLabel("UMR7358")}`,
         }),
       )
       .toBeVisible();
@@ -232,10 +238,10 @@ describe("UsersPage", () => {
     await screen.getByRole("combobox", { name: "Institution" }).click();
     await screen
       .getByLabelText("Search institutions")
-      .fill("Université d'Orléans");
+      .fill(organizationLabel("014zrew76"));
     await screen
       .getByRole("button", {
-        name: "Observatoire des sciences de l'univers en région Centre-Val de Loire (OSUC)",
+        name: osuLabel("OSUC"),
         exact: true,
       })
       .click();

@@ -1,3 +1,5 @@
+import { findLaboratory } from "../../packages/domain/src/institutional-group/find-laboratory";
+import { laboratoryLabel } from "../../packages/domain/src/institutional-group/label";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleModerationPage } from "../support/admin/sample-moderation.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
@@ -53,8 +55,8 @@ test.describe("space manager", () => {
     await moderation.expectSampleRow(elsewhere.name);
 
     await moderation.filterByInstitution(
-      "GéoRessources",
-      "GéoRessources (GEORESSOURCES)",
+      findLaboratory("UMR7359")!.name,
+      laboratoryLabel("UMR7359"),
     );
 
     await moderation.expectSampleRow(target.name);
