@@ -80,7 +80,6 @@ describe("matchRanges", () => {
   );
 
   it.each([
-    ["(d", "Core (deep)"],
     ["+1", "Core +1"],
     ["e|", "Core|A"],
     ["e?", "Core?"],
@@ -148,6 +147,27 @@ describe("matchRanges", () => {
     }
 
     expect(performance.now() - started).toBeLessThan(1000);
+  });
+
+  it.each([
+    ["Fine basalt powder", [[5, 18]]],
+    ["Basalt  Powder", [[0, 14]]],
+  ])("should highlight a phrase as one run in %j", (text, ranges) => {
+    expect(matchRanges(text, '"basalt powder"')).toEqual(ranges);
+  });
+
+  it.each(["Basalt fine powder", "Powder basalt", "Basaltic powder"])(
+    "should not highlight a phrase whose words are apart, reversed or partial in %j",
+    (text) => {
+      expect(matchRanges(text, '"basalt powder"')).toEqual([]);
+    },
+  );
+
+  it("should highlight every term of an OR but not the operator", () => {
+    expect(matchRanges("Basalt or Granite", "basalt OR granite")).toEqual([
+      [0, 6],
+      [10, 17],
+    ]);
   });
 
   it("should return no range for a fuzzy-only match", () => {

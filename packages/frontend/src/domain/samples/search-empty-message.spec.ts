@@ -10,6 +10,7 @@ describe("searchEmptyMessage", () => {
     [{ search: "a" }, TOO_SHORT],
     [{ search: "a b" }, TOO_SHORT],
     [{ search: "*" }, TOO_SHORT],
+    [{ search: '"" OR' }, TOO_SHORT],
     [{ search: "ab" }, NO_RESULTS],
     [{ search: "a basalt" }, NO_RESULTS],
     [{ search: "ab", bbox: BBOX }, NO_RESULTS],

@@ -1,5 +1,11 @@
 import { createMatchingMaterialPaths } from "@projet-igsn/domain/sample/search/matching-material-paths";
 import {
+  parseSearchQuery,
+  type SearchQuery,
+  searchQueryTerms,
+  type SearchTerm,
+} from "@projet-igsn/domain/sample/search/parse-search-query";
+import {
   MAX_TOKEN_LENGTH,
   parseSearchToken,
   searchTokens,
@@ -106,15 +112,17 @@ export function tokenFilters(
   );
 }
 
+type TermArms = (term: SearchTerm) => RawBuilder<unknown>[];
+
 function matchesSearchToken(
   texts: readonly RawBuilder<unknown>[],
-  tokenArms: (token: string) => RawBuilder<unknown>[],
+  extraArms: RawBuilder<unknown>[],
   token: string,
 ): Expression<SqlBool> {
   if (token.length > MAX_TOKEN_LENGTH) return sql<SqlBool>`false`;
   const regex = termRegex(token);
   const arms = [
-    ...tokenArms(token),
+    ...extraArms,
     ...texts.map((text) => sql`${text} @@@ pdb.regex(${regex})`),
     ...(isFuzzyToken(token)
       ? texts.map(
@@ -126,35 +134,70 @@ function matchesSearchToken(
   return sql<SqlBool>`(${sql.join(arms, sql` OR `)})`;
 }
 
+function matchesSearchPhrase(
+  texts: readonly RawBuilder<unknown>[],
+  extraArms: RawBuilder<unknown>[],
+  phrase: string,
+): Expression<SqlBool> {
+  const arms = [
+    ...extraArms,
+    ...texts.map((text) => sql`${text} ### immutable_unaccent(${phrase})`),
+  ];
+  return sql<SqlBool>`(${sql.join(arms, sql` OR `)})`;
+}
+
+function queryExpression(
+  texts: readonly RawBuilder<unknown>[],
+  termArms: TermArms,
+  query: SearchQuery,
+): Expression<SqlBool> {
+  if ("children" in query) {
+    const children = query.children.map((child) =>
+      queryExpression(texts, termArms, child),
+    );
+    const operator = query.kind === "and" ? sql` AND ` : sql` OR `;
+    return sql<SqlBool>`(${sql.join(children, operator)})`;
+  }
+  return query.kind === "word"
+    ? matchesSearchToken(texts, termArms(query), query.token)
+    : matchesSearchPhrase(texts, termArms(query), query.text);
+}
+
 function textSearchFilters(
   search: string,
   texts: readonly RawBuilder<unknown>[],
-  tokenArms: (token: string) => RawBuilder<unknown>[],
+  termArms: TermArms,
 ): Expression<SqlBool>[] {
-  const tokens = searchTokens(search);
-  if (tokens.length === 0) return [sql<SqlBool>`false`];
-  return tokens.map((token) => matchesSearchToken(texts, tokenArms, token));
+  const query = parseSearchQuery(search);
+  if (!query) return [sql<SqlBool>`false`];
+  return [queryExpression(texts, termArms, query)];
 }
 
-const igsnArm = (token: string) => sql`igsn = upper(${token})`;
+function singleWordOf(term: SearchTerm): string[] {
+  if (term.kind === "word") return [term.token];
+  return term.text.includes(" ") ? [] : [term.text];
+}
+
+const igsnArms = (term: SearchTerm) =>
+  singleWordOf(term).map((word) => sql`igsn = upper(${word})`);
 
 export function searchFilters(search: string): Expression<SqlBool>[] {
-  return textSearchFilters(search, SEARCHED_TEXTS, (token) => [igsnArm(token)]);
+  return textSearchFilters(search, SEARCHED_TEXTS, igsnArms);
 }
 
 export function publicSearchFilters(search: string): Expression<SqlBool>[] {
-  return textSearchFilters(search, SEARCHED_TEXTS, (token) => [
-    igsnArm(token),
-    ...matchingMaterialPaths(token).map(
+  return textSearchFilters(search, SEARCHED_TEXTS, (term) => [
+    ...igsnArms(term),
+    ...matchingMaterialPaths(term).map(
       (path) => sql`${path} = any(material_paths)`,
     ),
   ]);
 }
 
 export function pickerSearchFilters(search: string): Expression<SqlBool>[] {
-  return textSearchFilters(search, [sql.ref("name_unaccented")], (token) => [
-    sql`strpos(igsn, upper(${token})) > 0`,
-  ]);
+  return textSearchFilters(search, [sql.ref("name_unaccented")], (term) =>
+    singleWordOf(term).map((word) => sql`strpos(igsn, upper(${word})) > 0`),
+  );
 }
 
 export async function forceCustomPlan(trx: Transaction<DB>): Promise<void> {
@@ -177,7 +220,14 @@ export async function applyFuzzyThreshold(
 }
 
 export function relevanceScore(search: string): RawBuilder<number> | undefined {
-  const tokens = searchTokens(search).filter((token) => !token.includes("*"));
+  const query = parseSearchQuery(search);
+  const tokens = (query ? searchQueryTerms(query) : []).flatMap((term) =>
+    term.kind === "phrase"
+      ? [term.text]
+      : term.token.includes("*")
+        ? []
+        : [term.token],
+  );
   const needle = tokens.join(" ");
   if (!needle) return undefined;
   const similarity = sql<number>`GREATEST(${sql.join(

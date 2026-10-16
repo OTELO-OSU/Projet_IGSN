@@ -238,6 +238,8 @@ export function faqCategories(): FaqCategory[] {
                 m.faq_search_rule_case(),
                 m.faq_search_rule_typo(),
                 m.faq_search_rule_wildcard(),
+                m.faq_search_rule_phrase(),
+                m.faq_search_rule_operators(),
                 m.faq_search_rule_limits(),
                 m.faq_search_rule_area(),
                 m.faq_search_rule_published(),

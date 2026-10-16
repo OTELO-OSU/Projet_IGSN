@@ -24,6 +24,8 @@ export function sampleListPage(page: Page) {
           exact: true,
         }),
       ).toBeVisible(),
+    expectNoResults: () =>
+      expect(page.getByText("No samples match your search.")).toBeVisible(),
     expectSampleAbsent: (name: string) =>
       expect(page.getByRole("link", { name })).toHaveCount(0),
     pickFacet: async (facet: string, option: string, param: string) => {

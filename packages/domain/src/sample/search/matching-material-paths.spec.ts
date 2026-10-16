@@ -1,4 +1,5 @@
 import type { Messages } from "../create-sample-labels.ts";
+import type { SearchTerm } from "./parse-search-query.ts";
 
 import catalog from "../../../messages/en.json";
 import { createSampleLabels } from "../create-sample-labels.ts";
@@ -14,6 +15,8 @@ const matchingMaterialPaths = createMatchingMaterialPaths(
   createSampleLabels(m).materialPathLabel,
 );
 
+const word = (token: string): SearchTerm => ({ kind: "word", token });
+
 const GRANITE = "rock_and_sediment.rock.igneous.plutonic.felsic.granite";
 
 describe("createMatchingMaterialPaths", () => {
@@ -24,11 +27,11 @@ describe("createMatchingMaterialPaths", () => {
     ["gran*", GRANITE],
     ["*ite", GRANITE],
   ])("should include the path whose own label %j matches", (token, path) => {
-    expect(matchingMaterialPaths(token)).toContain(path);
+    expect(matchingMaterialPaths(word(token))).toContain(path);
   });
 
   it("should match a meta-prefixed label under a meta branch only", () => {
-    const paths = matchingMaterialPaths("meta-granite");
+    const paths = matchingMaterialPaths(word("meta-granite"));
 
     expect(paths).not.toEqual([]);
     expect(paths.every((path) => path.includes(".meta_igneous_rock."))).toBe(
@@ -41,12 +44,27 @@ describe("createMatchingMaterialPaths", () => {
     ["sediment", "rock_and_sediment"],
   ])("should not match %j against %j", (token, excluded) => {
     expect(
-      matchingMaterialPaths(token).filter((path) => path.endsWith(excluded)),
+      matchingMaterialPaths(word(token)).filter((path) =>
+        path.endsWith(excluded),
+      ),
     ).toEqual([]);
   });
 
+  it("should match a phrase against a multi-word label whole", () => {
+    expect(
+      matchingMaterialPaths({ kind: "phrase", text: "Xenolithic rock" }),
+    ).toEqual(["rock_and_sediment.rock.xenolithic_rock"]);
+  });
+
+  it.each(["rock xenolithic", "xenolithic roc"])(
+    "should not match the reversed or partial phrase %j",
+    (text) => {
+      expect(matchingMaterialPaths({ kind: "phrase", text })).toEqual([]);
+    },
+  );
+
   it("should return no path for an unknown word", () => {
-    expect(matchingMaterialPaths("zzzz")).toEqual([]);
+    expect(matchingMaterialPaths(word("zzzz"))).toEqual([]);
   });
 
   it("should stay prompt over a broad query's every token", () => {
@@ -54,7 +72,7 @@ describe("createMatchingMaterialPaths", () => {
 
     for (let run = 0; run < 100; run++) {
       for (const token of "te ro ne an ar er".split(" ")) {
-        matchingMaterialPaths(token);
+        matchingMaterialPaths(word(token));
       }
     }
 

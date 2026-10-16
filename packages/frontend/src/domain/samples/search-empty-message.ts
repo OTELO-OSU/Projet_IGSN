@@ -1,11 +1,11 @@
-import { searchTokens } from "@projet-igsn/domain/sample/search/search-tokens";
+import { parseSearchQuery } from "@projet-igsn/domain/sample/search/parse-search-query";
 
 import type { SearchFilters } from "#/domain/samples/client/list-samples.ts";
 
 import { m } from "#/paraglide/messages.js";
 
 export function searchEmptyMessage({ search, bbox }: SearchFilters): string {
-  if (search && searchTokens(search).length === 0) {
+  if (search && !parseSearchQuery(search)) {
     return m.search_too_short_hint();
   }
   return bbox && !search
