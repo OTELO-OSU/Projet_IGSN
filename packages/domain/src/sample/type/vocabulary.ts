@@ -25,6 +25,7 @@ const typeTree = {
       "casq_section_large_lu_gutter",
       "casq_section_narrow_nu_gutter",
       "outcrop_preserved_stratigraphy",
+      "u_channel",
     ],
   },
   dredge: { searchable: true },
@@ -56,6 +57,7 @@ const typeTree = {
   casq_section_large_lu_gutter: { searchable: true },
   casq_section_narrow_nu_gutter: { searchable: true },
   outcrop_preserved_stratigraphy: { searchable: true },
+  u_channel: { searchable: true },
 } satisfies Record<string, TreeNode>;
 
 type SampleTypeKey = keyof typeof typeTree;

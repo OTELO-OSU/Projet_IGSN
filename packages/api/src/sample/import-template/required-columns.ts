@@ -31,8 +31,9 @@ const GOVERNED_PATHS = CONDITIONAL_FIELDS.flatMap((field) =>
 const MATERIAL_PUBLISH_FRONTIER = Math.max(
   ...TEMPLATE_MATERIAL_PATHS.filter(
     (candidate) =>
-      isMaterialComplete(candidate) &&
-      (!candidate.includes(".") || !isMaterialComplete(parentPath(candidate))),
+      isMaterialComplete(candidate, null) &&
+      (!candidate.includes(".") ||
+        !isMaterialComplete(parentPath(candidate), null)),
   ).map((candidate) => candidate.split(".").length),
 );
 

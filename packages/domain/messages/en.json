@@ -42,6 +42,7 @@
   "type_casq_section_large_lu_gutter": "Casq Section, Large (LU-gutter)",
   "type_casq_section_narrow_nu_gutter": "Casq Section Narrow (NU-gutter)",
   "type_outcrop_preserved_stratigraphy": "Outcrop (preserved stratigraphy)",
+  "type_u_channel": "Core U Channel",
   "type_dredge": "Dredge",
   "type_serie_of_sample": "Series of samples",
   "type_inapplicable": "Inapplicable",

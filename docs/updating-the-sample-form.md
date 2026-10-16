@@ -280,7 +280,7 @@ Background: ADR [0021](adr/0021-post-publish-field-mutability.md).
 
 A dot-path hierarchy like `material` cannot use the map: it needs a depth, not a field name. So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: a node with no mark is frozen once published, so mark `frozenWhenPublished: false` only on the frontier, the first level under a frozen head that may still change; every level below the frontier is never consulted.
 
-Material has one explicit root, `rock_and_sediment` (`MATERIAL_ROOTS`), whose children are the families (`rock`, `sediment`, `mineral`, `synthetic_rock_mineral`, `extraterrestrial_rock`). Neither the root nor a family carries a mark: both stay frozen once published, and neither is a valid publish stop. The frontier is the next level down, niveau 1 (`exogenous_detritic` under `sediment`, `igneous` under `rock`...), the 14 nodes that carry both flags together:
+Material has one explicit root, `rock_and_sediment` (`MATERIAL_ROOTS`), whose children are the families (`rock`, `sediment`, `mineral`, `synthetic_rock_mineral`, `extraterrestrial_rock`). Neither the root nor a family carries a mark: both stay frozen once published, and neither is a valid publish stop, except for a series core (`serie_of_sample.core`), whose material may stop at the root or any deeper level (`materialHierarchyFor`), its unlock frontier unchanged. The frontier is the next level down, niveau 1 (`exogenous_detritic` under `sediment`, `igneous` under `rock`...), the 14 nodes that carry both flags together:
 
 ```ts
 // packages/domain/src/sample/material/classification.ts

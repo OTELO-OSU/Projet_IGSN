@@ -366,6 +366,31 @@ describe("SampleForm", () => {
       .toBeVisible();
   });
 
+  it("should deem a series core's material root complete", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Carottes du Massif Central",
+          nature: null,
+          type: "serie_of_sample.core",
+          material: "rock_and_sediment",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Material *", exact: true }),
+      )
+      .toHaveAccessibleDescription(/Complete, a sub-level may be picked/);
+  });
+
   it("should show the texture field for an igneous branch and submit the chosen texture", async () => {
     const onSubmit = vi.fn();
     const screen = await render(

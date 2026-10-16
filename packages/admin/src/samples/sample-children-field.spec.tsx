@@ -178,6 +178,7 @@ describe("SampleChildrenField", () => {
   it("should keep the picked children when the series sub-type changes", async () => {
     const screen = await renderSeries({
       type: "serie_of_sample.core",
+      material: "rock_and_sediment.rock.igneous",
       childIds: [CHILD.id],
     });
 

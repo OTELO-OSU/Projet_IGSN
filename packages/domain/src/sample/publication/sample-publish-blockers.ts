@@ -156,7 +156,7 @@ const fieldRequirements = (
   const materialComplete =
     sample.material !== null &&
     MATERIAL_PATHS.includes(sample.material) &&
-    isMaterialComplete(sample.material);
+    isMaterialComplete(sample.material, sample.type);
   requirements.push({
     blocker:
       sample.material === null ? "material_missing" : "material_incomplete",

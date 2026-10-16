@@ -12,9 +12,14 @@ describe("sampleTypeSchema", () => {
     expect(sampleTypeSchema.safeParse("core").success).toBe(true);
   });
 
+  it("should accept a core U channel", () => {
+    expect(sampleTypeSchema.safeParse("core.u_channel").success).toBe(true);
+  });
+
   it.each([
     "",
     "half_round",
+    "u_channel",
     "dredge.half_round",
     "core.unknown",
     "core.core",

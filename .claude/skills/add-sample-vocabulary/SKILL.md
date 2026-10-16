@@ -40,7 +40,7 @@ it. `optional` behaves the same way (ADR
 a mark opens the node AND everything under it as a valid stopping point, not
 just the marked node, so mark the frontier only, never every descendant.
 Material's 14 niveau-1 nodes carry both flags together, one frontier for the
-publish depth and the unlock depth.
+publish depth and the unlock depth, a series core's publish depth aside.
 
 Material has one root, `rock_and_sediment` (ADR
 [0038](../../../docs/adr/0038-explicit-material-root.md)); its children are the

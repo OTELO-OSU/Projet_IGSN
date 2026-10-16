@@ -1,5 +1,5 @@
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
-import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
+import { materialHierarchyFor } from "@projet-igsn/domain/sample/material/hierarchy-for-type";
 import { fabricsFor } from "@projet-igsn/domain/sample/metamorphic-fabric/vocabulary";
 import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
@@ -57,15 +57,21 @@ export function MaterialField() {
         }}
       >
         {(field) => (
-          <field.HierarchyField
-            label={m.field_material()}
-            hierarchy={MATERIAL_HIERARCHY}
-            translate={materialPathLabel}
-            placeholder={m.material_placeholder()}
-            searchPlaceholder={m.material_search_placeholder()}
-            emptyText={m.material_empty()}
-            {...HIERARCHY_FIELD_LABELS}
-          />
+          <form.Subscribe
+            selector={(state) => composeHierarchyValue(state.values.typePath)}
+          >
+            {(type) => (
+              <field.HierarchyField
+                label={m.field_material()}
+                hierarchy={materialHierarchyFor(type)}
+                translate={materialPathLabel}
+                placeholder={m.material_placeholder()}
+                searchPlaceholder={m.material_search_placeholder()}
+                emptyText={m.material_empty()}
+                {...HIERARCHY_FIELD_LABELS}
+              />
+            )}
+          </form.Subscribe>
         )}
       </form.AppField>
     </>
