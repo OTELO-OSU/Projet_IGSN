@@ -1,104 +1,37 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
-import type { ExpressionBuilder, Kysely } from "kysely";
+import type { Kysely } from "kysely";
 
-import {
-  manualGroupListItemSchema,
-  manualGroupMemberSchema,
-  myManualGroupSchema,
-} from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { manualGroupSchema } from "@projet-igsn/domain/manual-group/model";
-import { PERMANENT_IGSN_STATUSES } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
-import { groupManagerSchema } from "@projet-igsn/domain/user/user-validator";
-import { HTTPException } from "hono/http-exception";
-import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
-import { likePattern } from "../like-pattern.ts";
-import { type Transactional, withTransaction } from "../transaction.ts";
-import { isNameTakenBy, lockName } from "../unique-name.ts";
+import { transactionally, withTransaction } from "../transaction.ts";
 import { addManualGroupMember } from "./add-manual-group-member.ts";
 import {
   attachableManualGroups,
   sampleOwnerId,
 } from "./attachable-manual-groups.ts";
-import { canDetachFromGroup } from "./can-detach-from-group.ts";
+import { createManualGroup } from "./create-manual-group.ts";
 import { detachManualGroupMember } from "./detach-manual-group-member.ts";
 import { grantManualGroupManagers } from "./grant-manual-group-managers.ts";
+import { listManualGroupManagers } from "./list-manual-group-managers.ts";
+import { listManualGroupMembers } from "./list-manual-group-members.ts";
+import { listManualGroupsWithPublishedSample } from "./list-manual-groups-with-published-sample.ts";
+import { listManualGroupsWithoutActiveManager } from "./list-manual-groups-without-active-manager.ts";
+import { listManualGroups } from "./list-manual-groups.ts";
+import { listUserManualGroups } from "./list-user-manual-groups.ts";
+import { GROUP_COLUMNS } from "./manual-group-columns.ts";
 import { manualGroupsByIds } from "./manual-groups-by-ids.ts";
-
-const GROUP_COLUMNS = ["id", "name"] as const;
-
-const hasActiveManager = (eb: ExpressionBuilder<DB, "manual_group">) =>
-  eb.exists(
-    eb
-      .selectFrom("user_managed_manual_group")
-      .innerJoin("user", "user.id", "user_managed_manual_group.user_id")
-      .select("user.id")
-      .whereRef("user_managed_manual_group.group_id", "=", "manual_group.id")
-      .where("user.status", "=", "accepted"),
-  );
-
-const activeManagerCount = (eb: ExpressionBuilder<DB, "manual_group">) =>
-  eb
-    .selectFrom("user_managed_manual_group")
-    .innerJoin("user", "user.id", "user_managed_manual_group.user_id")
-    .whereRef("user_managed_manual_group.group_id", "=", "manual_group.id")
-    .where("user.status", "=", "accepted")
-    .select((count) => count.fn.countAll().as("count"));
-
-const sampleGroups = (trx: Transactional<DB>) =>
-  trx
-    .selectFrom("sample_manual_group")
-    .innerJoin("sample", "sample.id", "sample_manual_group.sample_id");
+import { removeManualGroup } from "./remove-manual-group.ts";
+import { renameManualGroup } from "./rename-manual-group.ts";
+import { revokeManualGroupManager } from "./revoke-manual-group-manager.ts";
 
 export function createManualGroupRepository(
   db: Kysely<DB>,
 ): ManualGroupRepository {
+  const tx = transactionally(db);
   return {
-    list: ({ page, perPage, search, noManager }, managedGroupIds) =>
-      withTransaction(db, async (trx) => {
-        const matching = trx
-          .selectFrom("manual_group")
-          .$if(managedGroupIds !== null, (qb) =>
-            managedGroupIds!.length > 0
-              ? qb.where("id", "in", managedGroupIds!)
-              : qb.where((eb) => eb.lit(false)),
-          )
-          .$if(Boolean(search), (qb) =>
-            qb.where("name", "ilike", likePattern(search!)),
-          )
-          .$if(noManager === true, (qb) =>
-            qb.where((eb) => eb.not(hasActiveManager(eb))),
-          );
-        const rows = await matching
-          .select((eb) => [
-            ...GROUP_COLUMNS,
-            eb
-              .selectFrom("manual_group_member")
-              .whereRef("manual_group_member.group_id", "=", "manual_group.id")
-              .select((count) => count.fn.countAll().as("count"))
-              .as("memberCount"),
-            activeManagerCount(eb).as("managerCount"),
-          ])
-          .orderBy("name", "asc")
-          .limit(perPage)
-          .offset((page - 1) * perPage)
-          .execute();
-        const { count } = await matching
-          .select((eb) => eb.fn.countAll<number>().as("count"))
-          .executeTakeFirstOrThrow();
-        return {
-          data: rows.map((row) =>
-            manualGroupListItemSchema.parse({
-              ...row,
-              memberCount: Number(row.memberCount),
-              managerCount: Number(row.managerCount),
-            }),
-          ),
-          total: Number(count),
-        };
-      }),
+    list: tx(listManualGroups),
     get: (id) =>
       withTransaction(db, async (trx) => {
         const row = await trx
@@ -108,75 +41,11 @@ export function createManualGroupRepository(
           .executeTakeFirst();
         return row ? manualGroupSchema.parse(row) : null;
       }),
-    create: (name, managerIds) =>
-      withTransaction(db, async (trx) => {
-        await lockName(trx, name);
-        const row = await trx
-          .insertInto("manual_group")
-          .values({ id: uuidv7(), name })
-          .onConflict((oc) => oc.doNothing())
-          .returning(GROUP_COLUMNS)
-          .executeTakeFirst();
-        if (!row) {
-          return "name_taken";
-        }
-        await grantManualGroupManagers(trx, row.id, managerIds);
-        return { group: manualGroupSchema.parse(row) };
-      }),
-    rename: (id, name) =>
-      withTransaction(db, async (trx) => {
-        await lockName(trx, name);
-        if (await isNameTakenBy(trx, "manual_group", name, id)) {
-          return "name_taken";
-        }
-        const row = await trx
-          .updateTable("manual_group")
-          .set({ name })
-          .where("id", "=", id)
-          .returning(GROUP_COLUMNS)
-          .executeTakeFirst();
-        return row ? { group: manualGroupSchema.parse(row) } : "not_found";
-      }),
-    remove: (id) =>
-      withTransaction(db, async (trx) => {
-        const withIgsn = await sampleGroups(trx)
-          .select("sample.id")
-          .where("sample.status", "in", PERMANENT_IGSN_STATUSES)
-          .where("sample_manual_group.group_id", "=", id)
-          .limit(1)
-          .executeTakeFirst();
-        if (withIgsn) {
-          return "has_published_sample";
-        }
-        const { numDeletedRows } = await trx
-          .deleteFrom("manual_group")
-          .where("id", "=", id)
-          .executeTakeFirst();
-        return numDeletedRows > 0n ? "removed" : "not_found";
-      }),
-    listMembers: (id) =>
-      withTransaction(db, async (trx) => {
-        const rows = await trx
-          .selectFrom("manual_group_member")
-          .innerJoin("user", "user.id", "manual_group_member.user_id")
-          .select((eb) => [
-            "user.id",
-            "user.email",
-            "user.name",
-            "user.firstname",
-            "user.orcid",
-            "user.status",
-            canDetachFromGroup(eb.ref("manual_group_member.user_id"), id).as(
-              "canDetach",
-            ),
-          ])
-          .where("manual_group_member.group_id", "=", id)
-          .orderBy("user.email", "asc")
-          .execute();
-        return rows.map((row) => manualGroupMemberSchema.parse(row));
-      }),
-    addMember: (groupId, userId) =>
-      withTransaction(db, (trx) => addManualGroupMember(trx, groupId, userId)),
+    create: tx(createManualGroup),
+    rename: tx(renameManualGroup),
+    remove: tx(removeManualGroup),
+    listMembers: tx(listManualGroupMembers),
+    addMember: tx(addManualGroupMember),
     removeMember: (groupId, userId) =>
       withTransaction(db, async (trx) => {
         const detached = await detachManualGroupMember(trx, groupId, userId);
@@ -191,70 +60,14 @@ export function createManualGroupRepository(
         const detached = await detachManualGroupMember(trx, groupId, userId);
         return detached === "detached" ? "left" : detached;
       }),
-    listManagers: (id) =>
-      withTransaction(db, async (trx) => {
-        const rows = await trx
-          .selectFrom("user_managed_manual_group")
-          .innerJoin("user", "user.id", "user_managed_manual_group.user_id")
-          .select([
-            "user.id",
-            "user.email",
-            "user.name",
-            "user.firstname",
-            "user.orcid",
-            "user.status",
-          ])
-          .where("user_managed_manual_group.group_id", "=", id)
-          .orderBy("user.email", "asc")
-          .execute();
-        return rows.map((row) => groupManagerSchema.parse(row));
-      }),
+    listManagers: tx(listManualGroupManagers),
     addManager: (groupId, userId) =>
       withTransaction(db, (trx) =>
         grantManualGroupManagers(trx, groupId, [userId]),
       ),
-    removeManager: (groupId, userId) =>
-      withTransaction(db, async (trx) => {
-        const { numDeletedRows } = await trx
-          .deleteFrom("user_managed_manual_group")
-          .where("group_id", "=", groupId)
-          .where("user_id", "=", userId)
-          .executeTakeFirst();
-        if (numDeletedRows === 0n) {
-          throw new HTTPException(404, { message: "Manager not found" });
-        }
-      }),
-    listWithoutActiveManager: () =>
-      withTransaction(db, async (trx) => {
-        const rows = await trx
-          .selectFrom("manual_group")
-          .select(GROUP_COLUMNS)
-          .where((eb) => eb.not(hasActiveManager(eb)))
-          .orderBy("name", "asc")
-          .execute();
-        return rows.map((row) => manualGroupSchema.parse(row));
-      }),
-    listForUser: (userId) =>
-      withTransaction(db, async (trx) => {
-        const rows = await trx
-          .selectFrom("manual_group")
-          .innerJoin(
-            "manual_group_member",
-            "manual_group_member.group_id",
-            "manual_group.id",
-          )
-          .select((eb) => [
-            "manual_group.id",
-            "manual_group.name",
-            canDetachFromGroup(userId, eb.ref("manual_group.id")).as(
-              "canLeave",
-            ),
-          ])
-          .where("manual_group_member.user_id", "=", userId)
-          .orderBy("manual_group.name", "asc")
-          .execute();
-        return rows.map((row) => myManualGroupSchema.parse(row));
-      }),
+    removeManager: tx(revokeManualGroupManager),
+    listWithoutActiveManager: tx(listManualGroupsWithoutActiveManager),
+    listForUser: tx(listUserManualGroups),
     listAttachableForUser: (userId) =>
       withTransaction(db, (trx) => attachableManualGroups(trx, userId)),
     listByIds: (ids) =>
@@ -268,21 +81,6 @@ export function createManualGroupRepository(
       withTransaction(db, (trx) =>
         attachableManualGroups(trx, sampleOwnerId(trx, sampleId)),
       ),
-    listWithPublishedSample: () =>
-      withTransaction(db, async (trx) => {
-        const rows = await trx
-          .selectFrom("manual_group")
-          .select(GROUP_COLUMNS)
-          .where(
-            "id",
-            "in",
-            sampleGroups(trx)
-              .select("sample_manual_group.group_id")
-              .where("sample.status", "=", "published"),
-          )
-          .orderBy("name", "asc")
-          .execute();
-        return rows.map((row) => manualGroupSchema.parse(row));
-      }),
+    listWithPublishedSample: tx(listManualGroupsWithPublishedSample),
   };
 }

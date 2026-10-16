@@ -10,7 +10,7 @@ import type { CreateSampleRelation } from "@projet-igsn/domain/sample/relation/m
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 
-import type { SampleRow } from "./seed.ts";
+import type { SampleRow } from "./seed-sample-row.ts";
 
 type DemoRow = Omit<SampleRow, "id" | "igsn" | "status">;
 

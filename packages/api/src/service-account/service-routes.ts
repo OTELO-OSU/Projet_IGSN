@@ -1,128 +1,23 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { SampleBatchRepository } from "@projet-igsn/domain/sample-batch/repository";
-import type { SuspectedDuplicate } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
-import type { Sample } from "@projet-igsn/domain/sample/sample";
-import type { DuplicateConflict } from "@projet-igsn/domain/sample/sample-validator";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
-import type {
-  FrozenServiceSample,
-  ServiceSampleIssue,
-} from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
-import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
-import type { Context } from "hono";
 
-import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
-import { toListSamplesQuery } from "@projet-igsn/domain/sample/core/core-list-samples-query";
-import { CORE_SCHEMA_VERSION } from "@projet-igsn/domain/sample/core/core-sample-schema";
-import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
-import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacite-schema";
-import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
-import { ISAMPLES_MEDIA_TYPE } from "@projet-igsn/domain/sample/isamples/isamples-schema";
-import { toISamplesSample } from "@projet-igsn/domain/sample/isamples/to-isamples-sample";
-import { OMS_MEDIA_TYPE } from "@projet-igsn/domain/sample/oms/oms-schema";
-import {
-  toOmsSample,
-  toOmsSampleCollection,
-} from "@projet-igsn/domain/sample/oms/to-oms-sample";
-import { redactPrivateContacts } from "@projet-igsn/domain/sample/publication/redact-private-contacts";
-import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
-import { accepts } from "hono/accepts";
 
 import type { SendMail } from "../mail/send-mail.ts";
 
 import {
   type ServiceEnv,
-  keyedServiceAccount,
   requireServiceAccount,
 } from "../auth/require-service-account.ts";
-import { notifySampleModerated } from "../sample/notify-sample-moderated.ts";
-import { notifySubSampleDeclared } from "../sample/notify-sub-sample-declared.ts";
-import {
-  catchChildNotEligible,
-  ChildNotEligibleError,
-} from "../sample/service/replace-sample-children.ts";
-import { withSeriesId } from "../sample/with-series-id.ts";
 import { registerSampleBatchRoutes } from "./sample-batch-routes.ts";
-import {
-  SERVED_MEDIA_TYPES,
-  SERVICE_API_KEY_SCHEME,
-  createSampleRoute,
-  getSampleRoute,
-  listSamplesRoute,
-  updateSampleRoute,
-} from "./service-route-definitions.ts";
-import {
-  checkServiceCreate,
-  checkServiceUpdate,
-  createDuplicates,
-  findPublished,
-  updateDuplicates,
-} from "./service-sample-checks.ts";
-import { invalidSample, serviceSampleIssue } from "./service-sample-issue.ts";
+import { registerServiceDocsRoutes } from "./service-docs-routes.ts";
+import { registerServiceReadRoutes } from "./service-read-routes.ts";
 import { serviceValidationHook } from "./service-validation-hook.ts";
+import { registerServiceWriteRoutes } from "./service-write-routes.ts";
 import { registerVocabularyRoutes } from "./vocabulary-routes.ts";
-
-const SWAGGER_UI_VERSION = "5.32.15";
-
-const OPENAPI_URL = "./openapi.json";
-
-const SWAGGER_UI_INTEGRITY: Record<string, string> = {
-  "swagger-ui-bundle.js":
-    "sha384-m7zaGj7MPzU+G4lz2eyy73GxK9bbRDr9bB2CSdj8wodg2wu/Wnt6wsoLP3JD+RS9",
-  "swagger-ui.css":
-    "sha384-fgyWYkUAamzuI8mJFu/xpRP0JWCJRwkwUwsYDoOYVHUJ8NQE5cENn8ib3ppwFFSX",
-};
-
-const subresource = (url: string) =>
-  `integrity="${SWAGGER_UI_INTEGRITY[url.slice(url.lastIndexOf("/") + 1)]}" crossorigin="anonymous"`;
-
-const specificity = (type: string) =>
-  type === "*/*" ? 0 : type === "application/*" ? 1 : 2;
-
-// ponytail: Accept: application/json;q=0 reads as unranked, not as explicitly unacceptable; write an RFC 9110 parser if a caller ever needs it
-const negotiate = (c: Context<ServiceEnv>) =>
-  accepts(c, {
-    header: "Accept",
-    supports: ["*/*", "application/*", ...SERVED_MEDIA_TYPES],
-    default: "*/*",
-    match: (candidates, { supports }) =>
-      [...candidates]
-        .sort((a, b) => b.q - a.q || specificity(b.type) - specificity(a.type))
-        .find(({ type }) => supports.includes(type))?.type ?? "",
-  });
-
-export const NO_REACH: ModerationScope = {
-  callerId: "",
-  superAdmin: false,
-  managedLaboratories: [],
-  managedManualGroupIds: [],
-};
-
-const readable = (c: Context<ServiceEnv>, sample: Sample) =>
-  c.get("serviceAccount") ? sample : redactPrivateContacts(sample);
-
-const notAcceptable = (c: Context<ServiceEnv>) =>
-  c.json({ error: "Not acceptable" }, 406);
-
-const conflicting = (
-  c: Context<ServiceEnv>,
-  duplicates: SuspectedDuplicate[],
-) =>
-  c.json(
-    {
-      error: "Suspected duplicate",
-      reason: "duplicates",
-      duplicates,
-    } satisfies DuplicateConflict,
-    409,
-  );
-
-const forbidden = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
-  c.json({ error: "Forbidden", issues } satisfies FrozenServiceSample, 403);
 
 export function createServiceRoutes(
   serviceAccounts: Pick<ServiceAccountRepository, "findByApiKeyHash">,
@@ -137,207 +32,11 @@ export function createServiceRoutes(
   const app = new OpenAPIHono<ServiceEnv>({
     defaultHook: serviceValidationHook,
   });
-  app.openAPIRegistry.registerComponent(
-    "securitySchemes",
-    "apiKey",
-    SERVICE_API_KEY_SCHEME,
-  );
-  let document: string | undefined;
-  app.get("/openapi.json", (c) =>
-    c.body(
-      (document ??= JSON.stringify(
-        app.getOpenAPI31Document({
-          openapi: "3.1.0",
-          info: {
-            title: "IGSN service API",
-            version: CORE_SCHEMA_VERSION,
-            description: `Machine API of the IGSN registry, reading and writing published samples as IGSN Core v${CORE_SCHEMA_VERSION} records. Reading is public, a call with no api key omitting the archive contact; writing needs the api key of a service account.`,
-          },
-          servers: [{ url: new URL("api/service", frontendUrl).toString() }],
-        }),
-      )),
-      200,
-      { "content-type": "application/json" },
-    ),
-  );
-  app.get(
-    "/docs",
-    swaggerUI({
-      url: OPENAPI_URL,
-      version: SWAGGER_UI_VERSION,
-      manuallySwaggerUIHtml: ({ css, js }) => `
-        <div id="swagger-ui"></div>
-        ${css.map((url) => `<link rel="stylesheet" href="${url}" ${subresource(url)} />`).join("")}
-        ${js.map((url) => `<script src="${url}" ${subresource(url)}></script>`).join("")}
-        <script>
-          window.onload = () => {
-            window.ui = SwaggerUIBundle({ dom_id: '#swagger-ui', url: '${OPENAPI_URL}' })
-          }
-        </script>
-      `,
-    }),
-  );
+  registerServiceDocsRoutes(app, frontendUrl);
   app.use("*", requireServiceAccount(serviceAccounts));
   registerVocabularyRoutes(app);
   registerSampleBatchRoutes(app, { ...checks, sampleBatches });
-  return app
-    .openapi(listSamplesRoute, async (c) => {
-      const format = negotiate(c);
-      if (!format) {
-        return notAcceptable(c);
-      }
-      const account = c.get("serviceAccount");
-      const { editable, ...query } = c.req.valid("query");
-      const { data, total } = await samples.listPublishedForService(
-        { ...toListSamplesQuery(query), sort: "igsn" },
-        account ? managerScope(account.id, account.managedGroups) : NO_REACH,
-        account !== undefined && editable === true,
-      );
-      const records = data.map((sample) =>
-        toCoreSample(readable(c, sample), frontendUrl),
-      );
-      const meta = { total };
-      switch (format) {
-        case DATACITE_MEDIA_TYPE:
-          return c.json(
-            { data: records.map((record) => toDataCiteSample(record)), meta },
-            200,
-            {
-              "content-type": format,
-            },
-          );
-        case ISAMPLES_MEDIA_TYPE:
-          return c.json({ data: records.map(toISamplesSample), meta }, 200, {
-            "content-type": format,
-          });
-        case OMS_MEDIA_TYPE:
-          return c.json(toOmsSampleCollection(records, total), 200, {
-            "content-type": format,
-          });
-        default:
-          return c.json({ data: records, meta }, 200);
-      }
-    })
-    .openapi(getSampleRoute, async (c) => {
-      const format = negotiate(c);
-      if (!format) {
-        return notAcceptable(c);
-      }
-      const sample = await findPublished(samples, c.req.valid("param").igsn);
-      if (!sample) {
-        return c.json({ error: "Not found" }, 404);
-      }
-      const core = toCoreSample(readable(c, sample), frontendUrl);
-      switch (format) {
-        case DATACITE_MEDIA_TYPE:
-          return c.json(toDataCiteSample(core), 200, {
-            "content-type": format,
-          });
-        case ISAMPLES_MEDIA_TYPE:
-          return c.json(toISamplesSample(core), 200, {
-            "content-type": format,
-          });
-        case OMS_MEDIA_TYPE:
-          return c.json(toOmsSample(core), 200, {
-            "content-type": format,
-          });
-        default:
-          return c.json(core, 200);
-      }
-    })
-    .openapi(createSampleRoute, async (c) => {
-      const account = keyedServiceAccount(c);
-      const checked = await checkServiceCreate(
-        checks,
-        account,
-        c.req.valid("json"),
-      );
-      if ("issues" in checked) {
-        return invalidSample(c, checked.issues);
-      }
-      const duplicates = await createDuplicates(
-        samples,
-        checked.value,
-        c.req.valid("query").confirmDuplicates,
-      );
-      if (duplicates.length > 0) {
-        return conflicting(c, duplicates);
-      }
-      const created = await catchChildNotEligible(
-        samples.createPublished(
-          checked.value.input,
-          account.sampleOwner.id,
-          account,
-        ),
-      );
-      if (created instanceof ChildNotEligibleError) {
-        return invalidSample(c, [serviceSampleIssue("child_not_eligible", [])]);
-      }
-      notifySubSampleDeclared({
-        userSamples,
-        mail,
-        declarer: account.sampleOwner,
-        subSample: created,
-        parents: checked.value.parents,
-      });
-      return c.json(toCoreSample(created, frontendUrl), 201);
-    })
-    .openapi(updateSampleRoute, async (c) => {
-      const account = keyedServiceAccount(c);
-      const checked = await checkServiceUpdate(
-        checks,
-        account,
-        c.req.valid("param").igsn,
-        c.req.valid("json"),
-      );
-      if ("refusal" in checked) {
-        switch (checked.refusal) {
-          case "not_found":
-            return c.json({ error: "Not found" }, 404);
-          case "forbidden":
-            return c.json({ error: "Forbidden" }, 403);
-          case "frozen":
-            return forbidden(c, checked.issues);
-          case "invalid":
-            return invalidSample(c, checked.issues);
-        }
-      }
-      const { current, merged } = checked.value;
-      const duplicates = await updateDuplicates(
-        samples,
-        checked.value,
-        c.req.valid("query").confirmDuplicates,
-      );
-      if (duplicates.length > 0) {
-        return conflicting(c, duplicates);
-      }
-      const updated = await catchChildNotEligible(
-        samples.update(current.id, merged),
-      );
-      if (updated instanceof ChildNotEligibleError) {
-        return invalidSample(c, [serviceSampleIssue("child_not_eligible", [])]);
-      }
-      if (!updated) {
-        return c.json({ error: "Not found" }, 404);
-      }
-      notifySubSampleDeclared({
-        userSamples,
-        mail,
-        declarer: account.sampleOwner,
-        subSample: updated,
-        parents: checked.value.parents,
-      });
-      const fields = changedSampleFields(withSeriesId(current), merged);
-      if (mail && fields.length > 0) {
-        // ponytail: fire and forget; a retry queue if a lost notification ever matters.
-        void notifySampleModerated({
-          userSamples,
-          mail,
-          sample: updated,
-          fields,
-          actorId: account.sampleOwner.id,
-        });
-      }
-      return c.json(toCoreSample(updated, frontendUrl), 200);
-    });
+  registerServiceReadRoutes(app, samples, frontendUrl);
+  registerServiceWriteRoutes(app, checks, frontendUrl, userSamples, mail);
+  return app;
 }

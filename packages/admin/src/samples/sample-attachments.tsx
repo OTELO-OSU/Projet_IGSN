@@ -23,14 +23,15 @@ import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relation/target-resource-type";
 import { Download, Undo2 } from "lucide-react";
 
+import type { SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
+
 import { m } from "#/paraglide/messages.js";
-import { FileDropZone } from "#/samples/file-drop-zone.tsx";
-import { relationTargetResourceTypeLabel } from "#/samples/sample-labels.ts";
 import {
   type AttachmentEdit,
   keptAttachmentMetadata,
-  type SampleAttachmentChanges,
-} from "#/samples/use-attachment-changes.ts";
+} from "#/samples/attachment-metadata.ts";
+import { FileDropZone } from "#/samples/file-drop-zone.tsx";
+import { relationTargetResourceTypeLabel } from "#/samples/sample-labels.ts";
 import { useDownloadAttachment } from "#/samples/use-download-attachment.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 

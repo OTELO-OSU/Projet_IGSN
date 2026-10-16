@@ -1,13 +1,29 @@
 import type { SampleAdditionalRole } from "@projet-igsn/domain/sample/additional-role/model";
+import type { AdditionalRole } from "@projet-igsn/domain/sample/additional-role/role";
 import type { CollectionOrigin } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 import type { PlatformType } from "@projet-igsn/domain/sample/scientific-context/platform-type";
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
-import type { AdditionalRoleDraft } from "#/samples/sample-draft-schema.ts";
-
 import { composeContact } from "#/samples/compose-contact.ts";
 import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
+
+type AdditionalRoleDraft = {
+  key: string;
+  role: AdditionalRole;
+  personUserId: string | null | undefined;
+  personFirstname: string | null | undefined;
+  personLastname: string | null | undefined;
+};
+
+export const EMPTY_ADDITIONAL_ROLE_DRAFT: Omit<
+  AdditionalRoleDraft,
+  "key" | "role"
+> = {
+  personUserId: undefined,
+  personFirstname: undefined,
+  personLastname: undefined,
+};
 
 export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;

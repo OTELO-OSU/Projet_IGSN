@@ -7,11 +7,10 @@ import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { render } from "vitest-browser-react";
 
-import {
-  FACET_SECTIONS,
-  type FacetValues,
-  SampleFacets,
-} from "./sample-facets.tsx";
+import type { FacetValues } from "./facet-values.ts";
+
+import { FACET_SECTIONS } from "./facet-sections.ts";
+import { SampleFacets } from "./sample-facets.tsx";
 import { natureLabel } from "./sample-labels.ts";
 
 const LORRAINE = "04vfs2w97";

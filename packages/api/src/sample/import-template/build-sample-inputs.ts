@@ -11,6 +11,7 @@ import { parentPath } from "@projet-igsn/domain/sample/path/parent";
 import type { Column } from "./columns.ts";
 import type { Cell, ParsedRows, RawRow } from "./read-rows.ts";
 
+import { blockIdOf } from "./block-id-of.ts";
 import { COLUMN_KINDS } from "./column-kind.ts";
 import {
   ATTACHMENT_PATH,
@@ -22,7 +23,6 @@ import {
 } from "./columns.ts";
 import { textOf } from "./read-rows.ts";
 import { resolveLabel } from "./resolve-label.ts";
-import { blockIdOf } from "./workbook.ts";
 
 type Json = Record<string, unknown>;
 

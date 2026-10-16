@@ -1,35 +1,25 @@
-import { CheckIcon, ChevronsUpDownIcon, XIcon } from "lucide-react";
-import { Fragment, type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 
-import {
-  canStopAtPath,
-  hierarchyDescendantItems,
-  hierarchyLevelItems,
-  hierarchyPathLabel,
-  toHierarchyPath,
-  type Hierarchy,
-} from "../../lib/hierarchy.ts";
+import { ChevronsUpDownIcon } from "lucide-react";
+
+import { hierarchyPathLabel, type Hierarchy } from "../../lib/hierarchy.ts";
 import { cn } from "../../lib/utils.ts";
-import { Badge } from "./badge.tsx";
 import { Button } from "./button.tsx";
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
 } from "./command.tsx";
+import { HierarchyCrumb } from "./hierarchy-crumb.tsx";
+import { HierarchyOptions } from "./hierarchy-options.tsx";
 import {
   Popover,
   PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "./popover.tsx";
-import { TruncatedText } from "./truncated-text.tsx";
-
-// ponytail: no virtualization, so a short query over a large tree renders at most this many; virtualize the list or require a longer query to lift it.
-const MAX_SEARCH_RESULTS = 100;
+import { useHierarchyNavigation } from "./use-hierarchy-navigation.ts";
 
 type HierarchyInputProps = {
   id?: string;
@@ -73,51 +63,30 @@ export function HierarchyInput({
   hint,
   ...aria
 }: HierarchyInputProps) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [editingDepth, setEditingDepth] = useState<number | null>(null);
+  const {
+    open,
+    setOpen,
+    search,
+    setSearch,
+    current,
+    isLeaf,
+    canStop,
+    depth,
+    query,
+    children,
+    close,
+    edit,
+    pick,
+  } = useHierarchyNavigation({
+    hierarchy,
+    translate,
+    path,
+    onChange,
+    isSelectable,
+  });
 
   const isLocked = (level: number) =>
     disabled === true || isLevelLocked?.(level) === true;
-
-  const childrenOf = (parent: string | null) =>
-    hierarchyLevelItems(hierarchy, parent, translate).filter((item) =>
-      isSelectable(item.value),
-    );
-
-  const current = path.at(-1) ?? null;
-  const isLeaf = childrenOf(current).length === 0;
-  const canStop = current !== null && canStopAtPath(hierarchy, current);
-
-  const depth = editingDepth ?? path.length;
-  const parent = path[depth - 1] ?? null;
-  const query = search.trim().toLowerCase();
-  const children = query
-    ? hierarchyDescendantItems(hierarchy, parent, translate)
-        .filter(
-          (item) =>
-            isSelectable(item.value) &&
-            item.label.toLowerCase().includes(query),
-        )
-        .slice(0, MAX_SEARCH_RESULTS)
-    : childrenOf(parent);
-
-  const close = () => {
-    setOpen(false);
-    setSearch("");
-    setEditingDepth(null);
-  };
-
-  const pick = (value: string) => {
-    const next = [
-      ...path.slice(0, depth),
-      ...toHierarchyPath(value).slice(depth),
-    ];
-    if (next.some((node, level) => node !== path[level])) onChange(next);
-    if (childrenOf(value).length === 0) return close();
-    setSearch("");
-    setEditingDepth(next.length);
-  };
 
   return (
     <Popover
@@ -137,54 +106,18 @@ export function HierarchyInput({
               nodePath,
               translate,
             );
-            const locked = isLocked(level);
             return (
-              <Fragment key={nodePath}>
-                {level > 0 ? (
-                  <span aria-hidden className="text-muted-foreground text-xs">
-                    {">"}
-                  </span>
-                ) : null}
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "max-w-full min-w-0",
-                    !locked && "gap-1 pr-1",
-                    locked && "bg-background text-foreground/70",
-                    level === depth && "ring-2 ring-ring",
-                    level > depth && "opacity-50",
-                  )}
-                >
-                  {locked ? (
-                    <>
-                      <TruncatedText>{nodeLabel}</TruncatedText>
-                      {levelAdornment?.(level)}
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingDepth(level);
-                          setOpen(true);
-                        }}
-                        className="min-w-0 hover:underline"
-                      >
-                        <TruncatedText>{nodeLabel}</TruncatedText>
-                      </button>
-                      {levelAdornment?.(level)}
-                      <button
-                        type="button"
-                        aria-label={removeLabel(nodeLabel)}
-                        onClick={() => onChange(path.slice(0, level))}
-                        className="hover:bg-foreground/10 shrink-0 rounded-full"
-                      >
-                        <XIcon className="size-3" />
-                      </button>
-                    </>
-                  )}
-                </Badge>
-              </Fragment>
+              <HierarchyCrumb
+                key={nodePath}
+                label={nodeLabel}
+                level={level}
+                depth={depth}
+                locked={isLocked(level)}
+                adornment={levelAdornment?.(level)}
+                removeLabel={removeLabel(nodeLabel)}
+                onEdit={() => edit(level)}
+                onRemove={() => onChange(path.slice(0, level))}
+              />
             );
           })}
           {hint && current !== null && !isLeaf ? (
@@ -224,41 +157,15 @@ export function HierarchyInput({
           />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
-            <CommandGroup>
-              {depth === path.length && path.length > 0 && !query ? (
-                <CommandItem value="-" onSelect={close}>
-                  {stopLabel}
-                </CommandItem>
-              ) : null}
-              {children.map(({ value, label }) => {
-                const optionCount = count?.(value);
-                return (
-                  <CommandItem
-                    key={value}
-                    value={value}
-                    aria-checked={value === path[depth]}
-                    aria-label={
-                      optionCount === undefined
-                        ? undefined
-                        : `${label} (${optionCount})`
-                    }
-                    onSelect={() => pick(value)}
-                  >
-                    <CheckIcon
-                      className={cn(
-                        value === path[depth] ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    {label}
-                    {optionCount !== undefined ? (
-                      <span className="text-muted-foreground ml-auto tabular-nums">
-                        {optionCount}
-                      </span>
-                    ) : null}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
+            <HierarchyOptions
+              options={children}
+              selected={path[depth]}
+              count={count}
+              showStop={depth === path.length && path.length > 0 && !query}
+              stopLabel={stopLabel}
+              onStop={close}
+              onPick={pick}
+            />
           </CommandList>
         </Command>
       </PopoverContent>

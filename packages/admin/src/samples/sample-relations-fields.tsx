@@ -23,7 +23,7 @@ import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relat
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
-import { EMPTY_RELATION_DRAFT } from "#/samples/sample-draft-schema.ts";
+import { EMPTY_RELATION_DRAFT } from "#/samples/compose-relations.ts";
 import {
   relationTargetResourceTypeLabel,
   relationTypeLabel,

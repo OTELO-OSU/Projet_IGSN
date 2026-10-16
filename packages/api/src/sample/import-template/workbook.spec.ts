@@ -16,12 +16,10 @@ import {
   SHEETS,
   TEMPLATE_VERSION,
 } from "./columns.ts";
+import { FROZEN_FILL } from "./data-sheet.ts";
+import { sheetValidations } from "./sheet-validations.ts";
 import { BLOCK_PLACEMENTS } from "./vocabulary-sheet.ts";
-import {
-  FROZEN_FILL,
-  importTemplateWorkbook,
-  sheetValidations,
-} from "./workbook.ts";
+import { importTemplateWorkbook } from "./workbook.ts";
 
 const GROUP_ROW = 1;
 

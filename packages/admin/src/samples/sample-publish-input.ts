@@ -2,18 +2,16 @@ import type { PublishableFields } from "@projet-igsn/domain/sample/publication/s
 
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 
-import type { AttachmentMetadata } from "#/samples/use-attachment-changes.ts";
+import type { AttachmentMetadata } from "#/samples/attachment-metadata.ts";
+import type { SampleDraft } from "#/samples/sample-draft-schema.ts";
 
 import { toAgeInput } from "#/samples/age-form.ts";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
+import { composeMineralClassifications } from "#/samples/compose-mineral-classifications.ts";
+import { composeProcessSteps } from "#/samples/compose-process-steps.ts";
 import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
 import { composeSyntheticDetails } from "#/samples/compose-synthetic-details.ts";
-import {
-  composeMineralClassifications,
-  composeProcessSteps,
-  type SampleDraft,
-} from "#/samples/sample-draft-schema.ts";
 
 export type SamplePublishInput = PublishableFields & {
   attachments: AttachmentMetadata[];

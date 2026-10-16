@@ -1,59 +1,22 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
-import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/relation/target-resource-type";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import {
   type UpdateSampleAttachment,
   uploadSampleAttachmentSchema,
 } from "@projet-igsn/domain/sample/attachment/attachment-validator";
-import { sampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/model";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "react-oidc-context";
-import { z } from "zod";
 
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
+import {
+  type AttachmentEdit,
+  attachmentMetadata,
+} from "#/samples/attachment-metadata.ts";
+import { uploadSampleAttachment } from "#/samples/upload-sample-attachment.ts";
 import { useApiClient } from "#/use-api-client.ts";
-
-export type AttachmentEdit = {
-  title?: string;
-  targetResourceType?: RelationTargetResourceType | "";
-  description?: string;
-};
-
-export type AttachmentMetadata = Pick<
-  SampleAttachment,
-  "targetResourceType" | "title" | "description"
->;
-
-export function attachmentMetadata(
-  attachment: Partial<AttachmentMetadata>,
-  edit: AttachmentEdit,
-): AttachmentMetadata {
-  return {
-    title: (edit.title ?? attachment.title ?? "").trim() || null,
-    targetResourceType:
-      (edit.targetResourceType ?? attachment.targetResourceType) || null,
-    description:
-      (edit.description ?? attachment.description ?? "").trim() || null,
-  };
-}
-
-export function keptAttachmentMetadata(
-  saved: SampleAttachment[],
-  changes?: SampleAttachmentChanges,
-): AttachmentMetadata[] {
-  if (changes == null) return saved;
-  return [
-    ...saved
-      .filter(({ id }) => !changes.deletions.includes(id))
-      .map((attachment) =>
-        attachmentMetadata(attachment, changes.edits[attachment.id] ?? {}),
-      ),
-    ...changes.pending.map((staged) => attachmentMetadata({}, staged)),
-  ];
-}
 
 type StagedAttachment = {
   key: string;
@@ -66,46 +29,6 @@ type UploadBatchItem = {
   progress: number;
   status: "uploading" | "uploaded" | "failed";
 };
-
-const uploadResponseSchema = z.object({ data: sampleAttachmentSchema });
-
-// ponytail: no silent-renewal retry on 401 here; the upload just fails in the
-// recap.
-function xhrUpload(
-  url: string,
-  token: string | undefined,
-  file: File,
-  edit: AttachmentEdit,
-  onProgress: (percent: number) => void,
-): Promise<SampleAttachment> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
-    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        onProgress(Math.round((event.loaded / event.total) * 100));
-      }
-    };
-    xhr.onload = () => {
-      try {
-        if (xhr.status < 200 || xhr.status >= 300) {
-          throw new Error(`Upload failed (${xhr.status})`);
-        }
-        resolve(uploadResponseSchema.parse(JSON.parse(xhr.responseText)).data);
-      } catch (error: unknown) {
-        reject(error instanceof Error ? error : new Error("Upload failed"));
-      }
-    };
-    xhr.onerror = () => reject(new Error("Upload failed"));
-    const body = new FormData();
-    body.append("file", file);
-    for (const [name, value] of Object.entries(edit)) {
-      if (value?.trim()) body.append(name, value.trim());
-    }
-    xhr.send(body);
-  });
-}
 
 export function useAttachmentChanges(sampleId: string) {
   const token = useAuth().user?.access_token;
@@ -172,7 +95,7 @@ export function useAttachmentChanges(sampleId: string) {
     const results = await Promise.all(
       staged.map(async ({ key, file, error: _error, ...edit }) => {
         try {
-          const created = await xhrUpload(
+          const created = await uploadSampleAttachment(
             new URL(`admin/samples/${sampleId}/attachments`, API_URL).href,
             token,
             file,

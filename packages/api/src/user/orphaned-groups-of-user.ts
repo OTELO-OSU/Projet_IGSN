@@ -1,3 +1,4 @@
+import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { OrphanedGroup } from "@projet-igsn/domain/user/orphaned-group";
 import type { Transaction } from "kysely";
 
@@ -7,7 +8,7 @@ import { institutionalGroupLabel } from "../institutional-group/institutional-gr
 import { managesGroup } from "../institutional-group/manages-group.ts";
 import { institutionCodeOf } from "../institutional-group/stored-institution.ts";
 
-export async function orphanedGroupsOfUser(
+async function orphanedGroupsOfUser(
   trx: Transaction<DB>,
   userId: string,
 ): Promise<OrphanedGroup[]> {
@@ -77,3 +78,13 @@ export async function orphanedGroupsOfUser(
       ),
   ];
 }
+
+export const orphanedGroupsOnLeavingAccepted = (
+  trx: Transaction<DB>,
+  id: string,
+  previousStatus: UserStatus,
+  status: UserStatus,
+) =>
+  previousStatus === "accepted" && status !== "accepted"
+    ? orphanedGroupsOfUser(trx, id)
+    : Promise.resolve([]);

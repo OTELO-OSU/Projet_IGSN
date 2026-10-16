@@ -11,8 +11,8 @@ import { ADDITIONAL_ROLES } from "@projet-igsn/domain/sample/additional-role/rol
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
+import { EMPTY_ADDITIONAL_ROLE_DRAFT } from "#/samples/compose-scientific-context.ts";
 import { ContactNameFields } from "#/samples/contact-name-fields.tsx";
-import { EMPTY_ADDITIONAL_ROLE_DRAFT } from "#/samples/sample-draft-schema.ts";
 import { additionalRoleLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 

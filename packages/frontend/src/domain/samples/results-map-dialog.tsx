@@ -9,10 +9,8 @@ import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { MapIcon } from "lucide-react";
 import { Suspense, lazy, useEffect, useState } from "react";
 
-import type {
-  HoveredSample,
-  MapViewport,
-} from "#/domain/samples/results-map.tsx";
+import type { HoveredSample } from "#/domain/samples/map-highlight.ts";
+import type { MapViewport } from "#/domain/samples/map-view-bounds.ts";
 
 import {
   type ListSamplesParams,

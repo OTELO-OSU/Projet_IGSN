@@ -6,14 +6,16 @@ import { toConditionDraft } from "./compose-condition.ts";
 import { toDescriptionDraft } from "./compose-description.ts";
 import { toEconomicInterestDraft } from "./compose-economic-interest.ts";
 import { toLocationDraft } from "./compose-location.ts";
+import {
+  EMPTY_RELATION_DRAFT,
+  type RelationDraft,
+} from "./compose-relations.ts";
 import { toRepositoryDraft } from "./compose-repository.ts";
 import { toScientificContextDraft } from "./compose-scientific-context.ts";
 import { toSecurityDraft } from "./compose-security.ts";
 import { toSyntheticDetailsDraft } from "./compose-synthetic-details.ts";
 import { sampleDraftFieldErrors } from "./sample-draft-field-errors.ts";
 import {
-  EMPTY_RELATION_DRAFT,
-  type RelationDraft,
   type SampleDraft,
   sampleDraftSchema,
   toSampleDraft,

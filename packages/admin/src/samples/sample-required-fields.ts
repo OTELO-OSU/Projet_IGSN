@@ -8,21 +8,19 @@ import { identifierTypeLabel } from "@projet-igsn/domain/sample/relation/identif
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 import { getBy } from "@tanstack/react-form";
 
-import type { AttachmentMetadata } from "#/samples/use-attachment-changes.ts";
+import type { AttachmentMetadata } from "#/samples/attachment-metadata.ts";
+import type { SampleDraft } from "#/samples/sample-draft-schema.ts";
 
 import { m } from "#/paraglide/messages.js";
 import { hasReadingType } from "#/samples/compose-condition.ts";
 import { isTypedPerson } from "#/samples/compose-contact.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
+import { isUnclassified } from "#/samples/compose-mineral-classifications.ts";
 import { isLocated } from "#/samples/is-located.ts";
 import { ROWS } from "#/samples/location-position-fields.tsx";
 import { MEASUREMENTS } from "#/samples/measurement-fields.tsx";
 import { READINGS } from "#/samples/sample-condition-fields.tsx";
 import { publishBlockerField } from "#/samples/sample-draft-field-errors.ts";
-import {
-  isUnclassified,
-  type SampleDraft,
-} from "#/samples/sample-draft-schema.ts";
 import { samplePublishInput } from "#/samples/sample-publish-input.ts";
 import {
   EXPERIMENT_DURATION,

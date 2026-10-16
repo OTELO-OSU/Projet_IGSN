@@ -7,7 +7,8 @@ import {
   sampleRequiredFields,
 } from "#/samples/sample-required-fields.ts";
 
-import { EMPTY_RELATION_DRAFT, toSampleDraft } from "./sample-draft-schema.ts";
+import { EMPTY_RELATION_DRAFT } from "./compose-relations.ts";
+import { toSampleDraft } from "./sample-draft-schema.ts";
 
 type Draft = ReturnType<typeof toSampleDraft>;
 
