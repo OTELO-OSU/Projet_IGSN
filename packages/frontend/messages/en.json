@@ -462,7 +462,7 @@
   "privacy_recipients_unit": "Within the unit: the people in charge of the website, communication, and the unit's management.",
   "privacy_recipients_management": "The management of the supervising institutions, in particular to organize their defense in a dispute, an audit or proceedings brought by a supervisory authority.",
   "privacy_cookies_title": "Cookies",
-  "privacy_cookies_session": "This site uses no persistent cookie. It uses one mandatory tracker, a session cookie, to manage the identification information needed to use some features of the site.",
+  "privacy_cookies_session": "This site sets no tracking cookie. It sets a session cookie, to manage the identification information needed to use some features of the site, and a language cookie, to remember the language you chose.",
   "privacy_cookies_local_storage": "Your browser's local storage also keeps the sample fields you choose to display in search results, and a signal that signs you out of every open tab at once.",
   "privacy_retention_title": "Data retention",
   "privacy_retention_connection_lead": "Connection data:",
@@ -488,5 +488,7 @@
   "privacy_dpo_end": ") can be consulted on any question about the data processing related to the website.",
   "privacy_complaint_start": "If, after contacting us, you consider that your data protection rights are not respected, you can lodge a complaint with the",
   "privacy_complaint_link": "CNIL",
-  "privacy_complaint_end": "."
+  "privacy_complaint_end": ".",
+  "locale_name_en": "English",
+  "locale_name_fr": "Français"
 }
