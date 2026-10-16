@@ -1,7 +1,6 @@
-import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
-
 import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
+import { sampleCollaboratorsResponseSchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 import { Hono } from "hono";
 
@@ -26,11 +25,11 @@ export function createSampleCollaboratorRoutes({
       if (!c.get("sample")) {
         return c.json({ error: "Not found" }, 404);
       }
-      const body: SampleCollaboratorsResponse = {
+      const body = sampleCollaboratorsResponseSchema.parse({
         data: await userSampleRepository.listCollaborators(
           c.req.valid("param").id,
         ),
-      };
+      });
       return c.json(body);
     })
     .post(
@@ -54,7 +53,11 @@ export function createSampleCollaboratorRoutes({
           role,
           { mayChangeRole: canManageCollaborators(c.get("shareRole")) },
         );
-        if (mail && added !== "already_collaborator") {
+        if (
+          mail &&
+          added !== "already_collaborator" &&
+          canReceiveMail(added.added, "sample_invitation")
+        ) {
           // ponytail: fire and forget; a retry queue if a lost invitation ever matters.
           void trySendMail(
             added.added.email,
@@ -93,7 +96,7 @@ export function createSampleCollaboratorRoutes({
         if (removed === "not_found") {
           return c.json({ error: "Collaborator not found" }, 404);
         }
-        if (mail && canReceiveMail(removed.removed)) {
+        if (mail && canReceiveMail(removed.removed, "sample_removal")) {
           void trySendMail(
             removed.removed.email,
             () =>

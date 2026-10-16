@@ -51,6 +51,7 @@ describe("currentUser routes", () => {
       charterAccepted: false,
       managedLaboratories: [],
       managedManualGroups: [],
+      mailOptOuts: [],
       email: tokenEmail("test-token"),
       orcid: null,
       institutionalOrganization: null,
@@ -373,6 +374,74 @@ describe("currentUser routes", () => {
       expect(res.status).toBe(401);
     },
   );
+
+  describe("mail opt-outs", () => {
+    const setOptOut = (db: Kysely<DB>, method: string, kind: string) =>
+      createApp(db).app.request(`/admin/currentUser/mail-opt-outs/${kind}`, {
+        method,
+        headers: authHeader,
+      });
+
+    const mailOptOuts = async (db: Kysely<DB>) => {
+      const me = await testClient(createApp(db).app).admin.currentUser.$get(
+        undefined,
+        { headers: authHeader },
+      );
+      return (await me.json()).mailOptOuts;
+    };
+
+    pgTest(
+      "should switch a mail kind off then on again, each idempotently",
+      async ({ db }) => {
+        // Arrange
+        await insertUser(db, callerEmail);
+        // Act
+        const off = [
+          (await setOptOut(db, "PUT", "sample_removal")).status,
+          (await setOptOut(db, "PUT", "sample_removal")).status,
+        ];
+        const optedOut = await mailOptOuts(db);
+        const on = [
+          (await setOptOut(db, "DELETE", "sample_removal")).status,
+          (await setOptOut(db, "DELETE", "sample_removal")).status,
+        ];
+        // Assert
+        expect({ off, optedOut, on, after: await mailOptOuts(db) }).toEqual({
+          off: [204, 204],
+          optedOut: ["sample_removal"],
+          on: [204, 204],
+          after: [],
+        });
+      },
+    );
+
+    pgTest.for(["PUT", "DELETE"])(
+      "should answer 400 to a %s of an unknown or locked mail kind",
+      async (method, { db }) => {
+        // Arrange
+        await insertUser(db, callerEmail);
+        // Act
+        const res = await setOptOut(db, method, "contact_message");
+        // Assert
+        expect(res.status).toBe(400);
+        expect(await res.json()).toEqual({ error: "Invalid mail kind" });
+        expect(await mailOptOuts(db)).toEqual([]);
+      },
+    );
+
+    pgTest.for(["PUT", "DELETE"])(
+      "should answer 401 to an unauthenticated %s",
+      async (method, { db }) => {
+        // Act
+        const res = await createApp(db).app.request(
+          "/admin/currentUser/mail-opt-outs/sample_removal",
+          { method },
+        );
+        // Assert
+        expect(res.status).toBe(401);
+      },
+    );
+  });
 
   pgTest(
     "should answer 401 to an unauthenticated groups set",

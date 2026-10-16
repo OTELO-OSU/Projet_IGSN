@@ -40,4 +40,26 @@ describe("notifySampleModerated", () => {
       );
     },
   );
+
+  pgTest(
+    "should not mail an owner who switched moderation mails off",
+    async ({ db }) => {
+      // Arrange
+      const sendMail = vi.fn<(mail: Mail) => Promise<void>>();
+      const owner = await insertUser(db, tokenEmail("owner"), {
+        mailOptOuts: ["sample_moderated"],
+      });
+      const sample = await insertSample(db, draft);
+      await insertSampleOwner(db, sample.id, owner.id);
+      // Act
+      await notifySampleModerated({
+        userSamples: createUserSampleRepository(db),
+        mail: { sendMail, adminUrl: ADMIN_URL },
+        sample,
+        fields: ["name"],
+      });
+      // Assert
+      expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
 });

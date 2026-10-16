@@ -19,6 +19,7 @@ const fakeIdentity = (status: number, body?: BodyInit) =>
             charterAccepted: true,
             managedLaboratories: [],
             managedManualGroups: [],
+            mailOptOuts: [],
           })
         : new HttpResponse(body ?? null, { status }),
     ),

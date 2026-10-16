@@ -541,6 +541,31 @@ describe("admin manual group routes", () => {
   });
 
   pgTest(
+    "should add but not mail a user who switched group invitations off, the other added user still mailed",
+    async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026 94c");
+      const curie = await insertUser(db, "marie.curie-94c@univ-lorraine.fr", {
+        mailOptOuts: ["manual_group_invitation"],
+      });
+      const dupont = await insertUser(db, "pierre.dupont-94c@univ-lorraine.fr");
+      const { client, sendMail } = await asSuperAdminWithMail(db);
+      // Act
+      const statuses = [
+        (await addMember(client, MASSIF, curie.id)).status,
+        (await addMember(client, MASSIF, dupont.id)).status,
+      ];
+      // Assert
+      expect(statuses).toEqual([204, 204]);
+      expect(await countMembers(db, MASSIF)).toBe(2);
+      await vi.waitFor(() => expect(sendMail).toHaveBeenCalled());
+      expect(sendMail.mock.calls.map(([mail]) => mail.to)).toEqual([
+        ["pierre.dupont-94c@univ-lorraine.fr"],
+      ]);
+    },
+  );
+
+  pgTest(
     "should keep one membership and mail once when the same user is added twice",
     async ({ db }) => {
       // Arrange

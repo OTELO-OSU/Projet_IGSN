@@ -59,6 +59,7 @@ describe("app", () => {
         charterAccepted: true,
         managedLaboratories: [],
         managedManualGroups: [],
+        mailOptOuts: [],
       });
     });
   });

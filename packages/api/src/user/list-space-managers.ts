@@ -18,6 +18,11 @@ export async function listSpaceManagers(
     .select(userManagedGroups)
     .where("status", "=", "accepted")
     .where("super_admin", "=", false)
+    .where((eb) =>
+      eb.not(
+        eb(eb.val("pending_users_digest"), "=", eb.fn.any("mail_opt_outs")),
+      ),
+    )
     .orderBy("email", "asc")
     .execute();
   return rows

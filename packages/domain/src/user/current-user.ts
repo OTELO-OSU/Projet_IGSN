@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { institutionalGroupsFields } from "../institutional-group/model.ts";
 import { manualGroupSchema } from "../manual-group/model.ts";
+import { mailKindSchema } from "./mail-kind.ts";
 import { userStatusSchema } from "./model.ts";
 
 export const currentUserSchema = z.object({
@@ -16,6 +17,7 @@ export const currentUserSchema = z.object({
   charterAccepted: z.boolean(),
   managedLaboratories: z.array(z.string()),
   managedManualGroups: z.array(manualGroupSchema),
+  mailOptOuts: z.array(mailKindSchema),
   ...institutionalGroupsFields,
 });
 export type CurrentUser = z.infer<typeof currentUserSchema>;

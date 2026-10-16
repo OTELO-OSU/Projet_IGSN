@@ -16,6 +16,8 @@ const DUPONT = {
   email: "pierre.dupont@univ-lorraine.fr",
   name: "Dupont",
   firstname: "Pierre",
+  status: "accepted" as const,
+  mailOptOuts: [],
 };
 
 describe("notifyManualGroupJoined", () => {
