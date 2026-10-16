@@ -1,5 +1,6 @@
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 import type { SampleCollaborator } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,11 +31,14 @@ const SUB_SAMPLE = {
 const PUY = { id: "01890a5d-ac96-774b-bcce-b302099a9020", name: "Basalte" };
 const VOSGES = { id: "01890a5d-ac96-774b-bcce-b302099a9021", name: "Granite" };
 
+type Collaborator = SampleCollaborator & { mailOptOuts: MailKind[] };
+
 const collaborator = (
   id: string,
   role: UserSampleRole,
   status: UserStatus = "accepted",
-): SampleCollaborator => ({
+  mailOptOuts: MailKind[] = [],
+): Collaborator => ({
   id,
   email: `${id}@univ-lorraine.fr`,
   name: null,
@@ -42,10 +46,11 @@ const collaborator = (
   orcid: null,
   role,
   status,
+  mailOptOuts,
 });
 
 const notify = (
-  collaborators: Record<string, SampleCollaborator[]>,
+  collaborators: Record<string, Collaborator[]>,
   parents: { id: string; name: string }[],
   sendMail: (mail: Mail) => Promise<void>,
 ) =>
@@ -148,6 +153,27 @@ describe("notifySubSampleDeclared", () => {
     ).toEqual([
       [["first@univ-lorraine.fr"], true, false],
       [["second@univ-lorraine.fr"], false, true],
+    ]);
+  });
+
+  it("should not mail an owner who switched it off, the other parent's owner still mailed", async () => {
+    const sendMail = vi.fn<(mail: Mail) => Promise<void>>();
+
+    notify(
+      {
+        [PUY.id]: [
+          collaborator("first", "owner", "accepted", ["sub_sample_declared"]),
+        ],
+        [VOSGES.id]: [collaborator("second", "owner")],
+      },
+      [PUY, VOSGES],
+      sendMail,
+    );
+
+    await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+    await settled();
+    expect(sendMail.mock.calls.map(([mail]) => mail.to)).toEqual([
+      ["second@univ-lorraine.fr"],
     ]);
   });
 

@@ -3,6 +3,7 @@ import type {
   SampleStatus,
   SynchronizationStatus,
 } from "@projet-igsn/domain/sample/sample";
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 
 import { Kysely, type Generated } from "kysely";
@@ -253,6 +254,7 @@ type UserTable = {
   super_admin: Generated<boolean>;
   created_at: Generated<Date>;
   charter_accepted_at: Generated<Date | null>;
+  mail_opt_outs: Generated<MailKind[]>;
 };
 
 type UserSampleTable = {

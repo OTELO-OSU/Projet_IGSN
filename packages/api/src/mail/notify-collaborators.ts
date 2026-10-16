@@ -1,4 +1,5 @@
 import type { SampleCollaborator } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 
 import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 
@@ -7,7 +8,8 @@ import type { RenderedMail, SendMail } from "./send-mail.ts";
 import { trySendMail } from "./try-send-mail.ts";
 
 export async function notifyCollaborators(
-  collaborators: SampleCollaborator[],
+  kind: MailKind,
+  collaborators: (SampleCollaborator & { mailOptOuts: MailKind[] })[],
   actorId: string | undefined,
   render: (recipient: SampleCollaborator) => Promise<RenderedMail>,
   sendMail: SendMail,
@@ -17,7 +19,7 @@ export async function notifyCollaborators(
     collaborators
       .filter(
         (collaborator) =>
-          collaborator.id !== actorId && canReceiveMail(collaborator),
+          collaborator.id !== actorId && canReceiveMail(collaborator, kind),
       )
       .map((recipient) =>
         trySendMail(

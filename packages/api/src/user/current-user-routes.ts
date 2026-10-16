@@ -22,6 +22,7 @@ import {
 import { sendGroupsWithoutManagerMail } from "./send-groups-without-manager-mail.ts";
 import {
   validateLinkOrcidBody,
+  validateMailKindParam,
   validateOrcidAuthorizationQuery,
   validateSetInstitutionalGroupsBody,
 } from "./validator.ts";
@@ -50,6 +51,7 @@ export function createCurrentUserRoutes(
         managedManualGroups: await manualGroups.listByIds(
           managed.manualGroupIds,
         ),
+        mailOptOuts: await users.getMailOptOuts(user.id),
         institutionalOrganization: user.institutionalOrganization,
         institutionalOsu: user.institutionalOsu,
         institutionalLaboratory: user.institutionalLaboratory,
@@ -98,6 +100,32 @@ export function createCurrentUserRoutes(
       await users.acceptCharter(c.get("user").id);
       return c.body(null, 204);
     })
+    .put(
+      "/mail-opt-outs/:kind",
+      requireActiveSession,
+      validateMailKindParam,
+      async (c) => {
+        await users.setMailOptOut(
+          c.get("user").id,
+          c.req.valid("param").kind,
+          true,
+        );
+        return c.body(null, 204);
+      },
+    )
+    .delete(
+      "/mail-opt-outs/:kind",
+      requireActiveSession,
+      validateMailKindParam,
+      async (c) => {
+        await users.setMailOptOut(
+          c.get("user").id,
+          c.req.valid("param").kind,
+          false,
+        );
+        return c.body(null, 204);
+      },
+    )
     .get("/attachable-manual-groups", async (c) => {
       const body: ManualGroupsResponse = {
         data: await manualGroups.listAttachableForUser(c.get("user").id),

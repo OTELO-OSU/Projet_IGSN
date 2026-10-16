@@ -1,5 +1,6 @@
 import type { SetInstitutionalGroups } from "../institutional-group/institutional-groups-validator.ts";
 import type { ManualGroup } from "../manual-group/model.ts";
+import type { MailKind } from "./mail-kind.ts";
 import type { ManagedGroups } from "./managed-groups.ts";
 import type { User, UserStatus } from "./model.ts";
 import type { ModerationScope } from "./moderation-scope.ts";
@@ -80,6 +81,12 @@ export type UserRepository = {
     orphanedGroups: OrphanedGroup[];
   }>;
   getModerationScope(userId: string): Promise<ManagedGroups>;
+  getMailOptOuts(userId: string): Promise<MailKind[]>;
+  setMailOptOut(
+    userId: string,
+    kind: MailKind,
+    optedOut: boolean,
+  ): Promise<void>;
 };
 
 type UpdateUserResult = {
@@ -89,4 +96,5 @@ type UpdateUserResult = {
   joinedGroups: ManualGroup[];
   leftGroupIds: string[];
   orphanedGroups: OrphanedGroup[];
+  mailOptOuts: MailKind[];
 };

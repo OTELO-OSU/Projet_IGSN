@@ -14,6 +14,7 @@ describe("currentUserSchema", () => {
         charterAccepted: false,
         managedLaboratories: [],
         managedManualGroups: [],
+        mailOptOuts: ["pending_users_digest"],
       }),
     ).toEqual({
       id: "5c2f8b31-6a4d-4f92-8e10-3d7c9a5b1e04",
@@ -24,6 +25,7 @@ describe("currentUserSchema", () => {
       charterAccepted: false,
       managedLaboratories: [],
       managedManualGroups: [],
+      mailOptOuts: ["pending_users_digest"],
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,

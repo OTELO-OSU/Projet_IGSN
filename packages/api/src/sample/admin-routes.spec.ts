@@ -1,6 +1,7 @@
 import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 
 import { sampleEditLockResponseSchema } from "@projet-igsn/domain/sample/edit-lock";
 import {
@@ -28,6 +29,7 @@ import {
   draft,
   publishableSample,
 } from "../tests/sample-fixtures.ts";
+import { sentMails } from "../tests/sent-mails.ts";
 import { dataCiteEventsOf, stubDataCite } from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
@@ -3072,6 +3074,123 @@ describe("admin sample routes", () => {
         );
       },
     );
+
+    describe("with a collaborator who switched the mail off", () => {
+      async function arrangeOptedOut(
+        db: Parameters<typeof createApp>[0],
+        kind: MailKind,
+      ) {
+        const sendMail = vi.fn().mockResolvedValue(undefined);
+        const arranged = await arrangeOwnedSample(db, {
+          sendMail,
+          adminUrl: ADMIN_URL,
+          frontendUrl: FRONTEND_URL,
+        });
+        const optedOut = await insertUser(db, tokenEmail("opted-out"), {
+          mailOptOuts: [kind],
+        });
+        return { ...arranged, sendMail, optedOut };
+      }
+
+      const addContributors = (
+        db: Parameters<typeof createApp>[0],
+        sampleId: string,
+        userIds: string[],
+      ) =>
+        db
+          .insertInto("user_sample")
+          .values(
+            userIds.map((user_id) => ({
+              sample_id: sampleId,
+              user_id,
+              role: "contributor" as const,
+            })),
+          )
+          .execute();
+
+      pgTest(
+        "should not invite them, the other invitee still mailed",
+        async ({ db }) => {
+          const { app, sample, colleague, optedOut, sendMail } =
+            await arrangeOptedOut(db, "sample_invitation");
+          const client = testClient(app);
+
+          const statuses = [];
+          for (const userId of [optedOut.id, colleague.id]) {
+            const res = await client.admin.samples[":id"].collaborators.$post(
+              {
+                param: { id: sample.id },
+                json: { userId, role: "contributor" },
+              },
+              { headers: authHeader },
+            );
+            statuses.push(res.status);
+          }
+
+          expect(statuses).toEqual([204, 204]);
+          await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+          expect(sentMails(sendMail)).toEqual([
+            {
+              to: [tokenEmail("colleague")],
+              subject:
+                "You have been designated as a contributor for a new sample",
+            },
+          ]);
+        },
+      );
+
+      pgTest(
+        "should not mail their removal, the other removed collaborator still mailed",
+        async ({ db }) => {
+          const { app, sample, colleague, optedOut, sendMail } =
+            await arrangeOptedOut(db, "sample_removal");
+          await addContributors(db, sample.id, [optedOut.id, colleague.id]);
+
+          const statuses = [];
+          for (const userId of [optedOut.id, colleague.id]) {
+            const res = await app.request(
+              `/admin/samples/${sample.id}/collaborators/${userId}`,
+              { method: "DELETE", headers: authHeader },
+            );
+            statuses.push(res.status);
+          }
+
+          expect(statuses).toEqual([204, 204]);
+          await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+          expect(sentMails(sendMail)).toEqual([
+            {
+              to: [tokenEmail("colleague")],
+              subject:
+                'Test User removed you from the sample "Basalte à partager"',
+            },
+          ]);
+        },
+      );
+
+      pgTest(
+        "should not mail them a draft deletion, the other collaborator still mailed",
+        async ({ db }) => {
+          const { app, sample, colleague, optedOut, sendMail } =
+            await arrangeOptedOut(db, "sample_deleted");
+          await addContributors(db, sample.id, [optedOut.id, colleague.id]);
+
+          const res = await app.request(`/admin/samples/${sample.id}`, {
+            method: "DELETE",
+            headers: authHeader,
+          });
+
+          expect(res.status).toBe(204);
+          await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+          expect(sentMails(sendMail)).toEqual([
+            {
+              to: [tokenEmail("colleague")],
+              subject:
+                'Test User deleted the draft sample "Basalte à partager"',
+            },
+          ]);
+        },
+      );
+    });
 
     pgTest(
       "should not mail a removed collaborator whose account is rejected",

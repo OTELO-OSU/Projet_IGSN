@@ -1,3 +1,4 @@
+import type { MailKind } from "../user/mail-kind.ts";
 import type { User } from "../user/model.ts";
 import type { GroupManager } from "../user/user-validator.ts";
 import type {
@@ -10,7 +11,11 @@ import type { ManualGroup } from "./model.ts";
 
 export type AddManualGroupMemberResult =
   | "already_member"
-  | { added: Pick<User, "email" | "name" | "firstname"> };
+  | {
+      added: Pick<User, "email" | "name" | "firstname" | "status"> & {
+        mailOptOuts: MailKind[];
+      };
+    };
 
 type CreateManualGroupResult = "name_taken" | { group: ManualGroup };
 

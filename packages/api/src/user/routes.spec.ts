@@ -23,6 +23,7 @@ import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
+import { sentMails } from "../tests/sent-mails.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 
 type Db = Parameters<typeof createApp>[0];
@@ -1084,6 +1085,59 @@ describe("admin user routes", () => {
       ),
     );
   });
+
+  pgTest.for([
+    {
+      kind: "account_approved",
+      subject: expect.stringContaining(
+        'added you to the group "Vosges 2026 eb4"',
+      ),
+    },
+    {
+      kind: "manual_group_invitation",
+      subject: "Your account has been activated",
+    },
+  ] as const)(
+    "should accept and add to a group a user who switched $kind off, sending only the other mail",
+    async ({ kind, subject }, { db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Vosges 2026 eb4");
+      await insertResearchers(db);
+      await db
+        .updateTable("user")
+        .set({ mail_opt_outs: [kind] })
+        .where("id", "=", PENDING_ID)
+        .execute();
+      await provisionUser(db, "moderator", {
+        status: "accepted",
+        superAdmin: true,
+      });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const client = testClient(
+        createApp(db, {
+          mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+        }).app,
+      );
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        {
+          param: { id: PENDING_ID },
+          json: update({ manualGroupIds: [MASSIF] }),
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({ subject }),
+        ),
+      );
+      expect(sentMails(sendMail)).toEqual([
+        { to: ["pending-eb4@univ-lorraine.fr"], subject },
+      ]);
+    },
+  );
 
   pgTest(
     "should answer 200 when the acceptance mail cannot be sent",

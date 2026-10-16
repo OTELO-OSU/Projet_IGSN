@@ -1,3 +1,4 @@
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 
 import type { DB } from "../db.ts";
@@ -20,6 +21,7 @@ export function insertUser(
     institutionalOsu?: string;
     institutionalLaboratory?: string;
     charterAcceptedAt?: Date | null;
+    mailOptOuts?: MailKind[];
   } = {},
 ): Promise<{ id: string }> {
   const stored = storedInstitutions({
@@ -44,6 +46,7 @@ export function insertUser(
         overrides.charterAcceptedAt === undefined
           ? new Date()
           : overrides.charterAcceptedAt,
+      mail_opt_outs: overrides.mailOptOuts,
     })
     .returning("id")
     .executeTakeFirstOrThrow();

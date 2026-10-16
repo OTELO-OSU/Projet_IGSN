@@ -8,6 +8,7 @@ import type {
 } from "@projet-igsn/domain/user/user-validator";
 
 import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
+import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 import { superAdminScope } from "@projet-igsn/domain/user/moderation-scope";
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
@@ -128,6 +129,7 @@ export function createUserRoutes(
           joinedGroups,
           leftGroupIds,
           orphanedGroups,
+          mailOptOuts,
         } = await repository.update(id, c.req.valid("json"), c.get("scope"));
 
         const actor = c.get("user");
@@ -142,7 +144,8 @@ export function createUserRoutes(
         if (
           mail &&
           previousStatus !== "accepted" &&
-          user.status === "accepted"
+          user.status === "accepted" &&
+          canReceiveMail({ ...user, mailOptOuts }, "account_approved")
         ) {
           // ponytail: fire and forget; a retry queue if a lost notification ever matters.
           void sendUserAcceptedMail(user, mail.sendMail, mail.adminUrl);
@@ -153,7 +156,7 @@ export function createUserRoutes(
         }
         notifyManualGroupJoined({
           actor,
-          invitee: user,
+          invitee: { ...user, mailOptOuts },
           groups: joinedGroups,
           mail,
         });

@@ -25,6 +25,7 @@ describe("useCurrentUser", () => {
           charterAccepted: true,
           managedLaboratories: [],
           managedManualGroups: [],
+          mailOptOuts: [],
         });
       }),
     );

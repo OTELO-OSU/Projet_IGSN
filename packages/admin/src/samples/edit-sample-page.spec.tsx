@@ -272,6 +272,7 @@ function fakeApi(
         charterAccepted: true,
         managedLaboratories: callerManagedLaboratories,
         managedManualGroups: [],
+        mailOptOuts: [],
         ...CALLER_GROUPS,
       });
     }),

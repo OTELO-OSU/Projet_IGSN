@@ -72,15 +72,17 @@ export async function updateUser(
     .where("id", "=", id)
     .execute();
 
-  const row = await trx
+  const { mailOptOuts, ...row } = await trx
     .selectFrom("user")
     .select(USER_COLUMNS)
     .select(userManualGroups)
     .select(userManagedGroups)
+    .select("mail_opt_outs as mailOptOuts")
     .where("id", "=", id)
     .executeTakeFirstOrThrow();
   return {
     user: toAdminUser(row),
+    mailOptOuts,
     previousStatus: previous.status,
     previousSuperAdmin: previous.superAdmin,
     joinedGroups: joined,
