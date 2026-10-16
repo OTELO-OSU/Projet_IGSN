@@ -11,8 +11,7 @@ import type { SampleAdminDeps, SampleAdminEnv } from "./admin-routes.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
-import { notifyEmbargo } from "./notify-embargo.ts";
-import { notifySampleModerated } from "./notify-sample-moderated.ts";
+import { notifyPublication } from "./notify-publication.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
 import { sampleDeletionRequestMail } from "./sample-deletion-request-mail.ts";
 import { uploadLimit } from "./upload-limit.ts";
@@ -91,22 +90,13 @@ export function createSamplePublicationRoutes({
       if (!published) {
         return c.json({ error: "Not found" }, 404);
       }
-      if (mail && status === "embargo") {
-        void notifyEmbargo({
-          event: "started",
+      if (mail) {
+        void notifyPublication({
+          event: status === "embargo" ? "embargo_started" : status,
           userSamples: userSampleRepository,
           sample: published,
           actor: c.get("user"),
           mail,
-        });
-      }
-      if (mail && status !== "embargo" && c.get("moderating")) {
-        // ponytail: fire and forget; a retry queue if a lost notification ever matters.
-        void notifySampleModerated({
-          userSamples: userSampleRepository,
-          mail,
-          sample,
-          fields: status,
         });
       }
       return c.json({ data: published });
@@ -145,8 +135,8 @@ export function createSamplePublicationRoutes({
           sample.status === "embargo" &&
           body.status === "published"
         ) {
-          void notifyEmbargo({
-            event: "ended",
+          void notifyPublication({
+            event: "embargo_ended",
             userSamples: userSampleRepository,
             sample: updated,
             actor: c.get("user"),

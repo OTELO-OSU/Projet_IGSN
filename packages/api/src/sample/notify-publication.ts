@@ -7,18 +7,21 @@ import { z } from "zod";
 import type { SendMail } from "../mail/send-mail.ts";
 
 import { notifyCollaborators } from "../mail/notify-collaborators.ts";
-import { type EmbargoEvent, sampleEmbargoMail } from "./sample-embargo-mail.ts";
+import {
+  type PublicationEvent,
+  samplePublicationMail,
+} from "./sample-publication-mail.ts";
 
-const FAILURE = "Could not mail the sample embargo";
+const FAILURE = "Could not mail the sample publication";
 
-export async function notifyEmbargo({
+export async function notifyPublication({
   event,
   userSamples,
   sample,
   actor,
   mail,
 }: {
-  event: EmbargoEvent;
+  event: PublicationEvent;
   userSamples: Pick<UserSampleRepository, "listCollaborators">;
   sample: Pick<Sample, "id" | "name" | "publishedAt">;
   actor?: Pick<User, "id" | "email" | "name" | "firstname">;
@@ -31,7 +34,7 @@ export async function notifyEmbargo({
       await userSamples.listCollaborators(sample.id),
       actor?.id,
       (recipient) =>
-        sampleEmbargoMail({
+        samplePublicationMail({
           event,
           recipient,
           actor,

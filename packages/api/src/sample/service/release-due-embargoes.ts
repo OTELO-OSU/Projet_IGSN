@@ -3,7 +3,7 @@ import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repos
 
 import type { SendMail } from "../../mail/send-mail.ts";
 
-import { notifyEmbargo } from "../notify-embargo.ts";
+import { notifyPublication } from "../notify-publication.ts";
 
 // ponytail: single-replica ceiling, claim the row with FOR UPDATE SKIP LOCKED if the api ever scales past one replica.
 export async function releaseDueEmbargoes(
@@ -18,8 +18,8 @@ export async function releaseDueEmbargoes(
     try {
       const released = await samples.setStatus(id, { status: "published" });
       if (!released) continue;
-      await notifyEmbargo({
-        event: "ended",
+      await notifyPublication({
+        event: "embargo_ended",
         userSamples,
         sample: released,
         mail,

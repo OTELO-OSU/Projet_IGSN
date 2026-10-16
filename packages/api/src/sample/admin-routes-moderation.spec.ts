@@ -23,6 +23,7 @@ import {
   draft,
   publishableSample,
 } from "../tests/sample-fixtures.ts";
+import { sentMails } from "../tests/sent-mails.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -518,34 +519,12 @@ describe("the moderation mail", () => {
     );
   });
 
-  pgTest("should mail the owner on a moderated publish", async ({ db }) => {
-    // Arrange
-    const sendMail = vi.fn().mockResolvedValue(undefined);
-    const { app, owner } = await arrangeManager(db, {
-      sendMail,
-      adminUrl: ADMIN_URL,
-    });
-    const sample = await ownedSample(db, owner.id, publishableSample, IN_REACH);
-    // Act
-    const res = await testClient(app).admin.samples[":id"].publish.$post(
-      { param: { id: sample.id } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    await vi.waitFor(() =>
-      expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: [tokenEmail("owner")],
-          subject: expect.stringContaining("published"),
-        }),
-      ),
-    );
-  });
-
-  pgTest(
-    "should mail the owner on a moderated publish as withdrawn",
-    async ({ db }) => {
+  pgTest.for([
+    { status: "published", suffix: "" },
+    { status: "withdrawn", suffix: " as withdrawn" },
+  ])(
+    "should mail the owner the publication mail on a moderated publish as $status",
+    async ({ status, suffix }, { db }) => {
       // Arrange
       const sendMail = vi.fn().mockResolvedValue(undefined);
       const { app, owner } = await arrangeManager(db, {
@@ -560,20 +539,18 @@ describe("the moderation mail", () => {
       );
       // Act
       const res = await app.request(
-        `/admin/samples/${sample.id}/publish?status=withdrawn`,
+        `/admin/samples/${sample.id}/publish?status=${status}`,
         { method: "POST", headers: authHeader },
       );
       // Assert
       expect(res.status).toBe(200);
-      await vi.waitFor(() =>
-        expect(sendMail).toHaveBeenCalledWith(
-          expect.objectContaining({
-            to: [tokenEmail("owner")],
-            subject: expect.stringContaining("published as withdrawn"),
-          }),
-        ),
-      );
-      expect(sendMail.mock.calls[0]?.[0].text).toContain("out of public view");
+      await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+      expect(sentMails(sendMail)).toEqual([
+        {
+          to: [tokenEmail("owner")],
+          subject: `Test User published the sample "${publishableSample.name}"${suffix}`,
+        },
+      ]);
     },
   );
 
