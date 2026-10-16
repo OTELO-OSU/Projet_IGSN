@@ -8,7 +8,7 @@ import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-con
 import { composeContact } from "#/samples/compose-contact.ts";
 import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
 
-export type AdditionalRoleDraft = {
+type AdditionalRoleDraft = {
   key: string;
   role: AdditionalRole;
   personUserId: string | null | undefined;

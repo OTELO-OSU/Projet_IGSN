@@ -423,7 +423,7 @@ export const vocabularyLayout = (blocks: readonly VocabularyBlock[]) => {
 
 const sheet = vocabularyLayout(VOCABULARY_BLOCKS);
 
-export const VOCABULARY_ROWS: readonly VocabularyRow[] = sheet.rows;
+const VOCABULARY_ROWS: readonly VocabularyRow[] = sheet.rows;
 
 export const BLOCK_PLACEMENTS: Readonly<Record<string, BlockPlacement>> =
   sheet.placements;

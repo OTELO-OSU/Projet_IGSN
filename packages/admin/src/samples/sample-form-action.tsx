@@ -18,7 +18,7 @@ import {
 } from "#/samples/sample-publish-gate.tsx";
 import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
 
-export type SampleSubmitMenu = {
+type SampleSubmitMenu = {
   label: string;
   items: SampleSubmitMenuItem[];
 };

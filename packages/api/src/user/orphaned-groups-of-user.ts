@@ -8,7 +8,7 @@ import { institutionalGroupLabel } from "../institutional-group/institutional-gr
 import { managesGroup } from "../institutional-group/manages-group.ts";
 import { institutionCodeOf } from "../institutional-group/stored-institution.ts";
 
-export async function orphanedGroupsOfUser(
+async function orphanedGroupsOfUser(
   trx: Transaction<DB>,
   userId: string,
 ): Promise<OrphanedGroup[]> {
