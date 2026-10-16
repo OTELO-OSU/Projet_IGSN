@@ -269,6 +269,29 @@ describe("SearchCompose", () => {
     expect(onSearch).toHaveBeenCalledWith({ q: "", engine: "text", page: 1 });
   });
 
+  it("should disable the search button while its search runs", async () => {
+    const { promise, resolve } = Promise.withResolvers<void>();
+    const screen = await render(
+      <SearchCompose
+        initialActive={["text"]}
+        initialDrafts={noSeed}
+        onSearch={() => promise}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Search", exact: true });
+
+    await screen
+      .getByRole("searchbox", { name: "Search samples" })
+      .fill("granite");
+    await button.click();
+
+    await expect.element(button).toBeDisabled();
+
+    resolve();
+
+    await expect.element(button).toBeEnabled();
+  });
+
   it("should drop the tabs but still offer adding an engine on the results page", async () => {
     const screen = await render(
       <SearchCompose
