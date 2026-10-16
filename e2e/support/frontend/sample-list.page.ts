@@ -6,7 +6,10 @@ import { frontendUrl } from "../urls";
 export function sampleListPage(page: Page) {
   const openFilters = page.getByRole("button", { name: /^Filters/ });
   const sidebar = page.getByRole("complementary", { name: "Filters" });
-  const dialog = page.getByRole("dialog", { name: "Filters" });
+  const dialog = page.getByRole("dialog", {
+    name: "Filters",
+    includeHidden: true,
+  });
   const expandFilters = async (filters: Locator) => {
     const collapsed = filters
       .getByRole("heading", { level: 2 })
