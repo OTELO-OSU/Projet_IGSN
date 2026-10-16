@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { vi } from "vitest";
-import { userEvent } from "vitest/browser";
+import { page as browserPage, userEvent } from "vitest/browser";
 
 import type { ListSamplesParams } from "./client/list-samples.ts";
 
@@ -297,6 +297,7 @@ describe("ResultsMapDialog", () => {
   );
 
   it("should ask to open the map from the See on map button", async () => {
+    await browserPage.viewport(1280, 800);
     const onClick = vi.fn();
     const screen = await renderWithRouter(
       <ResultsMapButton onClick={onClick} />,

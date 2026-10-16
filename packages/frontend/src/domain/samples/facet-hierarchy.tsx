@@ -50,6 +50,7 @@ export function HierarchyFacet({
           (isPathSearchable(hierarchy, path) &&
             (!counts || (counts[path] ?? 0) > 0))
         }
+        modal
         placeholder={placeholder}
         searchPlaceholder={searchPlaceholder}
         emptyText={emptyText}

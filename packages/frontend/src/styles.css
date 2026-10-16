@@ -2,6 +2,12 @@
 
 @source "../../design-system/src";
 
+@custom-variant phone {
+  @media (width < 48rem), (height < 500px) {
+    @slot;
+  }
+}
+
 html,
 body,
 #app {

@@ -14,6 +14,7 @@ const MENU_ID = "site-menu";
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -22,8 +23,18 @@ export function SiteHeader() {
       setIsOpen(false);
       menuButtonRef.current?.focus();
     }
+    function closeOnPointerOutside(event: PointerEvent) {
+      if (!(event.target instanceof Node)) return;
+      if (menuRef.current?.contains(event.target)) return;
+      if (menuButtonRef.current?.contains(event.target)) return;
+      setIsOpen(false);
+    }
     document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
+    document.addEventListener("pointerdown", closeOnPointerOutside);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("pointerdown", closeOnPointerOutside);
+    };
   }, [isOpen]);
 
   const close = () => setIsOpen(false);
@@ -52,6 +63,7 @@ export function SiteHeader() {
           )}
         </Button>
         <div
+          ref={menuRef}
           id={MENU_ID}
           className={`${isOpen ? "flex" : "hidden"} bg-background absolute inset-x-0 top-full flex-col items-start gap-4 border-b px-6 py-4 md:static md:ml-auto md:flex md:flex-row md:items-center md:gap-6 md:border-0 md:bg-transparent md:p-0`}
         >

@@ -6,7 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
-import { PlusIcon, XIcon } from "lucide-react";
+import { LoaderCircleIcon, PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
 import type { SearchParams } from "#/domain/samples/search-params.ts";
@@ -78,12 +78,13 @@ export function SearchCompose({
 }: {
   initialActive: SearchEngine[];
   initialDrafts: Drafts;
-  onSearch: (params: SearchParams) => void;
+  onSearch: (params: SearchParams) => Promise<void> | void;
   shrunk?: boolean;
 }) {
   const [queries, setQueries] = useState(() =>
     seedQueries(initialActive, initialDrafts),
   );
+  const [isSearching, setIsSearching] = useState(false);
 
   function setValue(engine: SearchEngine, value: string) {
     setQueries(
@@ -93,21 +94,26 @@ export function SearchCompose({
     );
   }
 
-  function search(next: Query[]) {
+  async function search(next: Query[]) {
     const params: SearchParams = { page: 1, engine: next[0]!.engine };
     for (const { engine, value } of next) params[PARAM[engine]] = value;
-    onSearch(params);
+    setIsSearching(true);
+    try {
+      await onSearch(params);
+    } finally {
+      setIsSearching(false);
+    }
   }
 
   function removeEngine(engine: SearchEngine) {
     const next = queries.filter((query) => query.engine !== engine);
     setQueries(next);
-    if (shrunk) search(next);
+    if (shrunk) void search(next);
   }
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    search(queries);
+    void search(queries);
   }
 
   const open = queries.map((query) => query.engine);
@@ -118,8 +124,13 @@ export function SearchCompose({
       type="submit"
       size="lg"
       className="ms-auto h-12 rounded-full px-6"
-      disabled={queries.every((query) => !query.value) && !shrunk}
+      disabled={
+        isSearching || (queries.every((query) => !query.value) && !shrunk)
+      }
     >
+      {isSearching ? (
+        <LoaderCircleIcon aria-hidden className="motion-safe:animate-spin" />
+      ) : null}
       {m.search_action()}
     </Button>
   );

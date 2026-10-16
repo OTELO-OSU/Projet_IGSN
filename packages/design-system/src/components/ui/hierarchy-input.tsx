@@ -33,6 +33,7 @@ type HierarchyInputProps = {
   isLevelLocked?: (depth: number) => boolean;
   levelAdornment?: (depth: number) => ReactNode;
   disabled?: boolean;
+  modal?: boolean;
   placeholder: string;
   searchPlaceholder: string;
   emptyText: string;
@@ -55,6 +56,7 @@ export function HierarchyInput({
   isLevelLocked,
   levelAdornment,
   disabled,
+  modal = false,
   placeholder,
   searchPlaceholder,
   emptyText,
@@ -90,6 +92,7 @@ export function HierarchyInput({
 
   return (
     <Popover
+      modal={modal}
       open={open}
       onOpenChange={(next) => (next ? setOpen(true) : close())}
     >

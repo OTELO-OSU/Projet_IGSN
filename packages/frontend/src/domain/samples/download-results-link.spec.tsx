@@ -1,5 +1,5 @@
 import { render } from "vitest-browser-react";
-import { userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import { baseBrowserApiUrl } from "#/api.ts";
 import { SEARCH_EXPORT_LIMIT } from "#/search-export-limit.ts";
@@ -9,6 +9,10 @@ import { DownloadResultsLink } from "./download-results-link.tsx";
 const name = /download results/i;
 
 describe("DownloadResultsLink", () => {
+  beforeEach(async () => {
+    await page.viewport(1280, 800);
+  });
+
   it("should link to the export of the search filters, without pagination, up to the cap", async () => {
     const screen = await render(
       <DownloadResultsLink

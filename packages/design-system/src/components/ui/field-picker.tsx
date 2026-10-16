@@ -48,12 +48,16 @@ export function FieldPicker({
           {triggerLabel}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[32rem]">
+      <PopoverContent
+        collisionPadding={16}
+        sticky="always"
+        className="max-h-[min(var(--radix-popover-content-available-height),60dvh)] w-[calc(100vw-2rem)] overflow-y-auto md:w-[32rem]"
+      >
         <fieldset>
           <legend className="mb-3 text-sm leading-none font-medium">
             {legend}
           </legend>
-          <div className="columns-2 gap-6">
+          <div className="gap-6 md:columns-2">
             {[...Map.groupBy(fields, (field) => field.section)].map(
               ([section, sectionFields]) => (
                 <fieldset key={section} className="mb-4 break-inside-avoid">

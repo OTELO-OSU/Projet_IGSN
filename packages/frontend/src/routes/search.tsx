@@ -12,6 +12,7 @@ import {
   useListManualGroups,
 } from "#/domain/manual-groups/hook/list-manual-groups.ts";
 import { DownloadResultsLink } from "#/domain/samples/download-results-link.tsx";
+import { FacetsDialog } from "#/domain/samples/facets-dialog.tsx";
 import { useListSampleFacetCounts } from "#/domain/samples/hook/list-sample-facet-counts.ts";
 import {
   listSamplesQueryOptions,
@@ -71,6 +72,31 @@ function SearchPage() {
       search: (prev) => ({ ...prev, map: open ? true : undefined }),
     });
   const { data: counts } = useListSampleFacetCounts(params ?? {});
+  const facets = (
+    <SampleFacets
+      values={search as SampleFilters}
+      manualGroups={manualGroups}
+      contributors={contributors}
+      counts={counts}
+      onChange={(key, value) =>
+        navigate({
+          resetScroll: false,
+          search: (prev) => ({
+            ...prev,
+            [key]: value,
+            ...clearDependents(key),
+            page: 1,
+          }),
+        })
+      }
+      onClearAll={() =>
+        navigate({
+          resetScroll: false,
+          search: (prev) => ({ ...prev, ...clearFacets(), page: 1 }),
+        })
+      }
+    />
+  );
 
   return (
     <div>
@@ -96,30 +122,8 @@ function SearchPage() {
       </SearchBanner>
 
       <div className="relative mx-auto w-full max-w-6xl px-6 py-8">
-        <div className="relative grid gap-8 md:grid-cols-[24rem_1fr]">
-          <SampleFacets
-            values={search as SampleFilters}
-            manualGroups={manualGroups}
-            contributors={contributors}
-            counts={counts}
-            onChange={(key, value) =>
-              navigate({
-                resetScroll: false,
-                search: (prev) => ({
-                  ...prev,
-                  [key]: value,
-                  ...clearDependents(key),
-                  page: 1,
-                }),
-              })
-            }
-            onClearAll={() =>
-              navigate({
-                resetScroll: false,
-                search: (prev) => ({ ...prev, ...clearFacets(), page: 1 }),
-              })
-            }
-          />
+        <div className="relative grid gap-8 lg:grid-cols-[24rem_1fr]">
+          <div className="hidden lg:block">{facets}</div>
           {params && !search.map ? (
             <Results
               params={params}
@@ -135,6 +139,7 @@ function SearchPage() {
           ) : null}
         </div>
       </div>
+      <FacetsDialog values={search}>{facets}</FacetsDialog>
     </div>
   );
 }

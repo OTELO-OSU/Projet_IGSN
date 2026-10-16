@@ -114,7 +114,7 @@ export function Combobox({
   const selected = items.find((item) => item.value === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal open={open} onOpenChange={setOpen}>
       <ComboboxTrigger
         id={id}
         open={open}

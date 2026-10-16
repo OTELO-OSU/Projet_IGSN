@@ -120,8 +120,8 @@ function ResultsMapContent({
       <DialogHeader className="pe-8">
         <DialogTitle>{m.results_map_title()}</DialogTitle>
       </DialogHeader>
-      <div className="grid min-h-0 flex-1 grid-rows-2 gap-4 md:grid-cols-[1fr_3fr] md:grid-rows-1">
-        <div className="row-start-2 min-h-0 overflow-y-auto px-2 pb-3 motion-safe:scroll-smooth md:row-start-1">
+      <div className="grid min-h-0 flex-1 grid-rows-2 gap-4 md:landscape:grid-cols-[2fr_3fr] md:landscape:grid-rows-1 xl:landscape:grid-cols-[1fr_3fr]">
+        <div className="row-start-2 min-h-0 overflow-y-auto px-2 pb-3 motion-safe:scroll-smooth md:landscape:row-start-1">
           <ResultsMapList
             filters={filters}
             viewport={viewport?.bbox}
@@ -136,7 +136,7 @@ function ResultsMapContent({
         </div>
         <section
           aria-label={m.results_map_map_label()}
-          className="row-start-1 min-h-0 md:col-start-2"
+          className="row-start-1 min-h-0 md:landscape:col-start-2"
         >
           <MapPane
             filters={filters}
@@ -153,7 +153,12 @@ function ResultsMapContent({
 
 export function ResultsMapButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button type="button" variant="outline" onClick={onClick}>
+    <Button
+      type="button"
+      variant="outline"
+      onClick={onClick}
+      className="phone:hidden"
+    >
       <MapIcon aria-hidden="true" />
       {m.results_map_open()}
     </Button>

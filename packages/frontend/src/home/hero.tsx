@@ -26,13 +26,15 @@ export function Hero({
         <h1 className="text-primary mt-4 text-4xl font-bold sm:text-5xl">
           {m.search_landing_title()}
         </h1>
-        <p className="text-body mt-4 max-w-md text-lg whitespace-pre-line">
+        <p className="text-body mt-4 max-w-md text-lg md:whitespace-pre-line">
           {m.home_subtitle()}
         </p>
         <div className="mt-4 max-w-3xl">{children}</div>
-        <div className="divide-primary/20 mt-8 flex flex-wrap items-center gap-y-4 divide-x">
+        <div className="mt-8 flex flex-wrap items-center gap-y-4">
           {stats ? <StatsCounters {...stats} /> : null}
-          <div className="ps-10 first:ps-0">{statsAction}</div>
+          <div className="border-primary/20 phone:hidden border-s ps-10 first:border-s-0 first:ps-0">
+            {statsAction}
+          </div>
         </div>
       </div>
     </div>

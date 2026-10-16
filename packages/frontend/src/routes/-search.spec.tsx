@@ -7,6 +7,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { render } from "vitest-browser-react";
+import { page } from "vitest/browser";
 
 import type { MyRouterContext } from "#/router-context.ts";
 
@@ -70,6 +71,7 @@ describe("search page", () => {
   );
 
   it("should keep the scroll position when a facet changes", async () => {
+    await page.viewport(1280, 800);
     const screen = await renderSearch(
       () => json({}),
       "/search?q=basalt&nature=hand_sample",

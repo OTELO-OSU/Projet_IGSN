@@ -1,15 +1,30 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 import { withOptionalCount } from "../pick-hierarchy.ts";
 import { frontendUrl } from "../urls";
 
 export function sampleListPage(page: Page) {
-  const filters = page.getByRole("complementary", { name: "Filters" });
-  const expandFilters = async () => {
+  const openFilters = page.getByRole("button", { name: /^Filters/ });
+  const sidebar = page.getByRole("complementary", { name: "Filters" });
+  const dialog = page.getByRole("dialog", {
+    name: "Filters",
+    includeHidden: true,
+  });
+  const expandFilters = async (filters: Locator) => {
     const collapsed = filters
       .getByRole("heading", { level: 2 })
       .getByRole("button", { expanded: false });
     while ((await collapsed.count()) > 0) await collapsed.first().click();
+  };
+  const inFilters = async (act: (filters: Locator) => Promise<void>) => {
+    const isPanel = await openFilters.isVisible();
+    if (isPanel) await openFilters.click();
+    const filters = isPanel ? dialog : sidebar;
+    await expandFilters(filters);
+    await act(filters);
+    if (await dialog.isVisible()) {
+      await dialog.getByRole("button", { name: "Show results" }).click();
+    }
   };
 
   return {
@@ -28,25 +43,33 @@ export function sampleListPage(page: Page) {
       expect(page.getByText("No samples match your search.")).toBeVisible(),
     expectSampleAbsent: (name: string) =>
       expect(page.getByRole("link", { name })).toHaveCount(0),
-    pickFacet: async (facet: string, option: string, param: string) => {
-      await expandFilters();
-      await page.getByRole("combobox", { name: facet }).click();
-      await page.getByRole("option", { name: option }).click();
-      await page.waitForURL(new RegExp(`[?&]${param}=`));
-    },
-    includeSubSamples: async () => {
-      await expandFilters();
-      await page.getByRole("switch", { name: "Include sub-samples" }).click();
-      await page.waitForURL(/[?&]includeSubSamples=true/);
-    },
-    expectFacetValue: async (facet: string, value: string) => {
-      await expandFilters();
-      await expect(page.getByRole("combobox", { name: facet })).toHaveText(
-        withOptionalCount(value),
-      );
-    },
+    pickFacet: (facet: string, option: string, param: string) =>
+      inFilters(async (filters) => {
+        await filters.getByRole("combobox", { name: facet }).click();
+        await page.getByRole("option", { name: option }).click();
+        await page.waitForURL(new RegExp(`[?&]${param}=`));
+      }),
+    includeSubSamples: () =>
+      inFilters(async (filters) => {
+        await filters
+          .getByRole("switch", { name: "Include sub-samples" })
+          .click();
+        await page.waitForURL(/[?&]includeSubSamples=true/);
+      }),
+    expectFacetValue: (facet: string, value: string) =>
+      inFilters(async (filters) => {
+        await expect(filters.getByRole("combobox", { name: facet })).toHaveText(
+          withOptionalCount(value),
+        );
+      }),
     clearAllFilters: () =>
-      page.getByRole("button", { name: /clear all filters/i }).click(),
+      inFilters(async (filters) => {
+        const clearAll = filters.getByRole("button", {
+          name: /clear all filters/i,
+        });
+        await clearAll.click();
+        await expect(clearAll).toHaveCount(0);
+      }),
     pickCardField: async (field: string) => {
       await page.getByRole("button", { name: "Add field results" }).click();
       await page.getByRole("checkbox", { name: field }).click();

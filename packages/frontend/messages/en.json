@@ -178,6 +178,8 @@
   "facets_title": "Filters",
   "facets_clear_all": "Clear all filters",
   "facets_active": "Active filters",
+  "facets_open_count": "Filters ({count})",
+  "facets_show_results": "Show results",
   "facet_chip": "{label}: {value}",
   "facet_chip_min": "{label} ≥ {value}",
   "facet_chip_max": "{label} ≤ {value}",
