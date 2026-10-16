@@ -853,6 +853,36 @@ describe("EditSamplePage", () => {
     ).toHaveLength(0);
   });
 
+  it.each<[string, () => ReturnType<typeof renderEditPage>]>([
+    ["its owner", () => renderEditPage("published")],
+    ["an editor", () => renderEditPageAsEditor("published")],
+    ["a contributor", () => renderEditPageAsContributor("published")],
+  ])(
+    "should offer printing the label of a sample holding an IGSN to %s",
+    async (_case, renderPage) => {
+      const { screen } = await renderPage();
+
+      await expect
+        .element(screen.getByRole("button", { name: "Print label" }))
+        .toBeVisible();
+    },
+  );
+
+  it.each<[string, SampleStatus]>([
+    ["a draft, which has no IGSN", "draft"],
+    ["a tombstone", "tombstone"],
+  ])("should offer no label printing on %s", async (_case, status) => {
+    callerManaged = true;
+    const { screen } = await renderEditPage(status);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Print label" }).elements(),
+    ).toHaveLength(0);
+  });
+
   it("should save the edits, then withdraw a published sample from the save button menu", async () => {
     const { screen, calls } = await renderEditPage("published");
 

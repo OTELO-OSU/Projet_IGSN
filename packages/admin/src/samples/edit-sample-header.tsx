@@ -10,6 +10,7 @@ import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicat
 import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
 
 import { m } from "#/paraglide/messages.js";
+import { PrintSampleLabelDialog } from "#/samples/print-sample-label-dialog.tsx";
 import { SampleActionsMenu } from "#/samples/sample-actions-menu.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { SynchronizationStatusBadge } from "#/samples/synchronization-status-badge.tsx";
@@ -59,6 +60,9 @@ export function EditSampleHeader({
         ) : null}
       </div>
       <div className="flex items-center gap-2">
+        {sample.igsn == null || sample.status === "tombstone" ? null : (
+          <PrintSampleLabelDialog igsn={sample.igsn} />
+        )}
         {sample.status === "tombstone" ? null : (
           <ShareSampleButton sampleId={sampleId} />
         )}

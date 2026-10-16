@@ -1,3 +1,4 @@
+import { printSampleLabelPage } from "../support/admin/print-sample-label.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
@@ -6,7 +7,7 @@ import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { maildev } from "../support/maildev";
 
 test.describe("samples", () => {
-  test("an owner withdraws a published sample, readers see its reduced page, then the owner republishes it", async ({
+  test("an owner prints a published sample's label, withdraws it, readers see its reduced page, then the owner republishes it", async ({
     page,
     samples,
   }) => {
@@ -18,6 +19,14 @@ test.describe("samples", () => {
 
     const edit = sampleEditPage(page);
     await edit.expectVisible();
+
+    const label = printSampleLabelPage(page);
+    await label.open();
+    await label.pickSize("5 cm");
+    await label.emulatePrint();
+    await label.expectOnlyLabelPrinted(sample.igsn, 5);
+    await label.close();
+
     await edit.saveAnd("Withdraw");
     await edit.expectWithdrawnHint();
     await edit.expectStatusAction("Republish");

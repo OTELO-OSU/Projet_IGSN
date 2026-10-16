@@ -16,7 +16,7 @@ export default defineConfig({
     }),
   ],
   resolve: { tsconfigPaths: true },
-  optimizeDeps: { include: ["exceljs", "tus-js-client"] },
+  optimizeDeps: { include: ["exceljs", "qrcode.react", "tus-js-client"] },
   publicDir: path.resolve(__dirname, "test/public"),
   test: {
     browser: {
