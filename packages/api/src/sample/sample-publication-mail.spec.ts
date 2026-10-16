@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { sampleEmbargoMail } from "./sample-embargo-mail.ts";
+import { samplePublicationMail } from "./sample-publication-mail.ts";
 
 const SAMPLE_URL = "http://localhost:3001/admin/samples/0190";
 
-const embargo = {
+const publication = {
   recipient: {
     email: "marie.dupont@univ-lorraine.fr",
     name: "Dupont",
@@ -20,9 +20,12 @@ const embargo = {
   url: SAMPLE_URL,
 };
 
-describe("sampleEmbargoMail", () => {
+describe("samplePublicationMail", () => {
   it("should name the publisher, the sample and the publication date when the embargo starts", async () => {
-    const mail = await sampleEmbargoMail({ ...embargo, event: "started" });
+    const mail = await samplePublicationMail({
+      ...publication,
+      event: "embargo_started",
+    });
 
     expect(mail.subject).toBe(
       'Jean Martin published the sample "Basalt core 12" with an embargo until 2027-03-15',
@@ -38,10 +41,10 @@ Open the sample: ${SAMPLE_URL}
   });
 
   it("should name the sample when the embargo ends", async () => {
-    const mail = await sampleEmbargoMail({
-      ...embargo,
+    const mail = await samplePublicationMail({
+      ...publication,
       actor: undefined,
-      event: "ended",
+      event: "embargo_ended",
     });
 
     expect(mail.subject).toBe('The sample "Basalt core 12" is now published');
@@ -54,4 +57,32 @@ Open the sample: ${SAMPLE_URL}
 `,
     );
   });
+
+  it.each([
+    {
+      event: "published" as const,
+      subject: 'Jean Martin published the sample "Basalt core 12"',
+      body: 'Jean Martin published the sample "Basalt core 12" you collaborate on. It now carries an IGSN and its main information can no longer be changed.',
+    },
+    {
+      event: "withdrawn" as const,
+      subject: 'Jean Martin published the sample "Basalt core 12" as withdrawn',
+      body: 'Jean Martin published the sample "Basalt core 12" you collaborate on as withdrawn. It now carries an IGSN and its main information can no longer be changed, but it stays out of public view until it is republished.',
+    },
+  ])(
+    "should name the publisher and the sample when it is $event",
+    async ({ event, subject, body }) => {
+      const mail = await samplePublicationMail({ ...publication, event });
+
+      expect(mail.subject).toBe(subject);
+      expect(mail.text).toBe(
+        `Hello Marie Dupont,
+
+${body}
+
+Open the sample: ${SAMPLE_URL}
+`,
+      );
+    },
+  );
 });

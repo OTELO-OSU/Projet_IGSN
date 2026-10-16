@@ -23,12 +23,14 @@ What is sent:
 
 - **Sample collaborator invitation**, naming the inviter, sample and role. A re-add that changes nothing sends nothing, and a refused invite mails nobody ([[per-sample-roles]]).
 - **Manual group association notification**, a notification and not an invitation, with no token and no accept endpoint ([[manual-groups]]).
-- **Moderated edit and moderated publish**: the owner is mailed on a moderated edit, naming the fields changed, and on a moderated publish, a super admin's edit included ([[space-manager-scope]]).
+- **Moderated edit**: the owner is mailed on a moderated edit, naming the fields changed, a super admin's edit included ([[space-manager-scope]]).
 - `notifySampleModerated` takes an optional `actorId` and mails nobody when the editor is the owner itself, `PUT /service/samples/:igsn` calling it with the service account's owner ([[service-accounts]]).
 - **Sub-sample declared**: the parent's owner is mailed as soon as a sub-sample is created from it, even a draft, from `POST /admin/samples` and `POST /service/samples`. Never if the declarer owns the parent, never if the owner can't receive mail. Two parents owned by the same person get one mail naming both.
 - **Orphan group mail**: a status change leaving `accepted` mails every super admin, one mail per group left without an active manager, naming the group and linking to its page.
 - **Weekly pending-accounts digest**: `listPending` reads every pending row unscoped, then the recipient list is filtered in JS through `userManagementRights`, so an institution manager is mailed only the pending users its `status` right covers and a manual-group-only manager is never mailed. It excludes `super_admin = true` rows, reports and orders by `created_at`, and carries, for super admins only, a recap of groups with no active manager (every manual group without one, and every organisme / OSU / laboratory without one that at least one user row records). The digest is sent when either list is non-empty.
-- **Embargo started and ended**: every collaborator of the sample is mailed when it is published under embargo and when the embargo ends, by hand or by the daily job, never the user who performed the operation (the job has none). The ended mail carries no date, and an embargo publish sends no moderated mail.
+- **Sample published**: `POST /admin/samples/:id/publish` (as `published`, `withdrawn` or `embargo`) mails every collaborator (owner, editors, contributors, rejected users excluded) but the publisher, through `notifyPublication`, and a publish sends no moderated mail.
+- Import, `/service` batch and "Retry synchronization" mail nobody, the synchronization worker publishing them and sending no mail.
+- **Embargo ended**: every collaborator is mailed when the embargo ends, by hand or by the daily job, never the user who performed the operation (the job has none). The ended mail carries no date.
 - **Public contact-the-owner form**, reaching the owner of a publicly resolvable sample ([[public-contributor-directory]]).
 
 Not sent: no mail on any user status change, on withdraw, republish, tombstone or restore, on detach or group deletion.

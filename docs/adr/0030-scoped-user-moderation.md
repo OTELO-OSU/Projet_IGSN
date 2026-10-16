@@ -64,6 +64,7 @@ Accepted. Amended 2026-08-21, 2026-08-24, 2026-08-25 and 2026-08-28, folded in b
 - Reach reads the sample row, not its owner's, so a sample keeps its moderators when its owner moves institution and a sample with no laboratory and no managed group is in nobody's reach.
 - A moderator acts as `editor`: it edits and publishes, but never grants a role or changes the attached manual groups, those following the share it holds itself (`shareRole`).
 - The owner is mailed on a moderated edit, naming the fields changed, and on a moderated publish, a super admin's edit included.
+- Update 2026-10-16: a publish no longer sends this owner-only mail, every collaborator but the publisher being mailed instead (`notifyPublication`); only the moderated edit mails the owner.
 - The list carries the owner's account status, which the per-assignment `GET /admin/samples` does not.
 
 **Independent scope pickers** (organismes, OSUs, laboratories, manual groups) with no cascade, unlike `institutional-groups-fields.tsx`: a manager's reach is a union of independent picks (PO decision). Search by identifier folds into the option label (`managed-group-items.ts`), leaving the shared `MultiCombobox` alone.

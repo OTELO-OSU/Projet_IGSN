@@ -100,7 +100,7 @@ const setStatus = (
 const toEveryCollaboratorButTheActor = (subject: string) =>
   [CONTRIBUTOR_EMAIL, OWNER_EMAIL].map((email) => ({ to: [email], subject }));
 
-describe("admin sample embargo", () => {
+describe("admin sample publication", () => {
   pgTest(
     "should publish under embargo until the chosen date, register the DOI and mail every collaborator but the publisher",
     async ({ db }) => {
@@ -126,6 +126,27 @@ describe("admin sample embargo", () => {
       expect(sentMails(sendMail)).toEqual(
         toEveryCollaboratorButTheActor(
           `Test User published the sample "${publishableSample.name}" with an embargo until ${TOMORROW}`,
+        ),
+      );
+    },
+  );
+
+  pgTest.for([
+    { status: "published", suffix: "" },
+    { status: "withdrawn", suffix: " as withdrawn" },
+  ])(
+    "should publish a draft as $status and mail every collaborator but the publisher",
+    async ({ status, suffix }, { db }) => {
+      // Arrange
+      const { app, sample, sendMail } = await arrangeSample(db);
+      // Act
+      const res = await publish(app, sample.id, `status=${status}`);
+      // Assert
+      expect(res.status).toBe(200);
+      await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(2));
+      expect(sentMails(sendMail)).toEqual(
+        toEveryCollaboratorButTheActor(
+          `Test User published the sample "${publishableSample.name}"${suffix}`,
         ),
       );
     },

@@ -1,6 +1,5 @@
 import type { SampleMailField } from "@projet-igsn/domain/sample/changed-sample-fields";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
-import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
@@ -23,7 +22,7 @@ export async function notifySampleModerated({
   userSamples: Pick<UserSampleRepository, "listCollaborators">;
   mail: { sendMail: SendMail; adminUrl: string };
   sample: Pick<Sample, "id" | "name">;
-  fields: Exclude<PublishStatus, "embargo"> | SampleMailField[];
+  fields: SampleMailField[];
   actorId?: string;
 }): Promise<void> {
   try {

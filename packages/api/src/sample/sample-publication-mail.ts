@@ -9,10 +9,14 @@ import { ctaMailFor } from "../mail/cta-mail.ts";
 
 type MailUser = Pick<User, "email" | "name" | "firstname">;
 
-export type EmbargoEvent = "started" | "ended";
+export type PublicationEvent =
+  | "embargo_started"
+  | "embargo_ended"
+  | "published"
+  | "withdrawn";
 
-type SampleEmbargo = {
-  event: EmbargoEvent;
+type SamplePublication = {
+  event: PublicationEvent;
   recipient: MailUser;
   actor?: MailUser;
   sampleName: string;
@@ -20,15 +24,15 @@ type SampleEmbargo = {
   url: string;
 };
 
-export function sampleEmbargoMail({
+export function samplePublicationMail({
   event,
   recipient,
   actor,
   sampleName,
   publishedAt,
   url,
-}: SampleEmbargo): Promise<RenderedMail> {
-  return ctaMailFor(`sample_embargo_${event}`, {
+}: SamplePublication): Promise<RenderedMail> {
+  return ctaMailFor(`sample_${event}`, {
     recipient,
     params: {
       actor: actor ? fullName(actor) || actor.email : "",
