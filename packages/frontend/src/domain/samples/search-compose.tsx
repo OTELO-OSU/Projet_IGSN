@@ -147,7 +147,7 @@ export function SearchCompose({
           >
             <div className="flex-1">
               {engine === "text" ? (
-                <div className="border-primary/20 bg-background has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-ring/50 [&_svg]:text-primary flex items-center gap-2 rounded-full border p-2 ps-3 shadow-xs has-[input:focus-visible]:ring-[3px] [&_svg]:size-5">
+                <div className="border-primary/20 bg-background has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-ring/50 [&_label_svg]:text-primary flex items-center gap-2 rounded-full border p-2 ps-3 shadow-xs has-[input:focus-visible]:ring-[3px] [&_label_svg]:size-5">
                   <SearchInput
                     value={value}
                     onChange={(event) => setValue(engine, event.target.value)}
