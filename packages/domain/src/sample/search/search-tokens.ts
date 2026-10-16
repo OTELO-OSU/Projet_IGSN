@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 // ponytail: a search keeps its first 6 words of 2+ characters, bounding the ParadeDB regex arms an anonymous query builds; lift once pg_search bounds a regex's memory.
-const MIN_TOKEN_LENGTH = 2;
+export const MIN_TOKEN_LENGTH = 2;
 
-const MAX_SEARCH_TOKENS = 6;
+export const MAX_SEARCH_TOKENS = 6;
 
 const graphemes = new Intl.Segmenter();
 
-function literalLength(token: string): number {
+export function literalLength(token: string): number {
   const literal = token
     .replaceAll("*", "")
     .normalize("NFD")

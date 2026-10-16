@@ -10,6 +10,8 @@ Amended 2026-10-02: the search box runs in the ParadeDB index `sample_search_idx
 
 Amended 2026-10-12: the public callers also match a token against the material classification labels, through the `publicSearchFilters` arm below.
 
+Amended 2026-10-16: the search box also parses quoted phrases, `AND`/`OR` operators and parentheses, in `parse-search-query.ts`, extending the Grammar and Bounds below.
+
 ## Context
 
 The public sample list has a free-text search box, separate from the `SAMPLE_FACETS` sidebar filters. Its grammar and its typo tolerance are a public contract: changing them changes what a shared `/search?q=...` link returns.
@@ -18,13 +20,29 @@ The public sample list has a free-text search box, separate from the `SAMPLE_FAC
 
 **Grammar.** The query splits on whitespace; every token must match (AND), and a token matches on `name`, `specific_name` or `local_id` (OR), or on `igsn` by whole-token equality only. A word is a whitespace-separated word, punctuation being no boundary. `*` matches any run of characters inside one word, so it never spans two words: `bas*der` does not match "Basalt powder". The starless side of a token anchors to the word's start or end, `bas*` being "a word starting with bas" (it matches "basalt (x)" but not "Rock-basalt"), while a wildcard-free `gres` stays a substring inside one word and keeps matching "Grès de Fontainebleau". At most two wildcards apply per token (`MAX_WILDCARDS`), the extra `*` beyond that being literal, which bounds the pattern an untrusted query hands to the regex engine; only wildcards between two literals count, so `*bas*alt*` spends one of the two. The result highlighter agrees with this word definition.
 
+**Phrases, operators and groups** (`parseSearchQuery` in `parse-search-query.ts`). Each term is a word or a quoted phrase, and `searchQueryTerms` lists them.
+
+- `"…"` or `'…'` is an exact phrase: whole words, adjacent, in order, case and accent insensitive.
+- A phrase has no typo tolerance, no substring match and no `*`.
+- A phrase runs as ParadeDB `col ### immutable_unaccent(phrase)` on the three searched columns, plus the IGSN arm for a one-word phrase, plus the material label arm on the public callers.
+- A `'` opens a phrase only at a word start and closes it only at a word end, so `l'Étang` stays one word.
+- An unclosed quote character is dropped.
+- Uppercase `AND` or `ET` and `OR` or `OU` are operators, and lowercase ones are plain words.
+- A space is an implicit AND, and AND binds tighter than OR.
+- Parentheses group.
+- The parser is lenient: a missing `)` closes at the end, a stray `)` or dangling operator is dropped, and `()` vanishes.
+- A word keeps every arm above, and AND/OR nodes join in SQL.
+- The highlighter (`highlight-match.ts`, `matchesSearchPhrase`) and the material labels (`matching-material-paths.ts`) follow the same terms, the highlighter parsing the raw query since normalizing lowercases operators.
+- The person facets keep `searchTokens` and the grammar above.
+
 **Material label arm (public callers only).** `publicSearchFilters` adds to each token's OR one `<path> = any(material_paths)` arm per material path whose own label matches the token, so "igneous" finds every sample at or under that node through the indexed ancestor array, inside ParadeDB. The label is the English catalog label as displayed ("Meta-" prefix included) and matches by substring in one word with `*` anchoring, case and accent insensitive, with no typo tolerance. The root `rock_and_sediment` is excluded, since it would match every sample. Paths are resolved in JS against the `domain` catalog (`createMatchingMaterialPaths`) into `material_paths` terms rather than a stored column. Only the public list, map and facet counts use it; admin lists, `/service`, the export and the pickers keep `searchFilters`. Relevance ordering is unchanged, so a material-only hit ranks low.
 
 **Bounds** (`search-tokens.ts`), because Tantivy's regex has a non-configurable 1000-state limit (about 480 bytes of regex, `unaccent` and escaping expanding one character to at most 6 bytes) and each very short word adds regex arms matching nearly every word (16 one-letter words OOM-killed the backend in a test).
 
 - The search input is truncated at 128 characters (`MAX_SEARCH_TERM_LENGTH`); the person and text facets keep 200.
 - A token needs at least 2 characters once `*` and combining marks are removed; shorter ones are dropped like `*`-only tokens.
-- Duplicate tokens collapse and at most 6 are kept, the extras being ignored.
+- At most 6 terms (words or phrases) are kept, the extras being ignored, and duplicates no longer collapse.
+- A phrase never reaches `pdb.regex`, so the regex bounds here do not apply to it, only the 128-character input cap and the 6-term cap.
 - A token longer than 32 characters (`MAX_TOKEN_LENGTH`) matches nothing.
 - Measured worst case with these bounds: about 60-235 MB peak backend memory per query on 200K rows.
 
@@ -54,7 +72,7 @@ Two earlier JS-side attempts each shipped a way to break the public endpoint: an
 
 **Rejected: `tsvector` full-text search**, poor on substrings and on geological proper nouns, stemming a French/English mix of place names being worse than trigrams here. **Rejected: pure `similarity()` on the whole query**, since whole-string similarity against a long name falls under any usable threshold, so "gres" would stop matching "Grès de Fontainebleau".
 
-Out of scope: the `text` facets keep their substring `ILIKE`, and quoted exact search and `AND`/`OR` operators are separate tickets.
+Out of scope: the `text` facets keep their substring `ILIKE`.
 
 ## Consequences
 

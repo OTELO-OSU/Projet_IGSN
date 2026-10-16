@@ -21,4 +21,21 @@ test.describe("sample list", () => {
 
     await list.expectCardLine("Collection method", "Blasting");
   });
+
+  test("a quoted phrase finds a sample only when its words are side by side, in order", async ({
+    page,
+    samples,
+  }) => {
+    const target = sampleNamed(samples, "Basalt 42");
+
+    const list = sampleListPage(page);
+    await list.goto();
+    await list.search('"42 basalt"');
+
+    await list.expectNoResults();
+
+    await list.search('"basalt 42"');
+
+    await list.expectSampleLink(target.name, target.igsn);
+  });
 });

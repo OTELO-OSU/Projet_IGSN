@@ -66,7 +66,7 @@ export function coreFilterFields() {
   return {
     search: searchTermSchema.meta({
       type: "string",
-      description: `Free-text search matching the sample identifier exactly, or the sample name and specific name on a fragment, truncated past ${MAX_SEARCH_TERM_LENGTH} characters; a word longer than ${MAX_TOKEN_LENGTH} characters matches nothing.`,
+      description: `Free-text search matching the sample identifier exactly, or the sample name and specific name on a fragment, truncated past ${MAX_SEARCH_TERM_LENGTH} characters; a word longer than ${MAX_TOKEN_LENGTH} characters matches nothing. Words are ANDed; a quoted "phrase" or 'phrase' matches those whole words side by side; uppercase OR (or OU) and AND (or ET) combine terms, AND binding tighter, and parentheses group them.`,
     }),
     bbox: searchBboxSchema.optional().meta({
       type: "string",

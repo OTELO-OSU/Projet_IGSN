@@ -1,7 +1,9 @@
+import type { SearchTerm } from "./parse-search-query.ts";
 import type { SearchToken } from "./search-tokens.ts";
 
 import { normalizeSearch } from "../../text/normalize-search.ts";
-import { parseSearchToken, searchTokens } from "./search-tokens.ts";
+import { parseSearchQuery, searchQueryTerms } from "./parse-search-query.ts";
+import { parseSearchToken } from "./search-tokens.ts";
 
 const RUNS = /\S+/g;
 const MAX_HIGHLIGHT_LENGTH = 300;
@@ -31,10 +33,50 @@ function chainSegments(
   }, from);
 }
 
+function queryTerms(query: string): readonly SearchTerm[] {
+  const parsed = parseSearchQuery(query);
+  return (parsed ? searchQueryTerms(parsed) : []).map<SearchTerm>((term) =>
+    term.kind === "word"
+      ? { kind: "word", token: normalizeSearch(term.token) }
+      : { kind: "phrase", text: normalizeSearch(term.text) },
+  );
+}
+
 export function exactRanges(text: string, query: string): Range[] {
-  return searchTokens(normalizeSearch(query)).includes(normalizeSearch(text))
+  const normalized = normalizeSearch(text);
+  return queryTerms(query).some(
+    (term) => (term.kind === "word" ? term.token : term.text) === normalized,
+  )
     ? [[0, text.length]]
     : [];
+}
+
+function phraseRanges(haystack: string, phrase: string): Range[] {
+  const words = phrase.split(" ");
+  const runs = [...haystack.matchAll(RUNS)];
+  return runs.flatMap<Range>((run, at) => {
+    const last = runs[at + words.length - 1];
+    return last &&
+      words.every((word, offset) => runs[at + offset]?.[0] === word)
+      ? [[run.index, last.index + last[0].length]]
+      : [];
+  });
+}
+
+export function matchesSearchPhrase(text: string, phrase: string): boolean {
+  return (
+    phraseRanges(normalizeSearch(text), normalizeSearch(phrase)).length > 0
+  );
+}
+
+function wordRanges(haystack: string, token: string): Range[] {
+  const parsed = parseSearchToken(token);
+  return parsed.segments.length === 1
+    ? substringRanges(haystack, token)
+    : [...haystack.matchAll(RUNS)].flatMap<Range>((run) => {
+        const range = matchRun(run[0], parsed);
+        return range ? [[run.index + range[0], run.index + range[1]]] : [];
+      });
 }
 
 function matchRun(
@@ -72,8 +114,8 @@ export function matchesSearchToken(text: string, token: SearchToken): boolean {
 }
 
 export function matchRanges(text: string, query: string): Range[] {
-  const tokens = searchTokens(normalizeSearch(query));
-  if (tokens.length === 0) {
+  const terms = queryTerms(query);
+  if (terms.length === 0) {
     return [];
   }
 
@@ -90,18 +132,12 @@ export function matchRanges(text: string, query: string): Range[] {
   const haystack = chars.map(([codePoint]) => codePoint).join("");
   const originalIndex = chars.map(([, i]) => i);
 
-  return tokens
-    .flatMap<Range>((token) => {
-      const parsed = parseSearchToken(token);
-      const found: Range[] =
-        parsed.segments.length === 1
-          ? substringRanges(haystack, token)
-          : [...haystack.matchAll(RUNS)].flatMap<Range>((run) => {
-              const range = matchRun(run[0], parsed);
-              return range
-                ? [[run.index + range[0], run.index + range[1]]]
-                : [];
-            });
+  return terms
+    .flatMap<Range>((term) => {
+      const found =
+        term.kind === "word"
+          ? wordRanges(haystack, term.token)
+          : phraseRanges(haystack, term.text);
       return found.flatMap<Range>(([from, to]) => {
         const start = originalIndex[from];
         const last = originalIndex[to - 1];

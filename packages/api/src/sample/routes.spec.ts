@@ -295,7 +295,7 @@ describe("public sample routes", () => {
   pgTest.for([
     ["%%", "Recovery %% core"],
     ["\\\\", "Path\\\\core"],
-    ["((", "Core ((deep))"],
+    ['"((deep))"', "Core ((deep))"],
     ["..", "Core..A"],
     ["||", "Core||A"],
     ["（（", "Core（（deep））"],
