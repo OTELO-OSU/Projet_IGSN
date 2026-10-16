@@ -15,3 +15,9 @@ html {
 html body[data-scroll-locked] {
   margin-right: 0 !important;
 }
+
+@media print {
+  body:has(> .sample-label) > :not(.sample-label) {
+    display: none !important;
+  }
+}

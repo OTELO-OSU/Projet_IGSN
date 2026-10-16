@@ -17,7 +17,14 @@ export default defineConfig({
   },
   resolve: { tsconfigPaths: true },
   optimizeDeps: {
-    include: ["radix-ui", "lucide-react", "cmdk", "sonner", "exceljs"],
+    include: [
+      "radix-ui",
+      "lucide-react",
+      "cmdk",
+      "sonner",
+      "exceljs",
+      "qrcode.react",
+    ],
   },
   plugins: [
     tailwindcss(),
