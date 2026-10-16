@@ -1,4 +1,7 @@
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 import type { User } from "@projet-igsn/domain/user/model";
+
+import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 
 import type { SendMail } from "../mail/send-mail.ts";
 
@@ -22,14 +25,18 @@ export function notifyManualGroupJoined({
   mail,
 }: {
   actor: Party;
-  invitee: Party;
+  invitee: Party & Pick<User, "status"> & { mailOptOuts: MailKind[] };
   groups: { id: string; name: string }[];
   mail?: { sendMail: SendMail; adminUrl: string };
 }): void {
   for (const group of groups) {
     logMembershipChange(actor.id, group.id, invitee.id);
   }
-  if (!mail || groups.length === 0) {
+  if (
+    !mail ||
+    groups.length === 0 ||
+    !canReceiveMail(invitee, "manual_group_invitation")
+  ) {
     return;
   }
   // ponytail: fire and forget; a retry queue if a lost notification ever matters.

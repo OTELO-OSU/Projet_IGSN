@@ -29,7 +29,11 @@ export async function notifySampleModerated({
     const owner = (await userSamples.listCollaborators(sample.id)).find(
       (collaborator) => isSampleOwner(collaborator.role),
     );
-    if (!owner || owner.id === actorId || !canReceiveMail(owner)) {
+    if (
+      !owner ||
+      owner.id === actorId ||
+      !canReceiveMail(owner, "sample_moderated")
+    ) {
       return;
     }
     await trySendMail(

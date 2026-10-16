@@ -1,4 +1,4 @@
-import type { SampleCollaborator } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 
 import { sql } from "kysely";
 
@@ -9,7 +9,7 @@ import { type Transactional } from "../transaction.ts";
 export function listSampleCollaborators(
   db: Transactional<DB>,
   sampleId: string,
-): Promise<SampleCollaborator[]> {
+): ReturnType<UserSampleRepository["listCollaborators"]> {
   return db
     .selectFrom("user_sample")
     .innerJoin("user", "user.id", "user_sample.user_id")
@@ -20,6 +20,7 @@ export function listSampleCollaborators(
       "user.firstname",
       "user.orcid",
       "user.status",
+      "user.mail_opt_outs as mailOptOuts",
       "user_sample.role",
     ])
     .where("user_sample.sample_id", "=", sampleId)

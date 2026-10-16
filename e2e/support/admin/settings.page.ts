@@ -20,6 +20,11 @@ export function settingsPage(page: Page) {
     await expect(page.getByRole("menu")).toHaveCount(0);
   };
 
+  const mailSwitch = (name: string) =>
+    page
+      .getByRole("region", { name: "Emails", exact: true })
+      .getByRole("switch", { name, exact: true });
+
   return {
     openProfile: () => openFromUserMenu("Profile"),
     openGroups: () => openFromUserMenu("Groups"),
@@ -66,6 +71,11 @@ export function settingsPage(page: Page) {
           .getByRole("form", { name: "Institution" })
           .getByRole("combobox", { name: "Laboratory" }),
       ).toContainText(laboratory),
+    switchMailOff: async (name: string) => {
+      if (await mailSwitch(name).isChecked()) await mailSwitch(name).click();
+      await expect(mailSwitch(name)).not.toBeChecked();
+    },
+    expectMailOff: (name: string) => expect(mailSwitch(name)).not.toBeChecked(),
     expectService: (name: string) => expect(item(name)).toBeVisible(),
     generateApiKey: async (name: string) => {
       await item(name)

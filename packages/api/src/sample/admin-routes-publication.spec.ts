@@ -1,3 +1,4 @@
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 import type { Kysely } from "kysely";
 
 import { dateFromToday } from "@projet-igsn/domain/date/date-from-today";
@@ -34,9 +35,11 @@ async function arrangeSample(
   {
     superAdmin = false,
     status = "draft",
+    ownerMailOptOuts = [],
   }: {
     superAdmin?: boolean;
     status?: "draft" | "embargo" | "published";
+    ownerMailOptOuts?: MailKind[];
   } = {},
 ) {
   const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
@@ -51,7 +54,9 @@ async function arrangeSample(
     status: "accepted",
     superAdmin,
   });
-  const owner = await insertUser(db, OWNER_EMAIL);
+  const owner = await insertUser(db, OWNER_EMAIL, {
+    mailOptOuts: ownerMailOptOuts,
+  });
   const contributor = await insertUser(db, CONTRIBUTOR_EMAIL);
   const created = await insertSample(db, publishableSample);
   await insertSampleOwner(db, created.id, owner.id);
@@ -128,6 +133,32 @@ describe("admin sample publication", () => {
           `Test User published the sample "${publishableSample.name}" with an embargo until ${TOMORROW}`,
         ),
       );
+    },
+  );
+
+  pgTest(
+    "should not mail the publication to an owner who switched it off, the contributor still mailed",
+    async ({ db }) => {
+      // Arrange
+      const { app, sample, sendMail } = await arrangeSample(db, {
+        superAdmin: true,
+        ownerMailOptOuts: ["sample_publication"],
+      });
+      // Act
+      const res = await publish(
+        app,
+        sample.id,
+        `status=embargo&publishedAt=${TOMORROW}`,
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+      expect(sentMails(sendMail)).toEqual([
+        {
+          to: [CONTRIBUTOR_EMAIL],
+          subject: `Test User published the sample "${publishableSample.name}" with an embargo until ${TOMORROW}`,
+        },
+      ]);
     },
   );
 

@@ -76,6 +76,12 @@
 - Every transaction that scans ParadeDB (the facet count always; list, map and parent picker when a search is present) runs `set local plan_cache_mode = force_custom_plan`, since ParadeDB ignores parameters or hangs under generic plans.
 - That scan joins nothing, so `sample` carries trigger-maintained copies of what the counts and shared filters would join: `location_geom`, `is_sub_sample`, `manual_group_ids`, `contributor_ids`, `mineral_classification_paths`, plus the generated `*_paths` ancestor arrays.
 
+## Mail opt-outs
+
+- `canReceiveMail(user, kind)` (`domain/user/can-receive-mail.ts`) is the single per-recipient check, every switchable notifier passing its `MailKind` (`domain/user/mail-kind.ts`) and `listSpaceManagers` filtering the digest in SQL.
+- A new switchable mail adds a `MailKind` and calls it; a locked mail (visitor contact, sample removal, account approval, super-admin requests, groups left without a manager, the super-admin digest) never reads opt-outs.
+- `mailOptOuts` is private to `GET /admin/currentUser`, never in another user, collaborator or `/admin/users` response.
+
 ## Publish constraints
 
 A sample's `status` (`draft | embargo | published | withdrawn | tombstone`) drives three separate predicates: `status in PERMANENT_IGSN_STATUSES` (`embargo | published | withdrawn | tombstone`; `hasPermanentIgsn` in `domain/sample/publication/has-permanent-igsn.ts`, inline in SQL) gates IGSN permanence (frozen fields, contributor edit rights, manual-group deletion/detach), `status = 'published'` gates public visibility (search, contributor facet, manual-group facet), `status in PUBLIC_SAMPLE_STATUSES` (`published | withdrawn | embargo`, `domain/sample/publication/public-sample-statuses.ts`) gates public resolution at `GET /samples/:igsn` (also the contact form, the attachments and the lineage graph's root); see ADR 0032 and ADR 0033.

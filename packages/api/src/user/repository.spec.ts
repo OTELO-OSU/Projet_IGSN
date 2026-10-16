@@ -798,6 +798,33 @@ describe("createUserRepository", () => {
       ]);
     },
   );
+
+  pgTest(
+    "should leave out a manager who switched the pending users digest off",
+    async ({ db }) => {
+      // Arrange
+      const manager = await insertUser(db, "manager-1ba@univ-lorraine.fr");
+      const optedOut = await insertUser(db, "opted-out-1ba@univ-lorraine.fr", {
+        mailOptOuts: ["pending_users_digest"],
+      });
+      for (const { id } of [manager, optedOut]) {
+        await moderateInstitution(db, id, {
+          kind: "laboratory",
+          code: "UMR7358",
+        });
+      }
+      // Act
+      const managers = await createUserRepository(db).listSpaceManagers();
+      // Assert
+      expect(managers).toEqual([
+        {
+          id: manager.id,
+          email: "manager-1ba@univ-lorraine.fr",
+          groups: { ...NO_MANAGED_GROUPS, laboratories: ["UMR7358"] },
+        },
+      ]);
+    },
+  );
 });
 
 describe("moderation scope", () => {

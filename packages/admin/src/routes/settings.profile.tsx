@@ -7,6 +7,7 @@ import { frontendSearchUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { MyServiceAccounts } from "#/service-accounts/my-service-accounts.tsx";
 import { GroupSamplesLink } from "#/settings/group-samples-link.tsx";
+import { MailPreferences } from "#/settings/mail-preferences.tsx";
 import { OrcidLink } from "#/settings/orcid-link.tsx";
 import { ShareLink } from "#/settings/share-link.tsx";
 
@@ -51,6 +52,7 @@ function ProfilePage() {
               <MyServiceAccounts />
             </>
           )}
+          <MailPreferences user={data} />
         </>
       ) : (
         <p>{m.auth_loading()}</p>

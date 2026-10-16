@@ -31,6 +31,7 @@ export async function notifyPublication({
     const publishedAt = z.date().parse(sample.publishedAt);
     const url = new URL(`samples/${sample.id}`, mail.adminUrl).toString();
     await notifyCollaborators(
+      "sample_publication",
       await userSamples.listCollaborators(sample.id),
       actor?.id,
       (recipient) =>

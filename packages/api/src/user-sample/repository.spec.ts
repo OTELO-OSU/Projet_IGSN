@@ -87,6 +87,8 @@ describe("userSampleRepository", () => {
         email: "contributor-2c0@univ-lorraine.fr",
         name: "Curie",
         firstname: null,
+        status: "accepted",
+        mailOptOuts: [],
       },
     });
     expect(await repository.listCollaborators(sample.id)).toEqual([
@@ -98,6 +100,7 @@ describe("userSampleRepository", () => {
         orcid: null,
         role: "owner",
         status: "accepted",
+        mailOptOuts: [],
       },
       {
         id: contributor.id,
@@ -107,6 +110,7 @@ describe("userSampleRepository", () => {
         orcid: null,
         role: "contributor",
         status: "accepted",
+        mailOptOuts: [],
       },
     ]);
   });
@@ -176,6 +180,7 @@ describe("userSampleRepository", () => {
           orcid: null,
           role: "owner",
           status: "accepted",
+          mailOptOuts: [],
         },
       ]);
       const rows = await db
@@ -211,6 +216,7 @@ describe("userSampleRepository", () => {
         orcid: null,
         role: "owner",
         status: "accepted",
+        mailOptOuts: [],
       },
     ]);
   });
@@ -270,6 +276,7 @@ describe("userSampleRepository", () => {
         orcid: null,
         role: "owner",
         status: "accepted",
+        mailOptOuts: [],
       },
     ]);
   });
@@ -387,6 +394,7 @@ describe("userSampleRepository", () => {
         orcid: null,
         role: "owner",
         status: "accepted",
+        mailOptOuts: [],
       },
     ]);
   });
