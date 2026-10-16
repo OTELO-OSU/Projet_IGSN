@@ -4,7 +4,7 @@ import type { SampleEditLockState } from "#/samples/use-sample-edit-lock.ts";
 
 import { m } from "#/paraglide/messages.js";
 
-export function sampleEditBlockReason(
+export function describeSampleEditBlock(
   heldByOther: SampleEditLockState["heldByOther"],
   conflict: SampleConflict["reason"] | undefined,
 ): { lockedMessage: string | undefined; rejection: string | undefined } {

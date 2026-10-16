@@ -9,7 +9,7 @@ const uploadResponseSchema = z.object({ data: sampleAttachmentSchema });
 
 // ponytail: no silent-renewal retry on 401 here; the upload just fails in the
 // recap.
-export function xhrUpload(
+export function uploadSampleAttachment(
   url: string,
   token: string | undefined,
   file: File,

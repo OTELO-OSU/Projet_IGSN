@@ -9,7 +9,7 @@ const toItem = (group: { id: string; name: string }) => ({
   label: group.name,
 });
 
-export function userManualGroupItems(
+export function buildUserManualGroupItems(
   caller: { superAdmin: boolean; managedManualGroupIds: string[] },
   memberGroups: AdminUser["manualGroups"],
   attachableGroups: { id: string; name: string }[],

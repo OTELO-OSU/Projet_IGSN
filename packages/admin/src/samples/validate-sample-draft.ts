@@ -5,9 +5,9 @@ import type {
 
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 
-type DraftFieldErrors = { fields: Record<string, { message: string }> };
+export type DraftFieldErrors = { fields: Record<string, { message: string }> };
 
-export const validateDraft =
+export const validateSampleDraft =
   (schema: typeof sampleDraftSchema) =>
   ({ value }: { value: SampleDraft }): DraftFieldErrors | undefined => {
     const parsed = schema.safeParse(value);
@@ -15,15 +15,3 @@ export const validateDraft =
       ? undefined
       : { fields: sampleDraftFieldErrors(parsed.error.issues) };
   };
-
-export function touchedFieldErrors(
-  result: DraftFieldErrors,
-  fieldMeta: Record<string, { isTouched: boolean } | undefined>,
-): DraftFieldErrors | undefined {
-  const touched = Object.fromEntries(
-    Object.entries(result.fields).filter(
-      ([name]) => fieldMeta[name]?.isTouched,
-    ),
-  );
-  return Object.keys(touched).length > 0 ? { fields: touched } : undefined;
-}

@@ -13,7 +13,7 @@ const PUBLIC_HINT: Partial<
     m.sample_embargo_hint({ date: publishedAt ? formatDate(publishedAt) : "" }),
 };
 
-export function samplePublicHint(
+export function resolveSamplePublicHint(
   sample: Pick<Sample, "status" | "publishedAt">,
 ): string | undefined {
   return PUBLIC_HINT[sample.status]?.(sample);

@@ -66,7 +66,7 @@ const refusedUpdate = (
   issues: ServiceSampleIssue[],
 ) => ({ refusal, issues });
 
-const serviceParentIssues = async (
+const findServiceParentIssues = async (
   samples: ServiceSampleChecksDeps["samples"],
   current: Sample,
   resolved: ResolvedParent[],
@@ -155,7 +155,11 @@ export async function checkServiceUpdate(
     samples,
     parents.filter(({ igsn }) => !stored.has(normalizedIgsn(igsn))),
   );
-  const parentIssues = await serviceParentIssues(samples, current, resolved);
+  const parentIssues = await findServiceParentIssues(
+    samples,
+    current,
+    resolved,
+  );
   if (parentIssues.length > 0) {
     return refusedUpdate("invalid", parentIssues);
   }

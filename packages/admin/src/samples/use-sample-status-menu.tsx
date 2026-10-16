@@ -4,7 +4,7 @@ import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-vali
 import { embargoPublicationDateSchema } from "@projet-igsn/domain/sample/publication/embargo-publication-date";
 import { useState } from "react";
 
-import type { SampleSubmitMenuItem } from "#/samples/sample-form-action.tsx";
+import type { SampleSubmitMenuItem } from "#/samples/sample-form-action-button.tsx";
 import type { useSetSampleStatus } from "#/samples/use-set-sample-status.ts";
 import type { useUpdateSample } from "#/samples/use-update-sample.ts";
 

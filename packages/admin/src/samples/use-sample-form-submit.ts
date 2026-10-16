@@ -10,11 +10,12 @@ import { useState } from "react";
 import { flushSync } from "react-dom";
 
 import type { AttachmentMetadata } from "#/samples/attachment-metadata.ts";
-import type { SamplePublish } from "#/samples/sample-form-action.tsx";
+import type { SamplePublish } from "#/samples/sample-form-action-button.tsx";
 import type { SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
-import type { validateDraft } from "#/samples/validate-sample-draft.ts";
+import type { validateSampleDraft } from "#/samples/validate-sample-draft.ts";
 
 import { m } from "#/paraglide/messages.js";
+import { keepTouchedFieldErrors } from "#/samples/keep-touched-field-errors.ts";
 import {
   sampleDraftSchema,
   type SampleDraftSource,
@@ -26,7 +27,6 @@ import {
   type SampleFormTab,
 } from "#/samples/sample-form-tabs.ts";
 import { useCheckSampleDuplicates } from "#/samples/use-check-sample-duplicates.ts";
-import { touchedFieldErrors } from "#/samples/validate-sample-draft.ts";
 import { withDefaultContacts } from "#/samples/with-default-contacts.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
@@ -80,7 +80,7 @@ export function useSampleFormSubmit({
   defaultSubmit: SubmitMeta["onValid"];
   wasPublished: boolean;
   sampleId: string | undefined;
-  validate: ReturnType<typeof validateDraft>;
+  validate: ReturnType<typeof validateSampleDraft>;
   tab: SampleFormTab;
   setTab: (next: SampleFormTab) => void;
   keptAttachments: AttachmentMetadata[];
@@ -133,7 +133,7 @@ export function useSampleFormSubmit({
       onChange: (context) => {
         const result = validate(context);
         if (!result) return undefined;
-        return touchedFieldErrors(
+        return keepTouchedFieldErrors(
           result,
           context.formApi.state.fieldMeta as Record<
             string,

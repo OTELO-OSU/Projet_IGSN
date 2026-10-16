@@ -14,19 +14,17 @@ import {
 import { createManualGroup } from "./create-manual-group.ts";
 import { detachManualGroupMember } from "./detach-manual-group-member.ts";
 import { grantManualGroupManagers } from "./grant-manual-group-managers.ts";
+import { listManualGroupManagers } from "./list-manual-group-managers.ts";
 import { listManualGroupMembers } from "./list-manual-group-members.ts";
+import { listManualGroupsWithPublishedSample } from "./list-manual-groups-with-published-sample.ts";
+import { listManualGroupsWithoutActiveManager } from "./list-manual-groups-without-active-manager.ts";
 import { listManualGroups } from "./list-manual-groups.ts";
-import { listPublishedManualGroups } from "./list-published-manual-groups.ts";
-import { listUnmanagedManualGroups } from "./list-unmanaged-manual-groups.ts";
 import { listUserManualGroups } from "./list-user-manual-groups.ts";
 import { GROUP_COLUMNS } from "./manual-group-columns.ts";
-import {
-  listManualGroupManagers,
-  revokeManualGroupManager,
-} from "./manual-group-managers.ts";
 import { manualGroupsByIds } from "./manual-groups-by-ids.ts";
 import { removeManualGroup } from "./remove-manual-group.ts";
 import { renameManualGroup } from "./rename-manual-group.ts";
+import { revokeManualGroupManager } from "./revoke-manual-group-manager.ts";
 
 export function createManualGroupRepository(
   db: Kysely<DB>,
@@ -68,7 +66,7 @@ export function createManualGroupRepository(
         grantManualGroupManagers(trx, groupId, [userId]),
       ),
     removeManager: tx(revokeManualGroupManager),
-    listWithoutActiveManager: tx(listUnmanagedManualGroups),
+    listWithoutActiveManager: tx(listManualGroupsWithoutActiveManager),
     listForUser: tx(listUserManualGroups),
     listAttachableForUser: (userId) =>
       withTransaction(db, (trx) => attachableManualGroups(trx, userId)),
@@ -83,6 +81,6 @@ export function createManualGroupRepository(
       withTransaction(db, (trx) =>
         attachableManualGroups(trx, sampleOwnerId(trx, sampleId)),
       ),
-    listWithPublishedSample: tx(listPublishedManualGroups),
+    listWithPublishedSample: tx(listManualGroupsWithPublishedSample),
   };
 }

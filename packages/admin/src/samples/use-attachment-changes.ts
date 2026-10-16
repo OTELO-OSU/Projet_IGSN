@@ -15,7 +15,7 @@ import {
   type AttachmentEdit,
   attachmentMetadata,
 } from "#/samples/attachment-metadata.ts";
-import { xhrUpload } from "#/samples/upload-sample-attachment.ts";
+import { uploadSampleAttachment } from "#/samples/upload-sample-attachment.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 type StagedAttachment = {
@@ -95,7 +95,7 @@ export function useAttachmentChanges(sampleId: string) {
     const results = await Promise.all(
       staged.map(async ({ key, file, error: _error, ...edit }) => {
         try {
-          const created = await xhrUpload(
+          const created = await uploadSampleAttachment(
             new URL(`admin/samples/${sampleId}/attachments`, API_URL).href,
             token,
             file,

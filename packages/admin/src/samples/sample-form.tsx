@@ -42,6 +42,7 @@ import {
 import { FieldLock } from "#/samples/field-lock.tsx";
 import { hasUnsavedAttachmentChanges } from "#/samples/has-unsaved-attachment-changes.ts";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
+import { resolveSampleFrozenFields } from "#/samples/resolve-sample-frozen-fields.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleClassificationTab } from "#/samples/sample-classification-tab.tsx";
 import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
@@ -57,14 +58,13 @@ import {
   type SampleFormAction,
   SampleFormActionButton,
   type SampleFormActionContext,
-} from "#/samples/sample-form-action.tsx";
+} from "#/samples/sample-form-action-button.tsx";
 import { SampleFormTabList } from "#/samples/sample-form-tab-list.tsx";
 import {
   isSampleFormTabDisabled,
   type SampleFormTab,
   tabCompleteness,
 } from "#/samples/sample-form-tabs.ts";
-import { sampleFrozenField } from "#/samples/sample-frozen-field.ts";
 import { SampleIdentityTab } from "#/samples/sample-identity-tab.tsx";
 import { SampleLocationTab } from "#/samples/sample-location-tab.tsx";
 import { SampleParentTab } from "#/samples/sample-parent-tab.tsx";
@@ -77,7 +77,7 @@ import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { UnsavedChangesGuard } from "#/samples/unsaved-changes-guard.tsx";
 import { useSampleFormSubmit } from "#/samples/use-sample-form-submit.ts";
 import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
-import { validateDraft } from "#/samples/validate-sample-draft.ts";
+import { validateSampleDraft } from "#/samples/validate-sample-draft.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 const DEFAULT_TAB: SampleFormTab = "identity";
@@ -148,13 +148,13 @@ export function SampleForm({
         UPLOAD_LIMIT,
       )
     : [];
-  const validate = validateDraft(
+  const validate = validateSampleDraft(
     wasPublished
       ? publishedEditDraftSchema(existingBlockers)
       : sampleDraftSchema,
   );
   const isReadOnly = readOnlyReason !== undefined;
-  const { isFieldFrozen, isFrozenByPublication } = sampleFrozenField({
+  const { isFieldFrozen, isFrozenByPublication } = resolveSampleFrozenFields({
     isReadOnly,
     wasPublished,
     currentUser,

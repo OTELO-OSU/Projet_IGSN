@@ -18,9 +18,9 @@ import {
   useManualGroups,
 } from "#/manual-groups/use-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
+import { buildUserManualGroupItems } from "#/users/build-user-manual-group-items.ts";
 import { composeUser, toUserDraft } from "#/users/compose-user.ts";
 import { ManagedGroupsFields } from "#/users/managed-groups-fields.tsx";
-import { userManualGroupItems } from "#/users/user-manual-group-items.ts";
 import { UserManualGroupsField } from "#/users/user-manual-groups-field.tsx";
 import { UserSaveButton } from "#/users/user-save-button.tsx";
 import { UserStatusField } from "#/users/user-status-field.tsx";
@@ -60,7 +60,7 @@ export function UserForm({
       }),
   });
 
-  const manualGroupItems = userManualGroupItems(
+  const manualGroupItems = buildUserManualGroupItems(
     caller,
     user.manualGroups,
     isSuperAdmin ? (catalog.data?.data ?? []) : myManagedGroups,

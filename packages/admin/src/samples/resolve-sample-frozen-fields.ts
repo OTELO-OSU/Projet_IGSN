@@ -10,7 +10,7 @@ import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-fro
 
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 
-export function sampleFrozenField({
+export function resolveSampleFrozenFields({
   isReadOnly,
   wasPublished,
   currentUser,

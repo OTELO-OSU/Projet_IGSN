@@ -1,6 +1,6 @@
 import { canJoinManualGroup } from "@projet-igsn/domain/manual-group/can-join-manual-group";
 
-import type { userManualGroupItems } from "#/users/user-manual-group-items.ts";
+import type { buildUserManualGroupItems } from "#/users/build-user-manual-group-items.ts";
 
 import { m } from "#/paraglide/messages.js";
 import { useUserForm } from "#/users/use-user-form.ts";
@@ -10,7 +10,7 @@ export function UserManualGroupsField({
   memberItems,
   groupItems,
   lockedGroupIds,
-}: { disabled: boolean } & ReturnType<typeof userManualGroupItems>) {
+}: { disabled: boolean } & ReturnType<typeof buildUserManualGroupItems>) {
   const form = useUserForm();
   return (
     <form.Subscribe selector={(state) => state.values.status}>
