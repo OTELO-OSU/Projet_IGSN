@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { onTestFinished, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
@@ -71,6 +71,43 @@ describe("ContactOwnerForm", () => {
     await expect
       .element(screen.getByRole("status"))
       .toHaveTextContent("Something went wrong. Please try again.");
+  });
+
+  it("should send nothing when the captcha fails", async () => {
+    $altcha.defaults.set({ mockError: true });
+    onTestFinished(() => $altcha.defaults.set({ mockError: false }));
+    const onSend = vi.fn().mockResolvedValue("sent");
+    const screen = await render(
+      <ContactOwnerForm {...labels} onSend={onSend} />,
+    );
+
+    await fillAndSend();
+
+    await expect
+      .element(screen.getByText("Verification failed. Try again later."))
+      .toBeVisible();
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it("should keep the message and ask for a new captcha after a failed send", async () => {
+    const screen = await render(
+      <ContactOwnerForm
+        {...labels}
+        onSend={vi.fn().mockResolvedValue("rate_limited")}
+      />,
+    );
+
+    await fillAndSend();
+
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent("Too many messages, try again later.");
+    await expect
+      .element(screen.getByRole("checkbox", { name: "I'm not a robot" }))
+      .not.toBeChecked();
+    await expect
+      .element(screen.getByLabelText("Message"))
+      .toHaveValue(body.message);
   });
 
   it("should block the submit and flag the field when the email is invalid", async () => {

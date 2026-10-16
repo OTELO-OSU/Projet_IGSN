@@ -1,6 +1,8 @@
 import { testClient } from "hono/testing";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 
+import type { SendMail } from "./mail/send-mail.ts";
+
 import { createApp } from "./app.ts";
 import {
   AUTHENTICATED_USER_BUDGET,
@@ -15,6 +17,7 @@ import { insertSample } from "./sample/service/insert-sample.ts";
 import { insertUser } from "./tests/insert-user.ts";
 import { pgTest } from "./tests/pg-test.ts";
 import { tokenEmail } from "./tests/provision-user.ts";
+import { solvedCaptchaCookie } from "./tests/solved-captcha-cookie.ts";
 import { insertSampleOwner } from "./user-sample/insert-sample-owner.ts";
 
 const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9999";
@@ -130,6 +133,72 @@ describe("app", () => {
       expect(res.headers.get("content-type")).toContain("application/json");
       expect(await res.json()).toEqual({ error: "Internal server error" });
     });
+  });
+
+  describe("captcha", () => {
+    const visitor = {
+      name: "Lovelace",
+      firstname: "Ada",
+      email: "ada@example.org",
+      message: "May I study this sample?",
+    };
+
+    const arrangeApp = (db: Parameters<typeof createApp>[0]) => {
+      const sendMail = vi.fn<SendMail>().mockResolvedValue(undefined);
+      const { app } = createApp(db, {
+        mail: {
+          sendMail,
+          adminUrl: "http://localhost:3000/admin/",
+          frontendUrl: "http://localhost:3000/",
+        },
+        contactEmail: "contact@igsn.localhost",
+      });
+      return { app, sendMail };
+    };
+
+    pgTest.for([
+      "/samples/0123456789ABCDEFGHJKMNPQRS/contact",
+      "/samples/0123456789ABCDEFGHJKMNPQRS/contact/archive",
+      "/contact",
+    ])(
+      "should refuse a %s message without a solved captcha, without mailing",
+      async (path, { db }) => {
+        // Arrange
+        const { app, sendMail } = arrangeApp(db);
+        // Act
+        const res = await app.request(path, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ...visitor, subject: "Access" }),
+        });
+        // Assert
+        expect(res.status).toBe(403);
+        expect(await res.json()).toEqual({ error: expect.any(String) });
+        expect(sendMail).not.toHaveBeenCalled();
+      },
+    );
+
+    pgTest(
+      "should mail a message carrying a solved captcha once, refusing its replay",
+      async ({ db }) => {
+        // Arrange
+        const { app, sendMail } = arrangeApp(db);
+        const cookie = await solvedCaptchaCookie(app);
+        const contact = () =>
+          app.request("/contact", {
+            method: "POST",
+            headers: { "content-type": "application/json", cookie },
+            body: JSON.stringify({ ...visitor, subject: "Access" }),
+          });
+        // Act
+        const sent = await contact();
+        const replayed = await contact();
+        // Assert
+        expect(sent.status).toBe(204);
+        expect(replayed.status).toBe(403);
+        expect(sendMail).toHaveBeenCalledTimes(1);
+      },
+    );
   });
 
   describe("CORS", () => {
@@ -307,6 +376,27 @@ describe("app", () => {
           headers: { "X-Real-IP": "10.0.0.3" },
         });
         expect(read.status).toBe(200);
+      },
+    );
+
+    pgTest(
+      "should never spend the contact mail budget on challenges",
+      async ({ db }) => {
+        // Arrange
+        const app = createApp(db).app;
+        const headers = { "X-Real-IP": "10.0.0.10" };
+        await spend(
+          () => app.request("/captcha/challenge", { headers }),
+          CONTACT_MAIL_IP_BUDGET.points + 1,
+        );
+        // Act
+        const res = await app.request("/contact", {
+          method: "POST",
+          headers: { ...headers, "content-type": "application/json" },
+          body: "{}",
+        });
+        // Assert
+        expect(res.status).toBe(403);
       },
     );
 

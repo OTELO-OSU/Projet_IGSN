@@ -4,6 +4,7 @@ import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
+import { randomBytes } from "node:crypto";
 
 import type { DB } from "./db.ts";
 import type { SendMail } from "./mail/send-mail.ts";
@@ -11,6 +12,11 @@ import type { SendMail } from "./mail/send-mail.ts";
 import { attachmentsDir as defaultAttachmentsDir } from "./attachments-dir.ts";
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import {
+  type CaptchaConfig,
+  DEFAULT_CAPTCHA_COST,
+  createCaptcha,
+} from "./captcha/captcha.ts";
 import { createContactRoutes } from "./contact/routes.ts";
 import { dataCiteConfig } from "./datacite/config.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
@@ -63,11 +69,16 @@ export function createApp(
     frontendUrl = "http://localhost:3000/",
     mail,
     contactEmail,
+    captcha: captchaConfig = {
+      secret: randomBytes(32).toString("hex"),
+      cost: DEFAULT_CAPTCHA_COST,
+    },
   }: {
     attachmentsDir?: string;
     frontendUrl?: string;
     mail?: { sendMail: SendMail; adminUrl: string; frontendUrl: string };
     contactEmail?: string;
+    captcha?: CaptchaConfig;
   } = {},
 ) {
   const corsOrigins = (process.env.CORS_ORIGINS ?? "")
@@ -111,6 +122,7 @@ export function createApp(
   const serviceAccountRepository = createServiceAccountRepository(database);
 
   const publicRateLimit = rateLimit(rateLimitConfig, "ip");
+  const captcha = createCaptcha(captchaConfig);
   const mapRateLimit = rateLimit(rateLimitConfig, "ip", MAP_IP_BUDGET);
   const mapPointsRateLimit = rateLimit(
     rateLimitConfig,
@@ -131,6 +143,7 @@ export function createApp(
       "/:igsn/contact/*",
       rateLimit(rateLimitConfig, "ip", CONTACT_MAIL_IP_BUDGET),
     )
+    .use("/:igsn/contact/*", captcha.middleware())
     .use("/export", rateLimit(rateLimitConfig, "ip", EXPORT_IP_BUDGET))
     .route(
       "/",
@@ -144,7 +157,12 @@ export function createApp(
 
   const contactRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip", CONTACT_MAIL_IP_BUDGET))
+    .use("*", captcha.middleware())
     .route("/", createContactRoutes(mail, contactEmail));
+
+  const captchaRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .get("/challenge", captcha.challengeHandler);
 
   const publicManualGroupRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
@@ -299,6 +317,7 @@ export function createApp(
     .get("/", (c) => c.json({ message: "OK" }))
     .route("/samples", publicSampleRoutes)
     .route("/contact", contactRoutes)
+    .route("/captcha", captchaRoutes)
     .route("/manual-groups", publicManualGroupRoutes)
     .route("/stats", publicStatsRoutes)
     .route("/users", publicUserRoutes)

@@ -36,6 +36,8 @@ catalog:
   "@vitejs/plugin-react": ^6.1.1
   "@vitest/browser-playwright": ^4.1.9
   "@xyflow/react": ^12.11.6
+  altcha: ^3.3.0
+  altcha-lib: ^2.6.0
   babel-plugin-react-compiler: ^1.0.0
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1

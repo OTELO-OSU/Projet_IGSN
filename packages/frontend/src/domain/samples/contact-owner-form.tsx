@@ -1,12 +1,14 @@
 import type { ContactAdminBody } from "@projet-igsn/domain/contact/contact-validator";
 import type { ContactSampleOwnerBody } from "@projet-igsn/domain/sample/sample-validator";
+import type { AltchaWidgetElement } from "altcha";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { contactAdminBodySchema } from "@projet-igsn/domain/contact/contact-validator";
 import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
 import { contactSampleOwnerBodySchema } from "@projet-igsn/domain/sample/sample-validator";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
+import { Captcha } from "#/domain/contact/captcha.tsx";
 import { m } from "#/paraglide/messages.js";
 
 const ISSUE_MESSAGE: Record<string, () => string> = {
@@ -47,6 +49,7 @@ const ownerBodyOf = ({
 export function ContactOwnerForm(props: ContactOwnerFormProps) {
   const { title, noRecipientMessage = "" } = props;
   const [statusMessage, setStatusMessage] = useState("");
+  const captchaRef = useRef<AltchaWidgetElement>(null);
   const form = useAppForm({
     defaultValues: {
       subject: "",
@@ -62,6 +65,8 @@ export function ContactOwnerForm(props: ContactOwnerFormProps) {
           : validateOwnerBody({ value: ownerBodyOf(value) }),
     },
     onSubmit: async ({ value }) => {
+      await customElements.whenDefined("altcha-widget");
+      if (!(await captchaRef.current?.verify())) return;
       try {
         const result = await (props.withSubject
           ? props.onSend(value)
@@ -75,6 +80,8 @@ export function ContactOwnerForm(props: ContactOwnerFormProps) {
         );
       } catch {
         setStatusMessage(m.contact_error());
+      } finally {
+        captchaRef.current?.reset();
       }
     },
   });
@@ -122,6 +129,7 @@ export function ContactOwnerForm(props: ContactOwnerFormProps) {
             />
           )}
         </form.AppField>
+        <Captcha ref={captchaRef} />
         <div>
           <form.AppForm>
             <form.SubmitButton label={m.contact_submit()} />

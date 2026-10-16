@@ -4,6 +4,10 @@ import { z } from "zod";
 import { appUrl } from "./app-url.ts";
 import { createApp } from "./app.ts";
 import { attachmentsDir } from "./attachments-dir.ts";
+import {
+  CAPTCHA_SECRET_MIN_LENGTH,
+  DEFAULT_CAPTCHA_COST,
+} from "./captcha/captcha.ts";
 import { dataCiteConfig } from "./datacite/config.ts";
 import { createDb } from "./db.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
@@ -31,6 +35,18 @@ const { app } = createApp(db, {
   frontendUrl,
   mail: { sendMail, adminUrl, frontendUrl },
   contactEmail: z.email().parse(process.env.CONTACT_EMAIL),
+  captcha: {
+    secret: z
+      .string()
+      .min(CAPTCHA_SECRET_MIN_LENGTH)
+      .parse(process.env.CAPTCHA_HMAC_SECRET),
+    cost: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(DEFAULT_CAPTCHA_COST)
+      .parse(process.env.CAPTCHA_COST || undefined),
+  },
 });
 schedulePendingUsersDigest(() => {
   void sendPendingUsersDigest(

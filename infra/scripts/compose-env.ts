@@ -98,6 +98,19 @@ const VARS: EnvVar[] = [
     required: true,
   },
   {
+    name: "CAPTCHA_HMAC_SECRET",
+    purpose:
+      "HMAC secret signing the contact forms' captcha challenges, at least 32 characters (`openssl rand -hex 32`); the api refuses to boot without it.",
+    required: true,
+    secret: true,
+  },
+  {
+    name: "CAPTCHA_COST",
+    purpose:
+      "Captcha difficulty: PBKDF2 iterations per attempt, the visitor's solve time growing linearly with it.",
+    default: "1000",
+  },
+  {
     name: "SAMPLE_SEARCH_FUZZY_THRESHOLD",
     purpose: "pg_trgm similarity threshold of the person facets, in (0,1].",
     default: "0.8",
