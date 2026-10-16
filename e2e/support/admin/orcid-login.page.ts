@@ -6,13 +6,13 @@ import { expect, type Page } from "@playwright/test";
 export function orcidLoginPage(page: Page) {
   return {
     login: async (orcid: string, password: string) => {
-      await page.getByLabel(/orcid id/i).fill(orcid);
+      await page.getByRole("textbox", { name: /orcid id/i }).fill(orcid);
       // Keycloak's password field ships a "Show password" toggle whose aria-label
       // also matches /password/i, so scope to the textbox to avoid a strict-mode clash.
       await page.getByRole("textbox", { name: /password/i }).fill(password);
       await page.getByRole("button", { name: /sign in/i }).click();
     },
     expectCredentialsPrompt: () =>
-      expect(page.getByLabel(/orcid id/i)).toBeVisible(),
+      expect(page.getByRole("textbox", { name: /orcid id/i })).toBeVisible(),
   };
 }

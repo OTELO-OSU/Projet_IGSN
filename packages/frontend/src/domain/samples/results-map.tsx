@@ -14,6 +14,7 @@ import type {
   MapPoints,
 } from "#/domain/samples/map-cluster-index.ts";
 
+import { BaseMapLayer } from "#/domain/samples/base-map-layer.tsx";
 import { useListSamples } from "#/domain/samples/hook/list-samples.ts";
 import { useMapSampleDetails } from "#/domain/samples/hook/map-sample-details.ts";
 import {
@@ -26,7 +27,6 @@ import {
   SampleMarker,
 } from "#/domain/samples/map-sample-marker.tsx";
 import {
-  OsmTileLayer,
   WORLD_BOUNDS,
   formatBbox,
   singleBoundsOrWorld,
@@ -420,7 +420,7 @@ export function ResultsMap({
       maxBoundsViscosity={1}
       className="z-0 h-full w-full rounded-md"
     >
-      <OsmTileLayer />
+      <BaseMapLayer />
       <ClusterLayers {...layers} />
     </MapContainer>
   );

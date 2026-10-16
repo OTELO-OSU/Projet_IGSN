@@ -11,8 +11,8 @@ import {
   useMap,
 } from "react-leaflet";
 
+import { BaseMapLayer } from "#/domain/samples/base-map-layer.tsx";
 import {
-  OsmTileLayer,
   WORLD_BOUNDS,
   areaHalves,
   singleBoundsOrWorld,
@@ -119,7 +119,7 @@ export function SampleLocationMap({ position }: { position: Position }) {
       maxBoundsViscosity={1}
       className="z-0 h-full w-full rounded-md"
     >
-      <OsmTileLayer />
+      <BaseMapLayer />
       <SampleShape position={position} />
     </MapContainer>
   );

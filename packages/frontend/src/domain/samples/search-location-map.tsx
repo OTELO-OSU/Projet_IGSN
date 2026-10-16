@@ -21,12 +21,12 @@ import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   Rectangle,
-  TileLayer,
   Tooltip,
   useMap,
   useMapEvents,
 } from "react-leaflet";
 
+import { BaseMapLayer } from "#/domain/samples/base-map-layer.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export const WORLD_BOUNDS: LatLngBoundsLiteral = [
@@ -86,17 +86,6 @@ const isTooLarge = (a: LatLng, b: LatLng) =>
 function parseBoundsList(bbox: string | undefined): LatLngBoundsExpression[] {
   const parsed = searchBboxSchema.safeParse(bbox);
   return parsed.success ? toBoundsList(parsed.data) : [];
-}
-
-// ponytail: OSM public tiles are a known ceiling, self-host if traffic grows.
-export function OsmTileLayer() {
-  return (
-    <TileLayer
-      noWrap
-      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-    />
-  );
 }
 
 export function RectangleDrawer({
@@ -261,7 +250,7 @@ export function SearchLocationMap({
       maxBoundsViscosity={1}
       className="z-0 h-full w-full rounded-md select-none"
     >
-      <OsmTileLayer />
+      <BaseMapLayer />
       <RectangleDrawer bbox={value} drawing={drawing} onSelect={onChange} />
       <DrawCursor drawing={drawing} />
       <InvalidateOnResize compact={compact} />
