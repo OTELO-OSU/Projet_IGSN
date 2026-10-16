@@ -112,7 +112,7 @@ export function SearchResultsView({
       {pageCount > 1 ? (
         <nav
           aria-label={m.pagination_label()}
-          className="mt-8 flex items-center justify-center gap-4"
+          className="mt-8 flex items-center justify-between gap-4 md:justify-center max-md:[&>button]:h-11"
         >
           <Pager
             page={page}

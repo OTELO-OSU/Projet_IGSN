@@ -179,7 +179,7 @@ export function SampleList({
   query = "",
   fields,
   onHoverSample,
-  singleColumn = false,
+  columnsClassName = "sm:grid-cols-2",
   selectedIgsn,
   onLocateSample,
 }: {
@@ -187,7 +187,7 @@ export function SampleList({
   query?: string;
   fields?: string[];
   onHoverSample?: (sample: CardSample | undefined) => void;
-  singleColumn?: boolean;
+  columnsClassName?: string;
   selectedIgsn?: string;
   onLocateSample?: (sample: CardSample) => void;
 }) {
@@ -217,10 +217,7 @@ export function SampleList({
   }, [query, samples]);
 
   return (
-    <ul
-      ref={listRef}
-      className={singleColumn ? "grid gap-4" : "grid gap-4 sm:grid-cols-2"}
-    >
+    <ul ref={listRef} className={`grid gap-4 ${columnsClassName}`}>
       {samples.map((sample) => {
         const { igsn, name } = sample;
         if (igsn === null) {

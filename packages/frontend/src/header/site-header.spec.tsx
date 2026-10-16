@@ -75,4 +75,15 @@ describe("SiteHeader", () => {
       .toHaveAttribute("aria-expanded", "false");
     await expect.element(menuButton()).toHaveFocus();
   });
+
+  it("should close the menu on a click outside it", async () => {
+    await renderHeader();
+    await menuButton().click();
+
+    await page.getByRole("link", { name: "IGSN" }).click();
+
+    await expect
+      .element(menuButton())
+      .toHaveAttribute("aria-expanded", "false");
+  });
 });

@@ -79,9 +79,9 @@ function RootLayout() {
             </ExternalLink>
             <span aria-hidden className="bg-border h-px flex-1" />
           </div>
-          <div className="mx-auto mt-4 flex max-w-6xl flex-wrap gap-x-4 gap-y-2 ps-6 pe-8 md:-mt-8">
+          <div className="mx-auto mt-4 flex max-w-6xl flex-col items-start gap-2 ps-6 pe-8 md:-mt-8 md:flex-row md:flex-wrap md:gap-x-4">
             <OpenDataLink className="text-primary text-sm font-medium no-underline underline-offset-4 hover:underline" />
-            <div className="ms-auto flex flex-wrap gap-x-4 gap-y-2">
+            <div className="flex flex-col items-start gap-2 md:ms-auto md:flex-row md:flex-wrap md:gap-x-4">
               <Link
                 to="/legal-notice"
                 className="text-primary text-sm font-medium underline-offset-4 hover:underline"

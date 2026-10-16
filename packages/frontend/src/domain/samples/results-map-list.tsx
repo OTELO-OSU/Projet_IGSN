@@ -160,7 +160,7 @@ export function ResultsMapList({
           const located = toMapSample(sample);
           if (located) onLocateSample(located);
         }}
-        singleColumn
+        columnsClassName="md:portrait:grid-cols-2"
       />
       {hasNextPage && !isFetchingNextPage && !isPlaceholderData ? (
         <NextPageTrigger onReached={() => void fetchNextPage()} />

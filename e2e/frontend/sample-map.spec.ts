@@ -7,6 +7,8 @@ import { sampleListPage } from "../support/frontend/sample-list.page";
 const LOCATED_ASH = 3;
 
 test.describe("search results map", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
   test("a reader maps every located result across the world, then opens one from its marker in a new tab", async ({
     page,
     samples,

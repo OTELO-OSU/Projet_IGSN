@@ -25,12 +25,12 @@ export function StatsCounters({ samples, users }: Stats) {
   return (
     <ul
       aria-label={m.home_stats_label()}
-      className="divide-primary/20 flex flex-wrap gap-y-4 divide-x pe-10"
+      className="divide-primary/20 flex flex-col gap-y-4 md:flex-row md:flex-wrap md:divide-x md:pe-10"
     >
       {counters.map(({ key, Icon, value, label }) => (
         <li
           key={key}
-          className="text-primary flex items-center gap-3 px-10 first:ps-0 last:pe-0"
+          className="text-primary flex items-center gap-3 md:px-10 md:first:ps-0 md:last:pe-0"
         >
           <Icon aria-hidden className="size-8" />
           <span>

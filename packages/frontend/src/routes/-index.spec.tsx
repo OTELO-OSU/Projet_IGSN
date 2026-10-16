@@ -7,6 +7,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { render } from "vitest-browser-react";
+import { page } from "vitest/browser";
 
 import type { MyRouterContext } from "#/router-context.ts";
 
@@ -78,6 +79,7 @@ describe("home page", () => {
   });
 
   it("should link to the map of every sample", async () => {
+    await page.viewport(1280, 800);
     const screen = await renderHome(json({}, 500));
 
     await expect
@@ -106,6 +108,7 @@ describe("home page", () => {
   });
 
   it("should warn that the map of every sample can be slow to load", async () => {
+    await page.viewport(1280, 800);
     const screen = await renderHome(json({}, 500));
 
     await expect

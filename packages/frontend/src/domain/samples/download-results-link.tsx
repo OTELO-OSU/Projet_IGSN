@@ -34,7 +34,7 @@ export function DownloadResultsLink({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span tabIndex={0}>
+            <span tabIndex={0} className="phone:hidden">
               <Button type="button" variant="ghost" disabled>
                 {label}
               </Button>
@@ -51,7 +51,7 @@ export function DownloadResultsLink({
   const href = new URL("samples/export", baseBrowserApiUrl);
   href.search = searchFilterParams(filters).toString();
   return (
-    <Button asChild variant="ghost">
+    <Button asChild variant="ghost" className="phone:hidden">
       <a href={href.href} download>
         {label}
       </a>
