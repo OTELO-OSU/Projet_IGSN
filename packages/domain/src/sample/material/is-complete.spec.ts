@@ -25,7 +25,7 @@ describe("isMaterialComplete", () => {
     "rock_and_sediment.sediment.biogenic.carbonate.boundstone",
     "rock_and_sediment.extraterrestrial_rock.meteorites.chondrites",
   ])("should treat %s as a valid stopping point", (path) => {
-    expect(isMaterialComplete(path)).toBe(true);
+    expect(isMaterialComplete(path, null)).toBe(true);
   });
 
   it.each([
@@ -34,7 +34,25 @@ describe("isMaterialComplete", () => {
     "rock_and_sediment.sediment",
     "rock_and_sediment.extraterrestrial_rock",
   ])("should treat %s as a node that must be refined", (path) => {
-    expect(isMaterialComplete(path)).toBe(false);
+    expect(isMaterialComplete(path, null)).toBe(false);
+  });
+
+  it.each([
+    "rock_and_sediment",
+    "rock_and_sediment.rock",
+    "rock_and_sediment.sediment",
+  ])("should let a series core stop its material at %s", (path) => {
+    expect(isMaterialComplete(path, "serie_of_sample.core")).toBe(true);
+  });
+
+  it.each([
+    null,
+    "core",
+    "serie_of_sample",
+    "serie_of_sample.dredge",
+    "serie_of_sample.individual_sample",
+  ])("should keep rock_and_sediment incomplete for type %s", (type) => {
+    expect(isMaterialComplete("rock_and_sediment", type)).toBe(false);
   });
 
   it("should mark every child of a family optional and neither root nor family, the third level being the stop frontier", () => {

@@ -261,6 +261,18 @@ describe("samplePublishBlockers", () => {
     ).toEqual(["location_position_missing"]);
   });
 
+  it("should require a location but no finer material for a parentless series core stopped at the root", () => {
+    const blockers = samplePublishBlockers({
+      ...base,
+      type: "serie_of_sample.core",
+      material: "rock_and_sediment",
+      location: null,
+    });
+    expect(blockers).toContain("location_position_missing");
+    expect(blockers).not.toContain("material_incomplete");
+    expect(blockers).not.toContain("material_missing");
+  });
+
   it("should not add a location blocker while the material is still incomplete", () => {
     expect(
       samplePublishBlockers({
