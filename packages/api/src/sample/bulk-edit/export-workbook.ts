@@ -14,17 +14,16 @@ import type { Column } from "../import-template/columns.ts";
 import type { Cell } from "./sample-row.ts";
 
 import { queueBuild } from "../import-template/build-queue.ts";
+import { addChildSheet } from "../import-template/child-sheet.ts";
 import { SAMPLE_KEY_HEADER, SHEETS } from "../import-template/columns.ts";
+import { FIRST_DATA_ROW } from "../import-template/data-range.ts";
+import { addDataSheet, FROZEN_FILL } from "../import-template/data-sheet.ts";
+import { addReadMeSheet } from "../import-template/read-me-sheet.ts";
+import { addVocabularySheet } from "../import-template/vocabulary-sheet.ts";
 import {
-  addChildSheet,
-  addDataSheet,
-  addReadMeSheet,
-  addVocabularySheet,
   type ExcelBuffer,
-  FIRST_DATA_ROW,
-  FROZEN_FILL,
   xlsxResponse,
-} from "../import-template/workbook.ts";
+} from "../import-template/xlsx-response.ts";
 import {
   EXPORT_CHILD_SHEETS,
   EXPORT_SAMPLE_COLUMNS,

@@ -1,9 +1,8 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 
-import {
-  attachmentMetadata,
-  type SampleAttachmentChanges,
-} from "#/samples/use-attachment-changes.ts";
+import type { SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
+
+import { attachmentMetadata } from "#/samples/attachment-metadata.ts";
 
 export function hasUnsavedAttachmentChanges(
   saved: SampleAttachment[],

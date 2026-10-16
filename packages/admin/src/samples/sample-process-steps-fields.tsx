@@ -16,8 +16,8 @@ import {
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
+import { EMPTY_PROCESS_STEP_DRAFT } from "#/samples/compose-process-steps.ts";
 import { DateRangeField } from "#/samples/date-range-field.tsx";
-import { EMPTY_PROCESS_STEP_DRAFT } from "#/samples/sample-draft-schema.ts";
 import { processStepKindLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 

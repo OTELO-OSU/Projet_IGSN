@@ -7,7 +7,7 @@ import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { TruncatedText } from "@projet-igsn/design-system/components/ui/truncated-text";
 import { XIcon } from "lucide-react";
 
-import type { FacetValues } from "#/domain/samples/sample-facets.tsx";
+import type { FacetValues } from "#/domain/samples/facet-values.ts";
 
 import { facetLabel, facetValueLabel } from "#/domain/samples/facet-labels.ts";
 import { numericUnitLabel } from "#/domain/samples/sample-labels.ts";

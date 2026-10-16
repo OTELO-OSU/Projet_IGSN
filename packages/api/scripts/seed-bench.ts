@@ -11,7 +11,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import { createDb } from "../src/db.ts";
 import { FACET_VALUES } from "./bench-lib.ts";
-import { seedMockUsers } from "./seed.ts";
+import { seedMockUsers } from "./seed-mock-users.ts";
 
 const BATCH_SIZE = 1000;
 const CONCURRENCY = 8;

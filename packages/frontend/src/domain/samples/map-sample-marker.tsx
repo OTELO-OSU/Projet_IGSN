@@ -4,7 +4,7 @@ import type { SampleMapDetail } from "@projet-igsn/domain/sample/map/model";
 import L from "leaflet";
 import { Polyline, Rectangle, Tooltip, useMap } from "react-leaflet";
 
-import type { HoveredSample } from "#/domain/samples/results-map.tsx";
+import type { HoveredSample } from "#/domain/samples/map-highlight.ts";
 
 import { areaHalves } from "#/domain/samples/search-location-map.tsx";
 import { SplitMarker } from "#/domain/samples/split-marker.tsx";

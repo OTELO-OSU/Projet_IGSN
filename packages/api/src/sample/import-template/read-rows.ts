@@ -3,7 +3,7 @@ import type ExcelJS from "exceljs";
 import type { LayoutColumn, TemplateLayout } from "./template-layout.ts";
 
 import { plainHeader, SAMPLE_KEY_HEADER, SHEETS } from "./columns.ts";
-import { FIRST_DATA_ROW } from "./workbook.ts";
+import { FIRST_DATA_ROW } from "./data-range.ts";
 
 export type Cell = string | Date;
 

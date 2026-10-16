@@ -1,5 +1,6 @@
 import { createDb } from "../src/db.ts";
-import { SEED_SAMPLES, seed } from "./seed.ts";
+import { SEED_SAMPLES } from "./seed-samples.ts";
+import { seed } from "./seed.ts";
 
 const db = createDb();
 await db.deleteFrom("sample").execute();

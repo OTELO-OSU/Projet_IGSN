@@ -1,4 +1,5 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type ExcelJS from "exceljs";
 
 import { isOfferedLaboratory } from "@projet-igsn/domain/institutional-group/is-offered-laboratory";
 import {
@@ -426,3 +427,13 @@ export const VOCABULARY_ROWS: readonly VocabularyRow[] = sheet.rows;
 
 export const BLOCK_PLACEMENTS: Readonly<Record<string, BlockPlacement>> =
   sheet.placements;
+
+export function addVocabularySheet(
+  book: ExcelJS.Workbook,
+  rows: typeof VOCABULARY_ROWS = VOCABULARY_ROWS,
+) {
+  const sheet = book.addWorksheet(SHEETS.vocabularies);
+  sheet.addRows(rows.map((row) => [...row]));
+  for (const index of [1, 2, 3]) sheet.getColumn(index).width = 52;
+  return sheet;
+}

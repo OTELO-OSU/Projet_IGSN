@@ -10,7 +10,7 @@ import {
 import { useEffect, useRef } from "react";
 
 import type { SearchFilters } from "#/domain/samples/client/list-samples.ts";
-import type { HoveredSample } from "#/domain/samples/results-map.tsx";
+import type { HoveredSample } from "#/domain/samples/map-highlight.ts";
 
 import { type CardSample } from "#/domain/samples/card-fields.ts";
 import { getSampleByIgsnQueryOptions } from "#/domain/samples/hook/get-sample-by-igsn.ts";

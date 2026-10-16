@@ -1,7 +1,7 @@
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { NO_REACH } from "../service-account/service-routes.ts";
+import { NO_REACH } from "../service-account/service-read-routes.ts";
 
 const PAGE_SIZE = 500;
 

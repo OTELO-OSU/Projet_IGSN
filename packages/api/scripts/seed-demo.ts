@@ -3,7 +3,7 @@ import type { Kysely } from "kysely";
 import { sql } from "kysely";
 
 import type { DB } from "../src/db.ts";
-import type { SampleOwner } from "./seed.ts";
+import type { SampleOwner } from "./seed-sample-row.ts";
 
 import { createDb } from "../src/db.ts";
 import { deleteOrphanLocations } from "../src/sample/service/delete-orphan-locations.ts";
@@ -13,6 +13,7 @@ import { replaceSampleChildren } from "../src/sample/service/replace-sample-chil
 import { replaceSampleMineralClassifications } from "../src/sample/service/replace-sample-mineral-classifications.ts";
 import { replaceSampleProcessSteps } from "../src/sample/service/replace-sample-process-steps.ts";
 import { replaceSampleRelations } from "../src/sample/service/replace-sample-relations.ts";
+import { insertSamples } from "./insert-samples.ts";
 import {
   DEMO_ADDITIONAL_ROLES,
   DEMO_CHILDREN,
@@ -23,7 +24,7 @@ import {
   DEMO_RELATIONS,
   DEMO_SAMPLES,
 } from "./seed-demo-samples.ts";
-import { insertSamples, seedMockUsers } from "./seed.ts";
+import { seedMockUsers } from "./seed-mock-users.ts";
 
 const listAcceptedOwners = (db: Kysely<DB>): Promise<SampleOwner[]> =>
   db

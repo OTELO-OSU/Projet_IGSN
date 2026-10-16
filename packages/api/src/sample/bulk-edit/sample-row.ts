@@ -2,8 +2,8 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import type { Column } from "../import-template/columns.ts";
 
+import { blockIdOf } from "../import-template/block-id-of.ts";
 import { labelOf } from "../import-template/resolve-label.ts";
-import { blockIdOf } from "../import-template/workbook.ts";
 
 export type Cell = string | number | null;
 

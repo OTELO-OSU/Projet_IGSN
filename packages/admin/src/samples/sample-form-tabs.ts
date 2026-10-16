@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
+import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import {
   ArchiveIcon,
   FingerprintIcon,
@@ -133,4 +134,29 @@ export function tabCompleteness(
     };
   }
   return completeness;
+}
+
+export function isSampleFormTabDisabled(
+  value: SampleFormTab,
+  {
+    hasParentTab,
+    material,
+    hasSoleParent,
+    parentIds,
+    provenanceStatus,
+  }: {
+    hasParentTab: boolean;
+    material: string | null;
+    hasSoleParent: boolean;
+    parentIds: string[];
+    provenanceStatus: SampleDraft["scientificContext"]["provenanceStatus"];
+  },
+): boolean {
+  return (
+    (value === "parent" && !hasParentTab) ||
+    (value === "location" &&
+      (!allowsLocation(material) ||
+        (!hasSoleParent && parentIds.length > 0))) ||
+    (value === "scientific-context" && !provenanceStatus)
+  );
 }

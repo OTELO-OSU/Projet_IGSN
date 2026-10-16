@@ -33,6 +33,7 @@ import {
   ChildNotEligibleError,
 } from "../sample/service/replace-sample-children.ts";
 import { withSeriesId } from "../sample/with-series-id.ts";
+import { checkServiceUpdate } from "./check-service-update.ts";
 import {
   createSampleBatchRoute,
   getSampleBatchRoute,
@@ -42,7 +43,6 @@ import {
   type ServiceSampleChecksDeps,
   SAMPLE_KEY_PATH,
   checkServiceCreate,
-  checkServiceUpdate,
 } from "./service-sample-checks.ts";
 import { invalidSample, serviceSampleIssue } from "./service-sample-issue.ts";
 
