@@ -160,6 +160,19 @@ describe("SampleView", () => {
     await expect.element(screen.getByText("sample-42")).toBeInTheDocument();
   });
 
+  it("should offer the Excel download of the published sample right after the sidebar menu", async () => {
+    const screen = await render(<SampleView sample={sample()} />);
+    const link = screen.getByRole("link", { name: "Download as Excel" });
+
+    await expect.element(link).toBeVisible();
+    expect(
+      screen
+        .getByRole("navigation", { name: "Sample" })
+        .element()
+        .nextElementSibling?.contains(link.element()),
+    ).toBe(true);
+  });
+
   it("should show a QR code labelled for the sample igsn in the hero", async () => {
     const screen = await render(<SampleView sample={sample()} />);
 

@@ -145,6 +145,7 @@ export function createApp(
     )
     .use("/:igsn/contact/*", captcha.middleware())
     .use("/export", rateLimit(rateLimitConfig, "ip", EXPORT_IP_BUDGET))
+    .use("/:igsn/export", rateLimit(rateLimitConfig, "ip", EXPORT_IP_BUDGET))
     .route(
       "/",
       createSampleRoutes(

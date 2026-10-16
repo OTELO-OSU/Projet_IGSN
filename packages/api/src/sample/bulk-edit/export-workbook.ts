@@ -8,6 +8,7 @@ import {
   FROZEN_FORM_FIELDS_BY_PROVENANCE,
   frozenMaterialDepth,
 } from "@projet-igsn/domain/sample/publication/published-field-lock";
+import { redactPrivateContacts } from "@projet-igsn/domain/sample/publication/redact-private-contacts";
 import ExcelJS from "exceljs";
 
 import type { Column } from "../import-template/columns.ts";
@@ -27,6 +28,7 @@ import {
 import {
   EXPORT_CHILD_SHEETS,
   EXPORT_SAMPLE_COLUMNS,
+  PUBLIC_EXPORT_SAMPLE_COLUMNS,
 } from "./export-columns.ts";
 import { childRows, sampleRow } from "./sample-row.ts";
 
@@ -81,22 +83,26 @@ const keyOf = (sample: Sample): Cell =>
     ? null
     : formatInternalId(sample.internalNumber);
 
-async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
+async function build(
+  samples: readonly Sample[],
+  sampleColumns: readonly Column[],
+  withReadMe: boolean,
+): Promise<ExcelBuffer> {
   const book = new ExcelJS.Workbook();
-  addReadMeSheet(book, "IGSN samples export", READ_ME_LINES);
+  if (withReadMe) addReadMeSheet(book, "IGSN samples export", READ_ME_LINES);
   const sampleRows = Math.max(1, samples.length);
   const samplesSheet = addDataSheet(
     book,
     SHEETS.samples,
-    EXPORT_SAMPLE_COLUMNS,
+    sampleColumns,
     sampleRows,
   );
   fill(
     samplesSheet,
-    EXPORT_SAMPLE_COLUMNS,
+    sampleColumns,
     samples.map((sample) => ({
       sample,
-      cells: sampleRow(sample, EXPORT_SAMPLE_COLUMNS).with(0, keyOf(sample)),
+      cells: sampleRow(sample, sampleColumns).with(0, keyOf(sample)),
     })),
   );
   const hasSubSample = samples.some(({ parents }) => parents.length > 0);
@@ -113,7 +119,7 @@ async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
       child.name,
       child.columns,
       rows.length + MAX_IMPORT_ROWS,
-      EXPORT_SAMPLE_COLUMNS,
+      sampleColumns,
       sampleRows,
     );
     fill(sheet, child.columns, rows);
@@ -125,7 +131,15 @@ async function build(samples: readonly Sample[]): Promise<ExcelBuffer> {
 export function exportWorkbook(
   samples: readonly Sample[],
 ): Promise<ExcelBuffer> {
-  return queueBuild(() => build(samples));
+  return queueBuild(() => build(samples, EXPORT_SAMPLE_COLUMNS, true));
+}
+
+export function exportPublicSampleWorkbook(
+  sample: Sample,
+): Promise<ExcelBuffer> {
+  return queueBuild(() =>
+    build([redactPrivateContacts(sample)], PUBLIC_EXPORT_SAMPLE_COLUMNS, false),
+  );
 }
 
 export async function samplesExportResponse(
