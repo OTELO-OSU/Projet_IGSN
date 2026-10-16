@@ -39,6 +39,7 @@
   "opens_in_new_tab": "(opens in a new tab)",
   "open_data_link": "All samples on data.gouv.fr",
   "download_results": "Download results",
+  "download_sample": "Download as Excel",
   "download_results_too_many": "More than {max} results: refine your search or use the open data.",
   "results_map_view_sample": "View sample",
   "results_map_cluster": "{count} samples",

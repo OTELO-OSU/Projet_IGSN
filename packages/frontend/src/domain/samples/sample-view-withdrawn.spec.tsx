@@ -153,7 +153,7 @@ describe("SampleView of a withdrawn or embargoed sample", () => {
   });
 
   it.each(hiddenStatuses)(
-    "should offer the private notice of a %s sample and a way to contact the owner, but no edit action",
+    "should offer the private notice of a %s sample and a way to contact the owner, but no edit nor download action",
     async (status) => {
       vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response("{}", { status: 200 }),
@@ -180,6 +180,9 @@ describe("SampleView of a withdrawn or embargoed sample", () => {
         )
         .toBeVisible();
       expect(screen.getByRole("link", { name: "Edit" }).query()).toBeNull();
+      expect(
+        screen.getByRole("link", { name: "Download as Excel" }).query(),
+      ).toBeNull();
     },
   );
 

@@ -5,6 +5,7 @@ import { useLinkProps } from "@tanstack/react-router";
 
 import { AddSubSampleLink } from "#/domain/samples/add-sub-sample-link.tsx";
 import { AdminSampleLink } from "#/domain/samples/admin-sample-link.tsx";
+import { DownloadSampleLink } from "#/domain/samples/download-sample-link.tsx";
 import { LineageView } from "#/domain/samples/lineage-view.tsx";
 import { SampleHero } from "#/domain/samples/sample-hero.tsx";
 import { sampleSections } from "#/domain/samples/sample-sections.tsx";
@@ -95,20 +96,24 @@ export function SampleView({
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
         {withdrawn ? null : (
-          <nav
-            aria-label={m.sample_section_sample()}
-            className="sticky top-40 hidden shrink-0 self-start md:block"
-          >
-            <ul className="space-y-1 border-l">
-              {sections.map(({ id, title }) => (
-                <li key={id}>
-                  <SectionLink id={id} current={id === activeId}>
-                    {title}
-                  </SectionLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <div className="sticky top-40 hidden shrink-0 self-start md:block">
+            <nav aria-label={m.sample_section_sample()}>
+              <ul className="space-y-1 border-l">
+                {sections.map(({ id, title }) => (
+                  <li key={id}>
+                    <SectionLink id={id} current={id === activeId}>
+                      {title}
+                    </SectionLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            {sample.igsn != null && (
+              <div className="mt-6">
+                <DownloadSampleLink igsn={sample.igsn} />
+              </div>
+            )}
+          </div>
         )}
 
         <div className="flex-1">

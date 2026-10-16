@@ -33,3 +33,7 @@ export const EXPORT_SAMPLE_COLUMNS: readonly Column[] = SAMPLE_COLUMNS.flatMap(
 export const EXPORT_CHILD_SHEETS = CHILD_SHEETS.filter(
   ({ name }) => name !== SHEETS.attachments,
 );
+
+export const PUBLIC_EXPORT_SAMPLE_COLUMNS = EXPORT_SAMPLE_COLUMNS.filter(
+  ({ path }) => path !== "repository.currentArchiveContactEmail",
+);

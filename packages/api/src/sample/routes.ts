@@ -16,7 +16,9 @@ import { HTTPException } from "hono/http-exception";
 import type { SendMail } from "../mail/send-mail.ts";
 
 import { attachmentDownload } from "./attachment-download.ts";
+import { exportPublicSampleWorkbook } from "./bulk-edit/export-workbook.ts";
 import { contactSampleOwnerMail } from "./contact-sample-owner-mail.ts";
+import { xlsxResponse } from "./import-template/xlsx-response.ts";
 import { searchExportResponse } from "./search-export.ts";
 import {
   validateContactBody,
@@ -78,6 +80,17 @@ export function createSampleRoutes(
       }
       const body: PublicSampleResponse = { data: toPublicSample(sample) };
       return c.json(body);
+    })
+    .get("/:igsn/export", validateIgsnParam, async (c) => {
+      const { igsn } = c.req.valid("param");
+      const sample = await repository.getPublicByIgsn(igsn);
+      if (sample?.status !== "published") {
+        return c.json({ error: "Sample not found" }, 404);
+      }
+      return xlsxResponse(
+        await exportPublicSampleWorkbook(sample),
+        `igsn-${igsn}.xlsx`,
+      );
     })
     .get("/:igsn/lineage", validateIgsnParam, async (c) => {
       const lineage = await repository.getPublicLineage(
