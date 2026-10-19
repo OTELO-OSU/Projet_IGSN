@@ -37,7 +37,7 @@
   "results_map_open": "See on map",
   "results_map_title": "Search results on the map",
   "opens_in_new_tab": "(opens in a new tab)",
-  "open_data_link": "All samples on data.gouv.fr",
+  "open_data_link": "Download published samples from data.gouv.fr",
   "download_results": "Download results",
   "download_sample": "Download as Excel",
   "download_results_too_many": "More than {max} results: refine your search or use the open data.",
