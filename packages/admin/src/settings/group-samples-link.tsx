@@ -1,16 +1,23 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+
 import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { useId, useState } from "react";
 
 import { frontendSearchUrl } from "#/frontend-url.ts";
+import { mergeManagedGroups } from "#/manual-groups/merge-managed-groups.ts";
 import { useMyManualGroups } from "#/manual-groups/use-my-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import { ShareLink } from "#/settings/share-link.tsx";
 
-export function GroupSamplesLink() {
+export function GroupSamplesLink({
+  managedGroups,
+}: {
+  managedGroups: ManualGroup[];
+}) {
   const id = useId();
   const query = useMyManualGroups();
-  const groups = query.data?.data ?? [];
+  const groups = mergeManagedGroups(query.data?.data ?? [], managedGroups);
   const [pickedId, setPickedId] = useState("");
   const onlyGroup = groups.length === 1 ? groups[0] : undefined;
   const groupId = onlyGroup?.id ?? pickedId;

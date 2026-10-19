@@ -1,3 +1,5 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import {
   Tooltip,
@@ -8,10 +10,15 @@ import {
 import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
 
+import { mergeManagedGroups } from "./merge-managed-groups.ts";
 import { useLeaveManualGroup } from "./use-leave-manual-group.ts";
 import { useMyManualGroups } from "./use-my-manual-groups.ts";
 
-export function MyManualGroups() {
+export function MyManualGroups({
+  managedGroups,
+}: {
+  managedGroups: ManualGroup[];
+}) {
   const query = useMyManualGroups();
   const leaveGroup = useLeaveManualGroup();
 
@@ -23,13 +30,25 @@ export function MyManualGroups() {
       </FormSection>
     );
 
-  const { data: groups } = query.data;
+  const groups = mergeManagedGroups(query.data.data, managedGroups);
   if (groups.length === 0) return null;
 
   return (
     <FormSection title={m.settings_manual_groups_title()}>
       <ul className="grid w-full max-w-md gap-2">
         {groups.map((group) => {
+          if (!("canLeave" in group))
+            return (
+              <li
+                key={group.id}
+                className="flex items-center justify-between gap-4"
+              >
+                <span>{group.name}</span>
+                <span className="text-muted-foreground text-sm">
+                  {m.manual_group_manager_badge()}
+                </span>
+              </li>
+            );
           const leaveButton = (
             <ConfirmButton
               variant="outline"

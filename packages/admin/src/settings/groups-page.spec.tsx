@@ -37,8 +37,10 @@ const LOCKED_MESSAGE =
 
 function fakeApi({
   manualGroups = [BASALT_TEAM],
+  managedManualGroups = [],
 }: {
   manualGroups?: { id: string; name: string; canLeave: boolean }[];
+  managedManualGroups?: { id: string; name: string }[];
 } = {}) {
   const groupPuts: unknown[] = [];
   worker.use(
@@ -63,7 +65,7 @@ function fakeApi({
         superAdmin: false,
         charterAccepted: true,
         managedLaboratories: [],
-        managedManualGroups: [],
+        managedManualGroups,
         ...CALLER_GROUPS,
       }),
     ),
@@ -157,6 +159,26 @@ describe("groups page", () => {
     await expect
       .element(page.getByRole("heading", { name: "Manual groups" }))
       .not.toBeInTheDocument();
+  });
+
+  it("should list a group the user only manages without offering to leave it", async () => {
+    await renderGroupsPage({ managedManualGroups: [FOSSIL_TEAM] });
+    const section = page.getByRole("region", { name: "Manual groups" });
+    await expect.element(section.getByText("Fossil team")).toBeVisible();
+    await expect.element(section.getByText("Manager")).toBeVisible();
+    await expect
+      .element(page.getByRole("button", { name: "Leave Fossil team" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show the manual groups section to a user who only manages one", async () => {
+    await renderGroupsPage({
+      manualGroups: [],
+      managedManualGroups: [FOSSIL_TEAM],
+    });
+    await expect
+      .element(page.getByRole("heading", { name: "Manual groups" }))
+      .toBeVisible();
   });
 
   it("should refuse to leave only the group holding a published sample", async () => {

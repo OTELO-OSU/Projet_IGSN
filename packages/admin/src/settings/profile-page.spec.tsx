@@ -306,6 +306,47 @@ describe("profile page", () => {
     await expect.element(groupSelector()).not.toBeInTheDocument();
   });
 
+  it("should offer the samples link of the only group the user manages without belonging to it", async () => {
+    await renderProfilePage({
+      manualGroups: [],
+      me: { managedManualGroups: [FOSSIL_TEAM] },
+    });
+
+    await expect
+      .element(page.getByRole("textbox", { name: "Fossil team samples link" }))
+      .toHaveValue(
+        `http://localhost:3000/search?manualGroup=${FOSSIL_TEAM.id}`,
+      );
+  });
+
+  it("should offer both a member group and a managed group to pick", async () => {
+    await renderProfilePage({
+      manualGroups: [BASALT_TEAM],
+      me: { managedManualGroups: [FOSSIL_TEAM] },
+    });
+
+    await groupSelector().click();
+
+    await expect
+      .element(page.getByRole("option", { name: "Basalt team" }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("option", { name: "Fossil team" }))
+      .toBeVisible();
+  });
+
+  it("should offer a group both joined and managed once", async () => {
+    await renderProfilePage({
+      manualGroups: [BASALT_TEAM],
+      me: { managedManualGroups: [BASALT_TEAM] },
+    });
+
+    await expect
+      .element(page.getByRole("textbox", { name: "Basalt team samples link" }))
+      .toBeVisible();
+    await expect.element(groupSelector()).not.toBeInTheDocument();
+  });
+
   it("should hide the group samples link when the user belongs to no group", async () => {
     await renderProfilePage({ manualGroups: [] });
 

@@ -46,7 +46,7 @@ function ProfilePage() {
                   label={m.settings_my_samples_link()}
                   link={frontendSearchUrl({ contributor: data.id })}
                 />
-                <GroupSamplesLink />
+                <GroupSamplesLink managedGroups={data.managedManualGroups} />
               </FormSection>
               <MyServiceAccounts />
             </>

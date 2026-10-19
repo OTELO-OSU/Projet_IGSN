@@ -864,6 +864,7 @@
   "manual_group_member_remove_error": "Could not detach the member",
   "settings_manual_groups_title": "Manual groups",
   "manual_group_leave_locked": "You cannot leave this group while you own a published sample attached to it.",
+  "manual_group_manager_badge": "Manager",
   "manual_group_leave_action": "Leave",
   "manual_group_leave_group": "Leave {name}",
   "manual_group_leave_title": "Leave this manual group?",
