@@ -56,7 +56,7 @@ test.describe("sub samples", () => {
 
     const subSampleName = `Sub sample ${Date.now()}`;
     await create.openTab("Identity");
-    await create.expectNoCollectionDate();
+    await create.expectCollectionDateDisabled("2025-06-15");
     await create.fillName(subSampleName);
     await create.submit();
     await edit.expectVisible();

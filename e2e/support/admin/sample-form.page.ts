@@ -182,10 +182,13 @@ export function sampleFormPage(page: Page) {
         .fill("2025-06-15");
       await fillPersonName(/operator name/i, "Paul", "Bernard");
     },
-    expectNoCollectionDate: () =>
-      expect(page.getByRole("group", { name: /collection date/i })).toHaveCount(
-        0,
-      ),
+    expectCollectionDateDisabled: async (date: string) => {
+      const input = page
+        .getByRole("group", { name: /collection date/i })
+        .getByRole("textbox", { name: /^Date/ });
+      await expect(input).toHaveValue(date);
+      await expect(input).toBeDisabled();
+    },
     addProcessStep: async (
       kind: string,
       { date, description }: { date: string; description: string },
