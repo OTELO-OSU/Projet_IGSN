@@ -7,6 +7,7 @@ import ExcelJS from "exceljs";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import type { TemplateCustomization } from "./customization.ts";
+import type { TemplateValidation } from "./sheet-validations.ts";
 
 import {
   CHILD_SHEETS,
@@ -72,7 +73,7 @@ const groupRunsOf = (name: string) => {
 };
 
 const sampleKeyRange = (lastRow: number) =>
-  `=${SHEETS.samples}!$A$${FIRST_DATA_ROW}:$A$${lastRow}`;
+  `${SHEETS.samples}!$A$${FIRST_DATA_ROW}:$A$${lastRow}`;
 
 const sampleValueOf = (row: number, letter: string, number: number) =>
   `VLOOKUP($A${row}, ${SHEETS.samples}!$A:$${letter}, ${number}, FALSE)`;
@@ -375,23 +376,27 @@ describe("import template workbook", () => {
 
     expect(
       sheetValidations(storage).find(`C${FIRST_DATA_ROW}`)?.formulae,
-    ).toEqual([`=${BLOCK_PLACEMENTS.storage_condition?.labelRange}`]);
+    ).toEqual([`${BLOCK_PLACEMENTS.storage_condition?.labelRange}`]);
   });
 
-  it("should keep every validation formula within Excel's 255-character limit", () => {
+  it("should keep every validation within Excel's limits", () => {
     const tooLong = book.worksheets.flatMap((worksheet) =>
       Object.entries(
         (
           worksheet as unknown as {
-            dataValidations: {
-              model: Record<string, { formulae?: string[] }>;
-            };
+            dataValidations: { model: Record<string, TemplateValidation> };
           }
         ).dataValidations.model,
-      ).flatMap(([address, { formulae = [] }]) =>
-        formulae
-          .filter((formula) => String(formula).length > 255)
-          .map(() => `${worksheet.name}!${address}`),
+      ).flatMap(([address, validation]) =>
+        [
+          ...(validation.formulae ?? []).map((formula) => [formula, 255]),
+          [validation.prompt, 255],
+          [validation.error, 255],
+          [validation.promptTitle, 32],
+          [validation.errorTitle, 32],
+        ]
+          .filter(([text = "", limit]) => String(text).length > Number(limit))
+          .map(([text]) => `${worksheet.name}!${address}: ${text}`),
       ),
     );
 

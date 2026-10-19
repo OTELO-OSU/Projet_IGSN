@@ -5,7 +5,6 @@ import type { TemplateValidation } from "./sheet-validations.ts";
 import type { BlockPlacement } from "./vocabulary-sheet.ts";
 
 import { blockIdOf } from "./block-id-of.ts";
-import { SHEETS } from "./columns.ts";
 import { conditionalPromptOf } from "./conditional-fields.ts";
 import { columnLetter, FIRST_DATA_ROW } from "./data-range.ts";
 
@@ -36,11 +35,11 @@ function vocabularyValidationOf(
   const placement = blockId === undefined ? undefined : placements[blockId];
   if (placement === undefined) return undefined;
   const { title, keyRange, labelAnchor, labelRange } = placement;
-  let formula = `=${labelRange}`;
+  let formula = labelRange;
   let follows = "";
   if ((column.level ?? 1) > 1) {
     const breadcrumb = breadcrumbOf(sheet, columns, column);
-    formula = `=OFFSET(${labelAnchor},MATCH(${breadcrumb},${keyRange},0)-1,0,COUNTIF(${keyRange},${breadcrumb}),1)`;
+    formula = `OFFSET(${labelAnchor},MATCH(${breadcrumb},${keyRange},0)-1,0,COUNTIF(${keyRange},${breadcrumb}),1)`;
     follows = ", which follows the level above";
   }
   return {
@@ -49,7 +48,7 @@ function vocabularyValidationOf(
     formulae: [formula],
     showInputMessage: true,
     promptTitle: title,
-    prompt: `Pick a value from the list${follows}. Full list in the "${title}" block of the ${SHEETS.vocabularies} sheet.`,
+    prompt: `Pick a value from the list${follows}.`,
     showErrorMessage: true,
     errorStyle: "warning",
     errorTitle: title,
