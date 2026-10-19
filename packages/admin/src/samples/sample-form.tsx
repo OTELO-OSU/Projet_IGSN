@@ -165,7 +165,6 @@ export function SampleForm({
     parents,
   });
   const onlyParent = soleParent(parents);
-  const hasParentTab = parents.length > 0 || sampleId !== undefined;
   const offersParentPicker = parents.length === 0 && canAddParent;
   const defaultSubmit =
     primaryAction?.kind === "submit"
@@ -242,7 +241,7 @@ export function SampleForm({
                   );
               const isTabDisabled = (value: SampleFormTab) =>
                 isSampleFormTabDisabled(value, {
-                  hasParentTab,
+                  hasParentContent: parents.length > 0 || offersParentPicker,
                   material,
                   hasSoleParent: onlyParent !== undefined,
                   parentIds: values.parentIds,
@@ -279,20 +278,17 @@ export function SampleForm({
                       >
                         <SampleFormTabList
                           parentCount={parents.length}
-                          hasParentTab={hasParentTab}
                           completeness={tabCompleteness(required)}
                           isTabDisabled={isTabDisabled}
                         />
 
-                        {hasParentTab ? (
-                          <TabsContent value="parent" className="grid gap-4">
-                            <SampleParentTab
-                              parents={parents}
-                              sampleId={sampleId}
-                              offersParentPicker={offersParentPicker}
-                            />
-                          </TabsContent>
-                        ) : null}
+                        <TabsContent value="parent" className="grid gap-4">
+                          <SampleParentTab
+                            parents={parents}
+                            sampleId={sampleId}
+                            offersParentPicker={offersParentPicker}
+                          />
+                        </TabsContent>
 
                         <TabsContent value={DEFAULT_TAB} className="grid gap-4">
                           <SampleIdentityTab

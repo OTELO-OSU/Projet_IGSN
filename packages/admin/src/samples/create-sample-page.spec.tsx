@@ -612,6 +612,38 @@ describe("CreateSamplePage", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should send the parent picked in the parent tab of a plain create in the POST body", async () => {
+    const screen = await renderCreatePage();
+    worker.use(
+      http.get("*/admin/samples/parents", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: SECOND_PARENT_ID,
+              igsn: SECOND_PARENT_IGSN,
+              name: SECOND_PARENT.name,
+              material: SECOND_PARENT.material,
+            },
+          ],
+        }),
+      ),
+    );
+    await screen.getByLabelText(/^name/i).fill("Thin section VO-2026-001");
+    await openTab(screen, "Parent sample");
+    await screen.getByRole("combobox", { name: "Parent" }).click();
+    await screen.getByPlaceholder("Search by name or IGSN").fill("Vosges");
+    await screen.getByRole("option", { name: /Vosges 2026/ }).click();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    expect(screen.created()).toMatchObject({
+      name: "Thin section VO-2026-001",
+      parentIds: [SECOND_PARENT_ID],
+    });
+  });
+
   it("should render the plain create form when the parent is out of reach", async () => {
     const screen = await renderCreatePage(
       false,
@@ -625,7 +657,7 @@ describe("CreateSamplePage", () => {
       .toBeVisible();
     await expect
       .element(screen.getByRole("tab", { name: "Parent sample" }))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
   });
 
   it("should prefill the form from the duplicated sample without asking for a second parent", async () => {
@@ -665,7 +697,7 @@ describe("CreateSamplePage", () => {
       .toHaveValue("Basalte du Massif Central (copy)");
     await expect
       .element(screen.getByRole("tab", { name: "Parent sample" }))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
   });
 
   it("should refuse to duplicate a sample out of reach", async () => {

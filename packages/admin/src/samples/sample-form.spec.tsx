@@ -1915,7 +1915,7 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByRole("tablist"))
       .toHaveTextContent(
-        /^Identity.*Sample classification.*Location.*Age.*Physical description.*Scientific context.*Conservation and security.*Curation and repository.*Related URL or document$/,
+        /^Parent sample.*Identity.*Sample classification.*Location.*Age.*Physical description.*Scientific context.*Conservation and security.*Curation and repository.*Related URL or document$/,
       );
   });
 
@@ -3253,17 +3253,29 @@ describe("SampleForm post-publication field lock", () => {
       .toHaveTextContent("Related URL or document > Relation resource type");
   });
 
-  it("should offer no parent tab on a parentless sample being created", async () => {
+  it("should disable the parent tab with no parent and no picker", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
     await expect
-      .element(screen.getByRole("tab", { name: "Identity" }))
-      .toBeVisible();
-    await expect
       .element(screen.getByRole("tab", { name: "Parent sample" }))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
+  });
+
+  it("should offer the parent picker on a sample being created", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        canAddParent
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Parent" }))
+      .toBeVisible();
   });
 
   it("should name the parent sample and link to its public page in the parent tab", async () => {
