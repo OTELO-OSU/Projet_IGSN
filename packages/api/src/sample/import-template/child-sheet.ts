@@ -52,7 +52,7 @@ export function addChildSheet(
   sheetValidations(sheet).add(dataRange("A", rows), {
     type: "list",
     allowBlank: true,
-    formulae: [`=${sampleKeyRange(sampleRows)}`],
+    formulae: [sampleKeyRange(sampleRows)],
     showInputMessage: true,
     promptTitle: SAMPLE_KEY_HEADER,
     prompt: `The "${SAMPLE_KEY_HEADER}" of the sample this row belongs to, taken from the ${SHEETS.samples} sheet.`,
