@@ -74,7 +74,6 @@ function requirementFields(
   values: SampleDraft,
 ): RequiredField[] {
   const one = (name: string): RequiredField[] => [{ name, isMet }];
-  if (blocker === "collection_date_missing" && isSubSample(values)) return [];
   switch (blocker) {
     case "process_step_date_missing":
       return one(`processSteps[${index}].dateStart`);

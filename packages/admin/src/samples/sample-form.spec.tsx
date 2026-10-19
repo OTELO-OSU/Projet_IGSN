@@ -3392,24 +3392,41 @@ describe("SampleForm post-publication field lock", () => {
   });
 
   it.each([
-    { parents: [], shown: true },
-    { parents: [NATURAL_PARENT], shown: false },
+    { parents: [], parentIds: [], enabled: true },
+    {
+      parents: [NATURAL_PARENT],
+      parentIds: ["3f2504e0-4f89-41d3-9a0c-0305000000b1"],
+      enabled: false,
+    },
   ])(
-    "should offer the collection date on a root sample only: $shown",
-    async ({ parents, shown }) => {
+    "should show the collection date, editable on a root sample only: $enabled",
+    async ({ parents, parentIds, enabled }) => {
       const screen = await render(
         <SampleForm
           onCancel={noop}
           parents={parents}
+          defaultValues={{
+            parentIds,
+            description: {
+              collectionDate: {
+                precision: "day",
+                start: "2026-01-01",
+                end: "2026-01-01",
+              },
+            },
+          }}
           primaryAction={createAction(noop)}
         />,
       );
 
-      const group = screen.getByRole("group", { name: "Collection date" });
-      if (shown) {
-        await expect.element(group).toBeVisible();
+      const date = screen
+        .getByRole("group", { name: "Collection date" })
+        .getByLabelText(/^Date( \*)?$/);
+      await expect.element(date).toHaveValue("2026-01-01");
+      if (enabled) {
+        await expect.element(date).toBeEnabled();
       } else {
-        await expect.element(group).not.toBeInTheDocument();
+        await expect.element(date).toBeDisabled();
       }
     },
   );
@@ -3439,7 +3456,7 @@ describe("SampleForm post-publication field lock", () => {
     },
   );
 
-  it("should submit the collection date of a sub sample though its field is hidden", async () => {
+  it("should submit the collection date of a sub sample though its field is disabled", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm
