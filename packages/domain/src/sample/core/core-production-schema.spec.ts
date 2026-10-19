@@ -25,6 +25,30 @@ describe("coreProductionSchema", () => {
   const { production } = RESEARCH_PROJECT_SAMPLE_RECORD;
   const project = production.projects?.[0];
 
+  const {
+    collection_date_start: _start,
+    collection_date_end: _end,
+    collectionDatePrecision: _precision,
+    collectionDateTimeZone: _timeZone,
+    ...dateless
+  } = production;
+
+  it("should accept a production with no collection date", () => {
+    expect(coreProductionSchema.safeParse(dateless).success).toBe(true);
+  });
+
+  it("should refuse a collection start without its end and precision", () => {
+    const result = coreProductionSchema.safeParse({
+      ...dateless,
+      collection_date_start: "2024-06-01",
+    });
+
+    expect(result.error?.issues).toMatchObject([
+      { path: ["collection_date_end"] },
+      { path: ["collectionDatePrecision"] },
+    ]);
+  });
+
   it.each([
     [
       "a campaign beside a name",

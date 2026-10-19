@@ -27,6 +27,13 @@ export function toDataCiteDates(core: CoreSample): DataCiteDate[] {
       const dateType = DATE_TYPE_BY_EVENT[eventType];
       return dateType == null ? [] : [{ date: timestamp, dateType }];
     }),
-    { date: start === end ? start : `${start}/${end}`, dateType: "Collected" },
+    ...(start == null
+      ? []
+      : [
+          {
+            date: start === end ? start : `${start}/${end}`,
+            dateType: "Collected" as const,
+          },
+        ]),
   ];
 }

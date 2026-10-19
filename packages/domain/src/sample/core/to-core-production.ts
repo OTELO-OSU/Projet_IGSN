@@ -5,7 +5,6 @@ import type {
   CoreProduction,
 } from "./core-production-schema.ts";
 
-import { collectionDateSchema } from "../description/collection-date.ts";
 import { isEmpty, optionalConcept } from "./core-optional.ts";
 import {
   CORE_SYNTHESIS_STEP,
@@ -68,15 +67,15 @@ function toCoreProcessSteps(sample: Sample): CoreProduction["processSteps"] {
 }
 
 export function toCoreProduction(sample: Sample): CoreProduction {
-  const collectionDate = collectionDateSchema.parse(
-    sample.description?.collectionDate,
-  );
+  const collectionDate = sample.description?.collectionDate;
   return {
-    collection_date_start: collectionDate.start,
-    collection_date_end: collectionDate.end,
-    collectionDatePrecision: collectionDate.precision,
+    collection_date_start: collectionDate?.start,
+    collection_date_end: collectionDate?.end,
+    collectionDatePrecision: collectionDate?.precision,
     collectionDateTimeZone:
-      collectionDate.precision === "hour" ? collectionDate.timeZone : undefined,
+      collectionDate?.precision === "hour"
+        ? collectionDate.timeZone
+        : undefined,
     collectionMethod: optionalConcept(
       "sample_description",
       sample.collectionMethod,
