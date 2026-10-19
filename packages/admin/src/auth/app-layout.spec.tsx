@@ -84,6 +84,12 @@ describe("AppLayout", () => {
     await expect
       .element(groups.getByRole("link", { name: "Laboratories" }))
       .toHaveAttribute("href", "/institutional-groups/laboratories");
+    expect(
+      screen
+        .getByRole("banner")
+        .getByRole("link", { name: "My samples" })
+        .elements(),
+    ).toHaveLength(0);
   });
 
   it("should offer the manual groups to a manual group manager", async () => {
@@ -121,6 +127,18 @@ describe("AppLayout", () => {
       )
       .toBeInTheDocument();
     expect(screen.getByRole("navigation").elements()).toHaveLength(0);
+  });
+
+  it("should offer a researcher without a sidebar a link to their samples", async () => {
+    fakeCurrentUser();
+
+    const screen = await renderLayout();
+
+    await expect
+      .element(
+        screen.getByRole("banner").getByRole("link", { name: "My samples" }),
+      )
+      .toHaveAttribute("href", "/");
   });
 
   it("should let a manager collapse the menu and keep it collapsed", async () => {

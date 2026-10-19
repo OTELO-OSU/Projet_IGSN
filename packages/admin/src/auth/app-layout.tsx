@@ -6,7 +6,7 @@ import { cn } from "@projet-igsn/design-system/lib/utils";
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-samples";
 import { Link } from "@tanstack/react-router";
-import { GlobeIcon } from "lucide-react";
+import { GlobeIcon, MountainIcon } from "lucide-react";
 
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
@@ -42,6 +42,14 @@ export function AppLayout({
             />
           </Link>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {!hasSidebar && (
+              <Button asChild variant="secondary">
+                <Link to="/" search={listSearch}>
+                  <MountainIcon />
+                  {m.nav_samples()}
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="secondary">
               <a href={FRONTEND_URL}>
                 <GlobeIcon />
