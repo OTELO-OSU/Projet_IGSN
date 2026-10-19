@@ -43,9 +43,9 @@ import {
 import {
   applyFuzzyThreshold,
   forceCustomPlan,
-  publicSearchFilters,
   relevanceScore,
   searchFilters,
+  serviceSearchFilters,
 } from "./search-filter.ts";
 import { toSample } from "./to-sample.ts";
 
@@ -253,12 +253,14 @@ async function listWithOwners(
   params: ListSamplesQuery,
   scope: Expression<SqlBool>[],
   withOwnerStatus = false,
+  searchBuilder = searchFilters,
 ): Promise<AdminListSamplesResult> {
   const { data, owners, total } = await listSamplesWhere(
     db,
     params,
     [...scope, ...adminFilters(params)],
     true,
+    searchBuilder,
   );
   return {
     data: withOwnerStatus
@@ -296,10 +298,13 @@ export function listPublishedSamplesForService(
   scope: ModerationScope,
   editableOnly: boolean,
 ): Promise<AdminListSamplesResult> {
-  return listWithOwners(db, params, [
-    isPublished(),
-    ...(editableOnly ? [moderatedSampleWhere(scope)] : []),
-  ]);
+  return listWithOwners(
+    db,
+    params,
+    [isPublished(), ...(editableOnly ? [moderatedSampleWhere(scope)] : [])],
+    false,
+    serviceSearchFilters,
+  );
 }
 
 export async function listPublishedSamples(
@@ -311,7 +316,7 @@ export async function listPublishedSamples(
     params,
     publishedScope(params),
     false,
-    publicSearchFilters,
+    searchFilters,
     params.withTotal ?? true,
   );
   return total === undefined ? { data } : { data, total };

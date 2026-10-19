@@ -93,6 +93,33 @@ describe("POST /admin/samples/export", () => {
     },
   );
 
+  pgTest(
+    "should export the samples whose material label matches a filters search",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const granite = await insertOwned(db, caller.id, {
+        name: "Brittany core",
+        material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      });
+      await insertOwned(db, caller.id, { name: "Brittany core" });
+
+      const res = await exportSamples(db, {
+        mode: "filters",
+        moderated: false,
+        query: { search: "granite" },
+      });
+      const book = new ExcelJS.Workbook();
+      await book.xlsx.load(await res.arrayBuffer());
+      const sheet = book.getWorksheet(SHEETS.samples)!;
+
+      expect([3, 4].map((row) => sheet.getCell(`A${row}`).value)).toEqual([
+        `sample-${granite.internalNumber}`,
+        null,
+      ]);
+    },
+    30_000,
+  );
+
   pgTest("should refuse an invalid body as 400", async ({ db }) => {
     const res = await exportSamples(db, {
       mode: "ids",

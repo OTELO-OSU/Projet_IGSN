@@ -1,6 +1,7 @@
 import type { z } from "zod";
 
 import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { sampleStatusSchema } from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-samples";
 import { createFileRoute } from "@tanstack/react-router";
@@ -93,6 +94,7 @@ function SampleModerationPage() {
             onRemove: () => update({ page: 1, manualGroup: undefined }),
           }),
           ...sampleFilterEntries({
+            statuses: sampleStatusSchema.options,
             values: params,
             onChange: (next) => update({ page: 1, ...next }),
           }),

@@ -67,6 +67,21 @@ beforeAll(() => page.viewport(1280, 1600));
 type Screen = Awaited<ReturnType<typeof renderRoute>>["screen"];
 
 describe("SampleListPage", () => {
+  it("should not offer the tombstone status, never listed among own samples", async () => {
+    fakeApi();
+    const { screen } = await renderRoute("/");
+
+    await addFilter(screen, "Status");
+    await screen.getByRole("combobox", { name: "Status" }).click();
+
+    await expect
+      .element(screen.getByRole("option", { name: "Published" }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("option", { name: "Tombstone" }).elements(),
+    ).toHaveLength(0);
+  });
+
   it("should ask the server for the chosen ownership and reset to page 1", async () => {
     const { requested } = fakeApi();
     const { screen, router } = await renderRoute(
