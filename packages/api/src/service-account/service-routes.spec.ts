@@ -21,7 +21,10 @@ import {
   SYNTHETIC_SAMPLE,
 } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { coreSampleSchema } from "@projet-igsn/domain/sample/core/core-sample-schema";
-import { SUB_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-variant-fixture";
+import {
+  DATELESS_COLLECTION_SPECIMEN,
+  SUB_SAMPLE,
+} from "@projet-igsn/domain/sample/core/core-sample-variant-fixture";
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
 import {
   DATACITE_MEDIA_TYPE,
@@ -942,6 +945,49 @@ describe("POST /service/samples", () => {
           .where("sample_id", "=", id)
           .execute(),
       ).toEqual([{ user_id: owner.id, role: "owner" }]);
+    },
+  );
+
+  pgTest(
+    "should publish a collection specimen posted with no collection date",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(app, core(DATELESS_COLLECTION_SPECIMEN));
+      // Assert
+      expect(res.status).toBe(201);
+      const body = coreSampleSchema.parse(await res.json());
+      expect(body.production).not.toHaveProperty("collection_date_start");
+      expect(body).toEqual(await storedCore(db, createdId(body)));
+    },
+  );
+
+  pgTest(
+    "should refuse a research project sample posted with no collection date at its Core path",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(
+        app,
+        core({
+          ...DATELESS_COLLECTION_SPECIMEN,
+          scientificContext: RESEARCH_PROJECT_SAMPLE.scientificContext,
+        }),
+      );
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "production.collection_date_start",
+            code: "collection_date_missing",
+          },
+        ],
+      });
+      expect(await db.selectFrom("sample").selectAll().execute()).toEqual([]);
     },
   );
 
