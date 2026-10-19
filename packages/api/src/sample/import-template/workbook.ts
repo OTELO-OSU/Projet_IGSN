@@ -1,13 +1,15 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
-import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
 
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { IMPORT_TEMPLATE_FILENAME } from "@projet-igsn/domain/sample/import/import-validator";
+import { lockedTemplateFields } from "@projet-igsn/domain/sample/import/locked-template-fields";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import { TEMPLATE_FIELDS } from "@projet-igsn/domain/sample/import/template-fields";
 import { HEADER_ROW } from "@projet-igsn/domain/sample/import/template-header";
+import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import ExcelJS from "exceljs";
 
-import type { Column, ColumnGroup } from "./columns.ts";
+import type { Column } from "./columns.ts";
 import type {
   StoredCustomization,
   TemplateCustomization,
@@ -21,7 +23,6 @@ import {
   SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
   SHEETS,
-  TEMPLATE_SECTIONS,
 } from "./columns.ts";
 import {
   defaultLabelOf,
@@ -60,23 +61,29 @@ const READ_ME_LINES = [
 
 const CUSTOMIZED_READ_ME_LINE = `A grey pre-filled column was fixed when this template was generated, so do not edit it.`;
 
-const droppedGroupsOf = (
+const droppedPathsOf = (
   customization: TemplateCustomization,
-): ReadonlySet<ColumnGroup> =>
-  new Set(
-    Object.entries(TEMPLATE_SECTIONS).flatMap(([section, group]) =>
-      customization[section as TemplateSectionKey] === false ? [group] : [],
-    ),
+): readonly string[] => {
+  const locked = lockedTemplateFields({
+    provenanceStatus: customization.provenanceStatus,
+    hasManualGroup: customization.prefilledManualGroup !== undefined,
+  });
+  return TEMPLATE_FIELDS.flatMap(({ key, paths }) =>
+    customization[key] === false && !locked.includes(key) ? paths : [],
   );
+};
 
 const keptColumnsOf = (
   columns: readonly Column[],
   customization: StoredCustomization,
-  droppedGroups: ReadonlySet<ColumnGroup>,
+  droppedPaths: readonly string[],
 ) => {
   const dropped = droppedColumnsOf(columns, customization);
   return columns.filter(
-    (column) => !dropped.includes(column) && !droppedGroups.has(column.group),
+    (column) =>
+      !dropped.includes(column) &&
+      (column.path === undefined ||
+        !droppedPaths.some((path) => isPathAtOrUnder(column.path, path))),
   );
 };
 
@@ -101,11 +108,11 @@ async function build(
   ]);
   const isParentColumnDropped =
     isCustomized && customization.subSamples !== true;
-  const droppedGroups = droppedGroupsOf(customization);
+  const droppedPaths = droppedPathsOf(customization);
   const sampleColumns = keptColumnsOf(
     SAMPLE_COLUMNS,
     stored,
-    droppedGroups,
+    droppedPaths,
   ).filter(({ path }) => !isParentColumnDropped || path !== "parentIds");
   const samples = addDataSheet(
     book,
@@ -129,7 +136,7 @@ async function build(
   }
   for (const child of CHILD_SHEETS) {
     if (isParentColumnDropped && child.name === SHEETS.processSteps) continue;
-    const columns = keptColumnsOf(child.columns, stored, droppedGroups);
+    const columns = keptColumnsOf(child.columns, stored, droppedPaths);
     if (columns.every((column) => column.path === undefined)) continue;
     addChildSheet(book, child.name, columns, rows, sampleColumns);
   }

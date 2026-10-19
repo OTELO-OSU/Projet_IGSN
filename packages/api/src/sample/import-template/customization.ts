@@ -1,5 +1,5 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
-import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
+import type { TemplateFieldKey } from "@projet-igsn/domain/sample/import/template-fields";
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 import type ExcelJS from "exceljs";
 
@@ -25,9 +25,9 @@ import { labelOf } from "./resolve-label.ts";
 export type TemplateCustomization = {
   provenanceStatus?: ProvenanceStatus;
   materialPath?: string;
-  manualGroup?: ManualGroup;
+  prefilledManualGroup?: ManualGroup;
   subSamples?: boolean;
-} & Partial<Record<TemplateSectionKey, boolean>>;
+} & Partial<Record<TemplateFieldKey, boolean>>;
 
 export const templateMaterialPathSchema = z
   .string()
@@ -55,11 +55,11 @@ const ancestorAt = (path: string, level: number) =>
 export const storedCustomizationOf = ({
   provenanceStatus,
   materialPath,
-  manualGroup,
+  prefilledManualGroup,
 }: TemplateCustomization): StoredCustomization => ({
   provenanceStatus,
   materialPath,
-  manualGroupLabel: manualGroup?.name,
+  manualGroupLabel: prefilledManualGroup?.name,
 });
 
 export function writeCustomization(

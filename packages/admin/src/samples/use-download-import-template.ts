@@ -4,9 +4,11 @@ import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import {
   IMPORT_TEMPLATE_FILENAME,
   type ReserveInternalIds,
-  TEMPLATE_SECTION_KEYS,
-  type TemplateSectionKey,
 } from "@projet-igsn/domain/sample/import/import-validator";
+import {
+  TEMPLATE_FIELD_KEYS,
+  type TemplateFieldKey,
+} from "@projet-igsn/domain/sample/import/template-fields";
 import { useMutation } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -19,7 +21,7 @@ export type ImportTemplateCustomization = {
   materialPath?: string;
   manualGroupId?: string;
   subSamples: boolean;
-} & Record<TemplateSectionKey, boolean>;
+} & Record<TemplateFieldKey, boolean>;
 
 function customizedTemplateUrl(
   customization: ImportTemplateCustomization | undefined,
@@ -34,7 +36,7 @@ function customizedTemplateUrl(
     url.searchParams.set("manualGroupId", customization.manualGroupId);
   }
   if (customization.subSamples) url.searchParams.set("subSamples", "true");
-  for (const key of TEMPLATE_SECTION_KEYS) {
+  for (const key of TEMPLATE_FIELD_KEYS) {
     if (!customization[key]) url.searchParams.set(key, "false");
   }
   return url;

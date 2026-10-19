@@ -75,7 +75,7 @@ const customizedBook = async () => {
       {
         provenanceStatus: "research_project_sample",
         materialPath: "rock_and_sediment.rock.igneous",
-        manualGroup: GROUP,
+        prefilledManualGroup: GROUP,
       },
       [GROUP],
     ),

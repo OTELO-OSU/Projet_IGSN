@@ -1,3 +1,5 @@
+import type { TemplateFieldKey } from "@projet-igsn/domain/sample/import/template-fields";
+
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { Checkbox } from "@projet-igsn/design-system/components/ui/checkbox";
 import {
@@ -15,11 +17,9 @@ import { HierarchyInput } from "@projet-igsn/design-system/components/ui/hierarc
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
-import {
-  reserveInternalIdsSchema,
-  type TemplateSectionKey,
-} from "@projet-igsn/domain/sample/import/import-validator";
+import { reserveInternalIdsSchema } from "@projet-igsn/domain/sample/import/import-validator";
 import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
+import { lockedTemplateFields } from "@projet-igsn/domain/sample/import/locked-template-fields";
 import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
 import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 import { ArrowLeftIcon, FileDownIcon } from "lucide-react";
@@ -32,7 +32,7 @@ import {
   materialPathLabel,
   provenanceStatusLabel,
 } from "#/samples/sample-labels.ts";
-import { TemplateSectionCheckboxes } from "#/samples/template-section-checkboxes.tsx";
+import { TemplateFieldCheckboxes } from "#/samples/template-field-checkboxes.tsx";
 import { useDownloadImportTemplate } from "#/samples/use-download-import-template.ts";
 import { useTemplateCustomization } from "#/samples/use-template-customization.ts";
 
@@ -46,7 +46,7 @@ export type TemplateDialogValues = {
   groupId: string;
   provenanceValue: string;
   subSamples: boolean;
-  sections: Record<TemplateSectionKey, boolean>;
+  fields: Record<TemplateFieldKey, boolean>;
 };
 
 export function CustomizeTemplateDialog({
@@ -67,8 +67,8 @@ export function CustomizeTemplateDialog({
     setProvenanceValue,
     subSamples,
     setSubSamples,
-    sections,
-    setSections,
+    fields,
+    setFields,
     isReserving,
     setIsReserving,
     reserveCount,
@@ -85,15 +85,24 @@ export function CustomizeTemplateDialog({
   );
   const material = composeHierarchyValue(materialPath);
   const isRefused = material !== null && !isMassImportableMaterial(material);
+  const manualGroupId = groups.some((group) => group.id === groupId)
+    ? groupId
+    : undefined;
+  const lockedFields = lockedTemplateFields({
+    provenanceStatus,
+    hasManualGroup: manualGroupId !== undefined,
+  });
+  const includedFields = {
+    ...fields,
+    ...Object.fromEntries(lockedFields.map((key) => [key, true])),
+  };
   const customization = provenanceStatus
     ? {
         provenanceStatus,
         materialPath: material ?? undefined,
-        manualGroupId: groups.some((group) => group.id === groupId)
-          ? groupId
-          : undefined,
+        manualGroupId,
         subSamples,
-        ...sections,
+        ...includedFields,
       }
     : undefined;
 
@@ -169,9 +178,10 @@ export function CustomizeTemplateDialog({
               {m.customize_template_subsamples()}
             </Label>
           </div>
-          <TemplateSectionCheckboxes
-            sections={sections}
-            onChange={setSections}
+          <TemplateFieldCheckboxes
+            fields={includedFields}
+            lockedFields={lockedFields}
+            onChange={setFields}
           />
         </div>
         <ReserveInternalIdsField

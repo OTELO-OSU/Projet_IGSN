@@ -1,19 +1,13 @@
-import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
-
 import { toHierarchyPath } from "@projet-igsn/design-system/lib/hierarchy";
+import { TEMPLATE_FIELD_KEYS } from "@projet-igsn/domain/sample/import/template-fields";
 import { MATERIAL_ROOTS } from "@projet-igsn/domain/sample/material/classification";
 import { useState } from "react";
 
 import type { TemplateDialogValues } from "#/samples/customize-template-dialog.tsx";
 
-const ALL_SECTIONS: Record<TemplateSectionKey, boolean> = {
-  physicalDescription: true,
-  age: true,
-  conservationSecurity: true,
-  repository: true,
-  relatedDocuments: true,
-  geologicalContext: true,
-};
+const ALL_FIELDS = Object.fromEntries(
+  TEMPLATE_FIELD_KEYS.map((key) => [key, true]),
+) as TemplateDialogValues["fields"];
 
 export function useTemplateCustomization(initialValues?: TemplateDialogValues) {
   const [materialPath, setMaterialPath] = useState<string[]>(
@@ -26,9 +20,7 @@ export function useTemplateCustomization(initialValues?: TemplateDialogValues) {
   const [subSamples, setSubSamples] = useState(
     initialValues?.subSamples ?? false,
   );
-  const [sections, setSections] = useState(
-    initialValues?.sections ?? ALL_SECTIONS,
-  );
+  const [fields, setFields] = useState(initialValues?.fields ?? ALL_FIELDS);
   const [isReserving, setIsReserving] = useState(false);
   const [reserveCount, setReserveCount] = useState("250");
   return {
@@ -40,8 +32,8 @@ export function useTemplateCustomization(initialValues?: TemplateDialogValues) {
     setProvenanceValue,
     subSamples,
     setSubSamples,
-    sections,
-    setSections,
+    fields,
+    setFields,
     isReserving,
     setIsReserving,
     reserveCount,

@@ -294,14 +294,14 @@ describe("import template route", () => {
   );
 
   pgTest(
-    "should answer a template without the Curation and repository columns on repository=false",
+    "should answer a template without the Texture column on texture=false",
     async ({ db }) => {
-      const res = await download(db, "?rows=1&repository=false");
+      const res = await download(db, "?rows=1&texture=false");
 
       expect({
         status: res.status,
-        existence: await hasSampleColumn(res, "Existence status"),
-      }).toEqual({ status: 200, existence: false });
+        texture: await hasSampleColumn(res, "Texture"),
+      }).toEqual({ status: 200, texture: false });
     },
   );
 });
@@ -415,14 +415,14 @@ describe("import template reservation route", () => {
   );
 
   pgTest(
-    "should answer a reserved template without the Curation and repository columns on repository: false",
+    "should answer a reserved template without the Texture column on texture: false",
     async ({ db }) => {
-      const res = await reserve(db, { count: 1, repository: false });
+      const res = await reserve(db, { count: 1, texture: false });
 
       expect({
         status: res.status,
-        existence: await hasSampleColumn(res, "Existence status"),
-      }).toEqual({ status: 200, existence: false });
+        texture: await hasSampleColumn(res, "Texture"),
+      }).toEqual({ status: 200, texture: false });
     },
     30_000,
   );
