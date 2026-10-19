@@ -184,10 +184,15 @@ const fieldRequirements = (
     });
   }
 
-  requirements.push({
-    blocker: "collection_date_missing",
-    isMet: sample.description?.collectionDate != null,
-  });
+  if (
+    !hasParent &&
+    sample.scientificContext?.provenanceStatus !== "collection_specimen"
+  ) {
+    requirements.push({
+      blocker: "collection_date_missing",
+      isMet: sample.description?.collectionDate != null,
+    });
+  }
 
   const age = sample.age;
   if (age != null && (age.numericAgeMin != null || age.numericAgeMax != null)) {

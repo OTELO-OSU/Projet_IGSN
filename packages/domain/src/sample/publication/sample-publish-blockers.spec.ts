@@ -283,16 +283,48 @@ describe("samplePublishBlockers", () => {
     ).toEqual(["material_incomplete"]);
   });
 
-  it.each<[string, Sample["description"]]>([
-    ["the sample has no description", null],
+  it.each<[string, Partial<Sample>]>([
+    ["the sample has no description", { description: null }],
     [
       "the description has no collection date",
-      { openDescription: "Coarse-grained" },
+      { description: { openDescription: "Coarse-grained" } },
     ],
-  ])("should report collection_date_missing when %s", (_label, description) => {
-    expect(samplePublishBlockers({ ...base, description })).toEqual([
+    [
+      "a top-level sample has no scientific context",
+      { description: null, scientificContext: null },
+    ],
+  ])("should report collection_date_missing when %s", (_label, fields) => {
+    expect(samplePublishBlockers({ ...base, ...fields })).toContain(
       "collection_date_missing",
-    ]);
+    );
+  });
+
+  it.each([
+    [
+      "a collection specimen",
+      {
+        ...base,
+        description: null,
+        scientificContext: {
+          provenanceStatus: "collection_specimen" as const,
+          collectionOrigin: "scientific_expedition" as const,
+        },
+      },
+    ],
+    [
+      "create-shaped values carrying a parentIds entry",
+      toPublishableFields({
+        ...base,
+        description: null,
+        parentIds: [parent.id],
+      }),
+    ],
+    [
+      "a stored sample with a parent",
+      { ...base, description: null, parents: [parent] },
+    ],
+  ])("should not require a collection date for %s", (_label, sample) => {
+    expect(samplePublishBlockers(sample)).toEqual([]);
   });
 
   const emptyAge: NonNullable<Sample["age"]> = {

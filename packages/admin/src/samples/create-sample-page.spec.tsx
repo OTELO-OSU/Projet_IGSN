@@ -361,7 +361,7 @@ async function fillPublishableSample(screen: CreateScreen) {
   await pick(screen, "Nature *", "Thin section");
   await pick(screen, "Type *", "Dredge");
   await pick(screen, "Provenance status *", "Collection specimen");
-  await screen.getByLabelText("Date *", { exact: true }).fill("2025-06-15");
+  await screen.getByLabelText("Date", { exact: true }).fill("2025-06-15");
 
   await openTab(screen, "Sample classification");
   await pick(screen, "Material *", "Synthetic rock / mineral");

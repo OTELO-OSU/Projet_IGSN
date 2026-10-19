@@ -90,12 +90,16 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
       localIdDescription: null,
       location: fromCoreLocation(production.location),
       description: {
-        collectionDate: fromCoreDateRange({
-          start: production.collection_date_start,
-          end: production.collection_date_end,
-          precision: production.collectionDatePrecision,
-          timeZone: production.collectionDateTimeZone,
-        }),
+        collectionDate:
+          production.collection_date_start == null ||
+          production.collection_date_end == null
+            ? null
+            : fromCoreDateRange({
+                start: production.collection_date_start,
+                end: production.collection_date_end,
+                precision: production.collectionDatePrecision,
+                timeZone: production.collectionDateTimeZone,
+              }),
         oriented: physical?.orientation?.oriented ?? null,
         orientationExplanation: physical?.orientation?.description ?? null,
         openDescription: physical?.openPhysicalDescription ?? null,

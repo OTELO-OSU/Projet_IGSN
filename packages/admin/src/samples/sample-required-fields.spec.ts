@@ -289,6 +289,23 @@ describe("sampleRequiredFields", () => {
       [{ name: "processSteps[0].dateStart", isMet: false }],
     ],
     [
+      "a collection specimen requires no collection date",
+      draftOf({}, (draft) => ({
+        scientificContext: {
+          ...draft.scientificContext,
+          provenanceStatus: "collection_specimen",
+        },
+      })),
+      ["description.collectionDate"],
+      [],
+    ],
+    [
+      "a research project sample requires its collection date",
+      researchProjectSample({}),
+      ["description.collectionDate"],
+      [{ name: "description.collectionDateStart", isMet: false }],
+    ],
+    [
       "a sub-sample requires no collection date and no location",
       draftOf({ material: ROCK, parentIds: ["p1"] }, (draft) => ({
         location: {

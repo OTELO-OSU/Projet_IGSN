@@ -4,7 +4,7 @@ Date: 2026-09-18
 
 ## Status
 
-Accepted.
+Accepted. Amended by ADR [0063](0063-collection-date-optional-on-collection-specimens.md) (a sub-sample of dateless parents publishes, and its date is shown disabled, not hidden).
 
 ## Context
 

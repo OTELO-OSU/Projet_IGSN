@@ -124,7 +124,8 @@ const samplingEventSchema = z.object({
     .meta({ description: "Names of the agents who authorized the sampling." }),
   result_time: z
     .string()
-    .meta({ description: "When the sample was collected." }),
+    .meta({ description: "When the sample was collected." })
+    .optional(),
   project: z
     .string()
     .meta({ description: "Research programme the sample was collected for." })

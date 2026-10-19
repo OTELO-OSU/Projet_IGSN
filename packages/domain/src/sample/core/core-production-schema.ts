@@ -308,18 +308,29 @@ export const fromRorUri = (uri: string): string =>
 
 export const coreProductionSchema = z
   .strictObject({
-    collection_date_start: z.string().min(1).meta({
-      description:
-        "Start of the collection, at the precision below; required on a published sample.",
-    }),
-    collection_date_end: z.string().min(1).meta({
-      description:
-        "End of the collection, equal to the start for a one-off collection; required on a published sample.",
-    }),
-    collectionDatePrecision: z.enum(CORE_DATE_PRECISIONS).meta({
-      description:
-        "Precision both collection dates are written at; required on a published sample.",
-    }),
+    collection_date_start: z
+      .string()
+      .min(1)
+      .meta({
+        description:
+          "Start of the collection, at the precision below; required on a published sample with no parent, unless it is a collection specimen.",
+      })
+      .optional(),
+    collection_date_end: z
+      .string()
+      .min(1)
+      .meta({
+        description:
+          "End of the collection, equal to the start for a one-off collection; required on a published sample with no parent, unless it is a collection specimen.",
+      })
+      .optional(),
+    collectionDatePrecision: z
+      .enum(CORE_DATE_PRECISIONS)
+      .meta({
+        description:
+          "Precision both collection dates are written at; required on a published sample with no parent, unless it is a collection specimen.",
+      })
+      .optional(),
     collectionDateTimeZone: timeZoneSchema
       .meta({
         description:
@@ -371,6 +382,22 @@ export const coreProductionSchema = z
       .optional(),
   })
   .superRefine((production, ctx) => {
+    const dateFields = [
+      "collection_date_start",
+      "collection_date_end",
+      "collectionDatePrecision",
+    ] as const;
+    if (dateFields.some((field) => production[field] != null)) {
+      for (const field of dateFields.filter(
+        (field) => production[field] == null,
+      )) {
+        ctx.addIssue({
+          code: "custom",
+          path: [field],
+          message: "a collection date carries its start, end and precision",
+        });
+      }
+    }
     hourPrecisionHasTimeZone(
       ctx,
       production.collectionDatePrecision,

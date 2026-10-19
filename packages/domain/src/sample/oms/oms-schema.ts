@@ -45,13 +45,16 @@ const samplerSchema = z.object({
 const samplingSchema = z.object({
   startTime: z
     .string()
-    .meta({ description: "Start of the collection, at the precision below." }),
+    .meta({ description: "Start of the collection, at the precision below." })
+    .optional(),
   endTime: z
     .string()
-    .meta({ description: "End of the collection, at the precision below." }),
+    .meta({ description: "End of the collection, at the precision below." })
+    .optional(),
   timePrecision: z
     .string()
-    .meta({ description: "Precision both collection times are written at." }),
+    .meta({ description: "Precision both collection times are written at." })
+    .optional(),
   timeZone: z
     .string()
     .meta({

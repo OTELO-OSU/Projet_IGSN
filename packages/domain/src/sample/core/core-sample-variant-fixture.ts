@@ -370,8 +370,15 @@ export const SYNTHETIC_SUB_SAMPLE: Sample = {
   ],
 };
 
+export const DATELESS_COLLECTION_SPECIMEN: Sample = {
+  ...COLLECTION_SPECIMEN,
+  name: "Undated museum gravel",
+  description: { ...COLLECTION_SPECIMEN.description, collectionDate: null },
+};
+
 export const CORE_SAMPLE_FIXTURES: readonly Sample[] = [
   RESEARCH_PROJECT_SAMPLE,
+  DATELESS_COLLECTION_SPECIMEN,
   SUB_SAMPLE,
   SYNTHETIC_SUB_SAMPLE,
   COLLECTION_SPECIMEN,

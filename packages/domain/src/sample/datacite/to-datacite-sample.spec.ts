@@ -13,6 +13,7 @@ import {
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
 import {
+  DATELESS_COLLECTION_SPECIMEN,
   MINERAL_RESOURCE_SAMPLE,
   TEAM_SAMPLE,
 } from "../core/core-sample-variant-fixture.ts";
@@ -402,6 +403,12 @@ describe("the Collected date of a DataCite record", () => {
       date,
       dateType: "Collected",
     });
+  });
+
+  it("should carry no Collected date when the sample has no collection date", () => {
+    expect(
+      toDataCiteSample(core(DATELESS_COLLECTION_SPECIMEN)).dates,
+    ).not.toContainEqual(expect.objectContaining({ dateType: "Collected" }));
   });
 });
 

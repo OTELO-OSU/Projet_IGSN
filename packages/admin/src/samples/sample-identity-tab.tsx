@@ -3,6 +3,7 @@ import type { SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { SampleSeries } from "@projet-igsn/domain/sample/series/model";
 
+import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
@@ -78,7 +79,13 @@ export function SampleIdentityTab({
 
         <ProvenanceStatusField />
 
-        {parents.length === 0 ? <CollectionDateField /> : null}
+        {parents.length === 0 ? (
+          <CollectionDateField />
+        ) : (
+          <FieldDisabledProvider value={() => true}>
+            <CollectionDateField />
+          </FieldDisabledProvider>
+        )}
       </FormSection>
 
       {parents.length > 0 ? <SampleProcessStepsFields /> : null}

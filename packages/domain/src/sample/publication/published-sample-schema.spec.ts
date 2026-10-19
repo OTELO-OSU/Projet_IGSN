@@ -50,7 +50,14 @@ describe("publishedSampleSchema", () => {
   it.each([
     [
       "collection_date_missing",
-      { ...publishable, description: null },
+      {
+        ...publishable,
+        description: null,
+        scientificContext: {
+          ...missingCollectorFirstname,
+          collectorFirstname: "Marie",
+        },
+      },
       "description.collectionDate",
     ],
     [
