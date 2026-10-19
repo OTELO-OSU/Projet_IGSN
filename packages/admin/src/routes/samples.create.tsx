@@ -134,6 +134,7 @@ function CreateSamplePage() {
         parents={(source ? sourceParents : parents).map((parent) =>
           sampleParentSchema.parse(parent),
         )}
+        canAddParent={!source && subSampleParentId === undefined}
         fieldSuggestions={
           hasTwoParents ? parentFieldSuggestions(parents) : undefined
         }

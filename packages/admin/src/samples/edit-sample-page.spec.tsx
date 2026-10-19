@@ -671,15 +671,12 @@ describe("EditSamplePage", () => {
     ).toHaveLength(0);
   });
 
-  it("should tell a caller who cannot update a parentless sample that it has no parent", async () => {
+  it("should disable the parent tab for a caller who cannot update a parentless sample", async () => {
     const { screen } = await renderEditPageAsContributor("published");
 
-    await screen.getByRole("tab", { name: "Parent sample" }).click();
-
-    await expect.element(screen.getByText("No parent")).toBeVisible();
-    expect(
-      screen.getByRole("combobox", { name: "Parent" }).elements(),
-    ).toHaveLength(0);
+    await expect
+      .element(screen.getByRole("tab", { name: "Parent sample" }))
+      .toBeDisabled();
   });
 
   it("should offer each parent's value under its short label on a saved two-parent sample", async () => {

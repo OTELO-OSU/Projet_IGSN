@@ -38,7 +38,7 @@ export function SampleParentTab({
             }
           />
         ))
-      ) : offersParentPicker ? (
+      ) : (
         <form.AppField name="parentIds">
           {(field) => (
             <AddParentField
@@ -48,8 +48,6 @@ export function SampleParentTab({
             />
           )}
         </form.AppField>
-      ) : (
-        <p className="text-muted-foreground text-sm">{m.no_parent()}</p>
       )}
     </FormSection>
   );

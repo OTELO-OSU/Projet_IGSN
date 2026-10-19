@@ -139,13 +139,13 @@ export function tabCompleteness(
 export function isSampleFormTabDisabled(
   value: SampleFormTab,
   {
-    hasParentTab,
+    hasParentContent,
     material,
     hasSoleParent,
     parentIds,
     provenanceStatus,
   }: {
-    hasParentTab: boolean;
+    hasParentContent: boolean;
     material: string | null;
     hasSoleParent: boolean;
     parentIds: string[];
@@ -153,7 +153,7 @@ export function isSampleFormTabDisabled(
   },
 ): boolean {
   return (
-    (value === "parent" && !hasParentTab) ||
+    (value === "parent" && !hasParentContent) ||
     (value === "location" &&
       (!allowsLocation(material) ||
         (!hasSoleParent && parentIds.length > 0))) ||
