@@ -23,6 +23,8 @@ const SAMPLES = Array.from({ length: 12 }, (_, i) => ({
   owner: null,
   id: `3f2504e0-4f89-41d3-9a0c-0305000000${String(i + 1).padStart(2, "0")}`,
   name: `Sample ${i + 1}`,
+  status: "published",
+  igsn: `01K072TVWVFK5A1RRZ5MY4PP${String(i + 1).padStart(2, "0")}`,
 }));
 
 const EXPORT_FILENAME = "igsn-samples-export-2026-09-28.xlsx";
@@ -187,6 +189,61 @@ describe("SampleBulkActionBar", () => {
         .toEqual([{ mode: "filters", moderated, query }]);
     },
   );
+
+  it.each([
+    ["1.5 cm", "1.5cm"],
+    ["3 cm", "3cm"],
+    ["5 cm", "5cm"],
+    ["8 cm", "8cm"],
+  ])(
+    "should print a label per checked sample with a %s QR code",
+    async (size, width) => {
+      fakeApi();
+      const print = vi.spyOn(window, "print").mockImplementation(() => {});
+      const { screen } = await renderRoute("/?perPage=10");
+      await check(screen, "Sample 1");
+      await check(screen, "Sample 2");
+
+      await bar(screen).getByRole("button", { name: "Print labels" }).click();
+      await page.getByRole("menuitem", { name: size, exact: true }).click();
+
+      const labels = page
+        .getByRole("list", { name: "Print labels", includeHidden: true })
+        .getByRole("listitem", { includeHidden: true });
+      await expect.element(labels.nth(1)).toBeInTheDocument();
+      expect(print).toHaveBeenCalledOnce();
+      expect(labels.elements().map((label) => label.textContent)).toEqual([
+        `${SAMPLES[0]!.igsn}Sample 1`,
+        `${SAMPLES[1]!.igsn}Sample 2`,
+      ]);
+      for (const { igsn } of SAMPLES.slice(0, 2)) {
+        await expect
+          .element(
+            labels.getByRole("img", {
+              name: `QR code linking to sample ${igsn}`,
+              includeHidden: true,
+            }),
+          )
+          .toHaveStyle({ width, height: width });
+      }
+    },
+  );
+
+  it("should not offer Print labels once Select all is clicked", async () => {
+    fakeApi();
+    const { screen } = await renderRoute("/?perPage=10");
+    await check(screen, "Sample 1");
+    await expect
+      .element(bar(screen).getByRole("button", { name: "Print labels" }))
+      .toBeVisible();
+
+    await bar(screen).getByRole("button", { name: "Select all" }).click();
+
+    await expect.element(bar(screen)).toHaveTextContent("12 selected");
+    await expect
+      .element(bar(screen).getByRole("button", { name: "Print labels" }))
+      .not.toBeInTheDocument();
+  });
 
   it("should hide once the selection is cleared", async () => {
     fakeApi();

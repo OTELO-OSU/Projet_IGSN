@@ -90,8 +90,17 @@ const IMPORTABLE: AdminSampleListItem = {
   material: "rock_and_sediment.rock",
 };
 
+const PUBLISHED: AdminSampleListItem = {
+  ...sample,
+  status: "published",
+  igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
+};
+
 const openRowMenu = (screen: RenderResult) =>
   screen.getByRole("button", { name: `Actions for ${sample.name}` }).click();
+
+const clickSelectionCell = (screen: RenderResult) =>
+  screen.getByRole("cell").first().element().querySelector("label")?.click();
 
 const COLUMNS_KEY = "admin-sample-columns";
 
@@ -584,7 +593,7 @@ describe("SampleTable", () => {
   });
 
   it("should select a row from its checkbox without opening the sample", async () => {
-    const screen = await renderTable(samples);
+    const screen = await renderTable([PUBLISHED]);
     const checkbox = screen.getByRole("checkbox", {
       name: `Select ${sample.name}`,
     });
@@ -597,9 +606,40 @@ describe("SampleTable", () => {
       .not.toBeInTheDocument();
   });
 
-  it("should select every row of the page from the header checkbox", async () => {
-    const other = { ...sample, id: crypto.randomUUID(), name: "Granite" };
-    const screen = await renderTable([sample, other]);
+  it("should check a row when its selection cell is clicked outside the checkbox, staying on the list", async () => {
+    const screen = await renderTable([PUBLISHED]);
+
+    clickSelectionCell(screen);
+
+    await expect
+      .element(screen.getByRole("checkbox", { name: `Select ${sample.name}` }))
+      .toBeChecked();
+    await expect
+      .element(screen.getByText("Edit page stub"))
+      .not.toBeInTheDocument();
+  });
+
+  it.each(["draft", "embargo", "withdrawn", "tombstone"] as const)(
+    "should disable the checkbox of a %s sample, its selection cell staying on the list",
+    async (status) => {
+      const screen = await renderTable([{ ...PUBLISHED, status }]);
+
+      clickSelectionCell(screen);
+
+      await expect
+        .element(
+          screen.getByRole("checkbox", { name: `Select ${sample.name}` }),
+        )
+        .toBeDisabled();
+      await expect
+        .element(screen.getByText("Edit page stub"))
+        .not.toBeInTheDocument();
+    },
+  );
+
+  it("should check only published rows with the page checkbox", async () => {
+    const draft = { ...sample, id: crypto.randomUUID(), name: "Granite" };
+    const screen = await renderTable([PUBLISHED, draft]);
 
     await screen
       .getByRole("checkbox", { name: "Select all samples on this page" })
@@ -610,7 +650,7 @@ describe("SampleTable", () => {
       .toBeChecked();
     await expect
       .element(screen.getByRole("checkbox", { name: "Select Granite" }))
-      .toBeChecked();
+      .not.toBeChecked();
   });
 
   it("should navigate to the edit page when the row is clicked", async () => {

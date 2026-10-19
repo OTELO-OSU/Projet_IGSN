@@ -1075,6 +1075,7 @@
   "action_clear_selection": "Clear selection",
   "action_export": "Export",
   "action_export_samples": "Export samples",
+  "action_print_labels": "Print labels",
   "bulk_edit_description": "Export the published samples of this list to an Excel file, edit it, then drop it back here to update them.",
   "samples_bulk_actions": "Bulk actions",
   "samples_selected_count": "{count} selected",

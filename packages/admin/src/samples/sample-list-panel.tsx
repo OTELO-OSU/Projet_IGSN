@@ -27,6 +27,10 @@ export function SampleListPanel({
   const total = query.data?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / perPage));
 
+  const labels = (query.data?.data ?? []).flatMap(({ id, igsn, name }) =>
+    selection.rowSelection[id] && igsn ? [{ id, igsn, name }] : [],
+  );
+
   const sorting: SortingState = sort
     ? [{ id: sort, desc: order === "desc" }]
     : [];
@@ -71,6 +75,7 @@ export function SampleListPanel({
           count={selection.isAllSelected ? total : selection.ids.length}
           isAllSelected={selection.isAllSelected}
           exportRequest={selection.exportRequest}
+          labels={labels}
           onSelectAll={selection.selectAll}
           onClear={selection.clear}
         />

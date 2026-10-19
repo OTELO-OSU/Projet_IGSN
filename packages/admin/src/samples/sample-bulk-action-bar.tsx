@@ -3,13 +3,17 @@ import type { ExportSamplesRequest } from "@projet-igsn/domain/sample/export/exp
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { FileDownIcon, XIcon } from "lucide-react";
 
+import type { LabelledSample } from "#/samples/label-sheet.tsx";
+
 import { m } from "#/paraglide/messages.js";
+import { PrintLabelsMenu } from "#/samples/print-labels-menu.tsx";
 import { useExportSamples } from "#/samples/use-export-samples.ts";
 
 type SampleBulkActionBarProps = {
   count: number;
   isAllSelected: boolean;
   exportRequest: ExportSamplesRequest;
+  labels: LabelledSample[];
   onSelectAll: () => void;
   onClear: () => void;
 };
@@ -18,6 +22,7 @@ export function SampleBulkActionBar({
   count,
   isAllSelected,
   exportRequest,
+  labels,
   onSelectAll,
   onClear,
 }: SampleBulkActionBarProps) {
@@ -30,10 +35,11 @@ export function SampleBulkActionBar({
     >
       <span className="text-sm">{m.samples_selected_count({ count })}</span>
       {isAllSelected ? null : (
-        <Button type="button" variant="outline" onClick={onSelectAll}>
+        <Button type="button" variant="ghost" onClick={onSelectAll}>
           {m.action_select_all()}
         </Button>
       )}
+      {isAllSelected ? null : <PrintLabelsMenu samples={labels} />}
       <Button
         type="button"
         disabled={exportSamples.isPending}

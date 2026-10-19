@@ -184,14 +184,19 @@ function sampleColumns(
         />
       ),
       cell: ({ row }) => (
-        <Checkbox
-          aria-label={m.sample_select({ name: row.original.name })}
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+        <label
+          className="absolute inset-0 flex cursor-pointer items-center pl-2"
           onClick={(event) => event.stopPropagation()}
-        />
+        >
+          <Checkbox
+            aria-label={m.sample_select({ name: row.original.name })}
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+          />
+        </label>
       ),
-      meta: { className: "w-10" },
+      meta: { className: "relative w-10" },
     },
     {
       accessorKey: "igsn",
@@ -304,6 +309,7 @@ export function SampleTable({
     columns: sampleColumns(moderated, setTemplateSample),
     getCoreRowModel: getCoreRowModel(),
     getRowId: (sample) => sample.id,
+    enableRowSelection: (row) => row.original.status === "published",
     manualSorting: true,
     state: {
       sorting,
