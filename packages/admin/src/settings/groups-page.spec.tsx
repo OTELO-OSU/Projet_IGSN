@@ -66,6 +66,7 @@ function fakeApi({
         charterAccepted: true,
         managedLaboratories: [],
         managedManualGroups,
+        mailOptOuts: [],
         ...CALLER_GROUPS,
       }),
     ),

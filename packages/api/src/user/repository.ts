@@ -1,3 +1,4 @@
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { Kysely } from "kysely";
 
@@ -52,6 +53,29 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirst();
         return knownManagedGroupCodes(row?.managedGroups ?? NO_MANAGED_GROUPS);
       }),
+    getMailOptOuts: (userId) =>
+      withTransaction(db, async (trx) => {
+        const row = await trx
+          .selectFrom("user")
+          .select("mail_opt_outs")
+          .where("id", "=", userId)
+          .executeTakeFirstOrThrow();
+        return row.mail_opt_outs;
+      }),
+    setMailOptOut: async (userId, kind, optedOut) => {
+      const kept = sql<MailKind[]>`array_remove(mail_opt_outs, ${kind})`;
+      await withTransaction(db, (trx) =>
+        trx
+          .updateTable("user")
+          .set({
+            mail_opt_outs: optedOut
+              ? sql<MailKind[]>`array_append(${kept}, ${kind})`
+              : kept,
+          })
+          .where("id", "=", userId)
+          .execute(),
+      );
+    },
     listPublicUsers: tx(listPublicUsers),
     listPending: tx(listPendingUsers),
     listSpaceManagers: tx(listSpaceManagers),

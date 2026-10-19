@@ -1,5 +1,6 @@
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 import type { SampleCollaborator } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 
 import { describe, expect, it, vi } from "vitest";
 
@@ -19,10 +20,9 @@ const declarer = () => ({
 const PUY = { id: "01890a5d-ac96-774b-bcce-b302099a9020", name: "Basalte" };
 const VOSGES = { id: "01890a5d-ac96-774b-bcce-b302099a9021", name: "Granite" };
 
-const collaborator = (
-  id: string,
-  role: UserSampleRole,
-): SampleCollaborator => ({
+type Collaborator = SampleCollaborator & { mailOptOuts: MailKind[] };
+
+const collaborator = (id: string, role: UserSampleRole): Collaborator => ({
   id,
   email: `${id}@univ-lorraine.fr`,
   name: null,
@@ -30,10 +30,11 @@ const collaborator = (
   orcid: null,
   role,
   status: "accepted",
+  mailOptOuts: [],
 });
 
 const notify = (
-  collaborators: Record<string, SampleCollaborator[]>,
+  collaborators: Record<string, Collaborator[]>,
   parentIds: string[],
   sendMail: (mail: Mail) => Promise<void>,
   importer = declarer(),

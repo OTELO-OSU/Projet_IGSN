@@ -1,6 +1,7 @@
 import { setInstitutionalGroupsSchema } from "@projet-igsn/domain/institutional-group/institutional-groups-validator";
 import { MAX_MANUAL_GROUP_MANAGERS } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
+import { mailKindSchema } from "@projet-igsn/domain/user/mail-kind";
 import { userStatusSchema } from "@projet-igsn/domain/user/model";
 import {
   listPublicUsersQuerySchema,
@@ -93,6 +94,16 @@ export const validateUpdateUserBody = validator("json", (value, c) => {
   const parsed = updateUserSchema.safeParse(value);
   if (!parsed.success) {
     return c.json({ error: "Invalid user" }, 400);
+  }
+  return parsed.data;
+});
+
+const mailKindParamSchema = z.object({ kind: mailKindSchema });
+
+export const validateMailKindParam = validator("param", (value, c) => {
+  const parsed = mailKindParamSchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid mail kind" }, 400);
   }
   return parsed.data;
 });

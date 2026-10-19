@@ -24,6 +24,7 @@ export async function addManualGroupMember(
       "user.name",
       "user.firstname",
       "user.status",
+      "user.mail_opt_outs as mailOptOuts",
       "manual_group_member.group_id as memberOf",
     ])
     .where("user.id", "=", userId)
@@ -31,11 +32,11 @@ export async function addManualGroupMember(
   if (!found) {
     throw new HTTPException(404, { message: "User not found" });
   }
-  const { memberOf, status, ...user } = found;
+  const { memberOf, ...user } = found;
   if (memberOf) {
     return "already_member";
   }
-  if (!canJoinManualGroup(status)) {
+  if (!canJoinManualGroup(user.status)) {
     throw new HTTPException(422, { message: "User is not accepted" });
   }
   await db

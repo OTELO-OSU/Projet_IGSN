@@ -128,6 +128,7 @@ export function createUserRoutes(
           joinedGroups,
           leftGroupIds,
           orphanedGroups,
+          mailOptOuts,
         } = await repository.update(id, c.req.valid("json"), c.get("scope"));
 
         const actor = c.get("user");
@@ -153,7 +154,7 @@ export function createUserRoutes(
         }
         notifyManualGroupJoined({
           actor,
-          invitee: user,
+          invitee: { ...user, mailOptOuts },
           groups: joinedGroups,
           mail,
         });

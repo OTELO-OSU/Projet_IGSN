@@ -132,6 +132,7 @@ describe("requireAuth", () => {
         charterAccepted: false,
         managedLaboratories: [],
         managedManualGroups: [],
+        mailOptOuts: [],
         institutionalOrganization: null,
         institutionalOsu: null,
         institutionalLaboratory: null,

@@ -26,6 +26,7 @@ export async function insertSampleCollaborator(
       "user.name",
       "user.firstname",
       "user.status",
+      "user.mail_opt_outs as mailOptOuts",
       "user_sample.role as currentRole",
     ])
     .where("user.id", "=", userId)
@@ -33,8 +34,8 @@ export async function insertSampleCollaborator(
   if (!found) {
     throw new HTTPException(404, { message: "User not found" });
   }
-  const { currentRole, status, ...user } = found;
-  if (status === "rejected") {
+  const { currentRole, ...user } = found;
+  if (user.status === "rejected") {
     throw new HTTPException(403, { message: "Forbidden" });
   }
   if (currentRole === "owner" || currentRole === role) {

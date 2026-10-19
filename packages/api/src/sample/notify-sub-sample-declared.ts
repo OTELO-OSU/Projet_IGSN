@@ -50,7 +50,11 @@ export async function parentOwners(
     const owner = collaborators.find((collaborator) =>
       isSampleOwner(collaborator.role),
     );
-    if (!owner || owner.id === declarerId || !canReceiveMail(owner)) {
+    if (
+      !owner ||
+      owner.id === declarerId ||
+      !canReceiveMail(owner, "sub_sample_declared")
+    ) {
       continue;
     }
     const already = notified.get(owner.id);

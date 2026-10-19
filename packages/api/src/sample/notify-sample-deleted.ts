@@ -1,5 +1,6 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { SampleCollaborator } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 import type { User } from "@projet-igsn/domain/user/model";
 
 import type { SendMail } from "../mail/send-mail.ts";
@@ -15,13 +16,14 @@ export async function notifySampleDeleted({
   sample,
   mail,
 }: {
-  collaborators: SampleCollaborator[];
+  collaborators: (SampleCollaborator & { mailOptOuts: MailKind[] })[];
   deleter: Pick<User, "id" | "email" | "name" | "firstname">;
   sample: Pick<Sample, "name">;
   mail: { sendMail: SendMail; adminUrl: string };
 }): Promise<void> {
   try {
     await notifyCollaborators(
+      "sample_deleted",
       collaborators,
       deleter.id,
       (recipient) =>

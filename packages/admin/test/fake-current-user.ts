@@ -18,6 +18,7 @@ export const fakeCurrentUser = (overrides: Partial<CurrentUser> = {}) =>
         charterAccepted: true,
         managedLaboratories: [],
         managedManualGroups: [],
+        mailOptOuts: [],
         ...CALLER_GROUPS,
         ...overrides,
       }),

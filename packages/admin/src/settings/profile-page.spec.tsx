@@ -1,4 +1,5 @@
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
+import type { MailKind } from "@projet-igsn/domain/user/mail-kind";
 
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
@@ -63,7 +64,21 @@ function fakeApi({
   let deletes = 0;
   let stored = orcid;
   let myServices = services;
+  let mailOptOuts = me.mailOptOuts ?? [];
+  const mailCalls: string[] = [];
   worker.use(
+    http.put("*/admin/currentUser/mail-opt-outs/:kind", ({ params }) => {
+      const kind = params.kind as MailKind;
+      mailCalls.push(`PUT ${kind}`);
+      mailOptOuts = [...mailOptOuts, kind];
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.delete("*/admin/currentUser/mail-opt-outs/:kind", ({ params }) => {
+      const kind = params.kind as MailKind;
+      mailCalls.push(`DELETE ${kind}`);
+      mailOptOuts = mailOptOuts.filter((optOut) => optOut !== kind);
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.get("*/admin/currentUser/service-accounts", () =>
       HttpResponse.json({ data: myServices }),
     ),
@@ -102,10 +117,11 @@ function fakeApi({
         managedManualGroups: [],
         ...CALLER_GROUPS,
         ...me,
+        mailOptOuts,
       }),
     ),
   );
-  return { puts, deletes: () => deletes };
+  return { puts, deletes: () => deletes, mailCalls };
 }
 
 const LINKED_ORCID = "0000-0002-1825-0097";
@@ -432,4 +448,89 @@ describe("profile page", () => {
       .element(page.getByRole("button", { name: "Regenerate API key" }))
       .toBeVisible();
   });
+
+  const emailsSection = () =>
+    page.getByRole("region", { name: "Emails", exact: true });
+  const mailSwitch = (name: string) =>
+    emailsSection().getByRole("switch", { name, exact: true });
+  const INVITATION = "You are invited to a sample";
+  const DIGEST = "Weekly digest of users awaiting approval";
+  const SUPER_ADMIN_ALWAYS_SENT = [
+    "Weekly digest of pending users and groups without a manager",
+    "A user asks for an internal ID, a deletion, a manual group or a service account",
+    "A group is left without a manager",
+  ];
+
+  it.each([
+    ["off", [], "PUT sample_invitation", false],
+    ["on", ["sample_invitation" as const], "DELETE sample_invitation", true],
+  ])(
+    "should switch an email %s",
+    async (_, mailOptOuts, call, checkedAfter) => {
+      const { mailCalls } = await renderProfilePage({ me: { mailOptOuts } });
+
+      await mailSwitch(INVITATION).click();
+
+      await expect
+        .element(page.getByText("Email preference saved"))
+        .toBeVisible();
+      await expect
+        .element(mailSwitch(INVITATION))
+        .toHaveAttribute("aria-checked", String(checkedAfter));
+      expect(mailCalls).toEqual([call]);
+    },
+  );
+
+  it("should offer the email preferences to a pending user", async () => {
+    await renderProfilePage({ status: "pending" });
+
+    await expect.element(mailSwitch(INVITATION)).toBeEnabled();
+  });
+
+  it("should show the always sent emails checked and locked", async () => {
+    await renderProfilePage({ me: { superAdmin: true } });
+
+    for (const name of [
+      "A visitor contacts you about a sample",
+      "You are removed from a sample",
+      "Your account is approved",
+      ...SUPER_ADMIN_ALWAYS_SENT,
+    ]) {
+      await expect.element(mailSwitch(name)).toBeChecked();
+      await expect.element(mailSwitch(name)).toBeDisabled();
+    }
+  });
+
+  it.each([
+    ["a space manager", { managedLaboratories: ["UMR7358"] }, true],
+    [
+      "a super admin managing a laboratory",
+      { superAdmin: true, managedLaboratories: ["UMR7358"] },
+      false,
+    ],
+    ["a researcher", {}, false],
+  ])(
+    "should offer the pending users digest to %s only if a space manager",
+    async (_, me, offered) => {
+      await renderProfilePage({ me });
+
+      await expect.element(mailSwitch(INVITATION)).toBeVisible();
+      expect(mailSwitch(DIGEST).elements()).toHaveLength(offered ? 1 : 0);
+    },
+  );
+
+  it.each([
+    ["a super admin", true],
+    ["a researcher", false],
+  ])(
+    "should list the super admin always sent emails to %s only if a super admin",
+    async (_, superAdmin) => {
+      await renderProfilePage({ me: { superAdmin } });
+
+      await expect.element(mailSwitch(INVITATION)).toBeVisible();
+      expect(
+        SUPER_ADMIN_ALWAYS_SENT.flatMap((name) => mailSwitch(name).elements()),
+      ).toHaveLength(superAdmin ? SUPER_ADMIN_ALWAYS_SENT.length : 0);
+    },
+  );
 });

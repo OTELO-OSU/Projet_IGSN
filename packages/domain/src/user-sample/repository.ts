@@ -1,4 +1,5 @@
 import type { Sample } from "../sample/sample.ts";
+import type { MailKind } from "../user/mail-kind.ts";
 import type { User } from "../user/model.ts";
 import type {
   CollaboratorRole,
@@ -7,7 +8,11 @@ import type {
 
 export type AddCollaboratorResult =
   | "already_collaborator"
-  | { added: Pick<User, "email" | "name" | "firstname"> };
+  | {
+      added: Pick<User, "email" | "name" | "firstname" | "status"> & {
+        mailOptOuts: MailKind[];
+      };
+    };
 
 export type RemoveCollaboratorResult =
   | { removed: Pick<User, "email" | "name" | "firstname" | "status"> }
@@ -34,6 +39,8 @@ export type UserSampleRepository = {
     sampleId: string,
     userId: string,
   ): Promise<RemoveCollaboratorResult>;
-  listCollaborators(sampleId: string): Promise<SampleCollaborator[]>;
+  listCollaborators(
+    sampleId: string,
+  ): Promise<(SampleCollaborator & { mailOptOuts: MailKind[] })[]>;
   listContactRecipients(sample: ContactSample): Promise<string[]>;
 };
