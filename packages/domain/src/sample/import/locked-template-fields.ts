@@ -17,7 +17,7 @@ export const lockedTemplateFields = ({
   hasManualGroup: boolean;
 }): readonly TemplateFieldKey[] => [
   ...(provenanceStatus === undefined
-    ? []
+    ? Object.values(PROVENANCE_REQUIRED_TEMPLATE_FIELDS).flat()
     : PROVENANCE_REQUIRED_TEMPLATE_FIELDS[provenanceStatus]),
   ...(hasManualGroup ? (["manualGroup"] as const) : []),
 ];

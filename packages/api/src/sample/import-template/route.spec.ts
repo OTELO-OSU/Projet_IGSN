@@ -304,6 +304,21 @@ describe("import template route", () => {
       }).toEqual({ status: 200, texture: false });
     },
   );
+
+  pgTest.for<[string, string]>([
+    ["collector", "Collector first name"],
+    ["collectionOrigin", "Collection origin"],
+  ])(
+    "should keep on %s=false the %s column a provenance status needs to publish on a template without one",
+    async ([field, header], { db }) => {
+      const res = await download(db, `?rows=1&${field}=false`);
+
+      expect({
+        status: res.status,
+        kept: await hasSampleColumn(res, header),
+      }).toEqual({ status: 200, kept: true });
+    },
+  );
 });
 
 describe("import template reservation route", () => {

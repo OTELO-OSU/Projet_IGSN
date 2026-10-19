@@ -393,7 +393,6 @@ describe("CustomizeTemplateDialog", () => {
       );
       const { checkbox, download, openSection, pick } = await openDialog();
       await openSection(section);
-      await checkbox(field).click();
 
       await pick(/^Provenance status/, provenance);
       if (picksGroup) await pick("Manual group", GROUP.name);
