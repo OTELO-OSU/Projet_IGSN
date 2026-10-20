@@ -12,7 +12,7 @@ export function createStatsRepository(db: Kysely<DB>): StatsRepository {
           eb
             .selectFrom("sample")
             .select(sql<number>`count(*)::int`.as("n"))
-            .where("status", "not in", ["draft", "tombstone"])
+            .where("status", "=", "published")
             .as("samples"),
           eb
             .selectFrom("user")

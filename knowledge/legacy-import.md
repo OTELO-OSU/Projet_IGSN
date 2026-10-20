@@ -2,9 +2,9 @@
 type: feature
 title: Legacy IGSN dump import
 description: >-
-  An idempotent script upserts ~24,910 legacy samples as published rows keeping
-  their CNRS/TOAE identifiers, skipping any row carrying a value it cannot map.
-resource: packages/api/scripts/import-legacy.ts
+  The legacy samples arrive as a pg_dump already shaped to our schema, keeping
+  their CNRS/TOAE identifiers, loaded with psql and validated by report.
+resource: docs/adr/0027-legacy-dump-import.md
 tags:
   - import
   - legacy
@@ -19,16 +19,11 @@ relations:
 status: stable
 ---
 
-The previous registry (a Django app) holds ~24,910 geological samples with already-citable IGSNs (`CNRS##########` or `TOAE##########`), which must land in the new database and browse alongside newly-declared ones.
+The previous registry (a Django app) held ~26,400 geological samples with already-citable IGSNs (`CNRS##########` or `TOAE##########`). They now arrive as a pg_dump of our own tables (`legacy_data/*.sql`, untracked, one file per table), reworked upstream to our data model; the in-repo import script and its mapping were removed on 2026-10-20 (ADR 0027 superseded).
 
-- **Legacy IGSNs are real IGSNs**: the old `resourceIdentifier` is stored verbatim in `sample.igsn` and the sample is `published`, with no separate `legacy_igsn` column. `igsnSchema` therefore accepts both forms on read while minting stays strict ([[igsn-identifier]]).
-- **Publish completeness is bypassed**: rows insert as `published` validated only by `createSampleSchema`, never against the publish blockers, so the public app must tolerate a published sample with sparse data ([[publish-blockers]]).
-- **The import is idempotent.** `scripts/import-legacy.ts` reads the dump from a throwaway `legacy_import` database (loaded by `make db-import-legacy`, dropped after) and upserts on `igsn`, preserving `id` and `created_at`, so a rerun after a mapping fix updates in place.
-- **Legacy owners become users**, reached through `igsn_personnehasresource` to `igsn_personne` to `auth_user`, exactly one owner per sample. Email and names land in `user`, upserted by email, with a `user_sample` link; an account owning no imported sample is not created, and credentials, username and Django flags are dropped. The owner is not the collector, which stays a free-text field.
-- **A value we cannot place skips the whole sample.** Every field feeding an enum or controlled list (material, collection method, resource type, country, navigation type, and the size, elevation and age units) either normalizes into it or the sample is skipped. Values are slugged (CamelCase and `>` into snake_case and `.`) and kept only if the resulting path exists in the domain tree, taking the longest valid prefix.
-- **The material path must match the start of a supported path**, complete or not; a coarse source imports, a leaf the new tree spells differently is remapped by hand through `MATERIAL_SPECIALS`, and everything else is skipped, the "record to review" values included. Truncating to a coarser path would assert a classification the source did not.
-- **Legacy DOI related resources become relations** typed `other` / `doi`, the DOI URL doubling as the target title and the citation kept as description when it differs, deduplicated by DOI; a value with no DOI in it is dropped, not a skip ([[sample-relations-attachments]]).
-- **Private rows and sub-samples are ignored**, the first because they would otherwise be published, the second because the schema has no hierarchy.
-- **Every skip is printed** (IGSN, reason, offending value), teed to `import-legacy.log` by `make db-import-legacy`, so the gaps to close before a re-import are visible.
-- `scripts/import-legacy-mapping.ts` is the executable mapping; `docs/legacy-import-mapping.xlsx` lists every legacy column with its target or the reason it is dropped, and the geologist's screenshots plus `template_igsn_historique.xls` are the authority the mappings answer to.
-- Some legacy detail is deliberately lost, so recovering it later means new fields, not re-parsing differently.
+- **Legacy IGSNs are real IGSNs**: the old `resourceIdentifier` sits verbatim in `sample.igsn`. `igsnSchema` accepts both forms on read while minting stays strict ([[igsn-identifier]]).
+- **The dump is the contract**: it is loaded with `psql` in foreign-key order (`user`, `location`, `location_vertical_position`, `sample`, `sample_parent`, `user_sample`, `sample_additional_role`, `sample_relation`); a row the schema or a trigger refuses is a defect reported back to the dump owner, never patched locally.
+- **The dump must not reset `search_path`**: the sample trigger functions resolve `sample` and `location` through it, so the `set_config('search_path', '', false)` line pg_dump emits is removed from the dump before loading.
+- **Legacy rows land `withdrawn` with sparse data** and will be published later, so the public app tolerates a permanent-IGSN sample missing required fields ([[publish-blockers]]); the DataCite re-sync and the move to `published` need the dump to fill `nature`, `type`, `existence_status`, `availability_status` and `published_at` first.
+- **Validation before a load** runs every row through the api read path (`selectSample` + `toSample`), `toPublicSample`, `toCoreSample` and `samplePublishRequirements`, plus the admin and public pages against the dev stack; the findings go to the dump owner as a report.
+- Some legacy detail is deliberately lost upstream, so recovering it later means new fields, not a different mapping.

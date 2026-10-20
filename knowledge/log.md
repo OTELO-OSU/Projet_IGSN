@@ -1,5 +1,11 @@
 # Directory Update Log
 
+## 2026-10-20
+
+- **Update**: Legacy IGSN dump import (legacy-import)
+- **Update**: Commands and dev services (commands-and-services)
+- **Update**: Publish blockers (publish-blockers)
+
 ## 2026-10-07
 
 - **Update**: Single origin, path-routed apps (single-origin-routing)

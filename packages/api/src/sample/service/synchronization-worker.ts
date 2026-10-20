@@ -1,5 +1,6 @@
 import { type Kysely, sql } from "kysely";
 import { setTimeout } from "node:timers/promises";
+import { ZodError } from "zod";
 
 import type { DataCiteConfig } from "../../datacite/config.ts";
 import type { DB } from "../../db.ts";
@@ -21,7 +22,8 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function isPermanentRefusal(error: unknown): boolean {
+function isPermanentFailure(error: unknown): boolean {
+  if (error instanceof ZodError) return true;
   const cause = error instanceof Error ? error.cause : undefined;
   return (
     cause instanceof DataCiteRefusal &&
@@ -65,7 +67,7 @@ async function synchronizeWithRetry(
       await synchronize(db, id, dataCite);
       return null;
     } catch (error) {
-      if (attempt >= delays.length || isPermanentRefusal(error)) {
+      if (attempt >= delays.length || isPermanentFailure(error)) {
         return messageOf(error);
       }
       await setTimeout(delays[attempt]);

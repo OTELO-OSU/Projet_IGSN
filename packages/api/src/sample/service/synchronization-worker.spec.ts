@@ -220,6 +220,33 @@ describe("drainSynchronizationQueue", () => {
   );
 
   pgTest(
+    "should fail a row whose stored data no longer maps to a DataCite record at once, without retrying",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      const { id } = await insertPublished(db, "Legacy");
+      await db
+        .updateTable("sample")
+        .set({ nature: null, synchronization_status: "pending" })
+        .where("id", "=", id)
+        .execute();
+      fetchMock.mockClear();
+      // Act
+      await drain(db, [60_000]);
+      // Assert
+      expect(await rowsOf(db, [id])).toMatchObject([
+        {
+          id,
+          status: "published",
+          synchronization_status: "failed",
+          synchronization_error: expect.stringContaining("Invalid option"),
+        },
+      ]);
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
+  pgTest(
     "should publish a queued sub-sample before re-PUTting the parent its queueing marked, naming it IsSourceOf",
     async ({ db }) => {
       // Arrange

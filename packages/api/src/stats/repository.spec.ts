@@ -10,7 +10,7 @@ import { createStatsRepository } from "./repository.ts";
 
 describe("stats repository", () => {
   pgTest(
-    "should count every declared sample but drafts, queued or not, and tombstones, sub-samples included",
+    "should count published samples only, sub-samples included, since the home page counts what search can find",
     async ({ db }) => {
       // Arrange
       const owner = await insertUser(db, "owner@example.org");
@@ -18,6 +18,7 @@ describe("stats repository", () => {
         "draft",
         "pending",
         "failed",
+        "embargo",
         "published",
         "withdrawn",
         "tombstone",
@@ -33,7 +34,7 @@ describe("stats repository", () => {
       // Act
       const stats = await createStatsRepository(db).count();
       // Assert
-      expect(stats).toEqual({ samples: 4, users: 1 });
+      expect(stats).toEqual({ samples: 3, users: 1 });
     },
   );
 

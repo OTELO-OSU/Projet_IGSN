@@ -43,12 +43,19 @@ const request = (
     body,
   });
 
-const lastInternalNumber = async (db: Kysely<DB>) =>
+const drawInternalNumber = async (db: Kysely<DB>) =>
   (
     await sql<{
-      last_value: string;
-    }>`select last_value from sample_internal_number_seq`.execute(db)
-  ).rows[0]!.last_value;
+      n: string;
+    }>`select nextval('sample_internal_number_seq') as n`.execute(db)
+  ).rows[0]!.n;
+
+const sessionInternalNumber = async (db: Kysely<DB>) =>
+  (
+    await sql<{
+      n: string;
+    }>`select currval('sample_internal_number_seq') as n`.execute(db)
+  ).rows[0]!.n;
 
 const stagedFiles = () =>
   readdir(stagingDirOf(attachmentsDir)).catch(() => [] as string[]);
@@ -81,14 +88,14 @@ describe("import area for publishers only", () => {
     "should refuse %s %s to a pending user, writing nothing",
     async ([method, path, init], { db }) => {
       await provisionUser(db, "test-token", { status: "pending" });
-      const before = await lastInternalNumber(db);
+      const before = await drawInternalNumber(db);
 
       const res = await request(db, method, path, init);
 
       expect({
         status: res.status,
         body: method === "HEAD" ? null : await res.json(),
-        internalNumber: await lastInternalNumber(db),
+        internalNumber: await sessionInternalNumber(db),
         samples: (await db.selectFrom("sample").select("id").execute()).length,
         staged: await stagedFiles(),
       }).toEqual({
