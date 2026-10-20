@@ -18,6 +18,7 @@ import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { reserveInternalIdsSchema } from "@projet-igsn/domain/sample/import/import-validator";
+import { includedTemplateFields } from "@projet-igsn/domain/sample/import/included-template-fields";
 import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
 import { lockedTemplateFields } from "@projet-igsn/domain/sample/import/locked-template-fields";
 import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
@@ -88,14 +89,11 @@ export function CustomizeTemplateDialog({
   const manualGroupId = groups.some((group) => group.id === groupId)
     ? groupId
     : undefined;
-  const lockedFields = lockedTemplateFields({
+  const locks = lockedTemplateFields({
     provenanceStatus,
     hasManualGroup: manualGroupId !== undefined,
   });
-  const includedFields = {
-    ...fields,
-    ...Object.fromEntries(lockedFields.map((key) => [key, true])),
-  };
+  const includedFields = includedTemplateFields(fields, locks);
   const customization = provenanceStatus
     ? {
         provenanceStatus,
@@ -179,8 +177,9 @@ export function CustomizeTemplateDialog({
             </Label>
           </div>
           <TemplateFieldCheckboxes
-            fields={includedFields}
-            lockedFields={lockedFields}
+            fields={fields}
+            includedFields={includedFields}
+            locks={locks}
             onChange={setFields}
           />
         </div>

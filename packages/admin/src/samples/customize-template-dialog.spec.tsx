@@ -347,6 +347,9 @@ describe("CustomizeTemplateDialog", () => {
     await expect.element(section).toBeChecked();
   });
 
+  const REQUIRED_BY_RESEARCH =
+    "A Research project sample needs it to publish, so it cannot be excluded.";
+
   it.each([
     [
       "Research project sample",
@@ -354,14 +357,23 @@ describe("CustomizeTemplateDialog", () => {
       "Collection date",
       "collectionDate",
       false,
+      REQUIRED_BY_RESEARCH,
     ],
-    ["Research project sample", "Location", "Position", "position", false],
+    [
+      "Research project sample",
+      "Location",
+      "Position",
+      "position",
+      false,
+      REQUIRED_BY_RESEARCH,
+    ],
     [
       "Research project sample",
       "Scientific context",
       "Collector name",
       "collector",
       false,
+      REQUIRED_BY_RESEARCH,
     ],
     [
       "Collection specimen",
@@ -369,6 +381,7 @@ describe("CustomizeTemplateDialog", () => {
       "Collection origin",
       "collectionOrigin",
       false,
+      "A Collection specimen needs it to publish, so it cannot be excluded.",
     ],
     [
       "Research project sample",
@@ -376,10 +389,11 @@ describe("CustomizeTemplateDialog", () => {
       "Manual groups",
       "manualGroup",
       true,
+      "It holds the manual group chosen above, so it cannot be excluded.",
     ],
   ])(
-    "should lock in a %s template the %s field %s the template relies on",
-    async (provenance, section, field, key, picksGroup) => {
+    "should lock in a %s template the %s field %s the template relies on, explaining why",
+    async (provenance, section, field, key, picksGroup, reason) => {
       const requested: URLSearchParams[] = [];
       worker.use(
         http.get("*/admin/samples/import-template", ({ request }) => {
@@ -391,17 +405,53 @@ describe("CustomizeTemplateDialog", () => {
       vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
         () => {},
       );
-      const { checkbox, download, openSection, pick } = await openDialog();
+      const { checkbox, download, openSection, pick, screen } =
+        await openDialog();
       await openSection(section);
 
       await pick(/^Provenance status/, provenance);
       if (picksGroup) await pick("Manual group", GROUP.name);
       await expect.element(checkbox(field)).toBeChecked();
       await expect.element(checkbox(field)).toBeDisabled();
+      await checkbox(field).hover();
+      await expect
+        .element(screen.getByRole("tooltip"))
+        .toHaveTextContent(reason);
       await download.click();
 
       await expect.poll(() => requested.length).toBe(1);
       expect(requested[0]!.has(key)).toBe(false);
+    },
+  );
+
+  it.each([
+    ["Location", "Position", "Navigation type", "Region"],
+    ["Location", "Position", "Vertical positions", "Region"],
+    [
+      "Conservation and security",
+      "Storage conditions",
+      "Specific sample conditions",
+      "Packaging",
+    ],
+  ])(
+    "should exclude with the %s field %s the %s field requiring it, explaining why, and restore it once included",
+    async (section, driver, dependent, other) => {
+      const { checkbox, openSection, pick, screen } = await openDialog();
+      await pick(/^Provenance status/, "Collection specimen");
+      await openSection(section);
+
+      await checkbox(driver).click();
+      await expect.element(checkbox(dependent)).not.toBeChecked();
+      await expect.element(checkbox(dependent)).toBeDisabled();
+      await checkbox(dependent).hover();
+      await expect
+        .element(screen.getByRole("tooltip"))
+        .toHaveTextContent(`It requires ${driver}, so it is excluded with it.`);
+
+      await checkbox(other).click();
+      await checkbox(driver).click();
+      await expect.element(checkbox(dependent)).toBeChecked();
+      await expect.element(checkbox(dependent)).toBeEnabled();
     },
   );
 

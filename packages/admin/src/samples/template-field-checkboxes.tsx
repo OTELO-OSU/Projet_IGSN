@@ -1,3 +1,6 @@
+import type { TemplateFieldLocks } from "@projet-igsn/domain/sample/import/locked-template-fields";
+import type { ReactNode } from "react";
+
 import {
   Accordion,
   AccordionContent,
@@ -12,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import {
+  TEMPLATE_FIELD_DRIVERS,
   TEMPLATE_FIELDS,
   TEMPLATE_SECTION_KEYS,
   PARTLY_EXCLUDABLE_TEMPLATE_SECTIONS,
@@ -20,6 +24,7 @@ import {
 } from "@projet-igsn/domain/sample/import/template-fields";
 
 import { m } from "#/paraglide/messages.js";
+import { provenanceStatusLabel } from "#/samples/sample-labels.ts";
 
 const SECTION_LABELS: Record<TemplateSectionKey, () => string> = {
   identity: m.tab_identity,
@@ -93,13 +98,54 @@ const TEMPLATE_FIELD_LABELS: Record<TemplateFieldKey, () => string> = {
   attachments: m.section_attachments,
 };
 
+function disabledReasonOf(
+  key: TemplateFieldKey,
+  includedFields: Record<TemplateFieldKey, boolean>,
+  locks: TemplateFieldLocks,
+): string | undefined {
+  const lock = locks[key];
+  if (lock === "manualGroup") return m.import_template_field_prefilled_group();
+  if (lock !== undefined)
+    return m.import_template_field_required({
+      provenance: provenanceStatusLabel(lock),
+    });
+  const driver = TEMPLATE_FIELD_DRIVERS[key];
+  if (driver !== undefined && !includedFields[driver])
+    return m.import_template_field_requires({
+      field: TEMPLATE_FIELD_LABELS[driver](),
+    });
+  return undefined;
+}
+
+function DisabledReason({
+  reason,
+  children,
+}: {
+  reason: string | undefined;
+  children: ReactNode;
+}) {
+  if (reason === undefined) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0} className="flex">
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{reason}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function TemplateFieldCheckboxes({
   fields,
-  lockedFields,
+  includedFields,
+  locks,
   onChange,
 }: {
   fields: Record<TemplateFieldKey, boolean>;
-  lockedFields: readonly TemplateFieldKey[];
+  includedFields: Record<TemplateFieldKey, boolean>;
+  locks: TemplateFieldLocks;
   onChange: (fields: Record<TemplateFieldKey, boolean>) => void;
 }) {
   return (
@@ -108,68 +154,70 @@ export function TemplateFieldCheckboxes({
         const sectionFields = TEMPLATE_FIELDS.filter(
           (field) => field.section === section,
         );
-        const isIncluded = sectionFields.map(({ key }) => fields[key]);
+        const isIncluded = sectionFields.map(({ key }) => includedFields[key]);
         const isPartlyExcludable =
           PARTLY_EXCLUDABLE_TEMPLATE_SECTIONS.includes(section);
-        const sectionCheckbox = (
-          <Checkbox
-            aria-label={m.import_template_include_section({
-              section: SECTION_LABELS[section](),
-            })}
-            checked={
-              isIncluded.every(Boolean)
-                ? true
-                : isPartlyExcludable || isIncluded.some(Boolean)
-                  ? "indeterminate"
-                  : false
-            }
-            disabled={isPartlyExcludable}
-            className="disabled:pointer-events-none"
-            onCheckedChange={(checked) =>
-              onChange({
-                ...fields,
-                ...Object.fromEntries(
-                  sectionFields.map(({ key }) => [key, checked === true]),
-                ),
-              })
-            }
-          />
-        );
         return (
           <AccordionItem key={section} value={section}>
             <div className="flex items-center gap-2">
-              {isPartlyExcludable ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={0} className="flex">
-                      {sectionCheckbox}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {m.import_template_section_mandatory()}
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                sectionCheckbox
-              )}
+              <DisabledReason
+                reason={
+                  isPartlyExcludable
+                    ? m.import_template_section_mandatory()
+                    : undefined
+                }
+              >
+                <Checkbox
+                  aria-label={m.import_template_include_section({
+                    section: SECTION_LABELS[section](),
+                  })}
+                  checked={
+                    isIncluded.every(Boolean)
+                      ? true
+                      : isPartlyExcludable || isIncluded.some(Boolean)
+                        ? "indeterminate"
+                        : false
+                  }
+                  disabled={isPartlyExcludable}
+                  className="disabled:pointer-events-none"
+                  onCheckedChange={(checked) =>
+                    onChange({
+                      ...fields,
+                      ...Object.fromEntries(
+                        sectionFields.map(({ key }) => [key, checked === true]),
+                      ),
+                    })
+                  }
+                />
+              </DisabledReason>
               <AccordionTrigger>{SECTION_LABELS[section]()}</AccordionTrigger>
             </div>
             <AccordionContent className="grid gap-2 ps-6">
-              {sectionFields.map(({ key }) => (
-                <div key={key} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`customize-template-field-${key}`}
-                    checked={fields[key]}
-                    disabled={lockedFields.includes(key)}
-                    onCheckedChange={(checked) =>
-                      onChange({ ...fields, [key]: checked === true })
-                    }
-                  />
-                  <Label htmlFor={`customize-template-field-${key}`}>
-                    {TEMPLATE_FIELD_LABELS[key]()}
-                  </Label>
-                </div>
-              ))}
+              {sectionFields.map(({ key }) => {
+                const disabledReason = disabledReasonOf(
+                  key,
+                  includedFields,
+                  locks,
+                );
+                return (
+                  <div key={key} className="flex items-center gap-2">
+                    <DisabledReason reason={disabledReason}>
+                      <Checkbox
+                        id={`customize-template-field-${key}`}
+                        checked={includedFields[key]}
+                        disabled={disabledReason !== undefined}
+                        className="disabled:pointer-events-none"
+                        onCheckedChange={(checked) =>
+                          onChange({ ...fields, [key]: checked === true })
+                        }
+                      />
+                    </DisabledReason>
+                    <Label htmlFor={`customize-template-field-${key}`}>
+                      {TEMPLATE_FIELD_LABELS[key]()}
+                    </Label>
+                  </div>
+                );
+              })}
             </AccordionContent>
           </AccordionItem>
         );

@@ -2,6 +2,7 @@ import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { IMPORT_TEMPLATE_FILENAME } from "@projet-igsn/domain/sample/import/import-validator";
+import { includedTemplateFields } from "@projet-igsn/domain/sample/import/included-template-fields";
 import { lockedTemplateFields } from "@projet-igsn/domain/sample/import/locked-template-fields";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { TEMPLATE_FIELDS } from "@projet-igsn/domain/sample/import/template-fields";
@@ -64,12 +65,15 @@ const CUSTOMIZED_READ_ME_LINE = `A grey pre-filled column was fixed when this te
 const droppedPathsOf = (
   customization: TemplateCustomization,
 ): readonly string[] => {
-  const locked = lockedTemplateFields({
-    provenanceStatus: customization.provenanceStatus,
-    hasManualGroup: customization.prefilledManualGroup !== undefined,
-  });
+  const included = includedTemplateFields(
+    customization,
+    lockedTemplateFields({
+      provenanceStatus: customization.provenanceStatus,
+      hasManualGroup: customization.prefilledManualGroup !== undefined,
+    }),
+  );
   return TEMPLATE_FIELDS.flatMap(({ key, paths }) =>
-    customization[key] === false && !locked.includes(key) ? paths : [],
+    included[key] ? [] : paths,
   );
 };
 

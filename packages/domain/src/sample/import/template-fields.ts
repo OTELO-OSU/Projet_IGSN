@@ -294,3 +294,11 @@ export const TEMPLATE_FIELDS = [
 export type TemplateFieldKey = (typeof TEMPLATE_FIELDS)[number]["key"];
 
 export const TEMPLATE_FIELD_KEYS = TEMPLATE_FIELDS.map(({ key }) => key);
+
+export const TEMPLATE_FIELD_DRIVERS: Partial<
+  Record<TemplateFieldKey, TemplateFieldKey>
+> = {
+  navigationType: "position",
+  verticalPositions: "position",
+  specificConditions: "storageConditions",
+};

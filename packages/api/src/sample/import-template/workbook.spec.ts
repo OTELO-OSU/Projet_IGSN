@@ -671,7 +671,11 @@ describe("customized import template workbook", () => {
       [],
     ],
     ["relations", [], [SHEETS.relations]],
-    ["storageConditions", [], [SHEETS.storageConditions]],
+    [
+      "storageConditions",
+      ["Specific sample conditions"],
+      [SHEETS.storageConditions],
+    ],
   ])(
     "should drop the %s field's columns %j and the sheets it empties %j",
     async (field, droppedHeaders, emptied) => {
@@ -690,6 +694,20 @@ describe("customized import template workbook", () => {
       });
     },
   );
+
+  it("should drop with the position the navigation type and vertical positions requiring it", async () => {
+    const trimmed = await loaded(1, [], {
+      provenanceStatus: "collection_specimen",
+      position: false,
+    });
+
+    expect({
+      navigationType: headersOf(trimmed).includes("Navigation type"),
+      verticalPositions: trimmed.worksheets.some(
+        (worksheet) => worksheet.name === SHEETS.verticalPositions,
+      ),
+    }).toEqual({ navigationType: false, verticalPositions: false });
+  });
 
   it.each<[string, TemplateCustomization, string[]]>([
     [
@@ -866,7 +884,9 @@ describe("template fields", () => {
           ),
         ).map(({ key }) => key),
       ).toEqual(
-        lockedTemplateFields({ provenanceStatus, hasManualGroup: false }),
+        Object.keys(
+          lockedTemplateFields({ provenanceStatus, hasManualGroup: false }),
+        ),
       );
     },
   );
