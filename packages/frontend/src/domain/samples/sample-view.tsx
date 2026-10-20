@@ -96,7 +96,7 @@ export function SampleView({
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
         {withdrawn ? null : (
-          <div className="sticky top-40 hidden shrink-0 self-start md:block">
+          <div className="phone:top-6 sticky top-40 hidden shrink-0 self-start md:block">
             <nav aria-label={m.sample_section_sample()}>
               <ul className="space-y-1 border-l">
                 {sections.map(({ id, title }) => (
@@ -122,7 +122,7 @@ export function SampleView({
               key={id}
               id={id}
               aria-labelledby={`${id}-heading`}
-              className="mt-8 scroll-mt-32 first:mt-0 sm:scroll-mt-44"
+              className="phone:scroll-mt-6 mt-8 scroll-mt-32 first:mt-0 sm:scroll-mt-44"
             >
               <SectionHeading id={`${id}-heading`}>{title}</SectionHeading>
               {content}

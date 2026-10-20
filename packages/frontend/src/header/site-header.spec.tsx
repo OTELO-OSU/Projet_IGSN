@@ -12,7 +12,7 @@ import { page, userEvent } from "vitest/browser";
 import { stubAuth } from "../../test/stub-auth.tsx";
 import { SiteHeader } from "./site-header.tsx";
 
-async function renderHeader() {
+async function renderHeader(initialPath = "/") {
   const rootRoute = createRootRoute({
     component: () => (
       <>
@@ -21,16 +21,17 @@ async function renderHeader() {
       </>
     ),
   });
-  const routes = ["/", "/faq", "/partners"].map((path) =>
-    createRoute({
-      getParentRoute: () => rootRoute,
-      path,
-      component: () => null,
-    }),
+  const routes = ["/", "/faq", "/partners", "/search", "/samples/$igsn"].map(
+    (path) =>
+      createRoute({
+        getParentRoute: () => rootRoute,
+        path,
+        component: () => null,
+      }),
   );
   const router = createRouter({
     routeTree: rootRoute.addChildren(routes),
-    history: createMemoryHistory({ initialEntries: ["/"] }),
+    history: createMemoryHistory({ initialEntries: [initialPath] }),
   });
   await render(stubAuth(<RouterProvider router={router} />));
 }
@@ -38,6 +39,17 @@ async function renderHeader() {
 const menuButton = () => page.getByRole("button", { name: "Menu" });
 
 describe("SiteHeader", () => {
+  it.each(["/search", "/samples/IGSN123"])(
+    "should mark the Search link as the current page on the search result %s",
+    async (path) => {
+      await renderHeader(path);
+
+      await expect
+        .element(page.getByRole("link", { name: "Search" }))
+        .toHaveAttribute("aria-current", "page");
+    },
+  );
+
   it("should open the menu on the menu button, revealing the nav links", async () => {
     await renderHeader();
     await expect
