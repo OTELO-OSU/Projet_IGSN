@@ -50,7 +50,6 @@ function benchSample(id: string) {
     id,
     status: "published" as const,
     igsn: generateIgsnSuffix(id),
-    publication_year: 2025,
     published_at: sql<Date>`now()`,
     internal_number: sql<number>`nextval('sample_internal_number_seq')`,
     name: `${faker.helpers.arrayElement(ROCK_NAMES)} ${faker.location.city()}`,

@@ -362,7 +362,7 @@ export function toSample(row: SampleRow): Sample {
     security: toSecurity(row),
     existenceStatus: row.existence_status,
     availabilityStatus: row.availability_status,
-    publicationYear: row.publication_year,
+    publicationYear: row.published_at?.getUTCFullYear() ?? null,
     resourceType: row.resource_type,
     economicInterestElements: row.economic_interest_elements ?? [],
     economicResourceTypePrecision: row.economic_resource_type_precision,

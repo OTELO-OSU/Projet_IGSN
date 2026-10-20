@@ -25,5 +25,5 @@ Why a sample cannot be published lives in ONE place, `samplePublishBlockers` (`d
 - Each of the four sample person names is a firstname/lastname pair carrying one blocker per half (`<person>_firstname_missing` / `<person>_lastname_missing`), so the error lands on the empty input ([[scientific-context]]).
 - An optional person half-filled blocks publish even though the whole person is optional, the filled half making the other one required ([[scientific-context]]).
 - On editing a published sample the api blocks only NEW blockers, comparing before and after the merge and answering 409, so a record already broken (DB tampering, a new constraint) stays repairable by script. The admin form instead validates the draft strictly against `publishedSampleSchema`, which is where a researcher sees the record no longer meets the bar.
-- Publish completeness is bypassed on import ([[legacy-import]]): legacy rows land `published` with sparse data, so the public app tolerates a published sample missing required fields.
+- Publish completeness is bypassed by the legacy dump ([[legacy-import]]): legacy rows land `withdrawn` with sparse data, so the public app tolerates a permanent-IGSN sample missing required fields.
 - Two e2e and seed fixtures must follow every new blocker: the e2e `fillPublishableFields` helper and the published rows of `make db-seed-demo`.

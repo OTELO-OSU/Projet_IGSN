@@ -33,8 +33,6 @@ packages/api/attachments
 .devcontainer.json
 .devcontainer-lock.json
 
-bdd-igsn.sql
-import-legacy.log
 /benchmark-results
 .playwright-mcp
 

@@ -114,7 +114,6 @@ const row = {
   syn_equipment_used: null,
   existence_status: "exists",
   availability_status: "available",
-  publication_year: null,
   resource_type: null,
   economic_interest_elements: null,
   economic_resource_type_precision: null,
@@ -311,6 +310,16 @@ describe("toSample", () => {
     expect(sample.location).toEqual({
       position: { type: "point", longitude: 2.35, latitude: 48.85 },
     });
+  });
+
+  it("should derive the publication year from the publication date", () => {
+    // Act
+    const sample = toSample({
+      ...row,
+      published_at: new Date("2024-12-31T23:30:00Z"),
+    });
+    // Assert
+    expect(sample.publicationYear).toBe(2024);
   });
 
   it("should map the age columns to the sample's age", () => {

@@ -37,6 +37,7 @@ const materialTree = {
       "volcano_detritic",
       "biogenic",
       "physico_chemical",
+      "unknown",
     ],
   },
   extraterrestrial_rock: {

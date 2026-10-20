@@ -154,7 +154,6 @@ type SampleTable = {
   syn_equipment_used: string | null;
   existence_status: string | null;
   availability_status: string | null;
-  publication_year: number | null;
   resource_type: string | null;
   economic_interest_elements: string[] | null;
   economic_resource_type_precision: string | null;

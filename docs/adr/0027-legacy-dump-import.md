@@ -4,7 +4,7 @@ Date: 2026-07-24
 
 ## Status
 
-Accepted
+Superseded on 2026-10-20: the legacy samples now arrive as a pg_dump already shaped to this schema (`legacy_data/`, untracked), loaded with psql and validated by report, so the import script, its mapping and `make db-import-legacy` are removed. The decisions below on legacy IGSNs and lax-on-read validation still hold.
 
 ## Context
 

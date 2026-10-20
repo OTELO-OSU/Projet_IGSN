@@ -36,7 +36,6 @@ export async function setSampleStatus(
       synchronization_status: "synced",
       synchronization_error: null,
       published_at: sql`case when status = 'embargo' then ${at} else published_at end`,
-      publication_year: sql`case when status = 'embargo' then extract(year from ${at})::int else publication_year end`,
     })
     .where("id", "=", id)
     .returning("id")

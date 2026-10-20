@@ -16,8 +16,6 @@ import {
 } from "../src/sample/service/to-location.ts";
 import { parseSampleRow } from "./seed-sample-row.ts";
 
-const SEED_PUBLICATION_YEAR = 2025;
-
 const SEED_DOI_PREFIX = "10.70113";
 
 export async function insertSamples(
@@ -70,7 +68,6 @@ export async function insertSamples(
             synchronization_error: synchronizationError ?? null,
             igsn: igsn ?? null,
             location_id: located.has(id) ? id : null,
-            publication_year: permanent ? SEED_PUBLICATION_YEAR : null,
             doi_prefix: permanent ? SEED_DOI_PREFIX : null,
             published_at: permanent ? sql`now()` : null,
             internal_number: permanent
