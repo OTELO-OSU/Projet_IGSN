@@ -14,11 +14,13 @@ import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 import type { Column } from "./columns.ts";
 
 import {
+  ATTACHMENT_PATH,
   DATA_SHEETS,
   plainHeader,
   TEMPLATE_MATERIAL_PATHS,
 } from "./columns.ts";
 import { labels } from "./labels.ts";
+import { RANGE_BOUNDS } from "./range-bounds.ts";
 import {
   DATE_PRECISION_LABEL,
   POSITION_TYPE_LABEL,
@@ -26,13 +28,14 @@ import {
   YES_NO_LABEL,
 } from "./vocabulary-sheet.ts";
 
-type ConditionalMatch = "is" | "isNot" | "isEmpty";
+type ConditionalMatch = "is" | "isNot" | "isEmpty" | "isBlank";
 
 export type ConditionalCondition = {
   path: string;
   level?: number;
   match: ConditionalMatch;
   values: readonly string[];
+  reason?: string;
 };
 
 export type ConditionalField = { paths: readonly string[] } & (
@@ -47,18 +50,34 @@ const headerOf = (path: string, level?: number) => {
   return column === undefined ? path : plainHeader(column);
 };
 
-const sentenceOf = (condition: ConditionalCondition) => {
+const clauseOf = (condition: ConditionalCondition) => {
   const driver = `"${headerOf(condition.path, condition.level)}"`;
   const values = condition.values.join(" or ");
   switch (condition.match) {
     case "is":
-      return `Only when ${driver} is ${values}.`;
+      return `Only when ${driver} is ${values}`;
     case "isNot":
-      return `Leave empty when ${driver} is ${values}.`;
+      return `Leave empty when ${driver} is ${values}`;
     case "isEmpty":
-      return `Leave empty when ${driver} is filled.`;
+      return `Leave empty when ${driver} is filled`;
+    case "isBlank":
+      return `Only when ${driver} is filled`;
   }
 };
+
+const sentenceOf = (condition: ConditionalCondition) =>
+  condition.reason === undefined
+    ? `${clauseOf(condition)}.`
+    : `${clauseOf(condition)}, since ${condition.reason}.`;
+
+const greyUntilFilled = (
+  description: string,
+  path: string,
+  level?: number,
+): ConditionalField => ({
+  paths: [description],
+  condition: { path, level, match: "isBlank", values: [] },
+});
 
 const material = (
   level: number,
@@ -144,20 +163,32 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
   },
   {
     paths: ["location", "description.collectionDate"],
-    condition: { path: "parentIds", match: "isEmpty", values: [] },
+    condition: {
+      path: "parentIds",
+      match: "isEmpty",
+      values: [],
+      reason: "a sub-sample inherits them from its parent",
+    },
   },
   {
     paths: ["parentIds"],
     prompt:
       "The IGSN of one already published sample. Its location and collection date are inherited.",
   },
+  ...RANGE_BOUNDS.map(([min, max]): ConditionalField => ({
+    paths: [max],
+    prompt: `Defaults to "${headerOf(min)}" when empty.`,
+  })),
+  greyUntilFilled("localIdDescription", "localId"),
+  greyUntilFilled("collectionMethodDescription", "collectionMethod", 1),
+  greyUntilFilled("economicDepositDescription", "economicDepositName"),
+  greyUntilFilled(
+    "scientificContext.researchProgramDescription",
+    "scientificContext.researchProgramName",
+  ),
   {
-    paths: ["location.verticalPositions.end"],
-    prompt: `On a point, repeat "${headerOf("location.verticalPositions.start")}" for a single position.`,
-  },
-  {
-    paths: ["localIdDescription"],
-    prompt: `Only when "${headerOf("localId")}" is filled.`,
+    paths: [`${ATTACHMENT_PATH}.name`],
+    prompt: "Include the file extension, e.g. outcrop.jpg.",
   },
   {
     paths: ["repository.currentArchiveLaboratory"],
@@ -290,11 +321,18 @@ export const driverIndexOf = (
       column.path === condition.path && column.level === condition.level,
   );
 
-export const conditionalPromptOf = (path: string): string | undefined => {
+export const conditionalPromptOf = (
+  path: string,
+  greyedOn: readonly Column[],
+): string | undefined => {
   const prompts = CONDITIONAL_FIELDS.filter((field) =>
     field.paths.some((governed) => isPathAtOrUnder(path, governed)),
-  ).map((field) =>
-    "prompt" in field ? field.prompt : sentenceOf(field.condition),
+  ).flatMap((field) =>
+    "prompt" in field
+      ? [field.prompt]
+      : driverIndexOf(greyedOn, field.condition) < 0
+        ? [sentenceOf(field.condition)]
+        : [],
   );
   return prompts.length === 0 ? undefined : prompts.join(" ");
 };

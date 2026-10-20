@@ -1,6 +1,7 @@
 import { DEFAULT_AVAILABILITY_STATUS } from "@projet-igsn/domain/sample/curation/availability-status";
 import { DEFAULT_EXISTENCE_STATUS } from "@projet-igsn/domain/sample/curation/existence-status";
 import { isMaterialComplete } from "@projet-igsn/domain/sample/material/is-complete";
+import { DEFAULT_NATURE } from "@projet-igsn/domain/sample/nature";
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { parentPath } from "@projet-igsn/domain/sample/path/parent";
 import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
@@ -50,6 +51,11 @@ function requiredLevel(path: string): number {
 }
 
 export const IMPORT_DEFAULTS: Readonly<Record<string, string>> = {
+  nature: DEFAULT_NATURE,
+  "description.oriented": "false",
+  "security.radioactivity": "false",
+  "security.asbestosRich": "false",
+  "security.chemicalRisk": "false",
   existenceStatus: DEFAULT_EXISTENCE_STATUS,
   availabilityStatus: DEFAULT_AVAILABILITY_STATUS,
 };

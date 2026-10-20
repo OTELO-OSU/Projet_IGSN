@@ -41,6 +41,7 @@ import {
   cleanBook,
   columnOf,
   fill,
+  FIRST_SAMPLE_ROW,
   parentedBook,
   sheetOf,
 } from "./import-fixture.ts";
@@ -170,7 +171,9 @@ describe("import template route", () => {
         mediaType: res.headers.get("Content-Type"),
         disposition: res.headers.get("Content-Disposition"),
         sniff: res.headers.get("X-Content-Type-Options"),
-        sampleRows: (book.getWorksheet(SHEETS.samples)?.rowCount ?? 0) - 2,
+        sampleRows:
+          (book.getWorksheet(SHEETS.samples)?.rowCount ?? 0) -
+          (FIRST_SAMPLE_ROW - 1),
       }).toEqual({
         status: 200,
         mediaType:
@@ -260,7 +263,7 @@ describe("import template route", () => {
       await book.xlsx.load(await res.arrayBuffer());
       const samples = sheetOf(book, SHEETS.samples);
       const prefillOf = (header: string) =>
-        samples.getCell(3, columnOf(samples, header)).value;
+        samples.getCell(FIRST_SAMPLE_ROW, columnOf(samples, header)).value;
 
       expect({
         status: res.status,
@@ -304,7 +307,7 @@ describe("import template route", () => {
 
       expect({
         status: res.status,
-        texture: await hasSampleColumn(res, "Texture"),
+        texture: await hasSampleColumn(res, "Magmatic texture"),
       }).toEqual({ status: 200, texture: false });
     },
   );
@@ -335,13 +338,17 @@ describe("import template reservation route", () => {
       const book = new ExcelJS.Workbook();
       await book.xlsx.load(await res.arrayBuffer());
       const samples = book.getWorksheet(SHEETS.samples)!;
-      const internalIds = [3, 4, 5].map((row) =>
-        Number(samples.getCell(row, 1).text.replace("sample-", "")),
+      const internalIds = [0, 1, 2].map((offset) =>
+        Number(
+          samples
+            .getCell(FIRST_SAMPLE_ROW + offset, 1)
+            .text.replace("sample-", ""),
+        ),
       );
 
       expect({
         status: res.status,
-        sampleRows: samples.rowCount - 2,
+        sampleRows: samples.rowCount - (FIRST_SAMPLE_ROW - 1),
         consecutive: internalIds.map((n) => n - internalIds[0]!),
       }).toEqual({ status: 200, sampleRows: 3, consecutive: [0, 1, 2] });
     },
@@ -381,11 +388,11 @@ describe("import template reservation route", () => {
       const book = new ExcelJS.Workbook();
       await book.xlsx.load(await res.arrayBuffer());
       const samples = sheetOf(book, SHEETS.samples);
-      const internalIds = [3, 4].map((row) =>
+      const internalIds = [FIRST_SAMPLE_ROW, FIRST_SAMPLE_ROW + 1].map((row) =>
         Number(samples.getCell(row, 1).text.replace("sample-", "")),
       );
       const prefillOf = (header: string) =>
-        samples.getCell(3, columnOf(samples, header)).value;
+        samples.getCell(FIRST_SAMPLE_ROW, columnOf(samples, header)).value;
 
       expect({
         status: res.status,
@@ -445,7 +452,7 @@ describe("import template reservation route", () => {
 
       expect({
         status: res.status,
-        texture: await hasSampleColumn(res, "Texture"),
+        texture: await hasSampleColumn(res, "Magmatic texture"),
       }).toEqual({ status: 200, texture: false });
     },
     30_000,
@@ -478,7 +485,7 @@ const cleanFile = async () => fileOf(await cleanBook());
 
 const bookNamingGroup = async () => {
   const book = await cleanBook();
-  fill(book, SHEETS.samples, 3, { "Manual group": GROUP.name });
+  fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, { "Manual group": GROUP.name });
   return book;
 };
 
@@ -629,7 +636,7 @@ describe("import upload route", () => {
     async ({ db }) => {
       await provisionUser(db, "test-token");
       const book = await cleanBook();
-      fill(book, SHEETS.samples, 4, CLEAN_SAMPLE);
+      fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, CLEAN_SAMPLE);
       for (const key of [1, 2])
         fill(book, SHEETS.attachments, 2 + key, {
           "Sample #": key,
@@ -791,7 +798,7 @@ describe("import upload route", () => {
         attachmentsDir,
       ).reserveInternalNumbers(1);
       const book = await cleanBook();
-      fill(book, SHEETS.samples, 4, {
+      fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
         ...CLEAN_SAMPLE,
         "Sample #": `sample-${reserved}`,
       });
@@ -846,7 +853,7 @@ describe("import upload route", () => {
           issues: [
             {
               sheet: SHEETS.samples,
-              row: 3,
+              row: FIRST_SAMPLE_ROW,
               column: "Manual group",
               value: GROUP.name,
               code: "unknown_manual_group",
@@ -1021,7 +1028,7 @@ describe("import upload route", () => {
           issues: [
             {
               sheet: SHEETS.samples,
-              row: 3,
+              row: FIRST_SAMPLE_ROW,
               column: "Parent IGSN",
               value: igsn,
               code: "parent_not_found",

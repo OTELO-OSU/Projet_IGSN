@@ -5,6 +5,7 @@ import type {
 } from "@projet-igsn/domain/sample/import/template-fields";
 import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
+import catalog from "@projet-igsn/domain/messages/en.json" with { type: "json" };
 import { lockedTemplateFields } from "@projet-igsn/domain/sample/import/locked-template-fields";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import {
@@ -40,6 +41,7 @@ import {
 } from "./columns.ts";
 import { CONDITIONAL_FIELDS, conditionOf } from "./conditional-fields.ts";
 import { FROZEN_FILL } from "./data-sheet.ts";
+import { EXAMPLE_SAMPLE } from "./example-sample.ts";
 import {
   IMPORT_DEFAULTS,
   REQUIRED_SAMPLE_COLUMNS,
@@ -53,6 +55,8 @@ const GROUP_ROW = 1;
 const HEADER_ROW = 2;
 
 const FIRST_DATA_ROW = 3;
+
+const FIRST_SAMPLE_ROW = 4;
 
 let book: ExcelJS.Workbook;
 
@@ -137,9 +141,12 @@ const conditionalFormattings = (worksheet: ExcelJS.Worksheet) =>
     }
   ).conditionalFormattings;
 
-const letterOf = (path: string) =>
+const letterOf = (path: string, level?: number) =>
   sheet(SHEETS.samples).getColumn(
-    SAMPLE_COLUMNS.findIndex((column) => column.path === path) + 1,
+    SAMPLE_COLUMNS.findIndex(
+      (column) =>
+        column.path === path && (level ?? column.level) === column.level,
+    ) + 1,
   ).letter;
 
 const GROUPS = [
@@ -232,7 +239,7 @@ describe("import template workbook", () => {
     expect({
       sampleNumbers: valuesOf(
         sheetOf(small, SHEETS.samples).getColumn(1).values,
-      ).slice(HEADER_ROW),
+      ).slice(FIRST_SAMPLE_ROW - 1),
       relations: lastRowOf(
         sampleKeyValidation(small, SHEETS.relations, FIRST_DATA_ROW)
           ?.formulae?.[0],
@@ -249,8 +256,8 @@ describe("import template workbook", () => {
       lookupPastLastRow: relations.getCell(`B${lastRow + 1}`).formula,
     }).toEqual({
       sampleNumbers: [1, 2, 3],
-      relations: String(lastRow),
-      additionalRoles: String(lastRow),
+      relations: String(lastRow + 1),
+      additionalRoles: String(lastRow + 1),
       validatedAtLastRow: true,
       validatedPastLastRow: false,
       lookupAtLastRow: sampleLookupFormula(
@@ -273,7 +280,7 @@ describe("import template workbook", () => {
       })),
     ).toEqual(
       CHILD_SHEETS.map(() => ({
-        key: sampleKeyRange(lastRow),
+        key: sampleKeyRange(lastRow + 1),
         lookup: sampleLookupFormula(FIRST_DATA_ROW, specificName),
       })),
     );
@@ -285,15 +292,24 @@ describe("import template workbook", () => {
 
     expect(
       valuesOf(sheetOf(reserved, SHEETS.samples).getColumn(1).values).slice(
-        HEADER_ROW,
+        FIRST_SAMPLE_ROW - 1,
       ),
     ).toEqual(["sample-349", "sample-350"]);
   });
 
-  it("should pre-fill every row's existence and availability status with their defaults, editable from their dropdown", () => {
+  it("should pre-fill every row with the admin form's defaults, editable from their dropdown", () => {
     const samples = sheet(SHEETS.samples);
+    const defaults = {
+      nature: "Hand sample",
+      "description.oriented": "No",
+      "security.radioactivity": "No",
+      "security.asbestosRich": "No",
+      "security.chemicalRisk": "No",
+      existenceStatus: "Exists",
+      availabilityStatus: "Available",
+    };
     const cellsAt = (row: number) =>
-      ["existenceStatus", "availabilityStatus"].map((path) => {
+      Object.keys(defaults).map((path) => {
         const address = `${letterOf(path)}${row}`;
         const cell = samples.getCell(address);
         return [
@@ -304,14 +320,132 @@ describe("import template workbook", () => {
       });
 
     expect([
-      cellsAt(FIRST_DATA_ROW),
-      cellsAt(FIRST_DATA_ROW + MAX_IMPORT_ROWS - 1),
+      cellsAt(FIRST_SAMPLE_ROW),
+      cellsAt(FIRST_SAMPLE_ROW + MAX_IMPORT_ROWS - 1),
     ]).toEqual(
-      [0, 1].map(() => [
-        ["Exists", undefined, "list"],
-        ["Available", undefined, "list"],
-      ]),
+      [0, 1].map(() =>
+        Object.values(defaults).map((label) => [label, undefined, "list"]),
+      ),
     );
+  });
+
+  it("should open the Samples sheet on a greyed example row, the samples numbered from the row below", () => {
+    const samples = sheet(SHEETS.samples);
+    const example = samples.getRow(FIRST_DATA_ROW);
+
+    expect({
+      key: example.getCell(1).value,
+      name: samples.getCell(`${letterOf("name")}${FIRST_DATA_ROW}`).value,
+      fills: SAMPLE_COLUMNS.map((_, index) => example.getCell(index + 1).fill),
+      firstSample: samples.getCell(FIRST_SAMPLE_ROW, 1).value,
+    }).toEqual({
+      key: "example",
+      name: EXAMPLE_SAMPLE.name,
+      fills: SAMPLE_COLUMNS.map(() => FROZEN_FILL),
+      firstSample: 1,
+    });
+  });
+
+  it("should show the admin form's help text as the prompt of every cell of a column that has one", () => {
+    const samples = sheet(SHEETS.samples);
+    const letter = letterOf("name");
+
+    expect({
+      first: sheetValidations(samples).find(`${letter}${FIRST_DATA_ROW}`)
+        ?.prompt,
+      last: sheetValidations(samples).find(
+        `${letter}${MAX_IMPORT_ROWS + HEADER_ROW + 1}`,
+      )?.prompt,
+      key: sheetValidations(samples).find(`A${FIRST_DATA_ROW}`)?.prompt,
+    }).toEqual({
+      first: catalog.name_placeholder,
+      last: catalog.name_placeholder,
+      key: undefined,
+    });
+  });
+
+  it("should prompt a dropdown column with the admin form's placeholder, or a generic text when the form has none", () => {
+    const samples = sheet(SHEETS.samples);
+    const promptOf = (path: string) =>
+      sheetValidations(samples).find(`${letterOf(path)}${FIRST_DATA_ROW}`)
+        ?.prompt;
+
+    expect({
+      nature: promptOf("nature"),
+      materialLevel2: sheetValidations(samples).find(
+        `${letterOf("material", 2)}${FIRST_DATA_ROW}`,
+      )?.prompt,
+      oriented: promptOf("description.oriented"),
+    }).toEqual({
+      nature: catalog.nature_placeholder,
+      materialLevel2: catalog.material_placeholder,
+      oriented: "Pick a value from the list.",
+    });
+  });
+
+  it("should keep a condition sentence only where the column is not greyed by it, on a child sheet whose driver stays on Samples", () => {
+    const funders = sheet(SHEETS.funderOrganizations);
+    const columns =
+      CHILD_SHEETS.find((child) => child.name === SHEETS.funderOrganizations)
+        ?.columns ?? [];
+    const letter = funders.getColumn(
+      columns.findIndex(
+        (column) => column.path === "scientificContext.funderOrganizations",
+      ) + 1,
+    ).letter;
+
+    expect(
+      sheetValidations(funders).find(`${letter}${FIRST_DATA_ROW}`)?.prompt,
+    ).toContain('Only when "Provenance status" is Research project sample.');
+  });
+
+  it("should grey Local ID description until Local ID is filled", () => {
+    const samples = sheet(SHEETS.samples);
+    const letter = letterOf("localIdDescription");
+
+    expect({
+      prompt:
+        sheetValidations(samples).find(`${letter}${FIRST_DATA_ROW}`)?.prompt ??
+        "",
+      formulae: conditionalFormattings(samples).find((formatting) =>
+        formatting.ref.startsWith(`${letter}${FIRST_DATA_ROW}:`),
+      )?.rules[0]?.formulae,
+    }).toEqual({
+      prompt: "",
+      formulae: [`$${letterOf("localId")}${FIRST_DATA_ROW}=""`],
+    });
+  });
+
+  it("should grey a hierarchy level while the level above is empty or leaves it no value", () => {
+    const samples = sheet(SHEETS.samples);
+    const levelLetter = (level: number) =>
+      samples.getColumn(
+        SAMPLE_COLUMNS.findIndex(
+          (column) => column.block === "sample_type" && column.level === level,
+        ) + 1,
+      ).letter;
+    const [above, letter] = [levelLetter(1), levelLetter(2)];
+
+    expect(
+      conditionalFormattings(samples)
+        .filter((formatting) =>
+          formatting.ref.startsWith(`${letter}${FIRST_DATA_ROW}:`),
+        )
+        .flatMap((formatting) => formatting.rules[0]?.formulae ?? []),
+    ).toEqual([
+      `OR($${above}${FIRST_DATA_ROW}="",COUNTIF(${BLOCK_PLACEMENTS.sample_type_2?.keyRange},$${above}${FIRST_DATA_ROW})=0)`,
+    ]);
+  });
+
+  it("should ask for the file extension in the Attachments File name prompt", () => {
+    const attachments = sheet(SHEETS.attachments);
+    const letter = attachments.getColumn(
+      headerOf(SHEETS.attachments).indexOf("File name") + 1,
+    ).letter;
+
+    expect(
+      sheetValidations(attachments).find(`${letter}${FIRST_DATA_ROW}`)?.prompt,
+    ).toBe("Include the file extension, e.g. outcrop.jpg.");
   });
 
   it.each([
@@ -328,19 +462,20 @@ describe("import template workbook", () => {
       "Collection specimen",
     ],
   ])(
-    "should state the condition of %s in its prompt and grey it when it does not apply",
+    "should grey %s when it does not apply, its prompt not restating the condition",
     (path, driver, sentence, value) => {
       const samples = sheet(SHEETS.samples);
       const letter = letterOf(path);
 
       expect({
-        prompt: sheetValidations(samples).find(`${letter}${FIRST_DATA_ROW}`)
-          ?.prompt,
+        prompt:
+          sheetValidations(samples).find(`${letter}${FIRST_DATA_ROW}`)
+            ?.prompt ?? "",
         formulae: conditionalFormattings(samples).find((formatting) =>
           formatting.ref.startsWith(`${letter}${FIRST_DATA_ROW}:`),
         )?.rules[0]?.formulae,
       }).toEqual({
-        prompt: expect.stringContaining(sentence),
+        prompt: expect.not.stringContaining(sentence),
         formulae: [`NOT(OR($${letterOf(driver)}${FIRST_DATA_ROW}="${value}"))`],
       });
     },
@@ -357,13 +492,14 @@ describe("import template workbook", () => {
     const letter = letterOn("condition.humidity.percentage");
 
     expect({
-      prompt: sheetValidations(storage).find(`${letter}${FIRST_DATA_ROW}`)
-        ?.prompt,
+      prompt:
+        sheetValidations(storage).find(`${letter}${FIRST_DATA_ROW}`)?.prompt ??
+        "",
       formulae: conditionalFormattings(storage).find((formatting) =>
         formatting.ref.startsWith(`${letter}${FIRST_DATA_ROW}:`),
       )?.rules[0]?.formulae,
     }).toEqual({
-      prompt: expect.stringContaining(
+      prompt: expect.not.stringContaining(
         'Only when "Storage condition" is Moisture controlled.',
       ),
       formulae: [
@@ -379,17 +515,16 @@ describe("import template workbook", () => {
       const letter = letterOf(path);
 
       expect({
-        prompt: sheetValidations(samples).find(`${letter}${FIRST_DATA_ROW}`)
-          ?.prompt,
+        prompt:
+          sheetValidations(samples).find(`${letter}${FIRST_DATA_ROW}`)
+            ?.prompt ?? "",
         formulae: conditionalFormattings(samples)
           .filter((formatting) =>
             formatting.ref.startsWith(`${letter}${FIRST_DATA_ROW}:`),
           )
           .flatMap((formatting) => formatting.rules[0]?.formulae ?? []),
       }).toEqual({
-        prompt: expect.stringContaining(
-          'Leave empty when "Parent IGSN" is filled.',
-        ),
+        prompt: expect.not.stringContaining('Leave empty when "Parent IGSN"'),
         formulae: expect.arrayContaining([
           `NOT($${letterOf("parentIds")}${FIRST_DATA_ROW}="")`,
         ]),
@@ -504,7 +639,7 @@ describe("import template workbook", () => {
 
 describe("customized import template workbook", () => {
   const rows = 3;
-  const lastRow = FIRST_DATA_ROW + rows - 1;
+  const lastRow = FIRST_SAMPLE_ROW + rows - 1;
   const prefilled = {
     "Provenance status": "Research project sample",
     "Manual group": "Alps",
@@ -538,6 +673,26 @@ describe("customized import template workbook", () => {
   beforeAll(async () => {
     customized = await loaded(rows, [], customization, GROUPS);
   }, 30_000);
+
+  it("should mark the collection date start as required to publish, but for a collection specimen", async () => {
+    const specimen = await loaded(1, [], {
+      provenanceStatus: "collection_specimen",
+    });
+    const collectionDateStartOf = (source: ExcelJS.Workbook) =>
+      headersOf(source).find(
+        (header) =>
+          typeof header === "string" &&
+          header.startsWith("Collection date start"),
+      );
+
+    expect({
+      default: collectionDateStartOf(book),
+      specimen: collectionDateStartOf(specimen),
+    }).toEqual({
+      default: "Collection date start *",
+      specimen: "Collection date start",
+    });
+  });
 
   it("should keep the Parent IGSN column and the Process steps sheet only when sub-samples are expected", async () => {
     const withoutSubSamples = await loaded(
@@ -594,8 +749,8 @@ describe("customized import template workbook", () => {
         return [header, cell.value, cell.fill];
       });
 
-    expect([cellsAt(FIRST_DATA_ROW), cellsAt(lastRow)]).toEqual(
-      [FIRST_DATA_ROW, lastRow].map(() =>
+    expect([cellsAt(FIRST_SAMPLE_ROW), cellsAt(lastRow)]).toEqual(
+      [FIRST_SAMPLE_ROW, lastRow].map(() =>
         Object.entries(prefilled).map(([header, label]) => [
           header,
           label,
@@ -658,7 +813,7 @@ describe("customized import template workbook", () => {
   });
 
   it.each<[TemplateFieldKey, string[], string[]]>([
-    ["texture", ["Texture"], []],
+    ["texture", ["Magmatic texture"], []],
     ["length", ["Length", "Length unit"], []],
     [
       "numericAge",
@@ -719,7 +874,7 @@ describe("customized import template workbook", () => {
         collector: false,
       },
       [
-        "Collection date start",
+        "Collection date start *",
         "Position type",
         "Collector first name *",
         "Collector last name *",
@@ -800,7 +955,7 @@ const PATH_COLUMNS = DATA_SHEETS.flatMap(({ columns }) => columns).filter(
 
 const REQUIRED_PATHS = REQUIRED_SAMPLE_COLUMNS.map(({ path }) => path);
 
-const ALWAYS_KEPT_PATHS = ["parentIds", "processSteps"];
+const ALWAYS_KEPT_PATHS = ["parentIds", "processSteps", "nature"];
 
 const CHECKED_BLOCKER_PATHS: Partial<Record<PublishBlocker, string>> = {
   location_position_missing: "location.position",
@@ -891,11 +1046,15 @@ describe("template fields", () => {
     },
   );
 
-  it("should keep the driver of every conditional column whenever that column stays", () => {
+  it("should keep the driver of every conditional column but a description whenever that column stays", () => {
     expect(
       CONDITIONAL_FIELDS.flatMap((field) => {
         const condition = conditionOf(field);
-        if (condition === undefined || isAlwaysIncluded(condition.path))
+        if (
+          condition === undefined ||
+          condition.match === "isBlank" ||
+          isAlwaysIncluded(condition.path)
+        )
           return [];
         const driverFields = fieldsCovering(condition.path);
         return PATH_COLUMNS.filter(

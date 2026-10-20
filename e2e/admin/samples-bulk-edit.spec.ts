@@ -13,7 +13,7 @@ test.describe("samples bulk edit", () => {
     const bulkEdit = bulkEditPage(page);
     const file = await bulkEdit.exportSample(basalt.name, testInfo);
     await editExport(file, {
-      cells: [{ sample: 0, column: "Name", value: "Basalt 42 revised" }],
+      cells: [{ sample: 0, column: "Sample name", value: "Basalt 42 revised" }],
       deletedColumns: ["Name of the research programme"],
     });
 

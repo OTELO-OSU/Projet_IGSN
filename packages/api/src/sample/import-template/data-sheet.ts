@@ -56,6 +56,6 @@ export function addDataSheet(
       validation,
     );
   }
-  addGreyRules(sheet, columns, rows);
+  addGreyRules(sheet, columns, rows, placements);
   return sheet;
 }

@@ -6,6 +6,7 @@ import { DATA_SHEETS } from "./columns.ts";
 import {
   columnIndexesOf,
   CONDITIONAL_FIELDS,
+  conditionalPromptOf,
   conditionOf,
   driverIndexOf,
 } from "./conditional-fields.ts";
@@ -96,5 +97,11 @@ describe("import template conditional fields", () => {
     );
 
     expect(compared.filter((value) => CODE_SHAPE.test(value))).toEqual([]);
+  });
+
+  it("should say why a sub-sample leaves its location empty", () => {
+    expect(conditionalPromptOf("location.localityDescription", [])).toMatch(
+      /^Leave empty when "Parent IGSN" is filled, since a sub-sample inherits them from its parent\./,
+    );
   });
 });

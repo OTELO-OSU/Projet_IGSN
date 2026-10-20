@@ -57,6 +57,12 @@ The template download can be customized by provenance status, material path (up 
 - Absent, the server applies those defaults before validation (`IMPORT_DEFAULTS` in `required-columns.ts`).
 - A row whose only values equal its pre-fill is blank on every template, customized or not.
 
+## Amendment: example row and renamed headers
+
+- Row 3 of `Samples` is a greyed example row keyed `example`, and samples start on row 4; the key is skipped on upload.
+- Headers still match by name, so the renames Name to "Sample name", Local name to "Local ID", Local name description to "Local ID description" and Texture to "Magmatic texture" leave an old template without its required "Sample name" column.
+- A missing maximum or end value takes the minimum or start on import.
+
 ## Rejected option
 
 Validate in the browser first, so a researcher sees mistakes before uploading. Rejected: it would move the column layout, the vocabulary resolution and the conditional-field rules from `api` to `domain` so both packages could read them, add `exceljs` (~950 KB) to `admin`, and run the same validator twice on every clean file, all for the sole gain of skipping one upload of a file capped at a modest size.

@@ -68,7 +68,7 @@ const statusAndLocalId = (db: Kysely<DB>, ids: string[]) =>
 const setLocalId =
   (localId: string, row = ROW) =>
   (book: ExcelJS.Workbook) =>
-    fill(book, SHEETS.samples, row, { "Local name": localId });
+    fill(book, SHEETS.samples, row, { "Local ID": localId });
 
 type Arranged = { sample: Sample; key?: string };
 

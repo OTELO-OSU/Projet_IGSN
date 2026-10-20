@@ -14,7 +14,10 @@ import { queueBuild } from "./build-queue.ts";
 import {
   buildSampleInputs,
   type SampleCandidate,
+  setPath,
+  valueAt,
 } from "./build-sample-inputs.ts";
+import { COLUMN_KINDS } from "./column-kind.ts";
 import {
   DATA_SHEETS,
   PARENT_IGSN_HEADER,
@@ -156,6 +159,22 @@ const absentDefaultsOf = (layout: TemplateLayout) => {
   );
 };
 
+const withDefaults = (
+  input: SampleCandidate["input"],
+  defaults: Readonly<Record<string, string>>,
+): SampleCandidate["input"] =>
+  Object.entries(defaults).reduce(
+    (defaulted, [path, code]) =>
+      valueAt(defaulted, path.split(".")) === undefined
+        ? setPath(
+            defaulted,
+            path,
+            COLUMN_KINDS.get(path)?.type === "boolean" ? code === "true" : code,
+          )
+        : defaulted,
+    input,
+  );
+
 export async function validateRows(
   parsed: ParsedRows,
   defaults: Readonly<Record<string, string>>,
@@ -171,7 +190,7 @@ export async function validateRows(
   const parents = await resolveImportParents(
     built.samples.map((sample) => ({
       ...sample,
-      input: { ...defaults, ...sample.input },
+      input: withDefaults(sample.input, defaults),
     })),
     resolveParentsByIgsn,
   );
@@ -179,7 +198,14 @@ export async function validateRows(
   const reported = new Set(
     [...built.issues, ...parents.issues, ...children.issues].map(fieldOf),
   );
-  const unresolved = new Set(parents.issues.map(({ row }) => row));
+  const unresolved = new Set<number | undefined>(
+    parents.samples.flatMap(({ row, input }, index) =>
+      built.samples[index]?.input.parentIds !== undefined &&
+      input.parentIds === undefined
+        ? [row]
+        : [],
+    ),
+  );
   const { issues, samples } = validateSamples(
     children.samples.map(prepare),
     providedFileNames,
@@ -192,7 +218,11 @@ export async function validateRows(
       ...issues.filter(
         (issue) =>
           !reported.has(fieldOf(issue)) &&
-          !(unresolved.has(issue.row) && isInheritedField(issue)),
+          !(
+            issue.sheet === SHEETS.samples &&
+            unresolved.has(issue.row) &&
+            isInheritedField(issue)
+          ),
       ),
     ],
     samples: samples.map((sample, index) => ({

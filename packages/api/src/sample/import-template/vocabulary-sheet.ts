@@ -107,16 +107,42 @@ export const DATE_PRECISION_LABEL = {
   hour: "Hour and minute",
 } as const;
 
+const ORDERED_BLOCKS = new Set([
+  "yes_no",
+  "date_precision",
+  "geological_age",
+  "age_numeric_unit",
+  "age_years_unit",
+  "size_unit",
+  "mass_unit",
+  "volume_unit",
+  "temperature_type",
+  "temperature_unit",
+  "pressure_type",
+  "pressure_unit",
+  "humidity_type",
+]);
+
+const byLabel = (left: VocabularyRow, right: VocabularyRow) =>
+  left[1].localeCompare(right[1]);
+
 const flat = <T extends string | number>(
   id: string,
   title: string,
   codes: readonly T[],
   label: (code: T) => string,
-): VocabularyBlock => ({
-  id,
-  title,
-  rows: codes.map((code) => [String(code), label(code), ""] as const),
-});
+): VocabularyBlock => {
+  const rows = codes.map((code): VocabularyRow => [
+    String(code),
+    label(code),
+    "",
+  ]);
+  return {
+    id,
+    title,
+    rows: ORDERED_BLOCKS.has(id) ? rows : rows.sort(byLabel),
+  };
+};
 
 const hierarchy = (
   id: string,
@@ -139,7 +165,10 @@ const hierarchy = (
       rows: paths
         .filter((path) => path.split(".").length === level)
         .map((path): VocabularyRow => [breadcrumb(path), label(path), path])
-        .sort((left, right) => left[0].localeCompare(right[0])),
+        .sort(
+          (left, right) =>
+            left[0].localeCompare(right[0]) || byLabel(left, right),
+        ),
     };
   });
 };
@@ -397,7 +426,9 @@ export const manualGroupBlock = (
 ): VocabularyBlock => ({
   id: MANUAL_GROUP_BLOCK,
   title: "Manual group",
-  rows: groups.map((group) => [group.id, group.name, ""] as const),
+  rows: groups
+    .map((group): VocabularyRow => [group.id, group.name, ""])
+    .sort(byLabel),
 });
 
 export const vocabularyLayout = (blocks: readonly VocabularyBlock[]) => {

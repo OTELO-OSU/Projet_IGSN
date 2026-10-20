@@ -38,18 +38,21 @@ describe("templateLayout", () => {
     const book = await templateBook();
     const samples = sheetOf(book, SHEETS.samples);
     const [name, nature] = [
-      columnOf(samples, "Name"),
+      columnOf(samples, "Sample name"),
       columnOf(samples, "Nature"),
     ];
     setHeader(book, SHEETS.samples, name, "Nature");
-    setHeader(book, SHEETS.samples, nature, "Name");
+    setHeader(book, SHEETS.samples, nature, "Sample name");
 
     const { layout, issues } = templateLayout(book);
 
     expect({
       issues,
       columns: columnsOf(layout, SHEETS.samples),
-    }).toMatchObject({ issues: [], columns: { Name: nature, Nature: name } });
+    }).toMatchObject({
+      issues: [],
+      columns: { "Sample name": nature, Nature: name },
+    });
   });
 
   it("should match a header whatever its case, spacing and required marker", async () => {
@@ -78,7 +81,7 @@ describe("templateLayout", () => {
   });
 
   it.each([
-    [SHEETS.samples, "Local name"],
+    [SHEETS.samples, "Local ID"],
     [SHEETS.relations, "Title"],
   ])(
     "should leave the optional or conditional column %s / %s out without an issue",
@@ -127,11 +130,15 @@ describe("templateLayout", () => {
     [
       "always-required columns are deleted",
       (book) => {
-        deleteColumn(book, SHEETS.samples, "Nature");
+        deleteColumn(book, SHEETS.samples, "Sample name");
         deleteColumn(book, SHEETS.samples, "Material (level 3)");
       },
       [
-        { sheet: SHEETS.samples, column: "Nature", code: "missing_column" },
+        {
+          sheet: SHEETS.samples,
+          column: "Sample name",
+          code: "missing_column",
+        },
         {
           sheet: SHEETS.samples,
           column: "Material (level 3)",

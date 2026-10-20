@@ -11,6 +11,7 @@ import {
   cleanBook,
   fill,
   filledRowsOf,
+  FIRST_SAMPLE_ROW,
 } from "./import-fixture.ts";
 
 const candidatesOf = (book: ExcelJS.Workbook) =>
@@ -19,7 +20,7 @@ const candidatesOf = (book: ExcelJS.Workbook) =>
 const CLEAN = {
   samples: [
     {
-      row: 3,
+      row: FIRST_SAMPLE_ROW,
       input: CLEAN_INPUT,
       rowsByPath: CLEAN_ROWS_BY_PATH,
       attachments: [],
@@ -42,7 +43,7 @@ describe("buildSampleInputs", () => {
 
   it("should collect each sample's attachment rows beside its input, a file named by two samples once per sample", async () => {
     const book = await cleanBook();
-    fill(book, SHEETS.samples, 4, CLEAN_SAMPLE);
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, CLEAN_SAMPLE);
     fill(book, SHEETS.attachments, 3, {
       "Sample #": 1,
       "File name": "report.pdf",
@@ -84,7 +85,7 @@ describe("buildSampleInputs", () => {
 
   it("should accept a raw code where a label is expected", async () => {
     const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, {
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
       Nature: "hand_sample",
       "Material (level 2)": "rock",
       "Position type": "point",
@@ -95,7 +96,7 @@ describe("buildSampleInputs", () => {
 
   it("should read a date cell down to the minute when the row's precision is the hour", async () => {
     const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, {
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
       "Collection date precision": "Hour and minute",
       "Collection date start": new Date(Date.UTC(2024, 0, 15, 8, 30)),
       "Collection date end": "2024-01-15T09:00",
@@ -115,7 +116,10 @@ describe("buildSampleInputs", () => {
 
   it("should pass a value it cannot convert to the schema untouched", async () => {
     const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, { Nature: "Big rock", Latitude: "abc" });
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
+      Nature: "Big rock",
+      Latitude: "abc",
+    });
 
     const { position } = CLEAN_INPUT.location;
     expect(candidatesOf(book).samples[0]?.input).toMatchObject({
@@ -126,11 +130,32 @@ describe("buildSampleInputs", () => {
 
   it("should keep the typed text of a hierarchy level it cannot resolve in the path", async () => {
     const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, { "Material (level 2)": null });
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
+      "Material (level 2)": null,
+    });
 
     expect(candidatesOf(book).samples[0]?.input.material).toBe(
       "rock_and_sediment.Igneous",
     );
+  });
+
+  it("should give a range left without its maximum its minimum", async () => {
+    const book = await cleanBook();
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, { "Numeric age minimum": 10 });
+    fill(book, SHEETS.verticalPositions, 3, {
+      "Sample #": 1,
+      "Minimum or start (m)": 12,
+    });
+
+    const { input } = candidatesOf(book).samples[0]!;
+    expect({
+      age: input.age,
+      verticalPositions: (input.location as { verticalPositions?: unknown })
+        .verticalPositions,
+    }).toEqual({
+      age: { ...CLEAN_INPUT.age, numericAgeMin: 10, numericAgeMax: 10 },
+      verticalPositions: [{ start: 12, end: 12 }],
+    });
   });
 
   it.each<[string, (book: ExcelJS.Workbook) => void, object[]]>([
@@ -142,14 +167,34 @@ describe("buildSampleInputs", () => {
     [
       "a filled sample row repeating a Sample #",
       (book) =>
-        fill(book, SHEETS.samples, 4, { "Sample #": 1, Name: "Basalt 2" }),
-      [issue(SHEETS.samples, 4, "Sample #", "duplicate_sample_key")],
+        fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
+          "Sample #": 1,
+          "Sample name": "Basalt 2",
+        }),
+      [
+        issue(
+          SHEETS.samples,
+          FIRST_SAMPLE_ROW + 1,
+          "Sample #",
+          "duplicate_sample_key",
+        ),
+      ],
     ],
     [
       "a filled sample row without a Sample #",
       (book) =>
-        fill(book, SHEETS.samples, 4, { "Sample #": null, Name: "Basalt 2" }),
-      [issue(SHEETS.samples, 4, "Sample #", "missing_sample_key")],
+        fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
+          "Sample #": null,
+          "Sample name": "Basalt 2",
+        }),
+      [
+        issue(
+          SHEETS.samples,
+          FIRST_SAMPLE_ROW + 1,
+          "Sample #",
+          "missing_sample_key",
+        ),
+      ],
     ],
     [
       "a storage-condition reading repeated with another value",

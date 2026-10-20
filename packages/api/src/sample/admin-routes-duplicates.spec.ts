@@ -18,6 +18,7 @@ import { publishableSample } from "../tests/sample-fixtures.ts";
 import {
   CLEAN_DUPLICATE,
   cleanBook,
+  FIRST_SAMPLE_ROW,
 } from "./import-template/import-fixture.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
@@ -101,7 +102,7 @@ describe("POST /admin/samples/import/duplicates", () => {
         body: {
           data: [
             {
-              row: 3,
+              row: FIRST_SAMPLE_ROW,
               duplicates: [
                 {
                   id: published.id,

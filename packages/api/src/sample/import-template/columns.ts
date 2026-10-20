@@ -57,7 +57,7 @@ export const SHEETS = {
 
 export const SAMPLE_KEY_HEADER = "Sample #";
 
-export const SAMPLE_NAME_HEADER = "Name";
+export const SAMPLE_NAME_HEADER = "Sample name";
 
 export const PARENT_IGSN_HEADER = "Parent IGSN";
 
@@ -74,10 +74,18 @@ export const MANUAL_GROUP_BLOCK = "manual_group";
 export const plainHeader = (column: Column): string =>
   column.header.replace(REQUIRED_MARKER, "");
 
+const MARKED_LEAF: Readonly<Record<string, string>> = {
+  "description.collectionDate": "start",
+};
+
 const PUBLISH_REQUIRED_PATHS = new Set(
   Object.entries(PUBLISH_BLOCKER_PATH)
     .filter(([blocker]) => blocker !== "parent_not_found")
-    .map(([, path]) => path.join(".")),
+    .map(([, path]) => {
+      const joined = path.join(".");
+      const leaf = MARKED_LEAF[joined];
+      return leaf === undefined ? joined : `${joined}.${leaf}`;
+    }),
 );
 
 const marked = (columns: readonly Column[]): readonly Column[] =>
@@ -129,8 +137,8 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
   ...grouped("Identity", [
     field(SAMPLE_NAME_HEADER, "name"),
     field(PARENT_IGSN_HEADER, "parentIds"),
-    field("Local name", "localId"),
-    field("Local name description", "localIdDescription"),
+    field("Local ID", "localId"),
+    field("Local ID description", "localIdDescription"),
     ...tree("type", "sample_type", "Sample type", SAMPLE_TYPES),
     field("Nature", "nature", "nature"),
     ...tree(
@@ -157,7 +165,7 @@ export const SAMPLE_COLUMNS: readonly Column[] = marked([
   ]),
   ...grouped("Sample classification", [
     ...tree("material", "material", "Material", TEMPLATE_MATERIAL_PATHS),
-    field("Texture", "texture", "texture"),
+    field("Magmatic texture", "texture", "texture"),
     field("Metamorphic facies", "metamorphicFacies", "metamorphic_facies"),
     field("Metamorphic fabrics", "metamorphicFabric", "metamorphic_fabric"),
     field("Specific name", "specificName"),

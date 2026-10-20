@@ -8,6 +8,11 @@ import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-ro
 import { TEMPLATE_FIELDS } from "@projet-igsn/domain/sample/import/template-fields";
 import { HEADER_ROW } from "@projet-igsn/domain/sample/import/template-header";
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
+import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
+import {
+  samplePublishBlockers,
+  toPublishableFields,
+} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import ExcelJS from "exceljs";
 
 import type { Column } from "./columns.ts";
@@ -17,10 +22,12 @@ import type {
 } from "./customization.ts";
 import type { ExcelBuffer } from "./xlsx-response.ts";
 
+import { sampleRow } from "../bulk-edit/sample-row.ts";
 import { queueBuild } from "./build-queue.ts";
 import { addChildSheet } from "./child-sheet.ts";
 import {
   CHILD_SHEETS,
+  plainHeader,
   SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
   SHEETS,
@@ -33,8 +40,9 @@ import {
   storedCustomizationOf,
   writeCustomization,
 } from "./customization.ts";
-import { FIRST_DATA_ROW, lastDataRow } from "./data-range.ts";
-import { addDataSheet } from "./data-sheet.ts";
+import { EXAMPLE_KEY, FIRST_DATA_ROW, FIRST_SAMPLE_ROW } from "./data-range.ts";
+import { addDataSheet, FROZEN_FILL } from "./data-sheet.ts";
+import { EXAMPLE_SAMPLE } from "./example-sample.ts";
 import { addReadMeSheet } from "./read-me-sheet.ts";
 import { GROUP_ROW } from "./section-style.ts";
 import {
@@ -47,7 +55,8 @@ import { xlsxResponse } from "./xlsx-response.ts";
 
 const READ_ME_LINES = [
   `Row ${GROUP_ROW} groups the columns as the declaration form's tabs do and row ${HEADER_ROW} names them.`,
-  `Fill one sample per row on the "${SHEETS.samples}" sheet, from row ${FIRST_DATA_ROW}.`,
+  `Fill one sample per row on the "${SHEETS.samples}" sheet, from row ${FIRST_SAMPLE_ROW}.`,
+  `Row ${FIRST_DATA_ROW} is a greyed example that is never imported; your samples start on row ${FIRST_SAMPLE_ROW}.`,
   `"${SAMPLE_KEY_HEADER}" numbers those rows: it is filled for you, so do not edit it.`,
   `A "${SAMPLE_KEY_HEADER}" reserved when downloading this template becomes that sample's internal ID; a plain number gets the next free one on import.`,
   `A row on ${CHILD_SHEETS.map((child) => `"${child.name}"`).join(", ")} picks that number in its own "${SAMPLE_KEY_HEADER}" list, and the name beside it fills itself.`,
@@ -113,25 +122,46 @@ async function build(
   const isParentColumnDropped =
     isCustomized && customization.subSamples !== true;
   const droppedPaths = droppedPathsOf(customization);
-  const sampleColumns = keptColumnsOf(
-    SAMPLE_COLUMNS,
-    stored,
-    droppedPaths,
-  ).filter(({ path }) => !isParentColumnDropped || path !== "parentIds");
+  const needsCollectionDate = samplePublishBlockers(
+    toPublishableFields({
+      scientificContext: customization.provenanceStatus && {
+        provenanceStatus: customization.provenanceStatus,
+        additionalRoles: [],
+      },
+    }),
+  ).includes("collection_date_missing");
+  const sampleColumns = keptColumnsOf(SAMPLE_COLUMNS, stored, droppedPaths)
+    .filter(({ path }) => !isParentColumnDropped || path !== "parentIds")
+    .map((column) =>
+      !needsCollectionDate &&
+      isPathAtOrUnder(
+        column.path,
+        PUBLISH_BLOCKER_PATH.collection_date_missing.join("."),
+      )
+        ? { ...column, header: plainHeader(column) }
+        : column,
+    );
+  const prefill = prefillOf(stored);
   const samples = addDataSheet(
     book,
     SHEETS.samples,
     sampleColumns,
-    rows,
-    prefillOf(stored),
+    rows + 1,
+    prefill,
     vocabulary.placements,
   );
+  const example = sampleRow(EXAMPLE_SAMPLE, sampleColumns).with(0, EXAMPLE_KEY);
+  for (const [index, column] of sampleColumns.entries()) {
+    const cell = samples.getCell(FIRST_DATA_ROW, index + 1);
+    cell.value = prefill(column) ?? example[index] ?? null;
+    cell.fill = FROZEN_FILL;
+  }
   const defaults = sampleColumns.flatMap((column, index) => {
     const label = defaultLabelOf(column);
     return label === undefined ? [] : [{ number: index + 1, label }];
   });
-  for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
-    const index = row - FIRST_DATA_ROW;
+  for (let index = 0; index < rows; index++) {
+    const row = FIRST_SAMPLE_ROW + index;
     const internalId = internalIds[index];
     samples.getCell(row, 1).value =
       internalId === undefined ? index + 1 : formatInternalId(internalId);
@@ -142,7 +172,7 @@ async function build(
     if (isParentColumnDropped && child.name === SHEETS.processSteps) continue;
     const columns = keptColumnsOf(child.columns, stored, droppedPaths);
     if (columns.every((column) => column.path === undefined)) continue;
-    addChildSheet(book, child.name, columns, rows, sampleColumns);
+    addChildSheet(book, child.name, columns, rows, sampleColumns, rows + 1);
   }
   await addVocabularySheet(book, vocabulary.rows).protect("", {});
   return book.xlsx.writeBuffer();

@@ -21,6 +21,7 @@ import {
   SAMPLE_KEY_HEADER,
   SHEETS,
 } from "./columns.ts";
+import { RANGE_BOUNDS } from "./range-bounds.ts";
 import { textOf } from "./read-rows.ts";
 import { resolveLabel } from "./resolve-label.ts";
 
@@ -69,7 +70,7 @@ export const valueAt = (
     value,
   );
 
-function setPath(object: Json, path: string, value: unknown): Json {
+export function setPath(object: Json, path: string, value: unknown): Json {
   const [key = "", ...rest] = path.split(".");
   if (rest.length === 0) return { ...object, [key]: value };
   const inner = object[key];
@@ -170,6 +171,14 @@ function hierarchyValue(
   return path;
 }
 
+const missingMaximaOf = (fields: readonly Field[]): Field[] =>
+  RANGE_BOUNDS.flatMap(([min, max]) => {
+    const minimum = fields.find(({ path }) => path === min);
+    return minimum === undefined || fields.some(({ path }) => path === max)
+      ? []
+      : [{ ...minimum, path: max }];
+  });
+
 function rowFields(sheet: string, row: SheetRow): Field[] {
   const fields: Field[] = [];
   for (const [column, cell] of row.cells) {
@@ -195,7 +204,7 @@ function rowFields(sheet: string, row: SheetRow): Field[] {
           : { column: first, path: first.path, value: path },
       );
   }
-  return fields;
+  return [...fields, ...missingMaximaOf(fields)];
 }
 
 function withChildRow(

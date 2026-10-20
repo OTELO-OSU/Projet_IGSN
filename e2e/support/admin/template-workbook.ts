@@ -19,9 +19,9 @@ const { Workbook } = createRequire(
   path.join(__dirname, "../../../packages/api/package.json"),
 )("exceljs") as { Workbook: new () => Workbook };
 
-const HEADER_ROW = 2;
+export const HEADER_ROW = 2;
 
-export const FIRST_DATA_ROW = HEADER_ROW + 1;
+export const FIRST_DATA_ROW = HEADER_ROW + 2;
 
 const REQUIRED_MARKER = " *";
 
