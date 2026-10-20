@@ -1,5 +1,6 @@
 import logoIgsnUrl from "@projet-igsn/design-system/assets/logo-igsn.svg";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { NAV_LINK_CLASS } from "@projet-igsn/design-system/lib/nav-link-class";
 import { Link, useLocation } from "@tanstack/react-router";
 import { MenuIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -7,8 +8,6 @@ import { useEffect, useRef, useState } from "react";
 import { AuthControls } from "#/auth/auth-controls.tsx";
 import { LocaleSwitch } from "#/i18n/locale-switch.tsx";
 import { m } from "#/paraglide/messages.js";
-
-import { NAV_LINK_CLASS } from "./nav-link-class.ts";
 
 const MENU_ID = "site-menu";
 
@@ -78,10 +77,7 @@ export function SiteHeader() {
             <Link
               to="/"
               activeOptions={{ exact: true }}
-              {...(isSearchSection && {
-                "data-status": "active",
-                "aria-current": "page",
-              })}
+              {...(isSearchSection && { "aria-current": "page" })}
               onClick={close}
               className={NAV_LINK_CLASS}
             >

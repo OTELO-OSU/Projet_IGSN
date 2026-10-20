@@ -114,31 +114,48 @@ describe("AppLayout", () => {
     ).toHaveLength(0);
   });
 
-  it("should show a plain researcher the logo but no sidebar", async () => {
+  it("should show a plain researcher the logo and a header navigation to their samples and the public site", async () => {
     fakeCurrentUser();
 
     const screen = await renderLayout();
+    const banner = screen.getByRole("banner");
+    const nav = banner.getByRole("navigation");
+
+    await expect
+      .element(banner.getByRole("link", { name: "IGSN Dashboard" }))
+      .toBeInTheDocument();
+    await expect
+      .element(nav.getByRole("link", { name: "My samples" }))
+      .toHaveAttribute("aria-current", "page");
+    await expect
+      .element(nav.getByRole("link", { name: "My samples" }))
+      .toHaveAttribute("href", "/");
+    await expect
+      .element(nav.getByRole("link", { name: "Go to public site" }))
+      .toHaveAttribute("href", FRONTEND_URL);
+    expect(screen.getByRole("navigation").elements()).toHaveLength(1);
+  });
+
+  it("should offer a moderator the public site in the sidebar, not the header", async () => {
+    fakeCurrentUser({ superAdmin: true });
+
+    const screen = await renderLayout();
+    const banner = screen.getByRole("banner");
+    await expect
+      .element(screen.getByRole("button", { name: "Collapse menu" }))
+      .toBeVisible();
 
     await expect
       .element(
         screen
-          .getByRole("banner")
-          .getByRole("link", { name: "IGSN Dashboard" }),
+          .getByRole("navigation")
+          .getByRole("link", { name: "Go to public site" }),
       )
-      .toBeInTheDocument();
-    expect(screen.getByRole("navigation").elements()).toHaveLength(0);
-  });
-
-  it("should offer a researcher without a sidebar a link to their samples", async () => {
-    fakeCurrentUser();
-
-    const screen = await renderLayout();
-
-    await expect
-      .element(
-        screen.getByRole("banner").getByRole("link", { name: "My samples" }),
-      )
-      .toHaveAttribute("href", "/");
+      .toHaveAttribute("href", FRONTEND_URL);
+    expect(
+      banner.getByRole("link", { name: "Go to public site" }).elements(),
+    ).toHaveLength(0);
+    expect(banner.getByRole("navigation").elements()).toHaveLength(0);
   });
 
   it("should let a manager collapse the menu and keep it collapsed", async () => {
@@ -159,16 +176,6 @@ describe("AppLayout", () => {
     await expect
       .element(remounted.getByRole("button", { name: "Expand menu" }))
       .toBeVisible();
-  });
-
-  it("should offer a way back to the public site", async () => {
-    fakeCurrentUser();
-
-    const screen = await renderLayout();
-
-    await expect
-      .element(screen.getByRole("link", { name: "Go to public site" }))
-      .toHaveAttribute("href", FRONTEND_URL);
   });
 
   it("should show no banner to an accepted user", async () => {

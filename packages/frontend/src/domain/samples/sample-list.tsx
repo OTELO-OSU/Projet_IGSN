@@ -5,14 +5,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { useSearchHighlight } from "@projet-igsn/design-system/lib/use-search-highlight";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
-import {
-  exactRanges,
-  matchRanges,
-} from "@projet-igsn/domain/sample/search/highlight-match";
 import { Link } from "@tanstack/react-router";
 import { ExternalLinkIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 import type { CardSample } from "#/domain/samples/card-fields.ts";
 
@@ -26,8 +23,6 @@ import {
 import { CARD_LINE_ICONS } from "#/domain/samples/card-line-icons.ts";
 import { m } from "#/paraglide/messages.js";
 
-const SEARCH_HIGHLIGHT = "sample-search-match";
-
 const sampleCardId = (igsn: string): string => `sample-card-${igsn}`;
 
 export function focusSampleCard(igsn: string): boolean {
@@ -36,26 +31,6 @@ export function focusSampleCard(igsn: string): boolean {
   card.scrollIntoView({ block: "nearest" });
   card.querySelector("button")?.focus({ preventScroll: true });
   return true;
-}
-
-function toRange(node: Node, [start, end]: [number, number]): Range {
-  const range = new Range();
-  range.setStart(node, start);
-  range.setEnd(node, end);
-  return range;
-}
-
-function elementRanges(element: Element, query: string): Range[] {
-  const node = element.firstChild;
-  if (node?.nodeType !== Node.TEXT_NODE) {
-    return [];
-  }
-  const text = node.textContent ?? "";
-  const ranges =
-    element.getAttribute("data-highlight") === "exact"
-      ? exactRanges(text, query)
-      : matchRanges(text, query);
-  return ranges.map((match) => toRange(node, match));
 }
 
 function CardLine({
@@ -195,26 +170,7 @@ export function SampleList({
   const extraFields = selectedCardFields(fields);
   const hasInternalId = fields?.includes("internalNumber") ?? false;
 
-  useEffect(() => {
-    const container = listRef.current;
-    if (!container || !("highlights" in CSS)) {
-      return;
-    }
-    const trimmed = query.trim();
-    if (!trimmed) {
-      CSS.highlights.delete(SEARCH_HIGHLIGHT);
-      return;
-    }
-
-    const ranges = [...container.querySelectorAll("[data-highlight]")].flatMap(
-      (element) => elementRanges(element, trimmed),
-    );
-    CSS.highlights.set(SEARCH_HIGHLIGHT, new Highlight(...ranges));
-
-    return () => {
-      CSS.highlights.delete(SEARCH_HIGHLIGHT);
-    };
-  }, [query, samples]);
+  useSearchHighlight(listRef, query, [samples]);
 
   return (
     <ul ref={listRef} className={`grid gap-4 ${columnsClassName}`}>

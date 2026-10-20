@@ -13,7 +13,8 @@
     "bench:grid": "node scripts/bench-grid.ts",
     "bench:concurrency": "node scripts/bench-concurrency.ts",
     "seed:e2e": "node scripts/reset-and-seed.ts",
-    "digest:send": "node scripts/send-pending-users-digest.ts"
+    "digest:send": "node scripts/send-pending-users-digest.ts",
+    "clear-samples": "node scripts/clear-samples.ts"
   },
   "dependencies": {
     "@faker-js/faker": "catalog:",

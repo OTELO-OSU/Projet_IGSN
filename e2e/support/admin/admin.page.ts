@@ -4,7 +4,6 @@ import { adminUrl } from "../urls";
 
 export const signedInLocator = (page: Page) =>
   page
-    .getByRole("banner")
     .getByRole("link", { name: "Go to public site" })
     .or(page.getByRole("button", { name: "Sign out" }));
 

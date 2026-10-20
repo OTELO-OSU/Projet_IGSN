@@ -73,3 +73,8 @@
     cursor: pointer;
   }
 }
+
+::highlight(sample-search-match) {
+  background-color: var(--color-yellow-200);
+  color: inherit;
+}

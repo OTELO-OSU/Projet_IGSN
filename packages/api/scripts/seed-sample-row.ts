@@ -89,7 +89,7 @@ export type OwnedSampleRow = SampleRow & {
 
 export type CreatedSample = Pick<
   Selectable<DB["sample"]>,
-  "id" | "name" | "nature" | "igsn" | "status"
+  "id" | "name" | "specific_name" | "nature" | "igsn" | "status"
 >;
 
 export function parseSampleRow(

@@ -12,6 +12,7 @@ import { v7 as uuidv7 } from "uuid";
 import { createDb } from "../src/db.ts";
 import { FACET_VALUES } from "./bench-lib.ts";
 import { seedMockUsers } from "./seed-mock-users.ts";
+import { seedSampleName } from "./seed-sample-name.ts";
 
 const BATCH_SIZE = 1000;
 const CONCURRENCY = 8;
@@ -43,7 +44,7 @@ const groupIds = (
   await db.selectFrom("manual_group").select("id").execute()
 ).map((group) => group.id);
 
-function benchSample(id: string) {
+function benchSample(id: string, position: number) {
   const laboratory = faker.helpers.arrayElement(LABORATORIES);
   const ageMin = faker.number.int({ min: 0, max: 500 });
   return {
@@ -52,8 +53,8 @@ function benchSample(id: string) {
     igsn: generateIgsnSuffix(id),
     published_at: sql<Date>`now()`,
     internal_number: sql<number>`nextval('sample_internal_number_seq')`,
-    name: `${faker.helpers.arrayElement(ROCK_NAMES)} ${faker.location.city()}`,
-    specific_name: faker.lorem.words(3),
+    name: seedSampleName(position),
+    specific_name: `${faker.helpers.arrayElement(ROCK_NAMES)} ${faker.location.city()}`,
     nature: faker.helpers.arrayElement(NATURES),
     texture: faker.helpers.arrayElement(TEXTURES),
     type: randomPath("type"),
@@ -81,7 +82,7 @@ function benchSample(id: string) {
   };
 }
 
-async function seedBatch(size: number) {
+async function seedBatch(size: number, offset: number) {
   const ids = Array.from({ length: size }, () => uuidv7());
   await db.transaction().execute(async (trx) => {
     await trx
@@ -95,7 +96,10 @@ async function seedBatch(size: number) {
         })),
       )
       .execute();
-    await trx.insertInto("sample").values(ids.map(benchSample)).execute();
+    await trx
+      .insertInto("sample")
+      .values(ids.map((id, row) => benchSample(id, offset + row)))
+      .execute();
     await trx
       .insertInto("user_sample")
       .values(
@@ -142,7 +146,7 @@ let seeded = 0;
 await Promise.all(
   Array.from({ length: CONCURRENCY }, async (_, worker) => {
     for (let index = worker; index < batchSizes.length; index += CONCURRENCY) {
-      await seedBatch(batchSizes[index]!);
+      await seedBatch(batchSizes[index]!, index * BATCH_SIZE);
       seeded += batchSizes[index]!;
       console.info(`seeded ${seeded}/${count} bench samples`);
     }

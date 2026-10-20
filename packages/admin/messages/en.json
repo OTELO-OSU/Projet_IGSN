@@ -143,6 +143,7 @@
   "column_igsn": "IGSN",
   "column_internal_id": "Internal ID",
   "column_name": "Name",
+  "column_specific_name": "Specific name",
   "column_type": "Type",
   "column_location": "Location",
   "column_collector": "Collector",

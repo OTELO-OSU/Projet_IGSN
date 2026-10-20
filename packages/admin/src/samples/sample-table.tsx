@@ -9,6 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { useSearchHighlight } from "@projet-igsn/design-system/lib/use-search-highlight";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -21,7 +22,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Columns3CogIcon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import {
@@ -66,10 +67,18 @@ type PickableColumn = {
   className?: string;
 };
 
-function TextCell({ text }: { text: string | null }) {
+function TextCell({
+  text,
+  highlight = false,
+}: {
+  text: string | null;
+  highlight?: boolean;
+}) {
   return text ? (
     <TruncatedCell text={text}>
-      <span className="block truncate">{text}</span>
+      <span className="block truncate" data-highlight={highlight || undefined}>
+        {text}
+      </span>
     </TruncatedCell>
   ) : null;
 }
@@ -105,7 +114,13 @@ const PICKABLE_COLUMNS: readonly PickableColumn[] = [
     id: "material",
     label: m.sample_field_material,
     section: m.sample_section_sample,
-    cell: (sample) => <TextCell text={materialText(sample)} />,
+    cell: (sample) => <TextCell text={materialText(sample)} highlight />,
+  },
+  {
+    id: "specificName",
+    label: m.column_specific_name,
+    section: m.sample_section_sample,
+    cell: (sample) => <TextCell text={sample.specificName} highlight />,
   },
   {
     id: "location",
@@ -202,7 +217,11 @@ function sampleColumns(
       cell: ({ row }) =>
         row.original.igsn ? (
           <TruncatedCell text={row.original.igsn}>
-            <span dir="rtl" className="block truncate text-left">
+            <span
+              dir="rtl"
+              className="block truncate text-left"
+              data-highlight="exact"
+            >
               {row.original.igsn}
             </span>
           </TruncatedCell>
@@ -219,6 +238,7 @@ function sampleColumns(
             params={{ sampleId: row.original.id }}
             search={editSampleSearch(moderated)}
             className="block truncate hover:underline"
+            data-highlight
           >
             {row.original.name}
           </Link>
@@ -285,6 +305,7 @@ type SampleTableProps = {
   rowSelection: RowSelectionState;
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
   moderated?: boolean;
+  query: string;
 };
 
 export function SampleTable({
@@ -294,6 +315,7 @@ export function SampleTable({
   rowSelection,
   onRowSelectionChange,
   moderated = false,
+  query,
 }: SampleTableProps) {
   const navigate = useNavigate();
   const [templateSample, setTemplateSample] =
@@ -319,6 +341,8 @@ export function SampleTable({
     onSortingChange,
     onRowSelectionChange,
   });
+  const tableRef = useRef<HTMLDivElement>(null);
+  useSearchHighlight(tableRef, query, [samples, columns]);
 
   return (
     <>
@@ -345,18 +369,20 @@ export function SampleTable({
           legend={m.sample_columns_legend()}
         />
       </div>
-      <DataTable
-        table={table}
-        className="table-fixed"
-        emptyLabel={m.samples_empty()}
-        onRowClick={(sample) =>
-          void navigate({
-            to: "/samples/$sampleId",
-            params: { sampleId: sample.id },
-            search: editSampleSearch(moderated),
-          })
-        }
-      />
+      <div ref={tableRef}>
+        <DataTable
+          table={table}
+          className="table-fixed"
+          emptyLabel={m.samples_empty()}
+          onRowClick={(sample) =>
+            void navigate({
+              to: "/samples/$sampleId",
+              params: { sampleId: sample.id },
+              search: editSampleSearch(moderated),
+            })
+          }
+        />
+      </div>
       {templateSample ? (
         <CustomizeTemplateDialog
           open
