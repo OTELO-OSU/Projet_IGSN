@@ -2,7 +2,10 @@ import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-vali
 import type { ReactNode } from "react";
 
 import { Checkbox } from "@projet-igsn/design-system/components/ui/checkbox";
-import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
+import {
+  DataTable,
+  STICKY_CELL_BACKGROUND,
+} from "@projet-igsn/design-system/components/ui/data-table";
 import { FieldPicker } from "@projet-igsn/design-system/components/ui/field-picker";
 import {
   Tooltip,
@@ -291,8 +294,7 @@ function sampleColumns(
         />
       ),
       meta: {
-        className:
-          "sticky right-0 w-20 bg-background [tr:hover_&]:bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-background))]",
+        className: `sticky right-0 w-20 ${STICKY_CELL_BACKGROUND}`,
       },
     },
   ];

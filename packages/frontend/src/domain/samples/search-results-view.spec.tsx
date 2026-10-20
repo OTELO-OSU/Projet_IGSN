@@ -63,6 +63,20 @@ describe("SearchResultsView", () => {
     await page.viewport(1280, 800);
   });
 
+  it("should highlight a search match in the table beside the hidden phone cards", async () => {
+    await renderView({ ...onePage, query: "basalt" });
+    await page.getByRole("radio", { name: "Table view" }).click();
+    const table = page.getByRole("table");
+
+    await expect
+      .poll(() =>
+        [...(CSS.highlights.get("sample-search-match") ?? [])]
+          .filter((range) => table.element().contains(range.startContainer))
+          .map(String),
+      )
+      .toEqual(["Basalt"]);
+  });
+
   it("should switch the cards to a table and keep that view after a remount", async () => {
     const first = await renderView(onePage);
     await page.getByRole("radio", { name: "Table view" }).click();
