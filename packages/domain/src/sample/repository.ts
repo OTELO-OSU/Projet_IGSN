@@ -137,6 +137,7 @@ export type SampleRepository = {
     samples: { id: string; input: CreateSample; updatedAt: Date }[],
   ): Promise<number>;
   retryFailedSynchronizations(userId: string): Promise<number>;
+  retryFailedSynchronization(id: string): Promise<number>;
   createPublished(
     input: CreateSample,
     ownerId: string,
