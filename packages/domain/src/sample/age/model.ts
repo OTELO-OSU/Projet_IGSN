@@ -31,6 +31,7 @@ export const ageSchema = z
         code: "custom",
         path: ["numericAgeMax"],
         message: ageErrorSchema.enum.numeric_range_order,
+        params: { code: "numeric_range_order" },
       });
     }
 

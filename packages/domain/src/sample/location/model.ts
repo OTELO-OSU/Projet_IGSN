@@ -104,6 +104,7 @@ export const locationSchema = z
           code: "custom",
           path: ["verticalPositions", index, "start"],
           message: "vertical start must be less than or equal to end",
+          params: { code: "vertical_position_order" },
         });
       }
     });
@@ -115,6 +116,7 @@ export const locationSchema = z
         code: "custom",
         path: ["position", "northLatitude"],
         message: "northLatitude must be greater than or equal to southLatitude",
+        params: { code: "area_latitude_order" },
       });
     }
   });

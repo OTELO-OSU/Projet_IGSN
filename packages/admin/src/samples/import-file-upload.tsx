@@ -39,7 +39,7 @@ export function ImportFileUpload({
   onImport,
   children,
 }: {
-  dropZone: Omit<ComponentProps<typeof FileDropZone>, "isInline">;
+  dropZone: Omit<ComponentProps<typeof FileDropZone>, "isInline" | "sizeHint">;
   file: File | null;
   onRemove: () => void;
   issues: ImportIssue[] | undefined;
@@ -83,7 +83,13 @@ export function ImportFileUpload({
           ) : null}
         </div>
       ) : (
-        <FileDropZone {...dropZone} isInline />
+        <FileDropZone
+          {...dropZone}
+          sizeHint={m.import_samples_workbook_size_hint({
+            max: IMPORT_MAX_BYTES / 1024 / 1024,
+          })}
+          isInline
+        />
       )}
       {children}
       {issues?.length ? <ImportReport issues={issues} /> : null}

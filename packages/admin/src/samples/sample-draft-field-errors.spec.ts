@@ -154,15 +154,30 @@ describe("sampleDraftFieldErrors", () => {
     },
   );
 
-  it("should keep the generic message on a missing coordinate", () => {
+  it.each([
+    ["latitude", "Latitude is required."],
+    ["longitude", "Longitude is required."],
+  ])("should name the missing %s of a point", (axis, message) => {
+    expect(
+      sampleDraftFieldErrors([
+        { path: ["location", "position", axis], code: "invalid_type" },
+      ]),
+    ).toEqual({ [`location.${axis}`]: { message } });
+  });
+
+  it("should ask for a valid archive contact email", () => {
     expect(
       sampleDraftFieldErrors([
         {
-          path: ["location", "position", "latitude"],
-          code: "invalid_type",
+          path: ["repository", "currentArchiveContactEmail"],
+          code: "invalid_format",
         },
       ]),
-    ).toEqual({ "location.latitude": { message: "Invalid value." } });
+    ).toEqual({
+      "repository.currentArchiveContactEmail": {
+        message: "Enter a valid email address.",
+      },
+    });
   });
 
   it("should not claim a positive bound on a reading value that has none", () => {
@@ -195,21 +210,48 @@ describe("sampleDraftFieldErrors", () => {
     });
   });
 
-  it("should read the range order error on both date fields", () => {
-    expect(
-      sampleDraftFieldErrors([
-        {
-          path: ["description", "collectionDate", "start"],
-          params: { code: "collection_date_order" },
-        },
-      ]),
-    ).toEqual({
-      "description.collectionDateStart": {
-        message: "The start date must be before the end date.",
+  it.each([
+    {
+      path: ["age", "numericAgeMax"],
+      code: "numeric_range_order",
+      fields: { "age.numericAgeMax": "Max must not be less than min." },
+    },
+    {
+      path: ["location", "verticalPositions", 0, "start"],
+      code: "vertical_position_order",
+      fields: {
+        "location.verticalPositions[0].start":
+          "Start must not be greater than end.",
       },
-      "description.collectionDateEnd": {
-        message: "The start date must be before the end date.",
+    },
+    {
+      path: ["location", "position", "northLatitude"],
+      code: "area_latitude_order",
+      fields: {
+        "location.northLatitude": "North must not be less than south.",
       },
-    });
-  });
+    },
+    {
+      path: ["description", "collectionDate", "start"],
+      code: "collection_date_order",
+      fields: {
+        "description.collectionDateStart":
+          "Start date must not be after end date.",
+        "description.collectionDateEnd":
+          "Start date must not be after end date.",
+      },
+    },
+  ])(
+    "should say what is wrong with a $code range",
+    ({ path, code, fields }) => {
+      expect(sampleDraftFieldErrors([{ path, params: { code } }])).toEqual(
+        Object.fromEntries(
+          Object.entries(fields).map(([field, message]) => [
+            field,
+            { message },
+          ]),
+        ),
+      );
+    },
+  );
 });

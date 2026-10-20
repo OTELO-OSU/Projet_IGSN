@@ -6,6 +6,7 @@ import {
 import { publishBlockerSchema } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
 import { m } from "#/paraglide/messages.js";
+import { REASON_MESSAGES } from "#/samples/field-reason-messages.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 
 const IMPORT_ISSUE_LABELS: Record<ImportIssueCode, () => string> = {
@@ -49,5 +50,7 @@ export function importIssueLabel({ code, message }: ImportIssue): string {
   if (importCode.success) return IMPORT_ISSUE_LABELS[importCode.data]();
   const blocker = publishBlockerSchema.safeParse(code);
   if (blocker.success) return publishBlockerLabel(blocker.data);
-  return message ?? m.import_report_invalid_value();
+  return (
+    REASON_MESSAGES[code]?.() ?? message ?? m.import_report_invalid_value()
+  );
 }

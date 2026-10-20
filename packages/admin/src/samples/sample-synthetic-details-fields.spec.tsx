@@ -269,7 +269,7 @@ describe("SampleSyntheticDetailsFields", () => {
 
     await expect
       .element(screen.getByRole("alert").first())
-      .toHaveTextContent("The start date must be before the end date.");
+      .toHaveTextContent("Start date must not be after end date.");
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
 

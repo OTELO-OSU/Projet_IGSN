@@ -5,6 +5,7 @@ import {
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
 import { m } from "#/paraglide/messages.js";
+import { REASON_MESSAGES } from "#/samples/field-reason-messages.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 
 const MEASUREMENT_PATH =
@@ -73,16 +74,6 @@ export function publishBlockerField(blocker: PublishBlocker): string | null {
 
 const DATE_ORDER_CODE = /_date_order$/;
 
-const REASON_MESSAGES: Record<string, (() => string) | undefined> = {
-  collection_date_future: m.field_collection_date_future,
-  collection_date_order: m.field_collection_date_order,
-  synthesis_date_future: m.field_synthesis_date_future,
-  synthesis_date_order: m.field_synthesis_date_order,
-  process_date_future: m.field_process_date_future,
-  process_date_order: m.field_process_date_order,
-  humidity_percentage_range: m.field_humidity_percentage_range,
-};
-
 type DraftIssue = {
   path: ReadonlyArray<PropertyKey>;
   code?: string;
@@ -129,6 +120,16 @@ function issueMessage(path: string, issue: DraftIssue): string {
   if (issue.code === "too_big" || issue.code === "too_small") {
     if (LONGITUDE_PATH.test(path)) return m.field_longitude_range();
     if (LATITUDE_PATH.test(path)) return m.field_latitude_range();
+  }
+  if (issue.code === "invalid_type") {
+    if (LONGITUDE_PATH.test(path)) return m.field_longitude_required();
+    if (LATITUDE_PATH.test(path)) return m.field_latitude_required();
+  }
+  if (
+    issue.code === "invalid_format" &&
+    path === "repository.currentArchiveContactEmail"
+  ) {
+    return m.field_email_invalid();
   }
   if (path === "condition.humidity.percentage") {
     return m.field_humidity_percentage_bounds();

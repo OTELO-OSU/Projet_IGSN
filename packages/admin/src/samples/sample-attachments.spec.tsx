@@ -117,6 +117,14 @@ describe("SampleAttachments", () => {
     expect(FakeXhr.instances).toHaveLength(0);
   });
 
+  it("should state the maximum size of a file", async () => {
+    const screen = await renderAttachments([]);
+
+    await expect
+      .element(screen.getByText("Up to 100 MB per file."))
+      .toBeVisible();
+  });
+
   it("should disable download on a staged file", async () => {
     const screen = await renderAttachments([]);
 

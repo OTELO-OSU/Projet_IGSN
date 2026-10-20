@@ -20,6 +20,7 @@ import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Textarea } from "@projet-igsn/design-system/components/ui/textarea";
 import { cn } from "@projet-igsn/design-system/lib/utils";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
+import { ATTACHMENT_MAX_BYTES } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relation/target-resource-type";
 import { Download, Undo2 } from "lucide-react";
 
@@ -226,6 +227,9 @@ export function SampleAttachments({
         <div className="max-w-2xl">
           <FileDropZone
             hint={m.attachment_drop_hint()}
+            sizeHint={m.attachment_size_hint({
+              max: ATTACHMENT_MAX_BYTES / 1024 / 1024,
+            })}
             browseLabel={m.action_browse_files()}
             multiple
             onFiles={addFiles}

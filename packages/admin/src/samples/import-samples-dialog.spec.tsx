@@ -218,6 +218,14 @@ describe("ImportSamplesDialog", () => {
     expect(dialog.getByText("Reserve internal IDs").elements()).toHaveLength(0);
   });
 
+  it("should state the maximum size of a document", async () => {
+    const { dialog } = await dropWorkbookNaming(["report.pdf"]);
+
+    await expect
+      .element(dialog.getByText("Up to 100 MB per file."))
+      .toBeVisible();
+  });
+
   it("should enable Import once an xlsx file is picked, showing its name", async () => {
     const { dialog, importButton } = await openDialog();
     await expect.element(importButton).toBeDisabled();

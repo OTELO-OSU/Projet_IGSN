@@ -2316,7 +2316,9 @@ describe("SampleForm", () => {
     await screen.getByRole("button", { name: "Create" }).click();
 
     expect(onSubmit).not.toHaveBeenCalled();
-    await expect.element(screen.getByText("Invalid value.")).toBeVisible();
+    await expect
+      .element(screen.getByText("Latitude is required."))
+      .toBeVisible();
   });
 
   it("should accept a decimal vertical position", async () => {
