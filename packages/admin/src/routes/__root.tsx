@@ -8,6 +8,7 @@ import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { getLocale } from "#/paraglide/runtime.js";
 
 import { AuthGate } from "../auth/auth-gate.tsx";
+import { DemoBanner } from "../demo-banner.tsx";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
@@ -17,6 +18,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     component: () => (
       <TooltipProvider>
         <PlaceholderTooltipProvider value>
+          <DemoBanner />
           <AuthGate>
             <Outlet />
             {/* Clears the sample form's fixed action bar, so a toast never covers Publish. */}

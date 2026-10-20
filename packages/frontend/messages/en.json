@@ -38,6 +38,7 @@
   "results_map_title": "Search results on the map",
   "opens_in_new_tab": "(opens in a new tab)",
   "open_data_link": "Download published samples from data.gouv.fr",
+  "demo_banner": "You are browsing the IGSN demo site. Its content may be reset at any time, and its samples and IGSNs are not real.",
   "download_results": "Download results",
   "download_sample": "Download as Excel",
   "download_results_too_many": "More than {max} results: refine your search or use the open data.",
