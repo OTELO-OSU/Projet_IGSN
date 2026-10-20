@@ -78,6 +78,19 @@ beforeAll(() => page.viewport(1280, 1600));
 type Screen = Awaited<ReturnType<typeof renderRoute>>["screen"];
 
 describe("SampleModerationPage", () => {
+  it("should offer the tombstone status to a moderator", async () => {
+    fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
+    fakeApi();
+    const { screen } = await renderRoute("/samples/moderation");
+
+    await addFilter(screen, "Status");
+    await screen.getByRole("combobox", { name: "Status" }).click();
+
+    await expect
+      .element(screen.getByRole("option", { name: "Tombstone" }))
+      .toBeVisible();
+  });
+
   it("should list the moderated samples with each owner's account status", async () => {
     fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
     fakeApi();

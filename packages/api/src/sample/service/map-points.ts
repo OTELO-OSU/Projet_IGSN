@@ -7,11 +7,7 @@ import type { DB } from "../../db.ts";
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { personFacetValues } from "./facet-filter.ts";
 import { publishedScope, sampleFilters } from "./list-sample.ts";
-import {
-  applyFuzzyThreshold,
-  forceCustomPlan,
-  publicSearchFilters,
-} from "./search-filter.ts";
+import { applyFuzzyThreshold, forceCustomPlan } from "./search-filter.ts";
 
 const COORDINATE_DECIMALS = 5;
 
@@ -23,10 +19,7 @@ export async function mapPublishedPointsJson(
     if (query.search !== undefined) await forceCustomPlan(trx);
     await applyFuzzyThreshold(trx, personFacetValues(query));
     await sql`set local paradedb.planner_warnings = off`.execute(trx);
-    const filters = [
-      ...sampleFilters(query, undefined, publicSearchFilters),
-      ...publishedScope(query),
-    ];
+    const filters = [...sampleFilters(query), ...publishedScope(query)];
     const located = trx
       .selectFrom("sample")
       .where((eb) => eb.and(filters))

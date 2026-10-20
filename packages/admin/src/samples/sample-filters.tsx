@@ -1,3 +1,4 @@
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 
 import {
@@ -10,10 +11,7 @@ import { COLLECTION_METHOD_HIERARCHY } from "@projet-igsn/domain/sample/collecti
 import { AVAILABILITY_STATUSES } from "@projet-igsn/domain/sample/curation/availability-status";
 import { EXISTENCE_STATUSES } from "@projet-igsn/domain/sample/curation/existence-status";
 import { NATURES } from "@projet-igsn/domain/sample/nature";
-import {
-  sampleStatusSchema,
-  synchronizationStatusSchema,
-} from "@projet-igsn/domain/sample/sample";
+import { synchronizationStatusSchema } from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 
 import type { FilterEntry } from "#/filters/list-header.tsx";
@@ -44,9 +42,6 @@ type SampleFilterValues = Pick<
 >;
 
 const NATURE_ITEMS = toComboboxItems(NATURES, natureLabel);
-const STATUS_ITEMS = toComboboxItems(sampleStatusSchema.options, (value) =>
-  SAMPLE_STATUS[value].label(),
-);
 const SYNCHRONIZATION_STATUS_ITEMS = toComboboxItems(
   synchronizationStatusSchema.options,
   (value) => SYNCHRONIZATION_STATUS[value].label(),
@@ -61,9 +56,11 @@ const AVAILABILITY_STATUS_ITEMS = toComboboxItems(
 );
 
 export function sampleFilterEntries({
+  statuses,
   values,
   onChange,
 }: {
+  statuses: readonly SampleStatus[];
   values: SampleFilterValues;
   onChange: (next: Partial<SampleFilterValues>) => void;
 }): FilterEntry[] {
@@ -126,7 +123,7 @@ export function sampleFilterEntries({
       name: "status",
       label: m.column_status(),
       anyLabel: m.samples_status_all(),
-      items: STATUS_ITEMS,
+      items: toComboboxItems(statuses, (value) => SAMPLE_STATUS[value].label()),
       value: values.status,
       parse: (next) => listSamplesQuerySchema.shape.status.parse(next),
       onChange: (status) => onChange({ status }),

@@ -120,7 +120,7 @@
   "samples_title": "My samples",
   "sample_moderation_title": "Sample moderation",
   "samples_search_label": "Search samples",
-  "samples_search_placeholder": "Search by name, specific name or IGSN",
+  "samples_search_placeholder": "Search by name, specific name, IGSN or material",
   "samples_empty": "No results",
   "samples_ownership_filter": "Ownership",
   "samples_ownership_all": "All samples",

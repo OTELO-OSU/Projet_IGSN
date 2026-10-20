@@ -12,7 +12,11 @@ import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { draft } from "../../tests/sample-fixtures.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listModeratedSamples, listPublishedSamples } from "./list-sample.ts";
+import {
+  listModeratedSamples,
+  listPublishedSamples,
+  listPublishedSamplesForService,
+} from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 import { setSampleStatus } from "./set-sample-status.ts";
 
@@ -1435,7 +1439,7 @@ describe("listSamples", () => {
   );
 
   pgTest(
-    "should match the material classification in the public search alone",
+    "should match the material classification in the public and admin searches, not in /service",
     async ({ db }) => {
       // Arrange
       const classified = async (material: string) => {
@@ -1453,20 +1457,50 @@ describe("listSamples", () => {
       await classified(
         "rock_and_sediment.rock.sedimentary.clastic_sedimentary_rock.sandstone",
       );
+      const graniteDraft = await insertSample(db, {
+        ...draft,
+        name: "Brittany core",
+        material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      });
+      await insertSample(db, { ...draft, name: "Brittany core" });
       const publicIds = async (search: string) =>
         (
           await listPublishedSamples(db, { page: 1, perPage: 10, search })
         ).data.map((sample) => sample.id);
+      const ids = (samples: readonly { id: string }[]) =>
+        samples.map((sample) => sample.id).toSorted();
+      const scope = superAdminScope(crypto.randomUUID());
       // Act
       const found = {
         granite: await publicIds("granite"),
         igneous: await publicIds("igneous"),
         graniteBrittany: await publicIds("granite brittany"),
-        moderated: (
+        assigned: ids(
+          (await listAsOwner(db, { page: 1, perPage: 10, search: "granite" }))
+            .data,
+        ),
+        moderated: ids(
+          (
+            await listModeratedSamples(
+              db,
+              { page: 1, perPage: 10, search: "granite" },
+              scope,
+            )
+          ).data,
+        ),
+        unmatched: (
           await listModeratedSamples(
             db,
+            { page: 1, perPage: 10, search: "andesite" },
+            scope,
+          )
+        ).data,
+        service: (
+          await listPublishedSamplesForService(
+            db,
             { page: 1, perPage: 10, search: "granite" },
-            superAdminScope(crypto.randomUUID()),
+            scope,
+            false,
           )
         ).data,
       };
@@ -1475,7 +1509,10 @@ describe("listSamples", () => {
         granite: [granite.id],
         igneous: [granite.id],
         graniteBrittany: [granite.id],
-        moderated: [],
+        assigned: ids([granite, graniteDraft]),
+        moderated: ids([granite, graniteDraft]),
+        unmatched: [],
+        service: [],
       });
     },
   );

@@ -21,10 +21,6 @@ describe("parseSearchQuery", () => {
     ["basalt ET granite", and(word("basalt"), word("granite"))],
     ["basalt OU granite", or(word("basalt"), word("granite"))],
     ["aa OU bb AND cc", or(word("aa"), and(word("bb"), word("cc")))],
-    [
-      "basalt and or et ou",
-      and(word("basalt"), word("and"), word("or"), word("et"), word("ou")),
-    ],
     ["aa bb OR cc", or(and(word("aa"), word("bb")), word("cc"))],
     ["(aa OR bb) cc", and(or(word("aa"), word("bb")), word("cc"))],
     [
@@ -40,6 +36,8 @@ describe("parseSearchQuery", () => {
     ["'basalt powder", and(word("basalt"), word("powder"))],
     ['"a*b (OR) AND c"', phrase("a*b (OR) AND c")],
     ['"OR"', phrase("OR")],
+    ['"or"', phrase("or")],
+    ["'et'", phrase("et")],
     ["basalt OR", word("basalt")],
     ["AND basalt", word("basalt")],
     ["aa OR OR bb", or(word("aa"), word("bb"))],
@@ -60,6 +58,21 @@ describe("parseSearchQuery", () => {
     ['a basalt é "b" *', word("basalt")],
   ])("should parse %j", (search, query) => {
     expect(parseSearchQuery(search)).toEqual(query);
+  });
+
+  it.each([
+    ["basalt or granite", "basalt OR granite"],
+    ["basalt Ou granite", "basalt OU granite"],
+    ["rock and roll", "rock AND roll"],
+    ["basalt eT granite", "basalt ET granite"],
+    ["aa ou bb and cc", "aa OU bb AND cc"],
+    ["or", "OR"],
+    ["basalt or", "basalt OR"],
+    ["or basalt", "OR basalt"],
+    ["aa or Or bb", "aa OR OR bb"],
+    ["aa bb cc dd ee oR ff", "aa bb cc dd ee OR ff"],
+  ])("should parse %j like %j", (search, uppercase) => {
+    expect(parseSearchQuery(search)).toEqual(parseSearchQuery(uppercase));
   });
 
   it.each(["", "   ", "()", "OR AND", 'a b "c" *'])(

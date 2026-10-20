@@ -1,6 +1,7 @@
 import type { z } from "zod";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { sampleStatusSchema } from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
@@ -108,6 +109,7 @@ function SampleListPage() {
             onRemove: () => update({ page: 1, manualGroup: undefined }),
           }),
           ...sampleFilterEntries({
+            statuses: sampleStatusSchema.exclude(["tombstone"]).options,
             values: params,
             onChange: (next) => update({ page: 1, ...next }),
           }),

@@ -10,6 +10,8 @@ Amended 2026-10-02: the search box runs in the ParadeDB index `sample_search_idx
 
 Amended 2026-10-12: the public callers also match a token against the material classification labels, through the `publicSearchFilters` arm below.
 
+Amended 2026-10-19: operators work in any case, and the material label arm now serves every `searchFilters` caller but `/service` (`serviceSearchFilters`) and the pickers, `publicSearchFilters` having become the default `searchFilters`.
+
 Amended 2026-10-16: the search box also parses quoted phrases, `AND`/`OR` operators and parentheses, in `parse-search-query.ts`, extending the Grammar and Bounds below.
 
 ## Context
@@ -24,18 +26,18 @@ The public sample list has a free-text search box, separate from the `SAMPLE_FAC
 
 - `"…"` or `'…'` is an exact phrase: whole words, adjacent, in order, case and accent insensitive.
 - A phrase has no typo tolerance, no substring match and no `*`.
-- A phrase runs as ParadeDB `col ### immutable_unaccent(phrase)` on the three searched columns, plus the IGSN arm for a one-word phrase, plus the material label arm on the public callers.
+- A phrase runs as ParadeDB `col ### immutable_unaccent(phrase)` on the three searched columns, plus the IGSN arm for a one-word phrase, plus the material label arm on every caller but `/service` and the pickers.
 - A `'` opens a phrase only at a word start and closes it only at a word end, so `l'Étang` stays one word.
 - An unclosed quote character is dropped.
-- Uppercase `AND` or `ET` and `OR` or `OU` are operators, and lowercase ones are plain words.
+- `AND` or `ET` and `OR` or `OU` are operators in any case, and a quoted one is a searched word.
 - A space is an implicit AND, and AND binds tighter than OR.
 - Parentheses group.
 - The parser is lenient: a missing `)` closes at the end, a stray `)` or dangling operator is dropped, and `()` vanishes.
 - A word keeps every arm above, and AND/OR nodes join in SQL.
-- The highlighter (`highlight-match.ts`, `matchesSearchPhrase`) and the material labels (`matching-material-paths.ts`) follow the same terms, the highlighter parsing the raw query since normalizing lowercases operators.
+- The highlighter (`highlight-match.ts`, `matchesSearchPhrase`) and the material labels (`matching-material-paths.ts`) follow the same terms.
 - The person facets keep `searchTokens` and the grammar above.
 
-**Material label arm (public callers only).** `publicSearchFilters` adds to each token's OR one `<path> = any(material_paths)` arm per material path whose own label matches the token, so "igneous" finds every sample at or under that node through the indexed ancestor array, inside ParadeDB. The label is the English catalog label as displayed ("Meta-" prefix included) and matches by substring in one word with `*` anchoring, case and accent insensitive, with no typo tolerance. The root `rock_and_sediment` is excluded, since it would match every sample. Paths are resolved in JS against the `domain` catalog (`createMatchingMaterialPaths`) into `material_paths` terms rather than a stored column. Only the public list, map and facet counts use it; admin lists, `/service`, the export and the pickers keep `searchFilters`. Relevance ordering is unchanged, so a material-only hit ranks low.
+**Material label arm.** `searchFilters` adds to each token's OR one `<path> = any(material_paths)` arm per material path whose own label matches the token, so "igneous" finds every sample at or under that node through the indexed ancestor array, inside ParadeDB. The label is the English catalog label as displayed ("Meta-" prefix included) and matches by substring in one word with `*` anchoring, case and accent insensitive, with no typo tolerance. The root `rock_and_sediment` is excluded, since it would match every sample. Paths are resolved in JS against the `domain` catalog (`createMatchingMaterialPaths`) into `material_paths` terms rather than a stored column. The public list, map and facet counts, the admin lists and the export use it; `/service` keeps the name-only `serviceSearchFilters` and the pickers `pickerSearchFilters`. Relevance ordering is unchanged, so a material-only hit ranks low.
 
 **Bounds** (`search-tokens.ts`), because Tantivy's regex has a non-configurable 1000-state limit (about 480 bytes of regex, `unaccent` and escaping expanding one character to at most 6 bytes) and each very short word adds regex arms matching nearly every word (16 one-letter words OOM-killed the backend in a test).
 
@@ -60,7 +62,7 @@ Two earlier JS-side attempts each shipped a way to break the public endpoint: an
 
 **Distance 1 replaces the 0.8 threshold for the search box.** The pg_trgm `word_similarity` threshold dropped near-miss geological terms (`achondrites`/`chondrites` 0.750) at the cost of missing short-root plurals (`basalts`/`Basalt`). Distance 1 accepts that tradeoff the other way: `achondrites` now finds both "Stony Achondrite" and "Chondrites Fragment", `basalts` finds "Basalt", and `chert` finds "chart". The near-miss rejection rule is dropped. `SAMPLE_SEARCH_FUZZY_THRESHOLD` (default `0.8`, read at boot, an unset, malformed or out-of-range value falling back to the default) now tunes the person facets alone.
 
-**ParadeDB index `sample_search_idx`, which shapes the query.** Migration `20261002080000-add-sample-search-text.ts` indexes `name_unaccented`, `specific_name_unaccented` and `local_id_unaccented` with `pdb.whitespace` (lowercased whitespace words) and `igsn` as `pdb.literal`, and drops the three GIN trigram indexes on those columns. Every caller of `searchFilters` uses it: public list, map, facet counts, admin lists, `/service` and export; the admin sample pickers use `pickerSearchFilters` instead (see Consequences). The `<column>_unaccented` stored generated columns (`GENERATED ALWAYS AS (immutable_unaccent(coalesce(col, ''))) STORED`) stay, so the arms and the relevance score read them directly. Editing the unaccent rules file leaves a stored value stale until the row is rewritten (an `UPDATE`, triggering regeneration). Two constraints follow:
+**ParadeDB index `sample_search_idx`, which shapes the query.** Migration `20261002080000-add-sample-search-text.ts` indexes `name_unaccented`, `specific_name_unaccented` and `local_id_unaccented` with `pdb.whitespace` (lowercased whitespace words) and `igsn` as `pdb.literal`, and drops the three GIN trigram indexes on those columns. Every caller of `searchFilters` and `serviceSearchFilters` uses it: public list, map, facet counts, admin lists, `/service` and export; the admin sample pickers use `pickerSearchFilters` instead (see Consequences). The `<column>_unaccented` stored generated columns (`GENERATED ALWAYS AS (immutable_unaccent(coalesce(col, ''))) STORED`) stay, so the arms and the relevance score read them directly. Editing the unaccent rules file leaves a stored value stale until the row is rewritten (an `UPDATE`, triggering regeneration). Two constraints follow:
 
 - ParadeDB ignores parameters or hangs under Postgres generic plans (paradedb#6492), so a transaction that scans ParadeDB (the facet count always; list, map and parent picker when a search is present) runs `set local plan_cache_mode = force_custom_plan`.
 - A searched list, map or parent picker uses the count's indexed facet predicates (`<v> = any(<array field>)`) so ParadeDB narrows in the index, while a list without a search keeps the Postgres-form predicates and indexes.

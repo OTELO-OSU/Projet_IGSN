@@ -170,6 +170,13 @@ describe("matchRanges", () => {
     ]);
   });
 
+  it("should not highlight a lowercase or operator", () => {
+    expect(matchRanges("Basalt or Granite", "basalt or granite")).toEqual([
+      [0, 6],
+      [10, 17],
+    ]);
+  });
+
   it("should return no range for a fuzzy-only match", () => {
     expect(matchRanges("Fontainebleau", "fontenebleau")).toEqual([]);
   });

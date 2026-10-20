@@ -41,7 +41,7 @@ function lexemeOf([, double, single, paren, bare]: RegExpExecArray): Lexeme {
     return { kind: paren === "(" ? "open" : "close" };
   }
   const token = bare ?? "";
-  const operator = OPERATORS.get(token);
+  const operator = OPERATORS.get(token.toUpperCase());
   return operator
     ? { kind: "operator", operator }
     : { kind: "term", term: { kind: "word", token } };

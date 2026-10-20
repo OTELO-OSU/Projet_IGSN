@@ -181,11 +181,11 @@ function singleWordOf(term: SearchTerm): string[] {
 const igsnArms = (term: SearchTerm) =>
   singleWordOf(term).map((word) => sql`igsn = upper(${word})`);
 
-export function searchFilters(search: string): Expression<SqlBool>[] {
+export function serviceSearchFilters(search: string): Expression<SqlBool>[] {
   return textSearchFilters(search, SEARCHED_TEXTS, igsnArms);
 }
 
-export function publicSearchFilters(search: string): Expression<SqlBool>[] {
+export function searchFilters(search: string): Expression<SqlBool>[] {
   return textSearchFilters(search, SEARCHED_TEXTS, (term) => [
     ...igsnArms(term),
     ...matchingMaterialPaths(term).map(
