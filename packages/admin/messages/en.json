@@ -692,7 +692,6 @@
   "field_relation_scheme_type": "Scheme type",
   "field_relation_description": "Description",
   "field_relation_identifier_doi": "Enter a DOI (https://doi.org/10.xxxx/... or doi:10.xxxx/...).",
-  "field_relation_identifier_igsn": "Enter a valid IGSN.",
   "field_relation_identifier_url": "Enter a valid URL.",
   "identifier_placeholder_doi": "https://doi.org/10.1594/IEDA.100252",
   "identifier_placeholder_igsn": "0123456789ABCDEFGHJKMNPQRS",

@@ -19,7 +19,7 @@ Each line of `en.json` pairs a key (left, never shown) with its text (right, sho
 
 The FAQ has a landing page (`/faq`) with a search box and one tile per category, and a page per category (`/faq/<slug>`, for example `/faq/account`) with its own search box over that category's questions. Both are built from `faqCategories()`, so the search, the tiles and the pages never need updating.
 
-Each category holds questions, and each question holds an answer made of blocks: a block is a paragraph, or a bullet or numbered list.
+Each category holds questions, and each question holds an answer made of blocks: a block is a paragraph, a bullet or numbered list, or a link.
 
 ## Reword a category, a question or an answer
 
@@ -31,6 +31,7 @@ That is all: `faq-categories.ts` does not change.
 Writing rules:
 
 - Plain text only: HTML, Markdown and links show exactly as typed.
+- A clickable link is its own block, `{ href: "https://...", label: m.faq_example_link() }`, its label a line of `en.json` like any text.
 - Quote a button or field name with curly quotes, as in “Add location”: a straight `"` would end the text early.
 - Keep the comma at the end of the line.
 
@@ -132,6 +133,7 @@ The answers to "How does the search find samples?" describe rules set in the cod
 | Quotes search an exact phrase                                    | [packages/domain/src/sample/search/parse-search-query.ts](../packages/domain/src/sample/search/parse-search-query.ts)                                     |
 | `AND`/`ET` and `OR`/`OU` operators, in any case                  | `OPERATORS` in [packages/domain/src/sample/search/parse-search-query.ts](../packages/domain/src/sample/search/parse-search-query.ts)                      |
 | An area no bigger than a quarter of the globe                    | `MAX_SEARCH_BBOX_WORLD_FRACTION` in [packages/domain/src/sample/sample-validator.ts](../packages/domain/src/sample/sample-validator.ts)                   |
+| AND applies before OR                                            | [packages/domain/src/sample/search/parse-search-query.ts](../packages/domain/src/sample/search/parse-search-query.ts)                                     |
 
 ## Check your change
 

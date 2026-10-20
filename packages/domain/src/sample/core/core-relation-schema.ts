@@ -47,7 +47,7 @@ export const coreRelationSchema = z.strictObject({
       }),
       identifierType: coreIdentifierType.schema.meta({
         description:
-          "Kind of identifier the value is written as, DOI for a minted IGSN and IGSN for a legacy handle.",
+          "Kind of identifier the value is written as, DOI for a minted IGSN and IGSN for a legacy handle or an IGSN from another agent.",
       }),
     })
     .meta({ description: "Identifier of the related resource." }),

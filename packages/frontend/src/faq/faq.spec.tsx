@@ -6,8 +6,45 @@ import { faqCategories } from "./faq-categories.ts";
 import { Faq } from "./faq.tsx";
 
 const ACCOUNT = faqCategories().find(({ slug }) => slug === "account");
+const DATASET_URL =
+  "https://www.data.gouv.fr/datasets/6accaa852f4ae7724956d181";
+
+describe("faqCategories", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("should leave the open data entry out without a dataset URL", () => {
+    vi.stubEnv("VITE_DATA_GOUV_DATASET_URL", undefined);
+
+    const usage = faqCategories().find(({ slug }) => slug === "usage");
+
+    expect(
+      usage?.questions.find(({ value }) => value === "open-data"),
+    ).toBeUndefined();
+  });
+});
 
 describe("Faq", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("should link the open data entry to the dataset", async () => {
+    vi.stubEnv("VITE_DATA_GOUV_DATASET_URL", DATASET_URL);
+    await renderWithRouter(
+      <Faq query="download all published" onQueryChange={() => {}} />,
+    );
+
+    await expect
+      .element(
+        page.getByRole("link", {
+          name: "Download published samples from data.gouv.fr (opens in a new tab)",
+        }),
+      )
+      .toHaveAttribute("href", DATASET_URL);
+  });
+
   it("should link a tile to each category page for a blank query", async () => {
     await renderWithRouter(<Faq query="" onQueryChange={() => {}} />, [
       "/faq/$category",

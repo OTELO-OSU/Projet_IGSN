@@ -92,6 +92,8 @@ describe("sampleRelationSchema", () => {
     "wj7t9pnc2vfxr4bkq5hy3m8ge0",
     "WJ7T9PNC2VFXR4BKQ5HY3M8GE0",
     "CNRS0000000001",
+    "IEXXX0001",
+    "10.58052/IEXXX0001",
   ])("should accept an igsn relation pointing at an IGSN: %s", (identifier) => {
     // Arrange / Act
     const result = sampleRelationSchema.safeParse({
@@ -101,17 +103,6 @@ describe("sampleRelationSchema", () => {
     });
     // Assert
     expect(result.success).toBe(true);
-  });
-
-  it("should reject an igsn relation whose target is not an IGSN", () => {
-    // Arrange / Act
-    const paths = issuePaths({
-      ...relation,
-      identifierType: "igsn",
-      identifier: "2019AGUFM.V51A0034J",
-    });
-    // Assert
-    expect(paths).toEqual([["identifier"]]);
   });
 
   it.each(["", "   "])("should reject an empty target #%#", (identifier) => {

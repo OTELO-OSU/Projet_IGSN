@@ -9,9 +9,12 @@ function containsAll(text: string, words: string[]): boolean {
 
 function answerText({ answer }: FaqQuestion): string {
   return answer
-    .map((block) =>
-      typeof block === "string" ? block : block.items.join("\n"),
-    )
+    .map((block) => {
+      if (typeof block === "string") {
+        return block;
+      }
+      return "items" in block ? block.items.join("\n") : block.label;
+    })
     .join("\n");
 }
 

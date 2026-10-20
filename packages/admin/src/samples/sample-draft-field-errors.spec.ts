@@ -22,7 +22,6 @@ describe("sampleDraftFieldErrors", () => {
       "relation_identifier_doi",
       "Enter a DOI (https://doi.org/10.xxxx/... or doi:10.xxxx/...).",
     ],
-    ["relation_identifier_igsn", "Enter a valid IGSN."],
     ["relation_identifier_url", "Enter a valid URL."],
     [
       "relation_scheme_without_has_metadata",
