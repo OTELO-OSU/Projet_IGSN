@@ -726,6 +726,21 @@ describe("customized import template workbook", () => {
     });
   });
 
+  it("should not name the dropped Parent IGSN column in the prompts of what it governed", async () => {
+    const withoutSubSamples = await loaded(1, [], {
+      ...customization,
+      subSamples: false,
+    });
+    const sheet = sheetOf(withoutSubSamples, SHEETS.samples);
+    const index = headersOf(withoutSubSamples).indexOf("Latitude");
+
+    expect(
+      sheetValidations(sheet).find(
+        `${sheet.getColumn(index + 1).letter}${FIRST_DATA_ROW}`,
+      )?.prompt,
+    ).toBe(catalog.field_latitude_hint);
+  });
+
   it("should fill the name alone beside a child row when the material leaves no specific name", async () => {
     const unknownRock = await loaded(rows, [], {
       materialPath: "rock_and_sediment.rock.unknown",

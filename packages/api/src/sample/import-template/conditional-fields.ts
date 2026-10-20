@@ -323,14 +323,16 @@ export const driverIndexOf = (
 
 export const conditionalPromptOf = (
   path: string,
-  greyedOn: readonly Column[],
+  sheetColumns: readonly Column[],
+  sampleColumns: readonly Column[],
 ): string | undefined => {
   const prompts = CONDITIONAL_FIELDS.filter((field) =>
     field.paths.some((governed) => isPathAtOrUnder(path, governed)),
   ).flatMap((field) =>
     "prompt" in field
       ? [field.prompt]
-      : driverIndexOf(greyedOn, field.condition) < 0
+      : driverIndexOf(sheetColumns, field.condition) < 0 &&
+          driverIndexOf(sampleColumns, field.condition) >= 0
         ? [sentenceOf(field.condition)]
         : [],
   );

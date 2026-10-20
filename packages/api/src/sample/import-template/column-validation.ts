@@ -62,12 +62,16 @@ export function validationOf(
   columns: readonly Column[],
   column: Column,
   placements: Placements,
+  sampleColumns: readonly Column[] = columns,
 ): TemplateValidation | undefined {
   const base = vocabularyValidationOf(sheet, columns, column, placements);
   const guidance =
     column.path === undefined
       ? []
-      : [COLUMN_HINTS[column.path], conditionalPromptOf(column.path, columns)];
+      : [
+          COLUMN_HINTS[column.path],
+          conditionalPromptOf(column.path, columns, sampleColumns),
+        ];
   const prompt = [base?.prompt, ...guidance]
     .filter((text) => text !== undefined)
     .join(" ");
