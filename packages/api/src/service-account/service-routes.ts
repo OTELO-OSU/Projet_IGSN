@@ -12,6 +12,7 @@ import {
   type ServiceEnv,
   requireServiceAccount,
 } from "../auth/require-service-account.ts";
+import { registerGroupRoutes } from "./group-routes.ts";
 import { registerSampleBatchRoutes } from "./sample-batch-routes.ts";
 import { registerServiceDocsRoutes } from "./service-docs-routes.ts";
 import { registerServiceReadRoutes } from "./service-read-routes.ts";
@@ -22,7 +23,10 @@ import { registerVocabularyRoutes } from "./vocabulary-routes.ts";
 export function createServiceRoutes(
   serviceAccounts: Pick<ServiceAccountRepository, "findByApiKeyHash">,
   samples: SampleRepository,
-  manualGroups: Pick<ManualGroupRepository, "listAttachableForUser">,
+  manualGroups: Pick<
+    ManualGroupRepository,
+    "listAttachableForUser" | "listWithPublishedSample"
+  >,
   frontendUrl: string,
   userSamples: Pick<UserSampleRepository, "listCollaborators">,
   sampleBatches: SampleBatchRepository,
@@ -35,6 +39,7 @@ export function createServiceRoutes(
   registerServiceDocsRoutes(app, frontendUrl);
   app.use("*", requireServiceAccount(serviceAccounts));
   registerVocabularyRoutes(app);
+  registerGroupRoutes(app, manualGroups);
   registerSampleBatchRoutes(app, { ...checks, sampleBatches });
   registerServiceReadRoutes(app, samples, frontendUrl);
   registerServiceWriteRoutes(app, checks, frontendUrl, userSamples, mail);
