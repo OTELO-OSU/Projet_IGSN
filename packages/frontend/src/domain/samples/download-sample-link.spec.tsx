@@ -1,21 +1,26 @@
 import { render } from "vitest-browser-react";
+import { page } from "vitest/browser";
 
 import { baseBrowserApiUrl } from "#/api.ts";
 
 import { DownloadSampleLink } from "./download-sample-link.tsx";
 
-describe("DownloadSampleLink", () => {
-  it("should download the export of the sample", async () => {
-    const screen = await render(
-      <DownloadSampleLink igsn="0123456789ABCDEFGHJKMNPQRS" />,
-    );
+const IGSN = "0123456789ABCDEFGHJKMNPQRS";
 
-    const link = screen.getByRole("link", { name: "Download as Excel" });
+describe("DownloadSampleLink", () => {
+  it.each([
+    { item: "CSV", format: "csv" },
+    { item: "Excel", format: "xlsx" },
+  ])("should download the sample's $item export", async ({ item, format }) => {
+    await render(<DownloadSampleLink igsn={IGSN} />);
+    await page.getByRole("button", { name: "Download" }).click();
+
+    const link = page.getByRole("menuitem", { name: item });
     await expect
       .element(link)
       .toHaveAttribute(
         "href",
-        new URL("samples/0123456789ABCDEFGHJKMNPQRS/export", baseBrowserApiUrl)
+        new URL(`samples/${IGSN}/export?format=${format}`, baseBrowserApiUrl)
           .href,
       );
     await expect.element(link).toHaveAttribute("download");

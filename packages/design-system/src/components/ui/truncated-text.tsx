@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 
+import { cn } from "#/lib/utils.ts";
+
 import {
   Tooltip,
   TooltipContent,
@@ -7,7 +9,15 @@ import {
   TooltipTrigger,
 } from "./tooltip.tsx";
 
-export function TruncatedText({ children }: { children: string }) {
+export function TruncatedText({
+  children,
+  truncate = "end",
+  className,
+}: {
+  children: string;
+  truncate?: "start" | "end";
+  className?: string;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const textRef = useRef<HTMLSpanElement>(null);
   const isOverflowing = () =>
@@ -21,7 +31,15 @@ export function TruncatedText({ children }: { children: string }) {
         onOpenChange={(next) => setIsOpen(next && isOverflowing())}
       >
         <TooltipTrigger asChild>
-          <span ref={textRef} className="block min-w-0 truncate">
+          <span
+            ref={textRef}
+            dir={truncate === "start" ? "rtl" : undefined}
+            className={cn(
+              "block min-w-0 truncate",
+              truncate === "start" && "text-left",
+              className,
+            )}
+          >
             {children}
           </span>
         </TooltipTrigger>

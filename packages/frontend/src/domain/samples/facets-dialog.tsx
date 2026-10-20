@@ -9,10 +9,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@projet-igsn/design-system/components/ui/dialog";
-import { activeFacetKeys } from "@projet-igsn/domain/sample/search/facets";
 import { SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { activeFacetCount } from "#/domain/samples/active-facet-count.ts";
 import { m } from "#/paraglide/messages.js";
 
 export function FacetsDialog({
@@ -22,9 +22,7 @@ export function FacetsDialog({
   values: Record<string, unknown>;
   children: ReactNode;
 }) {
-  const count = activeFacetKeys(values).filter(
-    (key) => !key.endsWith("Unit"),
-  ).length;
+  const count = activeFacetCount(values);
   const barRef = useRef<HTMLDivElement>(null);
   const [isPinned, setIsPinned] = useState(true);
 

@@ -1,10 +1,10 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
+import { saveBlob } from "@projet-igsn/design-system/lib/save-blob";
 
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
-import { saveBlob } from "#/samples/save-blob.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useDownloadAttachment(sampleId: string) {

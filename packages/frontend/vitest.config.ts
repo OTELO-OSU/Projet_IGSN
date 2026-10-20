@@ -21,6 +21,7 @@ export default defineConfig({
       "@inlang/paraglide-js/urlpattern-polyfill",
       "@maplibre/maplibre-gl-leaflet",
       "@tanstack/react-query",
+      "@tanstack/react-table",
       "@xyflow/react",
       "@projet-igsn/design-system > embla-carousel-react",
       "maplibre-gl",

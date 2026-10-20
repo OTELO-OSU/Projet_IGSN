@@ -1,6 +1,8 @@
 import type { PublicListedSample } from "@projet-igsn/domain/sample/sample-validator";
+import type { OnChangeFn, RowSelectionState } from "@tanstack/react-table";
 import type { ReactNode } from "react";
 
+import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { FieldPicker } from "@projet-igsn/design-system/components/ui/field-picker";
 import {
   Pager,
@@ -12,8 +14,14 @@ import {
   PICKABLE_FIELDS,
   pickedCardFieldKeys,
 } from "#/domain/samples/card-fields.ts";
+import { ResultsViewToggle } from "#/domain/samples/results-view-toggle.tsx";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
+import { SampleTable } from "#/domain/samples/sample-table.tsx";
+import { useStoredFlag } from "#/domain/samples/use-stored-flag.ts";
 import { m } from "#/paraglide/messages.js";
+import { SEARCH_CSV_EXPORT_LIMIT } from "#/search-export-limit.ts";
+
+const TABLE_VIEW_KEY = "sample-results-table-view";
 
 export function ResultsCount({ total }: { total: number }) {
   return (
@@ -49,6 +57,32 @@ export function CardFieldPicker({
   );
 }
 
+function SelectionLine({
+  count,
+  onClear,
+}: {
+  count: number;
+  onClear: () => void;
+}) {
+  return (
+    <div role="status" className="flex items-center justify-end gap-2">
+      {count > 0 ? (
+        <>
+          <span className="text-muted-foreground text-sm">
+            {m.samples_selected_count({ count })}
+            {count >= SEARCH_CSV_EXPORT_LIMIT
+              ? ` ${m.samples_selection_cap_reached()}`
+              : null}
+          </span>
+          <Button type="button" variant="ghost" size="sm" onClick={onClear}>
+            {m.samples_selection_clear()}
+          </Button>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function SearchResultsView({
   samples,
   total,
@@ -61,6 +95,8 @@ export function SearchResultsView({
   onPageChange,
   onPerPageChange,
   onFieldsChange,
+  selection,
+  onSelectionChange,
   download,
   actions,
 }: {
@@ -75,9 +111,13 @@ export function SearchResultsView({
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
   onFieldsChange: (fields: string[]) => void;
+  selection: RowSelectionState;
+  onSelectionChange: OnChangeFn<RowSelectionState>;
   download?: ReactNode;
   actions?: ReactNode;
 }) {
+  const [isTableView, saveTableView] = useStoredFlag(TABLE_VIEW_KEY);
+
   if (total === 0) {
     return (
       <div className="flex flex-col items-center gap-4">
@@ -105,9 +145,34 @@ export function SearchResultsView({
           {download}
           <CardFieldPicker fields={fields} onFieldsChange={onFieldsChange} />
           {actions}
+          <ResultsViewToggle
+            isTableView={isTableView}
+            onTableViewChange={saveTableView}
+          />
         </div>
+        <SelectionLine
+          count={Object.keys(selection).length}
+          onClear={() => onSelectionChange({})}
+        />
       </div>
-      <SampleList samples={samples} query={query} fields={fields} />
+      {isTableView ? (
+        <>
+          <div className="phone:hidden">
+            <SampleTable
+              samples={samples}
+              fields={fields ?? []}
+              selection={selection}
+              onSelectionChange={onSelectionChange}
+              maxSelected={SEARCH_CSV_EXPORT_LIMIT}
+            />
+          </div>
+          <div className="phone:block hidden">
+            <SampleList samples={samples} query={query} fields={fields} />
+          </div>
+        </>
+      ) : (
+        <SampleList samples={samples} query={query} fields={fields} />
+      )}
 
       {pageCount > 1 ? (
         <nav
