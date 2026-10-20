@@ -50,6 +50,16 @@ describe("SiteHeader", () => {
     },
   );
 
+  it("should offer the other language outside the menu, so it shows at every width", async () => {
+    await renderHeader();
+
+    await expect
+      .element(
+        page.getByRole("banner").getByRole("button", { name: "Français" }),
+      )
+      .toBeVisible();
+  });
+
   it("should open the menu on the menu button, revealing the nav links", async () => {
     await renderHeader();
     await expect
