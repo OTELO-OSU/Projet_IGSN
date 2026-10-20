@@ -13,10 +13,12 @@ import { m } from "#/paraglide/messages.js";
 
 export type FaqList = { ordered: boolean; items: string[] };
 
+export type FaqLink = { href: string; label: string };
+
 export type FaqQuestion = {
   value: string;
   title: string;
-  answer: (string | FaqList)[];
+  answer: (string | FaqList | FaqLink)[];
 };
 
 export type FaqCategory = {
@@ -27,6 +29,7 @@ export type FaqCategory = {
 };
 
 export function faqCategories(): FaqCategory[] {
+  const datasetUrl = import.meta.env.VITE_DATA_GOUV_DATASET_URL;
   return [
     {
       slug: "general",
@@ -173,6 +176,7 @@ export function faqCategories(): FaqCategory[] {
               items: [
                 m.faq_foreign_parent_item_1(),
                 m.faq_foreign_parent_item_2(),
+                m.faq_foreign_parent_item_3(),
               ],
             },
             m.faq_foreign_parent_answer_2(),
@@ -245,6 +249,15 @@ export function faqCategories(): FaqCategory[] {
                 m.faq_search_rule_published(),
               ],
             },
+            m.faq_search_examples_intro(),
+            {
+              ordered: false,
+              items: [
+                m.faq_search_example_words(),
+                m.faq_search_example_or(),
+                m.faq_search_example_precedence(),
+              ],
+            },
           ],
         },
         {
@@ -273,6 +286,19 @@ export function faqCategories(): FaqCategory[] {
           title: m.faq_api_title(),
           answer: [m.faq_api_answer()],
         },
+        ...(datasetUrl
+          ? [
+              {
+                value: "open-data",
+                title: m.faq_open_data_title(),
+                answer: [
+                  m.faq_open_data_answer(),
+                  { href: datasetUrl, label: m.open_data_link() },
+                  m.faq_open_data_search(),
+                ],
+              },
+            ]
+          : []),
         {
           value: "missing-term",
           title: m.faq_missing_term_title(),

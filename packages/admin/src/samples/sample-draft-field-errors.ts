@@ -96,9 +96,6 @@ function issueMessage(path: string, issue: DraftIssue): string {
   if (reason === "relation_identifier_doi") {
     return m.field_relation_identifier_doi();
   }
-  if (reason === "relation_identifier_igsn") {
-    return m.field_relation_identifier_igsn();
-  }
   if (reason === "relation_identifier_url") {
     return m.field_relation_identifier_url();
   }

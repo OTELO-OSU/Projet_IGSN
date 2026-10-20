@@ -4,6 +4,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@projet-igsn/design-system/components/ui/accordion";
+import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-link";
+
+import { m } from "#/paraglide/messages.js";
 
 import type { FaqQuestion } from "./faq-categories.ts";
 
@@ -28,6 +31,16 @@ export function FaqQuestions({
             {answer.map((block) => {
               if (typeof block === "string") {
                 return <p key={block}>{block}</p>;
+              }
+              if ("href" in block) {
+                return (
+                  <p key={block.href}>
+                    <ExternalLink href={block.href}>
+                      {block.label}{" "}
+                      <span className="sr-only">{m.opens_in_new_tab()}</span>
+                    </ExternalLink>
+                  </p>
+                );
               }
               const List = block.ordered ? "ol" : "ul";
               return (

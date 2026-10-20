@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { igsnSchema } from "../../igsn/model.ts";
 import { freeTextSchema } from "../free-text.ts";
 import {
   identifierTypeSchema,
@@ -38,17 +37,6 @@ const checkRelation = (value: RelationCheck, ctx: z.RefinementCtx) => {
       path: ["identifier"],
       message: "must be a valid URL",
       params: { code: "relation_identifier_url" },
-    });
-  }
-  if (
-    value.identifierType === "igsn" &&
-    !igsnSchema.safeParse(value.identifier).success
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["identifier"],
-      message: "must be a valid IGSN",
-      params: { code: "relation_identifier_igsn" },
     });
   }
   if (
