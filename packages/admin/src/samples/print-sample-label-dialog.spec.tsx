@@ -4,9 +4,12 @@ import { render } from "vitest-browser-react";
 import { PrintSampleLabelDialog } from "./print-sample-label-dialog.tsx";
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
+const NAME = "Granite 7";
 
 async function openDialog() {
-  const screen = await render(<PrintSampleLabelDialog igsn={IGSN} />);
+  const screen = await render(
+    <PrintSampleLabelDialog igsn={IGSN} name={NAME} />,
+  );
   await screen.getByRole("button", { name: "Print label" }).click();
   return screen;
 }
@@ -23,6 +26,8 @@ function labelQrCodes(screen: Awaited<ReturnType<typeof openDialog>>) {
 describe("PrintSampleLabelDialog", () => {
   it("should preview and print a 3 cm label by default", async () => {
     const screen = await openDialog();
+
+    await expect.element(screen.getByText(NAME).first()).toBeVisible();
 
     await expect
       .element(screen.getByRole("radio", { name: "3 cm", exact: true }))

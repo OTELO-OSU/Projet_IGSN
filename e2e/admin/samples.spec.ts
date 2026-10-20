@@ -94,4 +94,22 @@ test.describe("samples", () => {
     await edit.goto(published.id);
     await edit.expectVisible();
   });
+
+  test("a researcher prints the labels of two published samples", async ({
+    page,
+    samples,
+  }) => {
+    const granite = sampleNamed(samples, "Granite 7");
+    const ash = sampleNamed(samples, "Vesuvius Ash");
+    const list = sampleListPage(page);
+    await list.stubPrint();
+
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await list.selectSample(granite.name);
+    await list.selectSample(ash.name);
+    await list.printLabels("1.5 cm");
+
+    await list.expectLabel(granite.igsn, granite.name);
+    await list.expectLabel(ash.igsn, ash.name);
+  });
 });

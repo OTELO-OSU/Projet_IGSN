@@ -14,21 +14,26 @@ import {
   RadioGroupItem,
 } from "@projet-igsn/design-system/components/ui/radio-group";
 import { PrinterIcon } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
-
-const LABEL_SIZES_CM = [1.5, 3, 5, 8] as const;
-
-type LabelSizeCm = (typeof LABEL_SIZES_CM)[number];
+import {
+  LABEL_SIZES_CM,
+  type LabelSizeCm,
+  SampleLabel,
+} from "#/samples/sample-label.tsx";
 
 const DEFAULT_LABEL_SIZE_CM: LabelSizeCm = 3;
 
-export function PrintSampleLabelDialog({ igsn }: { igsn: string }) {
+export function PrintSampleLabelDialog({
+  igsn,
+  name,
+}: {
+  igsn: string;
+  name: string;
+}) {
   const [sizeCm, setSizeCm] = useState<LabelSizeCm>(DEFAULT_LABEL_SIZE_CM);
   const centimeters = new Intl.NumberFormat(getLocale(), {
     style: "unit",
@@ -37,7 +42,7 @@ export function PrintSampleLabelDialog({ igsn }: { igsn: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline">
+        <Button type="button" variant="ghost">
           <PrinterIcon aria-hidden />
           {m.sample_print_label_action()}
         </Button>
@@ -64,10 +69,16 @@ export function PrintSampleLabelDialog({ igsn }: { igsn: string }) {
             </div>
           ))}
         </RadioGroup>
-        <SampleLabel igsn={igsn} sizeCm={sizeCm} className="mx-auto flex" />
+        <SampleLabel
+          igsn={igsn}
+          name={name}
+          sizeCm={sizeCm}
+          className="mx-auto flex"
+        />
         {createPortal(
           <SampleLabel
             igsn={igsn}
+            name={name}
             sizeCm={sizeCm}
             className="sample-label hidden print:flex"
           />,
@@ -80,35 +91,5 @@ export function PrintSampleLabelDialog({ igsn }: { igsn: string }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function SampleLabel({
-  igsn,
-  sizeCm,
-  className,
-}: {
-  igsn: string;
-  sizeCm: LabelSizeCm;
-  className: string;
-}) {
-  return (
-    <div
-      className={`flex-col items-center gap-1 ${className}`}
-      style={{ width: `${sizeCm}cm` }}
-    >
-      <QRCodeSVG
-        value={frontendSampleUrl(igsn)}
-        role="img"
-        aria-label={m.sample_print_label_qr_code({ igsn })}
-        style={{ width: `${sizeCm}cm`, height: `${sizeCm}cm` }}
-      />
-      <p
-        className="w-full text-center font-mono break-all"
-        style={{ fontSize: `${sizeCm / 8}cm` }}
-      >
-        {igsn}
-      </p>
-    </div>
   );
 }

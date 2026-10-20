@@ -61,7 +61,7 @@ export function EditSampleHeader({
       </div>
       <div className="flex items-center gap-2">
         {sample.igsn == null || sample.status === "tombstone" ? null : (
-          <PrintSampleLabelDialog igsn={sample.igsn} />
+          <PrintSampleLabelDialog igsn={sample.igsn} name={sample.name} />
         )}
         {sample.status === "tombstone" ? null : (
           <ShareSampleButton sampleId={sampleId} />

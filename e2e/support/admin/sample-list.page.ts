@@ -46,6 +46,30 @@ export function sampleListPage(page: Page) {
       await page.getByRole("combobox", { name: "Ownership" }).click();
       await page.getByRole("option", { name: choice }).click();
     },
+    stubPrint: () =>
+      page.addInitScript(() => {
+        window.print = () => {};
+      }),
+    selectSample: (name: string) =>
+      sampleRow(page, name)
+        .getByRole("cell")
+        .first()
+        .click({ position: { x: 2, y: 2 } }),
+    printLabels: async (size: string) => {
+      await page
+        .getByRole("region", { name: "Bulk actions" })
+        .getByRole("button", { name: "Print labels" })
+        .click();
+      await page.getByRole("menuitem", { name: size, exact: true }).click();
+      await page.emulateMedia({ media: "print" });
+    },
+    expectLabel: (igsn: string, name: string) =>
+      expect(
+        page
+          .getByRole("list", { name: "Print labels" })
+          .getByRole("listitem")
+          .filter({ hasText: igsn }),
+      ).toContainText(name),
     expectSampleRow: (name: string) =>
       expect(page.getByRole("cell", { name, exact: true })).toBeVisible(),
     expectNoSampleRow: (name: string) =>
