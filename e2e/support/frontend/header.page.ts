@@ -30,6 +30,17 @@ export function headerPage(page: Page) {
       await showInMenu(signOutButton);
       await signOutButton.click();
     },
+    switchLocale: async (name: string) => {
+      const localeButton = banner.getByRole("button", { name });
+      const from = new URL(page.url()).pathname;
+      await showInMenu(localeButton);
+      await expect(async () => {
+        await localeButton.click();
+        await page.waitForURL((url) => url.pathname !== from, {
+          timeout: 2_000,
+        });
+      }).toPass({ timeout: 20_000 });
+    },
     expectSignedIn: () => showInMenu(signOutButton),
     expectSignedOut: () => showInMenu(signInButton),
     expectGoToDashboardHref: async (href: string) => {

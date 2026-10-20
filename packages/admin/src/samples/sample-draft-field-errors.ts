@@ -143,17 +143,22 @@ function issueMessage(path: string, issue: DraftIssue): string {
 
 export function sampleDraftFieldErrors(
   issues: ReadonlyArray<DraftIssue>,
+  isTouched: (name: string) => boolean = () => true,
 ): Record<string, { message: string }> {
   const fields: Record<string, { message: string }> = {};
   for (const issue of issues) {
     const path = issue.path.join(".");
     const message = issueMessage(path, issue);
     const name = draftFieldName(path);
-    fields[name] ??= { message };
     const reason = (issue.params as { code?: string } | undefined)?.code;
-    if (reason && DATE_ORDER_CODE.test(reason) && name.endsWith("Start")) {
-      fields[`${name.slice(0, -"Start".length)}End`] ??= { message };
-    }
+    const onEnd =
+      reason &&
+      DATE_ORDER_CODE.test(reason) &&
+      name.endsWith("Start") &&
+      !isTouched(name);
+    fields[onEnd ? `${name.slice(0, -"Start".length)}End` : name] ??= {
+      message,
+    };
   }
   return fields;
 }

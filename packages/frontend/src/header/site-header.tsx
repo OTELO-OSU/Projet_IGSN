@@ -69,7 +69,7 @@ export function SiteHeader() {
         <div
           ref={menuRef}
           id={MENU_ID}
-          className={`${isOpen ? "flex" : "hidden"} bg-background absolute inset-x-0 top-full flex-col items-start gap-4 border-b px-6 py-4 md:static md:ml-auto md:flex md:flex-row md:items-center md:gap-6 md:border-0 md:bg-transparent md:p-0`}
+          className={`${isOpen ? "flex" : "hidden"} bg-background absolute inset-x-0 top-full flex-col items-start border-b px-6 py-4 md:static md:ml-auto md:flex md:flex-row md:items-center md:gap-6 md:border-0 md:bg-transparent md:p-0`}
         >
           <nav
             aria-label={m.header_nav_label()}
@@ -94,9 +94,9 @@ export function SiteHeader() {
               {m.header_nav_faq()}
             </Link>
           </nav>
+          <LocaleSwitch />
           <AuthControls />
         </div>
-        <LocaleSwitch />
       </div>
     </header>
   );
