@@ -134,20 +134,21 @@ export function coreFilterFields() {
     affiliationOrganization: organizationRorSchema.optional().meta({
       enum: filterOrganizationsWithLaboratory().map((o) => o.ror),
       description:
-        "ROR id of the organisme recorded on the sample when it was created.",
+        "ROR id of the organisme recorded on the sample when it was created. GET /service/organizations lists them with their names.",
     }),
     affiliationOsu: osuCodeSchema.optional().meta({
       enum: OSUS.flatMap((o) => [o.code, ...(o.formerCodes ?? [])]),
       description:
-        "Code of the OSU recorded on the sample when it was created.",
+        "Code of the OSU recorded on the sample when it was created. GET /service/osus lists them with their names.",
     }),
     affiliationLaboratory: laboratoryCodeSchema.optional().meta({
       enum: LABORATORIES.flatMap((l) => [l.code, ...(l.formerCodes ?? [])]),
       description:
-        "Code of the laboratory recorded on the sample when it was created.",
+        "Code of the laboratory recorded on the sample when it was created. GET /service/laboratories lists them with their names.",
     }),
     manualGroup: z.uuid().optional().meta({
-      description: "Identifier of a manual group the sample belongs to.",
+      description:
+        "Identifier of a manual group the sample belongs to. GET /service/manual-groups lists them with their names.",
     }),
     contributor: z.uuid().optional().meta({
       description: "Identifier of a user contributing to the sample.",
