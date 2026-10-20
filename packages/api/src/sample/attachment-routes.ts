@@ -3,6 +3,7 @@ import { Hono } from "hono";
 
 import type { SampleAdminDeps, SampleAdminEnv } from "./admin-routes.ts";
 
+import { requireActiveSession } from "../auth/active-session.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
 import {
@@ -59,12 +60,18 @@ export function createSampleAttachmentRoutes({
         if (!found) {
           return c.json({ error: "Attachment not found" }, 404);
         }
-        return attachmentDownload(found.attachment, found.content);
+        return attachmentDownload(
+          c.req.raw,
+          found.attachment,
+          found.content,
+          found.size,
+        );
       },
     )
     .delete(
       "/:id/attachments/:attachmentId",
       validateAttachmentParams,
+      requireActiveSession,
       unlockedSample,
       async (c) => {
         const sample = c.get("sample");

@@ -49,16 +49,14 @@ type Key = {
 
 const keysOf = (criteria: readonly DuplicateCriteria[]) =>
   sql<Key>`jsonb_to_recordset(${JSON.stringify(
-    criteria.map(
-      (criterion, index): Key => ({
-        index,
-        name: criterion.name,
-        material: criterion.material,
-        collector_user_id: criterion.collectorUserId,
-        collector_firstname: criterion.collectorFirstname,
-        collector_lastname: criterion.collectorLastname,
-      }),
-    ),
+    criteria.map((criterion, index): Key => ({
+      index,
+      name: criterion.name,
+      material: criterion.material,
+      collector_user_id: criterion.collectorUserId,
+      collector_firstname: criterion.collectorFirstname,
+      collector_lastname: criterion.collectorLastname,
+    })),
   )}::text::jsonb)`.as<"k">(
     sql`k(index int, name text, material ltree, collector_user_id uuid, collector_firstname text, collector_lastname text)`,
   );

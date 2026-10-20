@@ -25,5 +25,9 @@ export type SampleAttachmentRepository = {
   getContent(
     sampleId: string,
     attachmentId: string,
-  ): Promise<{ attachment: SampleAttachment; content: Uint8Array } | null>;
+  ): Promise<{
+    attachment: SampleAttachment;
+    content: ReadableStream<Uint8Array>;
+    size: number;
+  } | null>;
 };

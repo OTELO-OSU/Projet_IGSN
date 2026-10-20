@@ -37,6 +37,7 @@ describe("requireActiveSession", () => {
     expect(await res.json()).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledWith(USERINFO_URI, {
       headers: { Authorization: "Bearer tok" },
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -71,6 +72,35 @@ describe("requireActiveSession", () => {
       userinfoUri: USERINFO_URI,
       error,
     });
+    logged.mockRestore();
+  });
+
+  it("should return 401 when userinfo does not answer within 5 seconds", async () => {
+    const timeout = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockImplementation(() =>
+        AbortSignal.abort(new DOMException("timed out", "TimeoutError")),
+      );
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.throwIfAborted();
+          init.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          );
+        }),
+    );
+    const logged = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    const res = await testClient(app()).critical.$post(undefined, {
+      headers: { Authorization: "Bearer tok" },
+    });
+
+    expect(res.status).toBe(401);
+    expect(timeout).toHaveBeenCalledWith(5000);
+    timeout.mockRestore();
     logged.mockRestore();
   });
 

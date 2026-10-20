@@ -145,12 +145,10 @@ export function createInstitutionalGroupRepository(
               .where((eb) => eb.not(hasActiveManager(eb, kind, column)))
               .execute();
             return rows
-              .map(
-                ({ code }): InstitutionalGroupRef => ({
-                  kind,
-                  code: institutionCodeOf(kind, code!),
-                }),
-              )
+              .map(({ code }): InstitutionalGroupRef => ({
+                kind,
+                code: institutionCodeOf(kind, code!),
+              }))
               .toSorted((a, b) => a.code.localeCompare(b.code));
           }),
         );

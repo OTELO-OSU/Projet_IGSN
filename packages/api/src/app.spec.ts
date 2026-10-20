@@ -136,6 +136,97 @@ describe("app", () => {
     });
   });
 
+  describe("request body limits", () => {
+    const MIB = 1024 * 1024;
+
+    pgTest.for([
+      { path: "/contact", size: 2 * MIB, headers: {} },
+      { path: "/admin/samples", size: 2 * MIB, headers: {} },
+      {
+        path: "/admin/samples/import",
+        size: 21 * MIB + 1,
+        headers: { "content-length": String(21 * MIB + 1) },
+      },
+    ])(
+      "should refuse $size bytes on $path before reading it",
+      async ({ path, size, headers }, { db }) => {
+        const res = await createApp(db).app.request(path, {
+          method: "POST",
+          headers: { "content-type": "application/json", ...headers },
+          body: "x".repeat(size),
+        });
+
+        expect(res.status).toBe(413);
+        expect(await res.json()).toEqual({ error: "Payload too large" });
+      },
+    );
+
+    pgTest(
+      "should let an attachment exceed the default limit",
+      async ({ db }) => {
+        const body = new FormData();
+        body.append("file", new Blob(["x".repeat(2 * MIB)]), "scan.pdf");
+
+        const res = await createApp(db).app.request(
+          `/admin/samples/${UNKNOWN_ID}/attachments`,
+          { method: "POST", body },
+        );
+
+        expect(res.status).not.toBe(413);
+      },
+    );
+
+    pgTest.for([
+      { path: `/admin/samples/${UNKNOWN_ID}/attachments`, status: 401 },
+      { path: "/service/samples/batch", status: 403 },
+    ])(
+      "should refuse an anonymous undeclared-length body on $path without reading it",
+      async ({ path, status }, { db }) => {
+        let isRead = false;
+        const body = new ReadableStream(
+          {
+            pull(controller) {
+              isRead = true;
+              controller.enqueue(new Uint8Array(1));
+              controller.close();
+            },
+          },
+          { highWaterMark: 0 },
+        );
+
+        const res = await createApp(db).app.request(path, {
+          method: "POST",
+          headers: { "transfer-encoding": "chunked" },
+          body,
+          duplex: "half",
+        });
+
+        expect({ status: res.status, isRead }).toEqual({
+          status,
+          isRead: false,
+        });
+      },
+    );
+
+    pgTest(
+      "should cap an authenticated undeclared-length body",
+      async ({ db }) => {
+        await insertUser(db, tokenEmail("test-token"), { status: "accepted" });
+
+        const res = await createApp(db).app.request("/admin/samples/import", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer test-token",
+            "transfer-encoding": "chunked",
+          },
+          body: "x".repeat(21 * MIB + 1),
+        });
+
+        expect(res.status).toBe(413);
+      },
+    );
+  });
+
   describe("captcha", () => {
     const visitor = {
       name: "Lovelace",

@@ -280,13 +280,11 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
     ),
     retiredRows: LABORATORIES.filter(
       (laboratory) => !isOfferedLaboratory(laboratory),
-    ).map(
-      ({ code }): VocabularyRow => [
-        code,
-        `${laboratoryLabel(code)} - ${code}`,
-        "",
-      ],
-    ),
+    ).map(({ code }): VocabularyRow => [
+      code,
+      `${laboratoryLabel(code)} - ${code}`,
+      "",
+    ]),
   },
   flat(
     "provenance_status",

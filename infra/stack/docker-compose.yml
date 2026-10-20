@@ -119,6 +119,8 @@ services:
   caddy:
     image: ${IMAGE_PREFIX:?IMAGE_PREFIX is required}/caddy:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped
+    environment:
+      OIDC_ISSUER: ${OIDC_ISSUER}
     ports:
       # ponytail: published host port for the infra team's TLS proxy, swap for their shared network once the edge is settled.
       - "${HTTP_PORT:?HTTP_PORT is required}:80"

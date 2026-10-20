@@ -27,8 +27,9 @@ export function createTusServer(
     namingFunction: () => uuidv7(),
     generateUrl: (_req, { id }) => id,
     onIncomingRequest: async (req, id) => {
+      if (req.method === "POST") return;
       const upload = await datastore.configstore.get(id);
-      if (upload && upload.metadata?.ownerId !== ownerOf(req)) {
+      if (upload?.metadata?.ownerId !== ownerOf(req)) {
         throw ERRORS.FILE_NOT_FOUND;
       }
     },

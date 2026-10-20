@@ -3,7 +3,7 @@ import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validato
 import { testClient } from "hono/testing";
 import { join } from "node:path";
 import { v7 as uuidv7 } from "uuid";
-import { describe, expect } from "vitest";
+import { afterEach, describe, expect } from "vitest";
 
 import { createApp } from "../app.ts";
 import { pgTest } from "../tests/pg-test.ts";
@@ -273,6 +273,7 @@ describe("admin attachment routes", () => {
     expect(res.headers.get("content-disposition")).toContain(
       'attachment; filename="measurements.csv"',
     );
+    expect(res.headers.get("content-length")).toBe(String(csv.byteLength));
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(csv);
   });
 
@@ -596,6 +597,71 @@ describe("upload limit on save and publish", () => {
 });
 
 describe("public attachment download", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  pgTest(
+    "should answer a HEAD with the download headers, no body, and close the file",
+    async ({ db }) => {
+      // Arrange
+      const client = await createTestApp(db);
+      const { igsn, attachmentId } = await publishedSampleWithFile(client);
+      const cancel = vi.spyOn(ReadableStream.prototype, "cancel");
+      // Act
+      const res = await createApp(db, { attachmentsDir }).app.request(
+        `/samples/${igsn}/attachments/${attachmentId}`,
+        { method: "HEAD" },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toBe("text/csv");
+      expect(res.headers.get("content-length")).toBe(String(csv.byteLength));
+      expect(await res.text()).toBe("");
+      expect(cancel).toHaveBeenCalled();
+    },
+  );
+
+  pgTest(
+    "should close the file and answer 500 for a stored media type that is no header value",
+    async ({ db }) => {
+      // Arrange
+      const client = await createTestApp(db);
+      const { igsn, attachmentId } = await publishedSampleWithFile(client);
+      await db
+        .updateTable("sample_attachment")
+        .set({ media_type: "a\u0100b" })
+        .where("id", "=", attachmentId)
+        .execute();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const cancel = vi.spyOn(ReadableStream.prototype, "cancel");
+      // Act
+      const res = await client.samples[":igsn"].attachments[
+        ":attachmentId"
+      ].$get({ param: { igsn, attachmentId } });
+      // Assert
+      expect(res.status).toBe(500);
+      expect(cancel).toHaveBeenCalled();
+    },
+  );
+
+  pgTest(
+    "should close the file when the client left before the response",
+    async ({ db }) => {
+      // Arrange
+      const client = await createTestApp(db);
+      const { igsn, attachmentId } = await publishedSampleWithFile(client);
+      const cancel = vi.spyOn(ReadableStream.prototype, "cancel");
+      // Act
+      await createApp(db, { attachmentsDir }).app.request(
+        `/samples/${igsn}/attachments/${attachmentId}`,
+        { signal: AbortSignal.abort() },
+      );
+      // Assert
+      expect(cancel).toHaveBeenCalled();
+    },
+  );
+
   pgTest("should download a published sample's attachment", async ({ db }) => {
     // Arrange
     const client = await createTestApp(db);

@@ -10,39 +10,34 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as UsersIndexRouteImport } from './routes/users.index'
-import { Route as ServiceAccountsIndexRouteImport } from './routes/service-accounts.index'
-import { Route as ManualGroupsIndexRouteImport } from './routes/manual-groups.index'
-import { Route as UsersUserIdRouteImport } from './routes/users.$userId'
-import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
-import { Route as SettingsGroupsRouteImport } from './routes/settings.groups'
-import { Route as ServiceAccountsCreateRouteImport } from './routes/service-accounts.create'
-import { Route as ServiceAccountsAccountIdRouteImport } from './routes/service-accounts.$accountId'
-import { Route as SamplesModerationRouteImport } from './routes/samples.moderation'
-import { Route as SamplesCreateRouteImport } from './routes/samples.create'
-import { Route as SamplesSampleIdRouteImport } from './routes/samples.$sampleId'
-import { Route as ManualGroupsGroupIdRouteImport } from './routes/manual-groups.$groupId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as InstitutionalGroupsOsusIndexRouteImport } from './routes/institutional-groups.osus.index'
-import { Route as InstitutionalGroupsOrganizationsIndexRouteImport } from './routes/institutional-groups.organizations.index'
+import { Route as ManualGroupsIndexRouteImport } from './routes/manual-groups.index'
+import { Route as ManualGroupsGroupIdRouteImport } from './routes/manual-groups.$groupId'
+import { Route as SamplesSampleIdRouteImport } from './routes/samples.$sampleId'
+import { Route as SamplesCreateRouteImport } from './routes/samples.create'
+import { Route as SamplesModerationRouteImport } from './routes/samples.moderation'
+import { Route as ServiceAccountsIndexRouteImport } from './routes/service-accounts.index'
+import { Route as ServiceAccountsAccountIdRouteImport } from './routes/service-accounts.$accountId'
+import { Route as ServiceAccountsCreateRouteImport } from './routes/service-accounts.create'
+import { Route as SettingsGroupsRouteImport } from './routes/settings.groups'
+import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
+import { Route as UsersIndexRouteImport } from './routes/users.index'
+import { Route as UsersUserIdRouteImport } from './routes/users.$userId'
 import { Route as InstitutionalGroupsLaboratoriesIndexRouteImport } from './routes/institutional-groups.laboratories.index'
-import { Route as InstitutionalGroupsOsusCodeRouteImport } from './routes/institutional-groups.osus.$code'
-import { Route as InstitutionalGroupsOrganizationsRorRouteImport } from './routes/institutional-groups.organizations.$ror'
 import { Route as InstitutionalGroupsLaboratoriesCodeRouteImport } from './routes/institutional-groups.laboratories.$code'
+import { Route as InstitutionalGroupsOrganizationsIndexRouteImport } from './routes/institutional-groups.organizations.index'
+import { Route as InstitutionalGroupsOrganizationsRorRouteImport } from './routes/institutional-groups.organizations.$ror'
+import { Route as InstitutionalGroupsOsusIndexRouteImport } from './routes/institutional-groups.osus.index'
+import { Route as InstitutionalGroupsOsusCodeRouteImport } from './routes/institutional-groups.osus.$code'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsersIndexRoute = UsersIndexRouteImport.update({
-  id: '/users/',
-  path: '/users/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ServiceAccountsIndexRoute = ServiceAccountsIndexRouteImport.update({
-  id: '/service-accounts/',
-  path: '/service-accounts/',
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManualGroupsIndexRoute = ManualGroupsIndexRouteImport.update({
@@ -50,24 +45,29 @@ const ManualGroupsIndexRoute = ManualGroupsIndexRouteImport.update({
   path: '/manual-groups/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsersUserIdRoute = UsersUserIdRouteImport.update({
-  id: '/users/$userId',
-  path: '/users/$userId',
+const ManualGroupsGroupIdRoute = ManualGroupsGroupIdRouteImport.update({
+  id: '/manual-groups/$groupId',
+  path: '/manual-groups/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsProfileRoute = SettingsProfileRouteImport.update({
-  id: '/settings/profile',
-  path: '/settings/profile',
+const SamplesSampleIdRoute = SamplesSampleIdRouteImport.update({
+  id: '/samples/$sampleId',
+  path: '/samples/$sampleId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsGroupsRoute = SettingsGroupsRouteImport.update({
-  id: '/settings/groups',
-  path: '/settings/groups',
+const SamplesCreateRoute = SamplesCreateRouteImport.update({
+  id: '/samples/create',
+  path: '/samples/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ServiceAccountsCreateRoute = ServiceAccountsCreateRouteImport.update({
-  id: '/service-accounts/create',
-  path: '/service-accounts/create',
+const SamplesModerationRoute = SamplesModerationRouteImport.update({
+  id: '/samples/moderation',
+  path: '/samples/moderation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServiceAccountsIndexRoute = ServiceAccountsIndexRouteImport.update({
+  id: '/service-accounts/',
+  path: '/service-accounts/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServiceAccountsAccountIdRoute =
@@ -76,35 +76,41 @@ const ServiceAccountsAccountIdRoute =
     path: '/service-accounts/$accountId',
     getParentRoute: () => rootRouteImport,
   } as any)
-const SamplesModerationRoute = SamplesModerationRouteImport.update({
-  id: '/samples/moderation',
-  path: '/samples/moderation',
+const ServiceAccountsCreateRoute = ServiceAccountsCreateRouteImport.update({
+  id: '/service-accounts/create',
+  path: '/service-accounts/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SamplesCreateRoute = SamplesCreateRouteImport.update({
-  id: '/samples/create',
-  path: '/samples/create',
+const SettingsGroupsRoute = SettingsGroupsRouteImport.update({
+  id: '/settings/groups',
+  path: '/settings/groups',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SamplesSampleIdRoute = SamplesSampleIdRouteImport.update({
-  id: '/samples/$sampleId',
-  path: '/samples/$sampleId',
+const SettingsProfileRoute = SettingsProfileRouteImport.update({
+  id: '/settings/profile',
+  path: '/settings/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ManualGroupsGroupIdRoute = ManualGroupsGroupIdRouteImport.update({
-  id: '/manual-groups/$groupId',
-  path: '/manual-groups/$groupId',
+const UsersIndexRoute = UsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
+const UsersUserIdRoute = UsersUserIdRouteImport.update({
+  id: '/users/$userId',
+  path: '/users/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InstitutionalGroupsOsusIndexRoute =
-  InstitutionalGroupsOsusIndexRouteImport.update({
-    id: '/institutional-groups/osus/',
-    path: '/institutional-groups/osus/',
+const InstitutionalGroupsLaboratoriesIndexRoute =
+  InstitutionalGroupsLaboratoriesIndexRouteImport.update({
+    id: '/institutional-groups/laboratories/',
+    path: '/institutional-groups/laboratories/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InstitutionalGroupsLaboratoriesCodeRoute =
+  InstitutionalGroupsLaboratoriesCodeRouteImport.update({
+    id: '/institutional-groups/laboratories/$code',
+    path: '/institutional-groups/laboratories/$code',
     getParentRoute: () => rootRouteImport,
   } as any)
 const InstitutionalGroupsOrganizationsIndexRoute =
@@ -113,28 +119,22 @@ const InstitutionalGroupsOrganizationsIndexRoute =
     path: '/institutional-groups/organizations/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const InstitutionalGroupsLaboratoriesIndexRoute =
-  InstitutionalGroupsLaboratoriesIndexRouteImport.update({
-    id: '/institutional-groups/laboratories/',
-    path: '/institutional-groups/laboratories/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const InstitutionalGroupsOsusCodeRoute =
-  InstitutionalGroupsOsusCodeRouteImport.update({
-    id: '/institutional-groups/osus/$code',
-    path: '/institutional-groups/osus/$code',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const InstitutionalGroupsOrganizationsRorRoute =
   InstitutionalGroupsOrganizationsRorRouteImport.update({
     id: '/institutional-groups/organizations/$ror',
     path: '/institutional-groups/organizations/$ror',
     getParentRoute: () => rootRouteImport,
   } as any)
-const InstitutionalGroupsLaboratoriesCodeRoute =
-  InstitutionalGroupsLaboratoriesCodeRouteImport.update({
-    id: '/institutional-groups/laboratories/$code',
-    path: '/institutional-groups/laboratories/$code',
+const InstitutionalGroupsOsusIndexRoute =
+  InstitutionalGroupsOsusIndexRouteImport.update({
+    id: '/institutional-groups/osus/',
+    path: '/institutional-groups/osus/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InstitutionalGroupsOsusCodeRoute =
+  InstitutionalGroupsOsusCodeRouteImport.update({
+    id: '/institutional-groups/osus/$code',
+    path: '/institutional-groups/osus/$code',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -306,18 +306,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/users/': {
-      id: '/users/'
-      path: '/users'
-      fullPath: '/users/'
-      preLoaderRoute: typeof UsersIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/service-accounts/': {
-      id: '/service-accounts/'
-      path: '/service-accounts'
-      fullPath: '/service-accounts/'
-      preLoaderRoute: typeof ServiceAccountsIndexRouteImport
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manual-groups/': {
@@ -327,53 +320,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManualGroupsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/users/$userId': {
-      id: '/users/$userId'
-      path: '/users/$userId'
-      fullPath: '/users/$userId'
-      preLoaderRoute: typeof UsersUserIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings/profile': {
-      id: '/settings/profile'
-      path: '/settings/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof SettingsProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings/groups': {
-      id: '/settings/groups'
-      path: '/settings/groups'
-      fullPath: '/settings/groups'
-      preLoaderRoute: typeof SettingsGroupsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/service-accounts/create': {
-      id: '/service-accounts/create'
-      path: '/service-accounts/create'
-      fullPath: '/service-accounts/create'
-      preLoaderRoute: typeof ServiceAccountsCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/service-accounts/$accountId': {
-      id: '/service-accounts/$accountId'
-      path: '/service-accounts/$accountId'
-      fullPath: '/service-accounts/$accountId'
-      preLoaderRoute: typeof ServiceAccountsAccountIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/samples/moderation': {
-      id: '/samples/moderation'
-      path: '/samples/moderation'
-      fullPath: '/samples/moderation'
-      preLoaderRoute: typeof SamplesModerationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/samples/create': {
-      id: '/samples/create'
-      path: '/samples/create'
-      fullPath: '/samples/create'
-      preLoaderRoute: typeof SamplesCreateRouteImport
+    '/manual-groups/$groupId': {
+      id: '/manual-groups/$groupId'
+      path: '/manual-groups/$groupId'
+      fullPath: '/manual-groups/$groupId'
+      preLoaderRoute: typeof ManualGroupsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/samples/$sampleId': {
@@ -383,32 +334,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SamplesSampleIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/manual-groups/$groupId': {
-      id: '/manual-groups/$groupId'
-      path: '/manual-groups/$groupId'
-      fullPath: '/manual-groups/$groupId'
-      preLoaderRoute: typeof ManualGroupsGroupIdRouteImport
+    '/samples/create': {
+      id: '/samples/create'
+      path: '/samples/create'
+      fullPath: '/samples/create'
+      preLoaderRoute: typeof SamplesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
+    '/samples/moderation': {
+      id: '/samples/moderation'
+      path: '/samples/moderation'
+      fullPath: '/samples/moderation'
+      preLoaderRoute: typeof SamplesModerationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/institutional-groups/osus/': {
-      id: '/institutional-groups/osus/'
-      path: '/institutional-groups/osus'
-      fullPath: '/institutional-groups/osus/'
-      preLoaderRoute: typeof InstitutionalGroupsOsusIndexRouteImport
+    '/service-accounts/': {
+      id: '/service-accounts/'
+      path: '/service-accounts'
+      fullPath: '/service-accounts/'
+      preLoaderRoute: typeof ServiceAccountsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/institutional-groups/organizations/': {
-      id: '/institutional-groups/organizations/'
-      path: '/institutional-groups/organizations'
-      fullPath: '/institutional-groups/organizations/'
-      preLoaderRoute: typeof InstitutionalGroupsOrganizationsIndexRouteImport
+    '/service-accounts/$accountId': {
+      id: '/service-accounts/$accountId'
+      path: '/service-accounts/$accountId'
+      fullPath: '/service-accounts/$accountId'
+      preLoaderRoute: typeof ServiceAccountsAccountIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/service-accounts/create': {
+      id: '/service-accounts/create'
+      path: '/service-accounts/create'
+      fullPath: '/service-accounts/create'
+      preLoaderRoute: typeof ServiceAccountsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/groups': {
+      id: '/settings/groups'
+      path: '/settings/groups'
+      fullPath: '/settings/groups'
+      preLoaderRoute: typeof SettingsGroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/profile': {
+      id: '/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof SettingsProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/users/': {
+      id: '/users/'
+      path: '/users'
+      fullPath: '/users/'
+      preLoaderRoute: typeof UsersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/users/$userId': {
+      id: '/users/$userId'
+      path: '/users/$userId'
+      fullPath: '/users/$userId'
+      preLoaderRoute: typeof UsersUserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/institutional-groups/laboratories/': {
@@ -418,11 +404,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstitutionalGroupsLaboratoriesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/institutional-groups/osus/$code': {
-      id: '/institutional-groups/osus/$code'
-      path: '/institutional-groups/osus/$code'
-      fullPath: '/institutional-groups/osus/$code'
-      preLoaderRoute: typeof InstitutionalGroupsOsusCodeRouteImport
+    '/institutional-groups/laboratories/$code': {
+      id: '/institutional-groups/laboratories/$code'
+      path: '/institutional-groups/laboratories/$code'
+      fullPath: '/institutional-groups/laboratories/$code'
+      preLoaderRoute: typeof InstitutionalGroupsLaboratoriesCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutional-groups/organizations/': {
+      id: '/institutional-groups/organizations/'
+      path: '/institutional-groups/organizations'
+      fullPath: '/institutional-groups/organizations/'
+      preLoaderRoute: typeof InstitutionalGroupsOrganizationsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/institutional-groups/organizations/$ror': {
@@ -432,11 +425,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstitutionalGroupsOrganizationsRorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/institutional-groups/laboratories/$code': {
-      id: '/institutional-groups/laboratories/$code'
-      path: '/institutional-groups/laboratories/$code'
-      fullPath: '/institutional-groups/laboratories/$code'
-      preLoaderRoute: typeof InstitutionalGroupsLaboratoriesCodeRouteImport
+    '/institutional-groups/osus/': {
+      id: '/institutional-groups/osus/'
+      path: '/institutional-groups/osus'
+      fullPath: '/institutional-groups/osus/'
+      preLoaderRoute: typeof InstitutionalGroupsOsusIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutional-groups/osus/$code': {
+      id: '/institutional-groups/osus/$code'
+      path: '/institutional-groups/osus/$code'
+      fullPath: '/institutional-groups/osus/$code'
+      preLoaderRoute: typeof InstitutionalGroupsOsusCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

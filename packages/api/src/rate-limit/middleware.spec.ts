@@ -96,6 +96,31 @@ describe("rateLimit", () => {
     expect((await from("10.0.0.1")).status).toBe(429);
   });
 
+  it.each([
+    ["2001:db8:1:2::1", "2001:db8:1:2:ffff::9"],
+    ["2001:db8::1", "2001:db8::2:1"],
+    ["::ffff:10.0.0.1", "10.0.0.1"],
+  ])(
+    "should count %s and %s, one client, against one budget",
+    async (first, second) => {
+      const app = publicApp(config({ trustProxyHeaders: true }));
+      const from = (ip: string) =>
+        app.request("/samples", { headers: { "X-Real-IP": ip } });
+      await spendBudget(() => from(first), PUBLIC_IP_BUDGET.points);
+
+      expect((await from(second)).status).toBe(429);
+    },
+  );
+
+  it("should count each IPv6 /64 against its own budget", async () => {
+    const app = publicApp(config({ trustProxyHeaders: true }));
+    const from = (ip: string) =>
+      app.request("/samples", { headers: { "X-Real-IP": ip } });
+    await spendBudget(() => from("2001:db8:1:2::1"), PUBLIC_IP_BUDGET.points);
+
+    expect((await from("2001:db8:1:3::1")).status).toBe(200);
+  });
+
   it("should ignore a forged X-Real-IP when proxy headers are untrusted", async () => {
     const app = publicApp(config());
     const forging = (ip: string) =>

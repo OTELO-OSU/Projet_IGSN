@@ -18,6 +18,8 @@
 - Caddy serves plain HTTP on `HTTP_PORT`, behind the infra team's TLS reverse proxy (still to be confirmed with them).
 - It path-routes `/api` (prefix stripped), `/admin`, and the rest to the frontend, and sets the security headers.
 - It trusts only private-range peers for the visitor IP (`trusted_proxies_strict`), so the api's rate limits key on the real client.
+- It caps `/api` request bodies at 110MB.
+- It sets a Content-Security-Policy on `/admin/*`, its `connect-src` allowing `OIDC_ISSUER`.
 - `TRUST_PROXY_HEADERS=true` on the api is mandatory, or every visitor shares one bucket; see [ADR 0029](adr/0029-api-rate-limiting.md).
 - `HTTP_PORT` must be reachable from the infra proxy only (host firewall).
 - Otherwise Docker can forward a direct hit through its userland proxy (IPv6 for instance), which Caddy then sees as a private peer.

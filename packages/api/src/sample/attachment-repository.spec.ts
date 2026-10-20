@@ -59,7 +59,10 @@ describe("sampleAttachmentRepository", () => {
       });
       const found = await repository.getContent(sample.id, stored(created).id);
       expect(found?.attachment).toEqual(created);
-      expect(new Uint8Array(found!.content)).toEqual(content);
+      expect(found?.size).toBe(content.byteLength);
+      expect(
+        new Uint8Array(await new Response(found!.content).arrayBuffer()),
+      ).toEqual(content);
     },
   );
 

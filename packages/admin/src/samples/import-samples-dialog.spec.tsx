@@ -167,11 +167,11 @@ describe("ImportSamplesDialog", () => {
       .spyOn(URL, "createObjectURL")
       .mockReturnValue("blob:test");
     const savedNames: string[] = [];
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
-      function (this: HTMLAnchorElement) {
-        savedNames.push(this.download);
-      },
-    );
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      savedNames.push(this.download);
+    });
     const { screen, dialog } = await openDialog();
     const download = dialog.getByRole("button", { name: "Download template" });
 

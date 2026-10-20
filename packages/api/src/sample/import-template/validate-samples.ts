@@ -155,12 +155,10 @@ export function leavesOf(
 const droppedIssues = (sample: SampleCandidate, parsed: unknown) =>
   leavesOf(sample.input)
     .filter((path) => valueAt(parsed, path) === undefined)
-    .map(
-      (path): ImportIssue => ({
-        ...placeOf(sample, path),
-        code: "not_applicable",
-      }),
-    );
+    .map((path): ImportIssue => ({
+      ...placeOf(sample, path),
+      code: "not_applicable",
+    }));
 
 function keptFieldsOf(sample: SampleCandidate) {
   const fields = Object.entries(createSampleSchema.shape).map(

@@ -66,7 +66,9 @@ export function createStagedUploads(
           {
             id,
             name: metadata.filename,
-            mediaType: metadata.filetype || "application/octet-stream",
+            mediaType: /^[\x20-\x7e]+$/.test(metadata.filetype ?? "")
+              ? metadata.filetype!
+              : "application/octet-stream",
           },
         ]
       : [];
@@ -101,9 +103,7 @@ export function createStagedUploads(
       await store.deleteExpired();
       const stale = (
         await Promise.all(
-          (
-            await listIds()
-          ).map(async (id) => {
+          (await listIds()).map(async (id) => {
             const state = await stateOf(id);
             return state?.isComplete && state.isStale ? [id] : [];
           }),

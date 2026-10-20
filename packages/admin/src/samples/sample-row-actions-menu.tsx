@@ -10,6 +10,7 @@ import {
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { canCreateImportTemplate } from "@projet-igsn/domain/user-sample/can-create-import-template";
 import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicate-sample";
+import { canPublishSamples } from "@projet-igsn/domain/user/can-publish-samples";
 import { Link } from "@tanstack/react-router";
 import {
   CopyIcon,
@@ -18,6 +19,7 @@ import {
   GitBranchPlusIcon,
 } from "lucide-react";
 
+import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { m } from "#/paraglide/messages.js";
 
 export function SampleRowActionsMenu({
@@ -27,7 +29,11 @@ export function SampleRowActionsMenu({
   sample: AdminSampleListItem;
   onCreateTemplate: (sample: AdminSampleListItem) => void;
 }) {
-  const canCreateTemplate = canCreateImportTemplate(sample);
+  const { data: currentUser } = useCurrentUser();
+  const canCreateTemplate =
+    currentUser !== undefined &&
+    canPublishSamples(currentUser) &&
+    canCreateImportTemplate(sample);
   const canAddSubSample = hasPermanentIgsn(sample);
   const canDuplicate = canDuplicateSample(sample);
   if (!canCreateTemplate && !canAddSubSample && !canDuplicate) return null;

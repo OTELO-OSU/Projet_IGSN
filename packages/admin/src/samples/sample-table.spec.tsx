@@ -18,6 +18,7 @@ import { useState } from "react";
 import { afterEach, vi } from "vitest";
 import { type RenderResult, render } from "vitest-browser-react";
 
+import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
 import { SampleTable } from "./sample-table.tsx";
 
@@ -568,7 +569,22 @@ describe("SampleTable", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should offer no import template to a user who cannot publish", async () => {
+    fakeCurrentUser({ status: "pending" });
+    const screen = await renderTable([IMPORTABLE]);
+
+    await openRowMenu(screen);
+
+    await expect
+      .element(screen.getByRole("menuitem", { name: DUPLICATE_ACTION }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("menuitem", { name: TEMPLATE_ACTION }))
+      .not.toBeInTheDocument();
+  });
+
   it("should open the template dialog prefilled from a published sample of an importable material, staying on the list", async () => {
+    fakeCurrentUser();
     worker.use(
       http.get("*/admin/currentUser/attachable-manual-groups", () =>
         HttpResponse.json({ data: [] }),

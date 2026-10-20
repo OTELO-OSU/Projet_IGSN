@@ -12,6 +12,7 @@ export const requireActiveSession = createMiddleware(async (c, next) => {
   }
   const res = await fetch(userinfoUri, {
     headers: { Authorization: authorization },
+    signal: AbortSignal.timeout(5000),
   }).catch((error: unknown) => {
     console.error("userinfo request failed", { userinfoUri, error });
     return null;
