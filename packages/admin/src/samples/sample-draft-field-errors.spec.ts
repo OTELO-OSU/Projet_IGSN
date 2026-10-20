@@ -230,16 +230,6 @@ describe("sampleDraftFieldErrors", () => {
         "location.northLatitude": "North must not be less than south.",
       },
     },
-    {
-      path: ["description", "collectionDate", "start"],
-      code: "collection_date_order",
-      fields: {
-        "description.collectionDateStart":
-          "Start date must not be after end date.",
-        "description.collectionDateEnd":
-          "Start date must not be after end date.",
-      },
-    },
   ])(
     "should say what is wrong with a $code range",
     ({ path, code, fields }) => {
@@ -251,6 +241,28 @@ describe("sampleDraftFieldErrors", () => {
           ]),
         ),
       );
+    },
+  );
+
+  it.each([
+    { startTouched: true, field: "description.collectionDateStart" },
+    { startTouched: false, field: "description.collectionDateEnd" },
+  ])(
+    "should show a date order error on one bound only, Start touched: $startTouched",
+    ({ startTouched, field }) => {
+      expect(
+        sampleDraftFieldErrors(
+          [
+            {
+              path: ["description", "collectionDate", "start"],
+              params: { code: "collection_date_order" },
+            },
+          ],
+          (name) => name !== "description.collectionDateStart" || startTouched,
+        ),
+      ).toEqual({
+        [field]: { message: "Start date must not be after end date." },
+      });
     },
   );
 });

@@ -50,8 +50,10 @@ describe("SiteHeader", () => {
     },
   );
 
-  it("should offer the other language outside the menu, so it shows at every width", async () => {
+  it("should offer the other language inside the menu", async () => {
     await renderHeader();
+
+    await menuButton().click();
 
     await expect
       .element(

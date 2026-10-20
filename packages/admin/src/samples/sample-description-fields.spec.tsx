@@ -168,11 +168,9 @@ describe("SampleDescriptionFields", () => {
     await screen.getByLabelText("End date").fill("2026-01-05");
 
     await expect
-      .element(screen.getByRole("alert").first())
-      .toHaveTextContent(/use the single date mode/i);
-    await expect
-      .element(screen.getByRole("alert").nth(1))
-      .toHaveTextContent(/use the single date mode/i);
+      .element(screen.getByLabelText("Start date"))
+      .toHaveAccessibleDescription(/use the single date mode/i);
+    await expect.element(screen.getByRole("alert")).toBeVisible();
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
 
@@ -195,7 +193,7 @@ describe("SampleDescriptionFields", () => {
     );
   });
 
-  it("should reject a range whose start is after its end, on both fields", async () => {
+  it("should reject a range whose start is after its end, on the start field only", async () => {
     const onSubmit = vi.fn();
     const screen = await renderSampleForm(onSubmit);
 
@@ -204,11 +202,9 @@ describe("SampleDescriptionFields", () => {
     await screen.getByLabelText("End date").fill("2026-01-05");
 
     await expect
-      .element(screen.getByRole("alert").first())
-      .toHaveTextContent("Start date must not be after end date.");
-    await expect
-      .element(screen.getByRole("alert").nth(1))
-      .toHaveTextContent("Start date must not be after end date.");
+      .element(screen.getByLabelText("Start date"))
+      .toHaveAccessibleDescription("Start date must not be after end date.");
+    await expect.element(screen.getByRole("alert")).toBeVisible();
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
 
@@ -244,6 +240,47 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it("should reject a future range end on the end field only", async () => {
+    const screen = await renderSampleForm();
+
+    await screen.getByRole("switch", { name: "Date range" }).click();
+    await screen.getByLabelText("Start date").fill("2001-07-01");
+    await screen.getByLabelText("End date").fill("2999-01-01");
+
+    await expect
+      .element(screen.getByLabelText("End date"))
+      .toHaveAccessibleDescription(
+        "The collection date cannot be in the future.",
+      );
+    await expect.element(screen.getByRole("alert")).toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Start date"))
+      .not.toHaveAttribute("aria-invalid");
+  });
+
+  it.each([
+    ["1999-01-01", "Start date must not be after end date."],
+    ["2000-01-01", /use the single date mode/i],
+  ])(
+    "should show a range error on the end field while the start is untouched (end %s)",
+    async (end, message) => {
+      const screen = await renderSampleForm(noop, {
+        collectionDate: {
+          precision: "day",
+          start: "2000-01-01",
+          end: "2001-07-01",
+        },
+      });
+
+      await screen.getByLabelText("End date").fill(end);
+
+      await expect
+        .element(screen.getByLabelText("End date"))
+        .toHaveAccessibleDescription(message);
+      await expect.element(screen.getByRole("alert")).toBeVisible();
+    },
+  );
 
   it("should submit an hour-precision range with the picked time zone", async () => {
     const onSubmit = vi.fn();

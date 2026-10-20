@@ -87,13 +87,17 @@ export function DateRangeField({
     clearBoundErrors();
   };
 
-  const identicalRange = () => {
+  const identicalRange = (bound: typeof startName | typeof endName) => {
     const start = form.getFieldValue(startName);
     const end = form.getFieldValue(endName);
-    return start !== undefined && start === end
+    const shown =
+      bound === startName || !form.getFieldMeta(startName)?.isTouched;
+    return shown && start !== undefined && start === end
       ? { message: identicalMessage() }
       : undefined;
   };
+  const revalidate = (sibling: typeof startName | typeof endName) => () =>
+    void form.getFieldInfo(sibling).instance?.validate("change");
 
   return (
     <form.Subscribe
@@ -134,10 +138,8 @@ export function DateRangeField({
                 <div className="w-full sm:w-auto">
                   <form.AppField
                     name={startName}
-                    validators={{
-                      onChangeListenTo: [endName],
-                      onChange: identicalRange,
-                    }}
+                    validators={{ onChange: () => identicalRange(startName) }}
+                    listeners={{ onChange: revalidate(endName) }}
                   >
                     {(field) => (
                       <field.DateField label={startLabel} withTime={isHour} />
@@ -147,10 +149,8 @@ export function DateRangeField({
                 <div className="w-full sm:w-auto">
                   <form.AppField
                     name={endName}
-                    validators={{
-                      onChangeListenTo: [startName],
-                      onChange: identicalRange,
-                    }}
+                    validators={{ onChange: () => identicalRange(endName) }}
+                    listeners={{ onChange: revalidate(startName) }}
                   >
                     {(field) => (
                       <field.DateField label={endLabel} withTime={isHour} />

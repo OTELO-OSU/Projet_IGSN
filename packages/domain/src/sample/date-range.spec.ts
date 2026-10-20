@@ -85,6 +85,18 @@ describe("dateRangeSchema", () => {
     ]);
   });
 
+  it("should report a future start after the end as future only", () => {
+    const result = schema.safeParse({
+      precision: "day",
+      start: "2999-01-01",
+      end: "2014-10-01",
+    });
+
+    expect(result.error?.issues).toMatchObject([
+      { path: ["start"], params: { code: "sample_date_future" } },
+    ]);
+  });
+
   it.each([
     { precision: "day", start: "2999-01-01", end: "2999-01-02" },
     {

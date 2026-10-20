@@ -32,9 +32,9 @@ function partners() {
     },
     {
       href: "https://www.data-terra.org/",
-      logo: "logo-gaiadata.png",
-      logoWidth: 256,
-      logoHeight: 256,
+      logo: "logo-gaiadata.svg",
+      logoWidth: 528,
+      logoHeight: 528,
       logoClassName: "h-34 w-auto",
       role: m.partners_gaiadata_role(),
       name: m.partners_gaiadata_name(),

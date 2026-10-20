@@ -34,7 +34,9 @@ export function sampleEditPage(page: Page) {
     });
 
   const attachmentRow = (name: string) =>
-    page.getByRole("listitem").filter({ hasText: name });
+    page
+      .getByRole("group", { name: /^Attachment \d+$/ })
+      .filter({ hasText: name });
 
   const uploadDialog = page.getByRole("dialog", { name: "Uploading files" });
   const savedToast = page.getByText("Sample saved");

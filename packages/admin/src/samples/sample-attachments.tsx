@@ -1,11 +1,9 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/relation/target-resource-type";
-import type { ReactNode } from "react";
 
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import {
   FieldListAction,
-  FieldListItem,
   FieldListRemoveButton,
 } from "@projet-igsn/design-system/components/form/field-list-item";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
@@ -23,6 +21,7 @@ import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { ATTACHMENT_MAX_BYTES } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relation/target-resource-type";
 import { Download, Undo2 } from "lucide-react";
+import { type ReactNode, useId } from "react";
 
 import type { SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 
@@ -35,6 +34,8 @@ import { FileDropZone } from "#/samples/file-drop-zone.tsx";
 import { relationTargetResourceTypeLabel } from "#/samples/sample-labels.ts";
 import { useDownloadAttachment } from "#/samples/use-download-attachment.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
+
+const COLUMN = "grid min-w-0 content-start gap-2 sm:w-72 sm:flex-none";
 
 const resourceTypeItems = toComboboxItems(
   RELATION_TARGET_RESOURCE_TYPES,
@@ -73,26 +74,33 @@ function AttachmentRowLayout({
   fields,
 }: AttachmentRowLayoutProps) {
   const isDisabled = useIsFieldDisabled("relations");
+  const id = useId();
   return (
-    <li>
-      <FieldListItem legend={m.legend_attachment({ index })} actions={actions}>
-        <div className="flex items-center gap-2 pe-16">
-          <span
-            className={cn(
-              "min-w-0 flex-1 truncate text-sm",
-              isStruck && "line-through",
-            )}
-            title={name}
-          >
-            {name}
-            {badge}
-          </span>
-          {status ? (
-            <span className="text-destructive text-sm">{status}</span>
-          ) : null}
-        </div>
-        {fields ? (
-          <div className="grid gap-2">
+    <div role="group" aria-labelledby={`${id}-legend`} className="grid gap-2">
+      <div className="flex items-center gap-1">
+        <span id={`${id}-legend`} className="font-medium">
+          {m.legend_attachment({ index })}
+        </span>
+        {actions}
+      </div>
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-sm",
+            isStruck && "line-through",
+          )}
+          title={name}
+        >
+          {name}
+          {badge}
+        </span>
+        {status ? (
+          <span className="text-destructive text-sm">{status}</span>
+        ) : null}
+      </div>
+      {fields ? (
+        <div className="grid gap-4 sm:flex sm:flex-wrap sm:items-start">
+          <div className={COLUMN}>
             <Label htmlFor={`${fields.id}-title`}>
               {m.attachment_title_label()}
             </Label>
@@ -104,6 +112,8 @@ function AttachmentRowLayout({
                 fields.onChange({ title: event.target.value })
               }
             />
+          </div>
+          <div className={COLUMN}>
             <Label htmlFor={`${fields.id}-resource-type`}>
               {withRequired(m.attachment_resource_type_label(), true)}
             </Label>
@@ -121,17 +131,19 @@ function AttachmentRowLayout({
                 })
               }
             />
-            <RevealField
-              label={m.reveal_attachment_description({ name })}
-              isShown={fields.description !== ""}
-              canReveal={fields.title !== ""}
-            >
+          </div>
+          <RevealField
+            label={m.reveal_attachment_description({ name })}
+            isShown={fields.description !== ""}
+            canReveal={fields.title !== ""}
+            className="sm:h-9 sm:self-end"
+          >
+            <div className={COLUMN}>
               <Label htmlFor={`${fields.id}-description`}>
                 {m.field_description()}
               </Label>
               <Textarea
                 id={`${fields.id}-description`}
-                className="sm:max-w-72"
                 value={fields.description}
                 disabled={isDisabled}
                 aria-label={m.attachment_description({ name })}
@@ -139,11 +151,11 @@ function AttachmentRowLayout({
                   fields.onChange({ description: event.target.value })
                 }
               />
-            </RevealField>
-          </div>
-        ) : null}
-      </FieldListItem>
-    </li>
+            </div>
+          </RevealField>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -247,7 +259,7 @@ export function SampleAttachments({
         {m.attachment_count({ count: keptCount, limit: UPLOAD_LIMIT })}
       </p>
       {pending.length > 0 ? (
-        <ul className="grid gap-2">
+        <>
           {pending.map((staged, index) => (
             <AttachmentRowLayout
               key={staged.key}
@@ -286,12 +298,12 @@ export function SampleAttachments({
               }}
             />
           ))}
-        </ul>
+        </>
       ) : null}
       {attachments.length === 0 && pending.length === 0 ? (
         <p className="text-muted-foreground text-sm">{m.attachments_empty()}</p>
       ) : (
-        <ul className="grid gap-2">
+        <>
           {attachments.map((attachment, index) => (
             <AttachmentRow
               key={attachment.id}
@@ -301,7 +313,7 @@ export function SampleAttachments({
               changes={changes}
             />
           ))}
-        </ul>
+        </>
       )}
     </FormSection>
   );

@@ -21,7 +21,15 @@ const dateRangeIssues =
   ): void => {
     const wellFormed = (bound: "start" | "end") =>
       BOUND_SCHEMA[period.precision].safeParse(period[bound]).success;
-    if (wellFormed("start") && wellFormed("end") && period.start > period.end) {
+    const futureBounds = (["start", "end"] as const).filter(
+      (bound) => wellFormed(bound) && isFutureDate(period[bound]),
+    );
+    if (
+      futureBounds.length === 0 &&
+      wellFormed("start") &&
+      wellFormed("end") &&
+      period.start > period.end
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["start"],
@@ -29,15 +37,13 @@ const dateRangeIssues =
         params: { code: `${codePrefix}_order` },
       });
     }
-    for (const bound of ["start", "end"] as const) {
-      if (wellFormed(bound) && isFutureDate(period[bound])) {
-        ctx.addIssue({
-          code: "custom",
-          path: [bound],
-          message: "date must not be in the future",
-          params: { code: `${codePrefix}_future` },
-        });
-      }
+    for (const bound of futureBounds) {
+      ctx.addIssue({
+        code: "custom",
+        path: [bound],
+        message: "date must not be in the future",
+        params: { code: `${codePrefix}_future` },
+      });
     }
   };
 
