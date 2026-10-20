@@ -23,6 +23,7 @@
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
+    "@tanstack/react-table": "catalog:",
     "@xyflow/react": "catalog:",
     "altcha": "catalog:",
     "leaflet": "catalog:",

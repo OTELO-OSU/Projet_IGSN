@@ -10,7 +10,7 @@ import {
   SAMPLE_FACETS,
 } from "@projet-igsn/domain/sample/search/facets";
 import { fullName } from "@projet-igsn/domain/user/full-name";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import type { FacetValues } from "#/domain/samples/facet-values.ts";
 
@@ -30,6 +30,7 @@ type SampleFacetsProps = {
   manualGroups?: ManualGroup[];
   contributors?: PublicUser[];
   counts?: SampleFacetCounts;
+  header?: ReactNode;
 };
 
 export function SampleFacets({
@@ -39,6 +40,7 @@ export function SampleFacets({
   manualGroups = [],
   contributors = [],
   counts,
+  header,
 }: SampleFacetsProps) {
   const [resetNonce, setResetNonce] = useState(0);
   const activeKeys = activeFacetKeys(values);
@@ -67,6 +69,7 @@ export function SampleFacets({
       aria-label={m.facets_title()}
       className="space-y-6 border-b py-6 lg:sticky lg:top-36 lg:z-0 lg:h-[calc(100vh-144px)] lg:self-start lg:overflow-y-auto lg:border-r lg:border-b-0 lg:pr-6"
     >
+      {header}
       <ActiveFacetChips
         facets={FACET_SECTIONS.flatMap((section) => section.keys).flatMap(
           (key) => byKey.get(key) ?? [],

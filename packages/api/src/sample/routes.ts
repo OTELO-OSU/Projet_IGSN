@@ -16,10 +16,12 @@ import { HTTPException } from "hono/http-exception";
 import type { SendMail } from "../mail/send-mail.ts";
 
 import { attachmentDownload } from "./attachment-download.ts";
-import { exportPublicSampleWorkbook } from "./bulk-edit/export-workbook.ts";
 import { contactSampleOwnerMail } from "./contact-sample-owner-mail.ts";
-import { xlsxResponse } from "./import-template/xlsx-response.ts";
-import { searchExportResponse } from "./search-export.ts";
+import {
+  samplesExportResponse,
+  searchExportResponse,
+  selectionExportResponse,
+} from "./search-export.ts";
 import {
   validateContactBody,
   validateContactParams,
@@ -29,6 +31,8 @@ import {
   validateMapPointsQuery,
   validatePublicExportQuery,
   validatePublicListQuery,
+  validateSampleExportQuery,
+  validateSelectionExportBody,
 } from "./validator.ts";
 
 export function createSampleRoutes(
@@ -71,6 +75,9 @@ export function createSampleRoutes(
     .get("/export", validatePublicExportQuery, async (c) =>
       searchExportResponse(repository, c.req.valid("query")),
     )
+    .post("/export", validateSelectionExportBody, async (c) =>
+      selectionExportResponse(repository, c.req.valid("json")),
+    )
     .get("/:igsn", validateIgsnParam, async (c) => {
       const sample = await repository.getPublicByIgsn(
         c.req.valid("param").igsn,
@@ -81,17 +88,23 @@ export function createSampleRoutes(
       const body: PublicSampleResponse = { data: toPublicSample(sample) };
       return c.json(body);
     })
-    .get("/:igsn/export", validateIgsnParam, async (c) => {
-      const { igsn } = c.req.valid("param");
-      const sample = await repository.getPublicByIgsn(igsn);
-      if (sample?.status !== "published") {
-        return c.json({ error: "Sample not found" }, 404);
-      }
-      return xlsxResponse(
-        await exportPublicSampleWorkbook(sample),
-        `igsn-${igsn}.xlsx`,
-      );
-    })
+    .get(
+      "/:igsn/export",
+      validateIgsnParam,
+      validateSampleExportQuery,
+      async (c) => {
+        const { igsn } = c.req.valid("param");
+        const sample = await repository.getPublicByIgsn(igsn);
+        if (sample?.status !== "published") {
+          return c.json({ error: "Sample not found" }, 404);
+        }
+        return samplesExportResponse(
+          [sample],
+          c.req.valid("query").format,
+          `igsn-${igsn}`,
+        );
+      },
+    )
     .get("/:igsn/lineage", validateIgsnParam, async (c) => {
       const lineage = await repository.getPublicLineage(
         c.req.valid("param").igsn,

@@ -25,5 +25,6 @@ export default defineConfig({
     maxConcurrency: 2,
     testTimeout: 2500,
     setupFiles: ["test/setup.ts"],
+    env: { SEARCH_CSV_EXPORT_LIMIT: "10", SEARCH_XLSX_EXPORT_LIMIT: "5" },
   },
 });

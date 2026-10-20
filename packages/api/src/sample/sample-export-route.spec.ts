@@ -2,6 +2,7 @@ import type { Kysely } from "kysely";
 
 import { XLSX_MEDIA_TYPE } from "@projet-igsn/domain/sample/import/import-validator";
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 import { describe, expect } from "vitest";
 
 import type { DB } from "../db.ts";
@@ -16,8 +17,8 @@ import { SHEETS } from "./import-template/columns.ts";
 
 const ARCHIVE_EMAIL = "archive-export@univ-lorraine.fr";
 
-const exportSample = (db: Kysely<DB>, igsn: string) =>
-  createApp(db).app.request(`/samples/${igsn}/export`);
+const exportSample = (db: Kysely<DB>, igsn: string, query = "") =>
+  createApp(db).app.request(`/samples/${igsn}/export${query}`);
 
 const loadBook = async (res: Response) => {
   const book = new ExcelJS.Workbook();
@@ -59,6 +60,40 @@ describe("GET /samples/:igsn/export", () => {
     },
     30_000,
   );
+
+  pgTest(
+    "should answer the sample as a zip of CSV files named after its IGSN with format=csv",
+    async ({ db }) => {
+      const owner = await insertUser(db, "sample-export-csv@example.org");
+      const sample = await insertParent(db, owner.id);
+
+      const res = await exportSample(db, sample.igsn!, "?format=csv");
+      const zip = await JSZip.loadAsync(await res.arrayBuffer());
+
+      expect({
+        status: res.status,
+        mediaType: res.headers.get("Content-Type"),
+        disposition: res.headers.get("Content-Disposition"),
+        samples: await zip.file("samples.csv")?.async("string"),
+      }).toEqual({
+        status: 200,
+        mediaType: "application/zip",
+        disposition: `attachment; filename="igsn-${sample.igsn}.zip"`,
+        samples: expect.stringContaining(sample.igsn!),
+      });
+    },
+    30_000,
+  );
+
+  pgTest("should refuse an unknown format as 400", async ({ db }) => {
+    const res = await exportSample(
+      db,
+      "0123456789ABCDEFGHJKMNPQRS",
+      "?format=pdf",
+    );
+
+    expect(res.status).toBe(400);
+  });
 
   pgTest(
     "should leave the archive contact email and its column out of the workbook",

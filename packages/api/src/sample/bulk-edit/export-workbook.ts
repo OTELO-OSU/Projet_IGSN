@@ -135,10 +135,14 @@ export function exportWorkbook(
 }
 
 export function exportPublicSampleWorkbook(
-  sample: Sample,
+  samples: readonly Sample[],
 ): Promise<ExcelBuffer> {
   return queueBuild(() =>
-    build([redactPrivateContacts(sample)], PUBLIC_EXPORT_SAMPLE_COLUMNS, false),
+    build(
+      samples.map(redactPrivateContacts),
+      PUBLIC_EXPORT_SAMPLE_COLUMNS,
+      false,
+    ),
   );
 }
 

@@ -160,9 +160,9 @@ describe("SampleView", () => {
     await expect.element(screen.getByText("sample-42")).toBeInTheDocument();
   });
 
-  it("should offer the Excel download of the published sample right after the sidebar menu", async () => {
+  it("should offer the download of the published sample right after the sidebar menu", async () => {
     const screen = await render(<SampleView sample={sample()} />);
-    const link = screen.getByRole("link", { name: "Download as Excel" });
+    const link = screen.getByRole("button", { name: "Download" });
 
     await expect.element(link).toBeVisible();
     expect(

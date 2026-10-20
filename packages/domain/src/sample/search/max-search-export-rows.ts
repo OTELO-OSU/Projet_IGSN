@@ -1,1 +1,2 @@
-export const MAX_SEARCH_EXPORT_ROWS = 5000;
+export const MAX_SEARCH_CSV_EXPORT_ROWS = 5000;
+export const MAX_SEARCH_XLSX_EXPORT_ROWS = 500;

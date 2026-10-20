@@ -1,3 +1,4 @@
+import type { OnChangeFn, RowSelectionState } from "@tanstack/react-table";
 import type { ReactNode } from "react";
 
 import { createFileRoute, redirect } from "@tanstack/react-router";
@@ -11,8 +12,10 @@ import {
   listManualGroupsQueryOptions,
   useListManualGroups,
 } from "#/domain/manual-groups/hook/list-manual-groups.ts";
+import { activeFacetCount } from "#/domain/samples/active-facet-count.ts";
 import { DownloadResultsLink } from "#/domain/samples/download-results-link.tsx";
 import { FacetsDialog } from "#/domain/samples/facets-dialog.tsx";
+import { FacetsPane } from "#/domain/samples/facets-pane.tsx";
 import { useListSampleFacetCounts } from "#/domain/samples/hook/list-sample-facet-counts.ts";
 import {
   listSamplesQueryOptions,
@@ -35,6 +38,8 @@ import {
 } from "#/domain/samples/search-params.ts";
 import { SearchResultsView } from "#/domain/samples/search-results-view.tsx";
 import { useCardFields } from "#/domain/samples/use-card-fields.ts";
+import { useSampleSelection } from "#/domain/samples/use-sample-selection.ts";
+import { useStoredFlag } from "#/domain/samples/use-stored-flag.ts";
 import {
   listPublicUsersQueryOptions,
   useListPublicUsers,
@@ -59,11 +64,16 @@ export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
 
+const FACETS_COLLAPSED_KEY = "search-facets-collapsed";
+
 function SearchPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const seed = composeSeedFromParams(search);
   const params = searchQueryParams(search);
+  const [selection, setSelection] = useSampleSelection(search);
+  const [isFacetsCollapsed, saveFacetsCollapsed] =
+    useStoredFlag(FACETS_COLLAPSED_KEY);
   const { data: manualGroups } = useListManualGroups();
   const { data: contributors } = useListPublicUsers(search.contributor);
   const setMap = (open: boolean) =>
@@ -72,8 +82,9 @@ function SearchPage() {
       search: (prev) => ({ ...prev, map: open ? true : undefined }),
     });
   const { data: counts } = useListSampleFacetCounts(params ?? {});
-  const facets = (
+  const renderFacets = (header?: ReactNode) => (
     <SampleFacets
+      header={header}
       values={search as SampleFilters}
       manualGroups={manualGroups}
       contributors={contributors}
@@ -122,11 +133,17 @@ function SearchPage() {
       </SearchBanner>
 
       <div className="relative mx-auto w-full max-w-6xl px-6 py-8">
-        <div className="relative grid gap-8 lg:grid-cols-[24rem_1fr]">
-          <div className="hidden lg:block">{facets}</div>
+        <FacetsPane
+          isCollapsed={isFacetsCollapsed}
+          count={activeFacetCount(search)}
+          onCollapsedChange={saveFacetsCollapsed}
+          facets={renderFacets}
+        >
           {params && !search.map ? (
             <Results
               params={params}
+              selection={selection}
+              onSelectionChange={setSelection}
               actions={<ResultsMapButton onClick={() => setMap(true)} />}
             />
           ) : null}
@@ -137,18 +154,22 @@ function SearchPage() {
               params={params}
             />
           ) : null}
-        </div>
+        </FacetsPane>
       </div>
-      <FacetsDialog values={search}>{facets}</FacetsDialog>
+      <FacetsDialog values={search}>{renderFacets()}</FacetsDialog>
     </div>
   );
 }
 
 function Results({
   params,
+  selection,
+  onSelectionChange,
   actions,
 }: {
   params: ListSamplesParams;
+  selection: RowSelectionState;
+  onSelectionChange: OnChangeFn<RowSelectionState>;
   actions?: ReactNode;
 }) {
   const navigate = Route.useNavigate();
@@ -174,7 +195,15 @@ function Results({
         navigate({ search: (prev) => ({ ...prev, perPage, page: 1 }) })
       }
       onFieldsChange={saveFields}
-      download={<DownloadResultsLink filters={params} total={total} />}
+      selection={selection}
+      onSelectionChange={onSelectionChange}
+      download={
+        <DownloadResultsLink
+          filters={params}
+          total={total}
+          selected={Object.keys(selection)}
+        />
+      }
       actions={actions}
     />
   );

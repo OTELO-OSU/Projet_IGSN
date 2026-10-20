@@ -181,7 +181,7 @@ describe("SampleView of a withdrawn or embargoed sample", () => {
         .toBeVisible();
       expect(screen.getByRole("link", { name: "Edit" }).query()).toBeNull();
       expect(
-        screen.getByRole("link", { name: "Download as Excel" }).query(),
+        screen.getByRole("button", { name: "Download" }).query(),
       ).toBeNull();
     },
   );

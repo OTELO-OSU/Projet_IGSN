@@ -122,10 +122,16 @@ const VARS: EnvVar[] = [
     default: "5",
   },
   {
-    name: "SEARCH_EXPORT_LIMIT",
+    name: "SEARCH_CSV_EXPORT_LIMIT",
     purpose:
-      "Most samples a public search download zips; also baked into the frontend bundle as VITE_SEARCH_EXPORT_LIMIT.",
+      "Most samples a public search CSV download zips; also baked into the frontend bundle as VITE_SEARCH_CSV_EXPORT_LIMIT.",
     default: "5000",
+  },
+  {
+    name: "SEARCH_XLSX_EXPORT_LIMIT",
+    purpose:
+      "Most samples a public search Excel download holds; also baked into the frontend bundle as VITE_SEARCH_XLSX_EXPORT_LIMIT.",
+    default: "500",
   },
   {
     name: "SAMPLE_EDIT_LOCK_TTL_MINUTES",

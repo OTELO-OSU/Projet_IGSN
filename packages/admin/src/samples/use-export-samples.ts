@@ -1,12 +1,12 @@
 import type { ExportSamplesRequest } from "@projet-igsn/domain/sample/export/export-validator";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
+import { saveBlob } from "@projet-igsn/design-system/lib/save-blob";
 import { useMutation } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
 import { HttpError, apiOk } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
-import { saveBlob } from "#/samples/save-blob.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 const FALLBACK_FILENAME = "igsn-samples-export.xlsx";

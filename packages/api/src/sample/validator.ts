@@ -31,6 +31,10 @@ import {
   updateSampleBodySchema,
 } from "@projet-igsn/domain/sample/sample-validator";
 import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
+import {
+  searchExportFormatSchema,
+  searchSelectionExportSchema,
+} from "@projet-igsn/domain/sample/search/search-export-validator";
 import { addCollaboratorBodySchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { validator } from "hono/validator";
 import { z } from "zod";
@@ -179,8 +183,22 @@ export const validatePublicListQuery = validator("query", (value, c) => {
 
 export const validatePublicExportQuery = zodValidator(
   "query",
-  publicListSamplesQuerySchema.omit({ page: true, perPage: true }),
+  publicListSamplesQuerySchema
+    .omit({ page: true, perPage: true })
+    .extend({ format: searchExportFormatSchema.default("csv") }),
   "Invalid query parameters",
+);
+
+export const validateSampleExportQuery = zodValidator(
+  "query",
+  z.object({ format: searchExportFormatSchema.default("xlsx") }),
+  "Invalid query parameters",
+);
+
+export const validateSelectionExportBody = zodValidator(
+  "json",
+  searchSelectionExportSchema,
+  "Invalid request body",
 );
 
 export const validateMapPointsQuery = zodValidator(

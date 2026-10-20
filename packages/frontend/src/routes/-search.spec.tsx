@@ -51,6 +51,7 @@ function renderSearch(
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  localStorage.clear();
   document.body.style.minHeight = "";
   window.scrollTo(0, 0);
 });
@@ -92,5 +93,21 @@ describe("search page", () => {
       requestAnimationFrame(() => requestAnimationFrame(resolve)),
     );
     expect(window.scrollY).toBe(1000);
+  });
+
+  it("should collapse the filters pane to its active filter count and keep it collapsed after a remount", async () => {
+    await page.viewport(1280, 800);
+    const first = await renderSearch(() => json({}));
+    await first.getByRole("button", { name: "Hide filters" }).click();
+
+    await expect
+      .element(first.getByRole("complementary", { name: "Filters" }))
+      .not.toBeInTheDocument();
+    await first.unmount();
+    const second = await renderSearch(() => json({}));
+
+    await expect
+      .element(second.getByRole("button", { name: "Show filters (1)" }))
+      .toBeVisible();
   });
 });

@@ -1,5 +1,14 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import {
+  expect,
+  type Locator,
+  type Page,
+  type TestInfo,
+} from "@playwright/test";
 
+import {
+  FIRST_DATA_ROW,
+  openSamplesSheet,
+} from "../admin/template-workbook.ts";
 import { withOptionalCount } from "../pick-hierarchy.ts";
 import { frontendUrl } from "../urls";
 
@@ -94,6 +103,36 @@ export function sampleListPage(page: Page) {
         await searchbox.press("Enter");
         await page.waitForURL(/[?&]q=/, { timeout: 2_000 });
       }).toPass({ timeout: 20_000 });
+    },
+    switchToTableView: async () => {
+      await page.getByRole("radio", { name: "Table view" }).click();
+      await expect(page.getByRole("table")).toBeVisible();
+    },
+    expectTableView: () =>
+      expect(
+        page.getByRole("radio", { name: "Table view", checked: true }),
+      ).toBeVisible(),
+    checkSample: (name: string) =>
+      page.getByRole("checkbox", { name: `Select ${name}` }).check(),
+    pickPageSize: async (size: string) => {
+      await page.getByRole("combobox", { name: "Results per page" }).click();
+      await page.getByRole("option", { name: size }).click();
+      await page.waitForURL(new RegExp(`[?&]perPage=${size}`));
+    },
+    downloadCheckedIgsns: async (format: string, testInfo: TestInfo) => {
+      await page
+        .getByRole("button", { name: /^Download \d+ selected$/ })
+        .click();
+      const download = page.waitForEvent("download");
+      await page.getByRole("menuitem", { name: format }).click();
+      const file = await download;
+      const path = testInfo.outputPath(file.suggestedFilename());
+      await file.saveAs(path);
+      const { sheet, columnOf } = await openSamplesSheet(path);
+      return sheet
+        .getColumn(columnOf("IGSN"))
+        .values.slice(FIRST_DATA_ROW)
+        .filter(Boolean);
     },
     expectLanding: () =>
       expect(
