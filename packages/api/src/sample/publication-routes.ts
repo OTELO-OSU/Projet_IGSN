@@ -107,6 +107,28 @@ export function createSamplePublicationRoutes({
         return c.json({ data: published });
       },
     )
+    .post(
+      "/:id/retry-synchronization",
+      validateIdParam,
+      requireActiveSession,
+      async (c) => {
+        const sample = c.get("sample");
+        if (!sample) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (!isSampleEditor(c.get("role"))) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        if (sample.synchronizationStatus !== "failed") {
+          return c.json(
+            { error: "Sample synchronization has not failed" },
+            409,
+          );
+        }
+        await repository.retryFailedSynchronization(c.req.valid("param").id);
+        return c.body(null, 204);
+      },
+    )
     .put(
       "/:id/status",
       validateIdParam,
