@@ -1,6 +1,7 @@
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
 
 import { isVirtualSample } from "@projet-igsn/domain/sample/type/is-virtual-sample";
+import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 
 import type { SampleFormTab } from "#/samples/sample-form-tabs.ts";
 import type { SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
@@ -92,6 +93,8 @@ export function EditSampleForm({
 
       <EditSampleAlerts
         sample={sample}
+        sampleId={sampleId}
+        canRetrySynchronization={isSampleEditor(sample.role)}
         lockedMessage={lockedMessage}
         rejection={rejection}
       />

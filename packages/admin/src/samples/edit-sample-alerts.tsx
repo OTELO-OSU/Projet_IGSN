@@ -7,9 +7,12 @@ import {
 import { InfoIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
+import { RetrySampleSynchronizationButton } from "#/samples/retry-sample-synchronization-button.tsx";
 
 export function EditSampleAlerts({
   sample,
+  sampleId,
+  canRetrySynchronization,
   lockedMessage,
   rejection,
 }: {
@@ -17,6 +20,8 @@ export function EditSampleAlerts({
     Sample,
     "status" | "synchronizationStatus" | "synchronizationError"
   >;
+  sampleId: string;
+  canRetrySynchronization: boolean;
   lockedMessage: string | undefined;
   rejection: string | undefined;
 }) {
@@ -41,6 +46,9 @@ export function EditSampleAlerts({
               error: sample.synchronizationError,
             })}
           </AlertDescription>
+          {canRetrySynchronization ? (
+            <RetrySampleSynchronizationButton sampleId={sampleId} />
+          ) : null}
         </Alert>
       ) : null}
 

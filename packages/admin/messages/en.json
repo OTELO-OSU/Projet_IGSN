@@ -1073,6 +1073,7 @@
   "import_template_reserve_count_invalid": "Enter a number from 1 to {max}.",
   "action_retry_synchronization": "Retry synchronization",
   "retry_synchronization_success": "{count} samples queued for synchronization.",
+  "retry_sample_synchronization_success": "Sample queued for synchronization.",
   "retry_synchronization_error": "Could not retry the synchronization. Please try again.",
   "import_template_complete": "Complete template",
   "import_template_customized": "Customized template",
