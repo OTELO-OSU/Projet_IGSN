@@ -10,12 +10,12 @@ Controlled-vocabulary labels are needed by both `admin` and `frontend`. Paraglid
 
 ## Decision
 
-Keep the shared vocabulary strings once, in `packages/design-system/messages/{locale}.json`, the package both apps already depend on. Each app's inlang project reads its own file plus the shared one through an array `pathPattern`:
+Keep the shared vocabulary strings once, in `packages/domain/messages/{locale}.json`, the package both apps already depend on. Each app's inlang project reads its own file plus the shared one through an array `pathPattern`:
 
     "plugin.inlang.messageFormat": {
       "pathPattern": [
         "./messages/{locale}.json",
-        "../design-system/messages/{locale}.json"
+        "../domain/messages/{locale}.json"
       ]
     }
 
