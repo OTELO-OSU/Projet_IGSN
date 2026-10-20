@@ -145,6 +145,12 @@ const VARS: EnvVar[] = [
     deployOnly: true,
   },
   {
+    name: "DEMO_BANNER",
+    purpose:
+      '"true" shows the demo site banner, baked into both bundles as VITE_DEMO_BANNER.',
+    deployOnly: true,
+  },
+  {
     name: "OIDC_ISSUER",
     purpose: "SSO realm, also baked into the bundles as VITE_OIDC_AUTHORITY.",
     required: true,

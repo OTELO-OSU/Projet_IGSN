@@ -13,6 +13,7 @@ import { AuthProvider } from "react-oidc-context";
 import type { MyRouterContext } from "../router-context";
 
 import { onSigninCallback, userManager } from "../auth/oidc-config.ts";
+import { DemoBanner } from "../demo-banner.tsx";
 import { OpenDataLink } from "../domain/samples/open-data-link.tsx";
 import { FRONTEND_URL } from "../frontend-url.ts";
 import { SiteHeader } from "../header/site-header.tsx";
@@ -72,6 +73,7 @@ function RootLayout() {
   return (
     <AuthProvider userManager={userManager} onSigninCallback={onSigninCallback}>
       <div className="flex min-h-svh flex-col">
+        <DemoBanner />
         <SiteHeader />
 
         <main className="w-full flex-1">

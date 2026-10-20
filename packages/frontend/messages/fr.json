@@ -38,6 +38,7 @@
   "results_map_title": "Résultats de recherche sur la carte",
   "opens_in_new_tab": "(s’ouvre dans un nouvel onglet)",
   "open_data_link": "Télécharger les échantillons publiés sur data.gouv.fr",
+  "demo_banner": "Vous naviguez sur le site de démonstration de l'IGSN. Son contenu peut être réinitialisé à tout moment, et ses échantillons et IGSN ne sont pas réels.",
   "download_results": "Télécharger les résultats",
   "download_sample": "Télécharger au format Excel",
   "download_results_too_many": "Plus de {max} résultats : affinez votre recherche ou utilisez les données ouvertes.",
