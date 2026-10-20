@@ -134,4 +134,12 @@ describe("ageSchema", () => {
     const issue = result.error?.issues.find((i) => i.path[0] === path);
     expect(issue?.message).toBe(code);
   });
+
+  it("should code a minimum above the maximum for translation", () => {
+    const result = ageSchema.safeParse({ numericAgeMin: 2, numericAgeMax: 1 });
+
+    expect(result.error?.issues).toMatchObject([
+      { path: ["numericAgeMax"], params: { code: "numeric_range_order" } },
+    ]);
+  });
 });

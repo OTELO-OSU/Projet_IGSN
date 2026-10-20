@@ -122,7 +122,9 @@ describe("SampleRepositoryFields", () => {
     await screen.getByRole("textbox", { name: "Email" }).fill("not-an-email");
     await screen.getByRole("button", { name: "Create" }).click();
 
-    await expect.element(screen.getByText("Invalid value.")).toBeVisible();
+    await expect
+      .element(screen.getByText("Enter a valid email address."))
+      .toBeVisible();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

@@ -185,6 +185,25 @@ describe("locationSchema", () => {
     ).toEqual([path]);
   });
 
+  it.each<[string, unknown, PropertyKey[], string]>([
+    [
+      "a point interval with its start above its end",
+      { position: point, verticalPositions: [entry(100, 0)] },
+      ["verticalPositions", 0, "start"],
+      "vertical_position_order",
+    ],
+    [
+      "an area with north below south",
+      { position: { ...area, southLatitude: 46, northLatitude: 44 } },
+      ["position", "northLatitude"],
+      "area_latitude_order",
+    ],
+  ])("should code %s for translation", (_label, value, path, code) => {
+    expect(locationSchema.safeParse(value).error?.issues).toMatchObject([
+      { path, params: { code } },
+    ]);
+  });
+
   it("should reject more entries than references before checking any entry", () => {
     const verticalPositions = Array.from(
       { length: VERTICAL_REFERENCES.length + 1 },

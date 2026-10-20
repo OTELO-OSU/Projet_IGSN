@@ -161,6 +161,19 @@ describe("ServiceAccountCreatePage", () => {
   });
 
   it.each([
+    ["an empty name", "", "This field is required."],
+    ["a name too long", "a".repeat(101), "Up to 100 characters."],
+  ])("should refuse %s", async (_reason, name, error) => {
+    const { posts } = fakeApi();
+
+    const { screen } = await createPage({ ...REQUEST, name });
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await expect.element(screen.getByRole("alert")).toHaveTextContent(error);
+    expect(posts).toEqual([]);
+  });
+
+  it.each([
     ["owner", "Choose the user this service account belongs to"],
     ["sampleOwner", "Choose the user who will own the created samples"],
   ])(

@@ -2,6 +2,7 @@ import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/mod
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import {
+  ATTACHMENT_MAX_BYTES,
   type UpdateSampleAttachment,
   uploadSampleAttachmentSchema,
 } from "@projet-igsn/domain/sample/attachment/attachment-validator";
@@ -43,7 +44,13 @@ export function useAttachmentChanges(sampleId: string) {
   const addFiles = (files: File[]) => {
     const accepted = files.filter((file) => {
       const isValid = uploadSampleAttachmentSchema.safeParse({ file }).success;
-      if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
+      if (!isValid)
+        toast.error(
+          m.attachment_too_large({
+            name: file.name,
+            max: ATTACHMENT_MAX_BYTES / 1024 / 1024,
+          }),
+        );
       return isValid;
     });
     setPending((current) => [

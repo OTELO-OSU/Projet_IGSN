@@ -34,6 +34,14 @@ async function openDialog() {
 }
 
 describe("BulkEditDialog", () => {
+  it("should state the format and maximum size of the workbook", async () => {
+    const { dialog } = await openDialog();
+
+    await expect
+      .element(dialog.getByText("Excel .xlsx file, up to 20 MB."))
+      .toBeVisible();
+  });
+
   it("should post the edited file, close and refresh the list", async () => {
     const posted: unknown[] = [];
     worker.use(

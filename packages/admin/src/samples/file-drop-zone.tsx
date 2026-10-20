@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 
 type FileDropZoneProps = {
   hint: string;
+  sizeHint: string;
   browseLabel: string;
   accept?: string;
   multiple?: boolean;
@@ -14,6 +15,7 @@ type FileDropZoneProps = {
 
 export function FileDropZone({
   hint,
+  sizeHint,
   browseLabel,
   accept,
   multiple,
@@ -69,6 +71,7 @@ export function FileDropZone({
           {browse}
         </>
       )}
+      <p className="text-muted-foreground text-xs">{sizeHint}</p>
       <input
         ref={inputRef}
         type="file"

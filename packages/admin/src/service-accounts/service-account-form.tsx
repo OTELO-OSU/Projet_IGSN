@@ -24,9 +24,10 @@ import { UserField } from "#/users/user-field.tsx";
 const OWNER_FIELD_ID = "service-account-owner";
 const SAMPLE_OWNER_FIELD_ID = "service-account-sample-owner";
 
-const validateBody = zodFieldErrors(
-  serviceAccountBodySchema,
-  (issue) => issue.message,
+const validateBody = zodFieldErrors(serviceAccountBodySchema, (issue) =>
+  issue.code === "too_big"
+    ? m.field_max_length({ max: Number(issue.maximum) })
+    : m.field_required(),
 );
 
 const toDraft = (draft?: ServiceAccountDraft): ServiceAccountDraft => ({

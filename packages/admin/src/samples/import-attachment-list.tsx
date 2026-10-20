@@ -1,4 +1,5 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { ATTACHMENT_MAX_BYTES } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { CheckIcon, CircleDashedIcon, XIcon } from "lucide-react";
 import { useId } from "react";
 
@@ -31,6 +32,9 @@ export function ImportAttachmentList({
       </p>
       <FileDropZone
         hint={m.import_samples_documents_drop_hint()}
+        sizeHint={m.attachment_size_hint({
+          max: ATTACHMENT_MAX_BYTES / 1024 / 1024,
+        })}
         browseLabel={m.import_samples_choose_documents()}
         multiple
         isInline
