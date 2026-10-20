@@ -88,6 +88,7 @@ export type SampleRepository = {
     params: ListSamplesQuery & { withTotal?: boolean },
   ): Promise<PublicListSamplesResult>;
   mapPublishedPointsJson(query: SampleMapPointsQuery): Promise<string>;
+  mapPublishedFeaturesJson(query: SampleMapPointsQuery): Promise<string>;
   mapPublishedDetails(numbers: number[]): Promise<SampleMapDetailsResponse>;
   countPublishedFacets(params: ListSamplesQuery): Promise<SampleFacetCounts>;
   listExportable(

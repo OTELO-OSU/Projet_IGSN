@@ -67,6 +67,7 @@ import {
   createUserSearchRoutes,
 } from "./user/routes.ts";
 
+const SERVICE_MAP_PATH = "/service/samples/map";
 const MIB = 1024 * 1024;
 const IMPORT_PATHS = new Set([
   "/admin/samples/import",
@@ -217,8 +218,13 @@ export function createApp(
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .route("/", createPublicUserRoutes(userRepository));
 
-  const serviceRoutes = new Hono()
-    .use("*", rateLimit(rateLimitConfig, "ip"))
+  const servicePublicRateLimit = rateLimit(rateLimitConfig, "ip");
+  const serviceRoutes = new Hono<RateLimitEnv>()
+    .use("*", (c, next) =>
+      c.req.path.endsWith(SERVICE_MAP_PATH)
+        ? mapRateLimit(c, next)
+        : servicePublicRateLimit(c, next),
+    )
     .use(
       "/samples/batch",
       rateLimit(rateLimitConfig, "ip", IMPORT_TEMPLATE_USER_BUDGET),
@@ -326,32 +332,39 @@ export function createApp(
     )
     .route("/users", createUserRoutes(userRepository, mail));
 
+  const rateLimitHeaders = [
+    "Retry-After",
+    "RateLimit-Limit",
+    "RateLimit-Remaining",
+    "RateLimit-Reset",
+  ];
+  const openCors = cors({ exposeHeaders: rateLimitHeaders });
+  const appCors = cors({
+    origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
+    credentials: true,
+    allowHeaders: [
+      "Authorization",
+      "Content-Type",
+      "Tus-Resumable",
+      "Upload-Length",
+      "Upload-Metadata",
+      "Upload-Offset",
+    ],
+    exposeHeaders: [
+      "Location",
+      "Upload-Offset",
+      "Upload-Length",
+      "Tus-Resumable",
+      ...rateLimitHeaders,
+      "X-Uncompressed-Length",
+    ],
+  });
+
   const app = new Hono<AuthenticatedEnv>()
-    .use(
-      "*",
-      cors({
-        origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
-        credentials: true,
-        allowHeaders: [
-          "Authorization",
-          "Content-Type",
-          "Tus-Resumable",
-          "Upload-Length",
-          "Upload-Metadata",
-          "Upload-Offset",
-        ],
-        exposeHeaders: [
-          "Location",
-          "Upload-Offset",
-          "Upload-Length",
-          "Tus-Resumable",
-          "Retry-After",
-          "RateLimit-Limit",
-          "RateLimit-Remaining",
-          "RateLimit-Reset",
-          "X-Uncompressed-Length",
-        ],
-      }),
+    .use("*", (c, next) =>
+      c.req.path.endsWith(SERVICE_MAP_PATH)
+        ? openCors(c, next)
+        : appCors(c, next),
     )
     .use("*", routeBodyLimit)
     .onError((error, c) => {

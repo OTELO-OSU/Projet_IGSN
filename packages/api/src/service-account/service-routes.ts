@@ -13,6 +13,7 @@ import {
   requireServiceAccount,
 } from "../auth/require-service-account.ts";
 import { registerGroupRoutes } from "./group-routes.ts";
+import { registerMapRoutes } from "./map-routes.ts";
 import { registerSampleBatchRoutes } from "./sample-batch-routes.ts";
 import { registerServiceDocsRoutes } from "./service-docs-routes.ts";
 import { registerServiceReadRoutes } from "./service-read-routes.ts";
@@ -41,6 +42,7 @@ export function createServiceRoutes(
   registerVocabularyRoutes(app);
   registerGroupRoutes(app, manualGroups);
   registerSampleBatchRoutes(app, { ...checks, sampleBatches });
+  registerMapRoutes(app, samples);
   registerServiceReadRoutes(app, samples, frontendUrl);
   registerServiceWriteRoutes(app, checks, frontendUrl, userSamples, mail);
   return app;
