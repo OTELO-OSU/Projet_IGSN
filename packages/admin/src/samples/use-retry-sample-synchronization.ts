@@ -13,14 +13,14 @@ export function useRetrySampleSynchronization(id: string) {
       const url = new URL(`admin/samples/${id}/retry-synchronization`, API_URL);
       const res = await apiFetch(url, { method: "POST" });
       if (!res.ok) {
-        throw new Error(
+        console.error(
           `Failed to retry the sample synchronization (${res.status})`,
         );
+        toast.error(m.retry_synchronization_error());
+        return;
       }
-    },
-    onSuccess: () => {
       toast.success(m.retry_sample_synchronization_success());
-      return queryClient.invalidateQueries({ queryKey: ["samples"] });
+      await queryClient.invalidateQueries({ queryKey: ["samples"] });
     },
     onError: () => toast.error(m.retry_synchronization_error()),
   });
