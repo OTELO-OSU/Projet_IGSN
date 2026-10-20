@@ -10,7 +10,12 @@ export function RetrySampleSynchronizationButton({
 }) {
   const { mutate, isPending } = useRetrySampleSynchronization(sampleId);
   return (
-    <Button variant="outline" disabled={isPending} onClick={() => mutate()}>
+    <Button
+      variant="outline"
+      className="shrink-0"
+      disabled={isPending}
+      onClick={() => mutate()}
+    >
       {m.action_retry_synchronization()}
     </Button>
   );

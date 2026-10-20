@@ -39,16 +39,18 @@ export function EditSampleAlerts({
       {sample.synchronizationStatus === "failed" &&
       sample.synchronizationError ? (
         <Alert variant="destructive">
-          <AlertDescription>
-            {(sample.status === "draft"
-              ? m.sample_publication_failed_alert
-              : m.sample_synchronization_failed_alert)({
-              error: sample.synchronizationError,
-            })}
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <p>
+              {(sample.status === "draft"
+                ? m.sample_publication_failed_alert
+                : m.sample_synchronization_failed_alert)({
+                error: sample.synchronizationError,
+              })}
+            </p>
+            {canRetrySynchronization ? (
+              <RetrySampleSynchronizationButton sampleId={sampleId} />
+            ) : null}
           </AlertDescription>
-          {canRetrySynchronization ? (
-            <RetrySampleSynchronizationButton sampleId={sampleId} />
-          ) : null}
         </Alert>
       ) : null}
 
