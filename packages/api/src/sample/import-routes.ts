@@ -61,7 +61,7 @@ export function createSampleImportRoutes({
       return importTemplateResponse(
         rows,
         undefined,
-        { ...customization, manualGroup },
+        { ...customization, prefilledManualGroup: manualGroup },
         attachable,
       );
     })
@@ -78,7 +78,7 @@ export function createSampleImportRoutes({
         return importTemplateResponse(
           count,
           await repository.reserveInternalNumbers(count),
-          { ...customization, manualGroup },
+          { ...customization, prefilledManualGroup: manualGroup },
           attachable,
         );
       },

@@ -1,16 +1,16 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import {
+  TEMPLATE_FIELD_KEYS,
+  type TemplateFieldKey,
+} from "@projet-igsn/domain/sample/import/template-fields";
 import { expect, it } from "vitest";
 
 import { templateCustomizationOfSample } from "./template-customization-of-sample.ts";
 
 const GROUP_ID = "3f2504e0-4f89-41d3-9a0c-0305000000a1";
 
-const COLLECTION_DATE = {
-  precision: "day" as const,
-  start: "2026-01-01",
-  end: "2026-01-01",
-};
+const USER_ID = "3f2504e0-4f89-41d3-9a0c-0305000000b1";
 
 const RELATION = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c33b1",
@@ -90,26 +90,21 @@ const bare: Sample = {
   updatedAt: new Date("2026-07-01T10:00:00.000Z"),
 };
 
-const NO_SECTIONS = {
-  physicalDescription: false,
-  age: false,
-  conservationSecurity: false,
-  repository: false,
-  relatedDocuments: false,
-  geologicalContext: false,
-};
+const NO_FIELDS = Object.fromEntries(
+  TEMPLATE_FIELD_KEYS.map((key) => [key, false]),
+) as Record<TemplateFieldKey, boolean>;
 
-it("should prefill the root material, no group, no provenance, no sub-samples and no section from a bare sample", () => {
+it("should prefill the root material, no group, no provenance, no sub-samples and no field from a bare sample", () => {
   expect(templateCustomizationOfSample(bare)).toEqual({
     materialPath: ["rock_and_sediment"],
     groupId: "",
     provenanceValue: "",
     subSamples: false,
-    sections: NO_SECTIONS,
+    fields: NO_FIELDS,
   });
 });
 
-it("should prefill the material cut to three levels, the first group, the provenance, sub-samples and every filled section", () => {
+it("should prefill the material cut to three levels, the first group, the provenance, sub-samples and every filled field", () => {
   expect(
     templateCustomizationOfSample({
       ...bare,
@@ -131,10 +126,6 @@ it("should prefill the material cut to three levels, the first group, the proven
         },
       ],
       description: { mass: { value: 5, unit: "kg" } },
-      age: { ...EMPTY_AGE, geologicalUnit: "Chaîne des Puys" },
-      condition: { packaging: "glass_bottle" },
-      repository: { collectionName: "Volcanic collection" },
-      relations: [RELATION],
       geologicalContextDescription: "Volcanic plateau",
     }),
   ).toEqual({
@@ -146,89 +137,69 @@ it("should prefill the material cut to three levels, the first group, the proven
     groupId: GROUP_ID,
     provenanceValue: "collection_specimen",
     subSamples: true,
-    sections: {
-      physicalDescription: true,
-      age: true,
-      conservationSecurity: true,
-      repository: true,
-      relatedDocuments: true,
-      geologicalContext: true,
+    fields: {
+      ...NO_FIELDS,
+      manualGroup: true,
+      collectionOrigin: true,
+      mass: true,
+      geologicalContextDescription: true,
     },
   });
 });
 
-it.each<[string, Partial<Sample>, keyof typeof NO_SECTIONS]>([
+it.each<[string, Partial<Sample>, TemplateFieldKey]>([
   [
-    "a physical measurement",
+    "a length, its width sibling left empty",
     { description: { length: { value: 3, unit: "cm" } } },
-    "physicalDescription",
+    "length",
   ],
-  ["a numeric age", { age: { ...EMPTY_AGE, numericAgeMin: 10 } }, "age"],
+  ["a related document", { relations: [RELATION] }, "relations"],
   [
-    "a storage condition",
-    { condition: { packaging: "glass_bottle" } },
-    "conservationSecurity",
-  ],
-  [
-    "a security hazard",
-    { security: { radioactivity: true } },
-    "conservationSecurity",
-  ],
-  ["an existence status alone", { existenceStatus: "exists" }, "repository"],
-  [
-    "an availability status alone",
-    { availabilityStatus: "available" },
-    "repository",
+    "an existence status alone",
+    { existenceStatus: "exists" },
+    "curationStatus",
   ],
   [
-    "a repository field",
-    { repository: { collectionName: "Volcanic collection" } },
-    "repository",
+    "a collector linked to an account with no typed name",
+    {
+      scientificContext: {
+        provenanceStatus: "collection_specimen",
+        collectorUserId: USER_ID,
+      },
+    },
+    "collector",
   ],
-  ["a related document", { relations: [RELATION] }, "relatedDocuments"],
   [
-    "a geological context description",
-    { geologicalContextDescription: "Volcanic plateau" },
-    "geologicalContext",
+    "a chief scientist linked to an account with no typed name",
+    {
+      scientificContext: {
+        provenanceStatus: "research_project_sample",
+        chiefScientistUserId: USER_ID,
+        additionalRoles: [],
+      },
+    },
+    "chiefScientist",
   ],
   [
-    "a physiographic environment",
-    { physiographicEnvironment: "continental.plateau" },
-    "geologicalContext",
+    "a manual group",
+    { manualGroups: [{ id: GROUP_ID, name: "Basalt team" }] },
+    "manualGroup",
   ],
-])("should check the section holding %s", (_, patch, section) => {
-  expect(templateCustomizationOfSample({ ...bare, ...patch }).sections).toEqual(
-    { ...NO_SECTIONS, [section]: true },
-  );
+])("should check only the field holding %s", (_, patch, field) => {
+  expect(templateCustomizationOfSample({ ...bare, ...patch }).fields).toEqual({
+    ...NO_FIELDS,
+    [field]: true,
+  });
 });
 
 it.each<[string, Partial<Sample>]>([
-  [
-    "a collection date alone, an identity column",
-    { description: { collectionDate: COLLECTION_DATE } },
-  ],
   ["an age whose every field is null", { age: EMPTY_AGE }],
   [
     "a repository with an empty rights holder list",
     { repository: { rightsHolder: [] } },
   ],
-  [
-    "attachments alone, outside the template",
-    {
-      attachments: [
-        {
-          id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
-          name: "data.csv",
-          mediaType: "text/csv",
-          title: null,
-          targetResourceType: null,
-          description: null,
-        },
-      ],
-    },
-  ],
-])("should check no section on %s", (_, patch) => {
-  expect(templateCustomizationOfSample({ ...bare, ...patch }).sections).toEqual(
-    NO_SECTIONS,
+])("should check no field on %s", (_, patch) => {
+  expect(templateCustomizationOfSample({ ...bare, ...patch }).fields).toEqual(
+    NO_FIELDS,
   );
 });

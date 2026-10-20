@@ -1,5 +1,3 @@
-import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
-
 import { COLLECTION_METHODS } from "@projet-igsn/domain/sample/collection-method/vocabulary";
 import {
   ATTACHMENT_FILE_NAME_HEADER,
@@ -28,15 +26,6 @@ export const COLUMN_GROUPS = [
 ] as const;
 
 export type ColumnGroup = (typeof COLUMN_GROUPS)[number];
-
-export const TEMPLATE_SECTIONS = {
-  physicalDescription: "Physical description",
-  age: "Age",
-  conservationSecurity: "Conservation and security",
-  repository: "Curation and repository",
-  relatedDocuments: "Related URL or document",
-  geologicalContext: "Geological context",
-} as const satisfies Record<TemplateSectionKey, ColumnGroup>;
 
 export type Column = {
   header: string;

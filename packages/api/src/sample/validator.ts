@@ -5,11 +5,13 @@ import {
   importSamplesSchema,
   internalIdRequestSchema,
   reserveInternalIdsSchema,
-  TEMPLATE_SECTION_KEYS,
-  type TemplateSectionKey,
 } from "@projet-igsn/domain/sample/import/import-validator";
 import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import {
+  TEMPLATE_FIELD_KEYS,
+  type TemplateFieldKey,
+} from "@projet-igsn/domain/sample/import/template-fields";
 import {
   sampleMapDetailsQuerySchema,
   sampleMapPointsQuerySchema,
@@ -96,9 +98,9 @@ const templatePrefillFields = {
   manualGroupId: z.uuid().optional(),
 };
 
-const templateSectionFlags = <Flag extends z.ZodType>(flag: Flag) =>
-  Object.fromEntries(TEMPLATE_SECTION_KEYS.map((key) => [key, flag])) as Record<
-    TemplateSectionKey,
+const templateFieldFlags = <Flag extends z.ZodType>(flag: Flag) =>
+  Object.fromEntries(TEMPLATE_FIELD_KEYS.map((key) => [key, flag])) as Record<
+    TemplateFieldKey,
     Flag
   >;
 
@@ -111,7 +113,7 @@ const importTemplateQuerySchema = z.object({
     .default(MAX_IMPORT_ROWS),
   ...templatePrefillFields,
   subSamples: z.stringbool().optional(),
-  ...templateSectionFlags(z.stringbool().optional()),
+  ...templateFieldFlags(z.stringbool().optional()),
 });
 
 export const validateImportTemplateQuery = zodValidator(
@@ -123,7 +125,7 @@ export const validateImportTemplateQuery = zodValidator(
 const reserveInternalIdsBodySchema = reserveInternalIdsSchema.extend({
   ...templatePrefillFields,
   subSamples: z.boolean().optional(),
-  ...templateSectionFlags(z.boolean().optional()),
+  ...templateFieldFlags(z.boolean().optional()),
 });
 
 export const validateReserveInternalIdsBody = zodValidator(

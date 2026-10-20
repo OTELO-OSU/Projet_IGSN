@@ -1,11 +1,31 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
-import type { TemplateSectionKey } from "@projet-igsn/domain/sample/import/import-validator";
+import type {
+  TemplateFieldKey,
+  TemplateSectionKey,
+} from "@projet-igsn/domain/sample/import/template-fields";
+import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
+import { lockedTemplateFields } from "@projet-igsn/domain/sample/import/locked-template-fields";
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
+import {
+  TEMPLATE_FIELDS,
+  TEMPLATE_SECTION_KEYS,
+  PARTLY_EXCLUDABLE_TEMPLATE_SECTIONS,
+} from "@projet-igsn/domain/sample/import/template-fields";
+import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
+import { isMaterialComplete } from "@projet-igsn/domain/sample/material/is-complete";
+import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
+import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
+import {
+  samplePublishBlockers,
+  toPublishableFields,
+} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 import ExcelJS from "exceljs";
 import { beforeAll, describe, expect, it } from "vitest";
 
+import type { Column, ColumnGroup } from "./columns.ts";
 import type { TemplateCustomization } from "./customization.ts";
 import type { TemplateValidation } from "./sheet-validations.ts";
 
@@ -15,9 +35,15 @@ import {
   DATA_SHEETS,
   SAMPLE_COLUMNS,
   SHEETS,
+  TEMPLATE_MATERIAL_PATHS,
   TEMPLATE_VERSION,
 } from "./columns.ts";
+import { CONDITIONAL_FIELDS, conditionOf } from "./conditional-fields.ts";
 import { FROZEN_FILL } from "./data-sheet.ts";
+import {
+  IMPORT_DEFAULTS,
+  REQUIRED_SAMPLE_COLUMNS,
+} from "./required-columns.ts";
 import { sheetValidations } from "./sheet-validations.ts";
 import { BLOCK_PLACEMENTS } from "./vocabulary-sheet.ts";
 import { importTemplateWorkbook } from "./workbook.ts";
@@ -489,7 +515,7 @@ describe("customized import template workbook", () => {
   const customization: TemplateCustomization = {
     provenanceStatus: "research_project_sample",
     materialPath: "rock_and_sediment.rock.igneous",
-    manualGroup: GROUPS[0],
+    prefilledManualGroup: GROUPS[0],
     subSamples: true,
   };
   let customized: ExcelJS.Workbook;
@@ -631,44 +657,108 @@ describe("customized import template workbook", () => {
     ]);
   });
 
-  it.each<[TemplateSectionKey, string, string[]]>([
-    ["physicalDescription", "Physical description", []],
-    ["age", "Age", []],
+  it.each<[TemplateFieldKey, string[], string[]]>([
+    ["texture", ["Texture"], []],
+    ["length", ["Length", "Length unit"], []],
     [
-      "conservationSecurity",
-      "Conservation and security",
+      "numericAge",
+      [
+        "Numeric age minimum",
+        "Numeric age maximum",
+        "Numeric age units *",
+        "Numeric age reference *",
+      ],
+      [],
+    ],
+    ["relations", [], [SHEETS.relations]],
+    [
+      "storageConditions",
+      ["Specific sample conditions"],
       [SHEETS.storageConditions],
     ],
-    ["repository", "Curation and repository", [SHEETS.rightsHolders]],
-    [
-      "relatedDocuments",
-      "Related URL or document",
-      [SHEETS.relations, SHEETS.attachments],
-    ],
-    ["geologicalContext", "Geological context", []],
   ])(
-    "should drop the %s section's %s columns and the sheets it empties (%s)",
-    async (section, group, emptied) => {
-      const trimmed = await loaded(1, [], { [section]: false });
-      const dataSheets = DATA_SHEETS.map(({ name }) => name);
+    "should drop the %s field's columns %j and the sheets it empties %j",
+    async (field, droppedHeaders, emptied) => {
+      const trimmed = await loaded(1, [], { [field]: false });
 
       expect({
-        holdingGroup: trimmed.worksheets
-          .filter(
-            (worksheet) =>
-              dataSheets.includes(worksheet.name) &&
-              valuesOf(worksheet.getRow(GROUP_ROW).values).includes(group),
-          )
-          .map((worksheet) => worksheet.name),
+        headers: headersOf(trimmed),
         sheets: trimmed.worksheets.map((worksheet) => worksheet.name),
       }).toEqual({
-        holdingGroup: [],
+        headers: headersOf(book).filter(
+          (header) => !droppedHeaders.includes(header as string),
+        ),
         sheets: book.worksheets
           .map((worksheet) => worksheet.name)
           .filter((name) => !emptied.includes(name)),
       });
     },
   );
+
+  it("should drop with the position the navigation type and vertical positions requiring it", async () => {
+    const trimmed = await loaded(1, [], {
+      provenanceStatus: "collection_specimen",
+      position: false,
+    });
+
+    expect({
+      navigationType: headersOf(trimmed).includes("Navigation type"),
+      verticalPositions: trimmed.worksheets.some(
+        (worksheet) => worksheet.name === SHEETS.verticalPositions,
+      ),
+    }).toEqual({ navigationType: false, verticalPositions: false });
+  });
+
+  it.each<[string, TemplateCustomization, string[]]>([
+    [
+      "a research project sample, its collection date, position and collector",
+      {
+        provenanceStatus: "research_project_sample",
+        collectionDate: false,
+        position: false,
+        collector: false,
+      },
+      [
+        "Collection date start",
+        "Position type",
+        "Collector first name *",
+        "Collector last name *",
+      ],
+    ],
+    [
+      "a collection specimen, its collection origin",
+      { provenanceStatus: "collection_specimen", collectionOrigin: false },
+      ["Collection origin *"],
+    ],
+    [
+      "a picked manual group, its column",
+      { prefilledManualGroup: GROUPS[0], manualGroup: false },
+      ["Manual group"],
+    ],
+  ])(
+    "should keep for %s even when excluded",
+    async (_case, customization, kept) => {
+      const headers = headersOf(await loaded(1, [], customization));
+
+      expect(kept.filter((header) => !headers.includes(header))).toEqual([]);
+    },
+  );
+
+  it("should let a collection specimen drop its collection date and position", async () => {
+    const headers = headersOf(
+      await loaded(1, [], {
+        provenanceStatus: "collection_specimen",
+        collectionDate: false,
+        position: false,
+      }),
+    );
+
+    expect(
+      ["Collection date start", "Position type"].filter((header) =>
+        headers.includes(header),
+      ),
+    ).toEqual([]);
+  });
 
   it("should record the customization codes and the manual group label in Read me C1 alone", () => {
     const readMe = sheetOf(customized, SHEETS.readMe);
@@ -688,5 +778,144 @@ describe("customized import template workbook", () => {
 
   it("should record no customization in an uncustomized template", () => {
     expect(sheet(SHEETS.readMe).getCell("C1").value).toBeNull();
+  });
+});
+
+const SECTION_GROUPS: Record<TemplateSectionKey, ColumnGroup> = {
+  identity: "Identity",
+  sampleClassification: "Sample classification",
+  location: "Location",
+  geologicalContext: "Geological context",
+  age: "Age",
+  physicalDescription: "Physical description",
+  scientificContext: "Scientific context",
+  conservationSecurity: "Conservation and security",
+  repository: "Curation and repository",
+  relatedDocuments: "Related URL or document",
+};
+
+const PATH_COLUMNS = DATA_SHEETS.flatMap(({ columns }) => columns).filter(
+  (column): column is Column & { path: string } => column.path !== undefined,
+);
+
+const REQUIRED_PATHS = REQUIRED_SAMPLE_COLUMNS.map(({ path }) => path);
+
+const ALWAYS_KEPT_PATHS = ["parentIds", "processSteps"];
+
+const CHECKED_BLOCKER_PATHS: Partial<Record<PublishBlocker, string>> = {
+  location_position_missing: "location.position",
+};
+
+const isAlwaysIncluded = (path: string) =>
+  REQUIRED_PATHS.includes(path) ||
+  ALWAYS_KEPT_PATHS.some((kept) => isPathAtOrUnder(path, kept));
+
+const fieldsCovering = (path: string) =>
+  TEMPLATE_FIELDS.filter(({ paths }) =>
+    paths.some((fieldPath) => isPathAtOrUnder(path, fieldPath)),
+  );
+
+describe("template fields", () => {
+  it("should cover every optional column with exactly one field", () => {
+    expect(
+      PATH_COLUMNS.filter(
+        ({ path }) =>
+          !isAlwaysIncluded(path) && fieldsCovering(path).length !== 1,
+      ).map(({ header }) => header),
+    ).toEqual([]);
+  });
+
+  it("should match at least one column with every field path", () => {
+    expect(
+      TEMPLATE_FIELDS.flatMap(({ paths }) =>
+        paths.filter(
+          (fieldPath) =>
+            !PATH_COLUMNS.some(({ path }) => isPathAtOrUnder(path, fieldPath)),
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  it("should cover no column the import requires or always keeps", () => {
+    expect(
+      PATH_COLUMNS.filter(
+        ({ path }) => isAlwaysIncluded(path) && fieldsCovering(path).length > 0,
+      ).map(({ header }) => header),
+    ).toEqual([]);
+  });
+
+  it("should keep every section holding a column the import requires or always keeps partly excludable", () => {
+    expect(
+      TEMPLATE_SECTION_KEYS.filter(
+        (section) =>
+          !PARTLY_EXCLUDABLE_TEMPLATE_SECTIONS.includes(section) &&
+          PATH_COLUMNS.some(
+            ({ path, group }) =>
+              group === SECTION_GROUPS[section] && isAlwaysIncluded(path),
+          ),
+      ),
+    ).toEqual([]);
+  });
+
+  it.each(PROVENANCE_STATUSES)(
+    "should lock exactly the fields a %s needs to publish",
+    (provenanceStatus) => {
+      const blockerPaths = samplePublishBlockers(
+        toPublishableFields({
+          material: TEMPLATE_MATERIAL_PATHS.find(
+            (path) => isMaterialComplete(path, null) && allowsLocation(path),
+          ),
+          scientificContext: { provenanceStatus, additionalRoles: [] },
+        }),
+      ).map(
+        (blocker) =>
+          CHECKED_BLOCKER_PATHS[blocker] ??
+          PUBLISH_BLOCKER_PATH[blocker].join("."),
+      );
+
+      expect(
+        TEMPLATE_FIELDS.filter(({ paths }) =>
+          paths.some(
+            (path) =>
+              !(path in IMPORT_DEFAULTS) &&
+              blockerPaths.some((blockerPath) =>
+                isPathAtOrUnder(path, blockerPath),
+              ),
+          ),
+        ).map(({ key }) => key),
+      ).toEqual(
+        Object.keys(
+          lockedTemplateFields({ provenanceStatus, hasManualGroup: false }),
+        ),
+      );
+    },
+  );
+
+  it("should keep the driver of every conditional column whenever that column stays", () => {
+    expect(
+      CONDITIONAL_FIELDS.flatMap((field) => {
+        const condition = conditionOf(field);
+        if (condition === undefined || isAlwaysIncluded(condition.path))
+          return [];
+        const driverFields = fieldsCovering(condition.path);
+        return PATH_COLUMNS.filter(
+          ({ path }) =>
+            field.paths.some((governed) => isPathAtOrUnder(path, governed)) &&
+            fieldsCovering(path).some(
+              (governing) => !driverFields.includes(governing),
+            ),
+        ).map(({ header }) => header);
+      }),
+    ).toEqual([]);
+  });
+
+  it("should keep every column a field covers in its section's group", () => {
+    expect(
+      PATH_COLUMNS.flatMap(({ path, header, group }) =>
+        fieldsCovering(path)
+          .filter(({ section }) => SECTION_GROUPS[section] !== group)
+          .map(({ key }) => `${key}: ${header}`),
+      ),
+    ).toEqual([]);
   });
 });

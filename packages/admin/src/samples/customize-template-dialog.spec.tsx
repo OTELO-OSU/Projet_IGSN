@@ -1,4 +1,9 @@
+import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { IMPORT_TEMPLATE_FILENAME } from "@projet-igsn/domain/sample/import/import-validator";
+import {
+  TEMPLATE_FIELD_KEYS,
+  type TemplateFieldKey,
+} from "@projet-igsn/domain/sample/import/template-fields";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
@@ -13,6 +18,26 @@ import {
 
 const GROUP = { id: "0f8fad5b-d9cb-469f-a165-70867728950e", name: "Alps team" };
 
+const ALL_FIELDS = Object.fromEntries(
+  TEMPLATE_FIELD_KEYS.map((key) => [key, true]),
+) as Record<TemplateFieldKey, boolean>;
+
+const PHYSICAL_DESCRIPTION_FIELDS = [
+  "Open description",
+  "Length",
+  "Width",
+  "Thickness",
+  "Mass",
+  "Volume",
+  "Oriented sample",
+];
+
+const AGE_FIELDS = [
+  "Numeric age",
+  "Geological age time scale",
+  "Geological unit",
+];
+
 async function openDialog(initialValues?: TemplateDialogValues) {
   worker.use(
     http.get("*/admin/currentUser/attachable-manual-groups", () =>
@@ -22,11 +47,13 @@ async function openDialog(initialValues?: TemplateDialogValues) {
   const onBack = vi.fn();
   const screen = await render(
     <QueryClientProvider client={new QueryClient()}>
-      <CustomizeTemplateDialog
-        open
-        onBack={onBack}
-        initialValues={initialValues}
-      />
+      <TooltipProvider>
+        <CustomizeTemplateDialog
+          open
+          onBack={onBack}
+          initialValues={initialValues}
+        />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
   const dialog = screen.getByRole("dialog", { name: "Customize the template" });
@@ -42,12 +69,18 @@ async function openDialog(initialValues?: TemplateDialogValues) {
       await screen.getByRole("option", { name: level, exact: true }).click();
     }
   };
+  const checkbox = (name: string) =>
+    dialog.getByRole("checkbox", { name, exact: true });
+  const openSection = (name: string) =>
+    dialog.getByRole("button", { name, exact: true }).click();
   return {
     screen,
     dialog,
     onBack,
     pick,
     pickMaterial,
+    checkbox,
+    openSection,
     download: dialog.getByRole("button", { name: "Download this template" }),
     reserve: dialog.getByRole("checkbox", { name: "Reserve internal IDs" }),
     count: dialog.getByRole("spinbutton", { name: "Number of internal IDs" }),
@@ -154,12 +187,7 @@ describe("CustomizeTemplateDialog", () => {
         materialPath: "rock_and_sediment.rock.igneous",
         manualGroupId: GROUP.id,
         subSamples: false,
-        physicalDescription: true,
-        age: true,
-        conservationSecurity: true,
-        repository: true,
-        relatedDocuments: true,
-        geologicalContext: true,
+        ...ALL_FIELDS,
       },
     ]);
     expect(await (createObjectURL.mock.calls[0]![0] as Blob).text()).toBe(
@@ -263,7 +291,171 @@ describe("CustomizeTemplateDialog", () => {
     });
   });
 
-  it("should ask for a template without the unchecked sections", async () => {
+  it("should set every field of a section to its Include checkbox", async () => {
+    const { checkbox, openSection } = await openDialog();
+    await openSection("Physical description");
+
+    await checkbox("Include Physical description").click();
+    for (const name of PHYSICAL_DESCRIPTION_FIELDS) {
+      await expect.element(checkbox(name)).not.toBeChecked();
+    }
+
+    await checkbox("Include Physical description").click();
+    for (const name of PHYSICAL_DESCRIPTION_FIELDS) {
+      await expect.element(checkbox(name)).toBeChecked();
+    }
+  });
+
+  it.each([
+    ["Identity", "Local name"],
+    ["Sample classification", "Texture"],
+    ["Location", "Locality name"],
+    ["Scientific context", "Funding"],
+  ])(
+    "should disable the Include checkbox of %s, explaining it holds mandatory fields, and follow its fields such as %s",
+    async (section, field) => {
+      const { checkbox, openSection, screen } = await openDialog();
+      const sectionCheckbox = checkbox(`Include ${section}`);
+      await openSection(section);
+      await expect.element(sectionCheckbox).toBeDisabled();
+      await expect.element(sectionCheckbox).toBeChecked();
+
+      await checkbox(field).click();
+      await expect.element(sectionCheckbox).toBePartiallyChecked();
+      await sectionCheckbox.hover();
+      await expect
+        .element(screen.getByRole("tooltip"))
+        .toHaveTextContent(
+          "This section holds mandatory fields, so it cannot be excluded.",
+        );
+    },
+  );
+
+  it("should show a section partially checked while its fields differ, and follow them once aligned", async () => {
+    const { checkbox, openSection } = await openDialog();
+    const section = checkbox("Include Age");
+    await openSection("Age");
+
+    await checkbox("Numeric age").click();
+    await expect.element(section).toBePartiallyChecked();
+
+    for (const name of AGE_FIELDS.slice(1)) await checkbox(name).click();
+    await expect.element(section).not.toBeChecked();
+    await expect.element(section).not.toBePartiallyChecked();
+
+    for (const name of AGE_FIELDS) await checkbox(name).click();
+    await expect.element(section).toBeChecked();
+  });
+
+  const REQUIRED_BY_RESEARCH =
+    "A Research project sample needs it to publish, so it cannot be excluded.";
+
+  it.each([
+    [
+      "Research project sample",
+      "Identity",
+      "Collection date",
+      "collectionDate",
+      false,
+      REQUIRED_BY_RESEARCH,
+    ],
+    [
+      "Research project sample",
+      "Location",
+      "Position",
+      "position",
+      false,
+      REQUIRED_BY_RESEARCH,
+    ],
+    [
+      "Research project sample",
+      "Scientific context",
+      "Collector name",
+      "collector",
+      false,
+      REQUIRED_BY_RESEARCH,
+    ],
+    [
+      "Collection specimen",
+      "Scientific context",
+      "Collection origin",
+      "collectionOrigin",
+      false,
+      "A Collection specimen needs it to publish, so it cannot be excluded.",
+    ],
+    [
+      "Research project sample",
+      "Identity",
+      "Manual groups",
+      "manualGroup",
+      true,
+      "It holds the manual group chosen above, so it cannot be excluded.",
+    ],
+  ])(
+    "should lock in a %s template the %s field %s the template relies on, explaining why",
+    async (provenance, section, field, key, picksGroup, reason) => {
+      const requested: URLSearchParams[] = [];
+      worker.use(
+        http.get("*/admin/samples/import-template", ({ request }) => {
+          requested.push(new URL(request.url).searchParams);
+          return new HttpResponse("customized-bytes");
+        }),
+      );
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        () => {},
+      );
+      const { checkbox, download, openSection, pick, screen } =
+        await openDialog();
+      await openSection(section);
+
+      await pick(/^Provenance status/, provenance);
+      if (picksGroup) await pick("Manual group", GROUP.name);
+      await expect.element(checkbox(field)).toBeChecked();
+      await expect.element(checkbox(field)).toBeDisabled();
+      await checkbox(field).hover();
+      await expect
+        .element(screen.getByRole("tooltip"))
+        .toHaveTextContent(reason);
+      await download.click();
+
+      await expect.poll(() => requested.length).toBe(1);
+      expect(requested[0]!.has(key)).toBe(false);
+    },
+  );
+
+  it.each([
+    ["Location", "Position", "Navigation type", "Region"],
+    ["Location", "Position", "Vertical positions", "Region"],
+    [
+      "Conservation and security",
+      "Storage conditions",
+      "Specific sample conditions",
+      "Packaging",
+    ],
+  ])(
+    "should exclude with the %s field %s the %s field requiring it, explaining why, and restore it once included",
+    async (section, driver, dependent, other) => {
+      const { checkbox, openSection, pick, screen } = await openDialog();
+      await pick(/^Provenance status/, "Collection specimen");
+      await openSection(section);
+
+      await checkbox(driver).click();
+      await expect.element(checkbox(dependent)).not.toBeChecked();
+      await expect.element(checkbox(dependent)).toBeDisabled();
+      await checkbox(dependent).hover();
+      await expect
+        .element(screen.getByRole("tooltip"))
+        .toHaveTextContent(`It requires ${driver}, so it is excluded with it.`);
+
+      await checkbox(other).click();
+      await checkbox(driver).click();
+      await expect.element(checkbox(dependent)).toBeChecked();
+      await expect.element(checkbox(dependent)).toBeEnabled();
+    },
+  );
+
+  it("should ask for a template without the unchecked fields", async () => {
     const requested: URLSearchParams[] = [];
     worker.use(
       http.get("*/admin/samples/import-template", ({ request }) => {
@@ -273,31 +465,21 @@ describe("CustomizeTemplateDialog", () => {
     );
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    const { dialog, download, pick } = await openDialog();
+    const { checkbox, download, openSection, pick } = await openDialog();
     await pick(/^Provenance status/, "Research project sample");
-    const section = (name: string) =>
-      dialog.getByRole("checkbox", { name, exact: true });
-    for (const name of [
-      "Include Physical description",
-      "Include Age",
-      "Include Conservation and security",
-      "Include Curation and repository",
-      "Include Related URL or document",
-      "Include Geological context",
-    ]) {
-      await expect.element(section(name)).toBeChecked();
-    }
 
-    await section("Include Curation and repository").click();
-    await section("Include Geological context").click();
+    await checkbox("Include Geological context").click();
+    await openSection("Physical description");
+    await checkbox("Length").click();
     await download.click();
 
     await expect.poll(() => requested.length).toBe(1);
     expect(Object.fromEntries(requested[0]!)).toEqual({
       materialPath: "rock_and_sediment",
       provenanceStatus: "research_project_sample",
-      repository: "false",
-      geologicalContext: "false",
+      geologicalContextDescription: "false",
+      physiographicEnvironment: "false",
+      length: "false",
     });
   });
 
@@ -311,13 +493,12 @@ describe("CustomizeTemplateDialog", () => {
       groupId: GROUP.id,
       provenanceValue: "research_project_sample",
       subSamples: true,
-      sections: {
-        physicalDescription: true,
-        age: false,
-        conservationSecurity: false,
-        repository: true,
-        relatedDocuments: false,
-        geologicalContext: false,
+      fields: {
+        ...ALL_FIELDS,
+        numericAge: false,
+        geologicalAge: false,
+        geologicalUnit: false,
+        length: false,
       },
     };
 
@@ -338,15 +519,13 @@ describe("CustomizeTemplateDialog", () => {
 
     it("should show the prefilled choices and download the template they describe", async () => {
       const requested = captureDownload();
-      const { dialog, download } = await openDialog(PREFILLED);
-      const checkbox = (name: string) =>
-        dialog.getByRole("checkbox", { name, exact: true });
+      const { checkbox, dialog, download } = await openDialog(PREFILLED);
       await expect
         .element(checkbox("The file will contain sub-samples"))
         .toBeChecked();
       await expect
         .element(checkbox("Include Physical description"))
-        .toBeChecked();
+        .toBePartiallyChecked();
       await expect.element(checkbox("Include Age")).not.toBeChecked();
       await expect
         .element(dialog.getByRole("combobox", { name: "Manual group" }))
@@ -360,10 +539,10 @@ describe("CustomizeTemplateDialog", () => {
         manualGroupId: GROUP.id,
         provenanceStatus: "research_project_sample",
         subSamples: "true",
-        age: "false",
-        conservationSecurity: "false",
-        relatedDocuments: "false",
-        geologicalContext: "false",
+        numericAge: "false",
+        geologicalAge: "false",
+        geologicalUnit: "false",
+        length: "false",
       });
     });
 

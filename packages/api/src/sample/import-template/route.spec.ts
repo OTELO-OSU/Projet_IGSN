@@ -294,14 +294,29 @@ describe("import template route", () => {
   );
 
   pgTest(
-    "should answer a template without the Curation and repository columns on repository=false",
+    "should answer a template without the Texture column on texture=false",
     async ({ db }) => {
-      const res = await download(db, "?rows=1&repository=false");
+      const res = await download(db, "?rows=1&texture=false");
 
       expect({
         status: res.status,
-        existence: await hasSampleColumn(res, "Existence status"),
-      }).toEqual({ status: 200, existence: false });
+        texture: await hasSampleColumn(res, "Texture"),
+      }).toEqual({ status: 200, texture: false });
+    },
+  );
+
+  pgTest.for<[string, string]>([
+    ["collector", "Collector first name"],
+    ["collectionOrigin", "Collection origin"],
+  ])(
+    "should keep on %s=false the %s column a provenance status needs to publish on a template without one",
+    async ([field, header], { db }) => {
+      const res = await download(db, `?rows=1&${field}=false`);
+
+      expect({
+        status: res.status,
+        kept: await hasSampleColumn(res, header),
+      }).toEqual({ status: 200, kept: true });
     },
   );
 });
@@ -415,14 +430,14 @@ describe("import template reservation route", () => {
   );
 
   pgTest(
-    "should answer a reserved template without the Curation and repository columns on repository: false",
+    "should answer a reserved template without the Texture column on texture: false",
     async ({ db }) => {
-      const res = await reserve(db, { count: 1, repository: false });
+      const res = await reserve(db, { count: 1, texture: false });
 
       expect({
         status: res.status,
-        existence: await hasSampleColumn(res, "Existence status"),
-      }).toEqual({ status: 200, existence: false });
+        texture: await hasSampleColumn(res, "Texture"),
+      }).toEqual({ status: 200, texture: false });
     },
     30_000,
   );
