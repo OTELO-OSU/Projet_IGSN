@@ -108,7 +108,7 @@ describe("the /service OpenAPI document", () => {
     },
   );
 
-  it.each(["/samples", "/samples/{igsn}"])(
+  it.each(["/samples", "/samples/{igsn}", "/samples/map"])(
     "should declare GET %s callable without an api key",
     async (path) => {
       const document = await serviceDocument();

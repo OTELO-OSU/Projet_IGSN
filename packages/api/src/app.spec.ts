@@ -355,6 +355,32 @@ describe("app", () => {
       },
     );
 
+    pgTest.for(["GET", "OPTIONS"])(
+      "should open the service map to any origin without credentials on %s, and no other service route",
+      async (method, { db }) => {
+        const app = createApp(db).app;
+        const headers = {
+          Origin: "https://museum.example.test",
+          "Access-Control-Request-Method": "GET",
+        };
+
+        const map = await app.request("/service/samples/map", {
+          method,
+          headers,
+        });
+        const list = await app.request("/service/samples", {
+          method,
+          headers,
+        });
+
+        expect({
+          mapOrigin: map.headers.get("access-control-allow-origin"),
+          mapCredentials: map.headers.get("access-control-allow-credentials"),
+          listOrigin: list.headers.get("access-control-allow-origin"),
+        }).toEqual({ mapOrigin: "*", mapCredentials: null, listOrigin: null });
+      },
+    );
+
     pgTest(
       "should deny every origin when CORS_ORIGINS is empty",
       async ({ db }) => {
@@ -435,6 +461,31 @@ describe("app", () => {
         expect((await detailsFrom("10.0.0.7")).status).toBe(429);
         expect((await pointsFrom("10.0.0.7")).status).toBe(200);
         expect((await get("/samples", "10.0.0.7")).status).toBe(200);
+      },
+    );
+
+    pgTest(
+      "should spend the map budget on the service map, apart from the service one",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const get = (path: string, ip: string) =>
+          app.request(path, { headers: { "X-Real-IP": ip } });
+        const serviceMapFrom = (ip: string) =>
+          get("/service/samples/map?bbox=x", ip);
+
+        await spend(() => serviceMapFrom("10.0.0.8"), MAP_IP_BUDGET.points);
+        expect((await serviceMapFrom("10.0.0.8")).status).toBe(429);
+        expect(
+          (await get("/samples/map/samples?numbers=x", "10.0.0.8")).status,
+        ).toBe(429);
+        expect((await get("/service/osus", "10.0.0.8")).status).toBe(200);
+
+        await spend(
+          () => get("/service/osus", "10.0.0.9"),
+          PUBLIC_IP_BUDGET.points,
+        );
+        expect((await get("/service/osus", "10.0.0.9")).status).toBe(429);
+        expect((await serviceMapFrom("10.0.0.9")).status).toBe(400);
       },
     );
 
