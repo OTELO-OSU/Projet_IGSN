@@ -392,10 +392,12 @@ const PENDING_ID = "01890a5d-ac96-774b-8eb4-b302099a8061";
 const ACCEPTED_ID = "01890a5d-ac96-774b-8eb4-b302099a8062";
 
 type Institution = {
-  [K in
-    | "institutionalOrganization"
-    | "institutionalOsu"
-    | "institutionalLaboratory"]-?: NonNullable<UpdateUser[K]>;
+  [
+    K in
+      | "institutionalOrganization"
+      | "institutionalOsu"
+      | "institutionalLaboratory"
+  ]-?: NonNullable<UpdateUser[K]>;
 };
 
 const TRIO_A: Institution = {

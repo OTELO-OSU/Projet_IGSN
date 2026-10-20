@@ -22,6 +22,7 @@ Follow TDD (testing rule).
 
    ```tsx
    import { render } from "vitest-browser-react";
+
    import { DeclarationForm } from "./DeclarationForm";
 
    it("should reject a blank sample name", async () => {

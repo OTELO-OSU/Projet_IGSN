@@ -8,6 +8,7 @@ import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicate-sample";
 import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
+import { canPublishSamples } from "@projet-igsn/domain/user/can-publish-samples";
 
 import { m } from "#/paraglide/messages.js";
 import { PrintSampleLabelDialog } from "#/samples/print-sample-label-dialog.tsx";
@@ -26,7 +27,7 @@ export function EditSampleHeader({
 }: {
   sample: Sample & Pick<AdminSampleResponse, "role" | "managed">;
   sampleId: string;
-  me: Pick<User, "superAdmin"> | undefined;
+  me: Pick<User, "superAdmin" | "status"> | undefined;
   publicHint: string | undefined;
   isDeleteDisabled: boolean;
   onDelete: () => void;
@@ -77,6 +78,8 @@ export function EditSampleHeader({
           }
           isDeleteDisabled={isDeleteDisabled}
           templateInitialValues={
+            me != null &&
+            canPublishSamples(me) &&
             canCreateImportTemplate(sample)
               ? templateCustomizationOfSample(sample)
               : undefined

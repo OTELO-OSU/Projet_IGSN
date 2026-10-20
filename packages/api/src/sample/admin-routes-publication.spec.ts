@@ -8,6 +8,7 @@ import { describe, expect, onTestFinished, vi } from "vitest";
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
+import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
@@ -106,6 +107,29 @@ const toEveryCollaboratorButTheActor = (subject: string) =>
   [CONTRIBUTOR_EMAIL, OWNER_EMAIL].map((email) => ({ to: [email], subject }));
 
 describe("admin sample publication", () => {
+  pgTest(
+    "should refuse a publication on a revoked session, the sample staying a draft",
+    async ({ db }) => {
+      // Arrange
+      const { app, sample, fetchMock } = await arrangeSample(db);
+      vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
+        c.json({ error: "Unauthorized" }, 401),
+      );
+      // Act
+      const res = await publish(app, sample.id, "status=published");
+      // Assert
+      expect(res.status).toBe(401);
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(
+        await db
+          .selectFrom("sample")
+          .select("status")
+          .where("id", "=", sample.id)
+          .executeTakeFirstOrThrow(),
+      ).toEqual({ status: "draft" });
+    },
+  );
+
   pgTest(
     "should publish under embargo until the chosen date, register the DOI and mail every collaborator but the publisher",
     async ({ db }) => {

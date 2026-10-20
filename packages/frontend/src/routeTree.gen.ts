@@ -9,52 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TombstoneRouteImport } from './routes/tombstone'
-import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
-import { Route as PartnersRouteImport } from './routes/partners'
-import { Route as ManifestDotjsonRouteImport } from './routes/manifest[.]json'
-import { Route as LegalNoticeRouteImport } from './routes/legal-notice'
-import { Route as ContactRouteImport } from './routes/contact'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as LegalNoticeRouteImport } from './routes/legal-notice'
+import { Route as ManifestDotjsonRouteImport } from './routes/manifest[.]json'
+import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as TermsOfUseRouteImport } from './routes/terms-of-use'
+import { Route as TombstoneRouteImport } from './routes/tombstone'
 import { Route as FaqIndexRouteImport } from './routes/faq/index'
-import { Route as SamplesIgsnRouteImport } from './routes/samples/$igsn'
 import { Route as FaqCategoryRouteImport } from './routes/faq/$category'
+import { Route as SamplesIgsnRouteImport } from './routes/samples/$igsn'
 
-const TombstoneRoute = TombstoneRouteImport.update({
-  id: '/tombstone',
-  path: '/tombstone',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermsOfUseRoute = TermsOfUseRouteImport.update({
-  id: '/terms-of-use',
-  path: '/terms-of-use',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
-  id: '/privacy-policy',
-  path: '/privacy-policy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PartnersRoute = PartnersRouteImport.update({
-  id: '/partners',
-  path: '/partners',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ManifestDotjsonRoute = ManifestDotjsonRouteImport.update({
-  id: '/manifest.json',
-  path: '/manifest.json',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegalNoticeRoute = LegalNoticeRouteImport.update({
-  id: '/legal-notice',
-  path: '/legal-notice',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -62,9 +32,39 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LegalNoticeRoute = LegalNoticeRouteImport.update({
+  id: '/legal-notice',
+  path: '/legal-notice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManifestDotjsonRoute = ManifestDotjsonRouteImport.update({
+  id: '/manifest.json',
+  path: '/manifest.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnersRoute = PartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsOfUseRoute = TermsOfUseRouteImport.update({
+  id: '/terms-of-use',
+  path: '/terms-of-use',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TombstoneRoute = TombstoneRouteImport.update({
+  id: '/tombstone',
+  path: '/tombstone',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqIndexRoute = FaqIndexRouteImport.update({
@@ -72,14 +72,14 @@ const FaqIndexRoute = FaqIndexRouteImport.update({
   path: '/faq/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SamplesIgsnRoute = SamplesIgsnRouteImport.update({
-  id: '/samples/$igsn',
-  path: '/samples/$igsn',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const FaqCategoryRoute = FaqCategoryRouteImport.update({
   id: '/faq/$category',
   path: '/faq/$category',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SamplesIgsnRoute = SamplesIgsnRouteImport.update({
+  id: '/samples/$igsn',
+  path: '/samples/$igsn',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -188,53 +188,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tombstone': {
-      id: '/tombstone'
-      path: '/tombstone'
-      fullPath: '/tombstone'
-      preLoaderRoute: typeof TombstoneRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms-of-use': {
-      id: '/terms-of-use'
-      path: '/terms-of-use'
-      fullPath: '/terms-of-use'
-      preLoaderRoute: typeof TermsOfUseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy-policy': {
-      id: '/privacy-policy'
-      path: '/privacy-policy'
-      fullPath: '/privacy-policy'
-      preLoaderRoute: typeof PrivacyPolicyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/partners': {
-      id: '/partners'
-      path: '/partners'
-      fullPath: '/partners'
-      preLoaderRoute: typeof PartnersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/manifest.json': {
-      id: '/manifest.json'
-      path: '/manifest.json'
-      fullPath: '/manifest.json'
-      preLoaderRoute: typeof ManifestDotjsonRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/legal-notice': {
-      id: '/legal-notice'
-      path: '/legal-notice'
-      fullPath: '/legal-notice'
-      preLoaderRoute: typeof LegalNoticeRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -244,11 +202,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/legal-notice': {
+      id: '/legal-notice'
+      path: '/legal-notice'
+      fullPath: '/legal-notice'
+      preLoaderRoute: typeof LegalNoticeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manifest.json': {
+      id: '/manifest.json'
+      path: '/manifest.json'
+      fullPath: '/manifest.json'
+      preLoaderRoute: typeof ManifestDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partners': {
+      id: '/partners'
+      path: '/partners'
+      fullPath: '/partners'
+      preLoaderRoute: typeof PartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms-of-use': {
+      id: '/terms-of-use'
+      path: '/terms-of-use'
+      fullPath: '/terms-of-use'
+      preLoaderRoute: typeof TermsOfUseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tombstone': {
+      id: '/tombstone'
+      path: '/tombstone'
+      fullPath: '/tombstone'
+      preLoaderRoute: typeof TombstoneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq/': {
@@ -258,18 +258,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/samples/$igsn': {
-      id: '/samples/$igsn'
-      path: '/samples/$igsn'
-      fullPath: '/samples/$igsn'
-      preLoaderRoute: typeof SamplesIgsnRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/faq/$category': {
       id: '/faq/$category'
       path: '/faq/$category'
       fullPath: '/faq/$category'
       preLoaderRoute: typeof FaqCategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/samples/$igsn': {
+      id: '/samples/$igsn'
+      path: '/samples/$igsn'
+      fullPath: '/samples/$igsn'
+      preLoaderRoute: typeof SamplesIgsnRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

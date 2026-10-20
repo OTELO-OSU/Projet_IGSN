@@ -5,7 +5,6 @@ import type {
 } from "@projet-igsn/domain/sample/import/import-report";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { canPublishSamples } from "@projet-igsn/domain/user/can-publish-samples";
 import { Hono } from "hono";
 
 import type { SampleAdminDeps, SampleAdminEnv } from "./admin-routes.ts";
@@ -86,6 +85,7 @@ export function createSampleImportRoutes({
     .post(
       "/import",
       requireCharterAccepted(users),
+      requireActiveSession,
       validateImportUpload,
       async (c) => {
         let parents: ReadonlyMap<string, Sample> = new Map();
@@ -142,41 +142,43 @@ export function createSampleImportRoutes({
       );
       return c.json({ data } satisfies { data: ImportDuplicate[] });
     })
-    .post("/bulk-edit", validateImportUpload, async (c) => {
-      const user = c.get("user");
-      if (!canPublishSamples(user)) {
-        return c.json({ error: "Forbidden" }, 403);
-      }
-      const { issues, samples } = await validateBulkEdit(
-        await c.req.valid("form").file.arrayBuffer(),
-        (numbers) => bulkEditTargets(repository, users, user, numbers),
-        {
-          resolve: async (igsns) =>
-            repository.listPublicSeriesLinkCandidatesByIgsns(
-              igsns,
-              user.id,
-              await getModerationScope(users, user),
-            ),
-          canEdit: (candidate) => canEditCandidate(user, candidate),
-        },
-        (igsns) => resolvePublishedParents(repository, igsns),
-        (ids) => repository.listDescendantIds(ids),
-      );
-      if (issues.length > 0) {
-        const body: InvalidImport = { error: "Invalid import", issues };
-        return c.json(body, 422);
-      }
-      if (!(await checkDataCite(dataCiteConfig()))) {
-        return c.json({ error: "DataCite unavailable" }, 503);
-      }
-      const count = await catchChildNotEligible(
-        repository.updatePublishing(samples),
-      );
-      if (count instanceof ChildNotEligibleError) {
-        return c.json(CHILD_CLAIMED_IMPORT, 422);
-      }
-      return c.json({ count } satisfies ImportAccepted, 200);
-    })
+    .post(
+      "/bulk-edit",
+      requireActiveSession,
+      validateImportUpload,
+      async (c) => {
+        const user = c.get("user");
+        const { issues, samples } = await validateBulkEdit(
+          await c.req.valid("form").file.arrayBuffer(),
+          (numbers) => bulkEditTargets(repository, users, user, numbers),
+          {
+            resolve: async (igsns) =>
+              repository.listPublicSeriesLinkCandidatesByIgsns(
+                igsns,
+                user.id,
+                await getModerationScope(users, user),
+              ),
+            canEdit: (candidate) => canEditCandidate(user, candidate),
+          },
+          (igsns) => resolvePublishedParents(repository, igsns),
+          (ids) => repository.listDescendantIds(ids),
+        );
+        if (issues.length > 0) {
+          const body: InvalidImport = { error: "Invalid import", issues };
+          return c.json(body, 422);
+        }
+        if (!(await checkDataCite(dataCiteConfig()))) {
+          return c.json({ error: "DataCite unavailable" }, 503);
+        }
+        const count = await catchChildNotEligible(
+          repository.updatePublishing(samples),
+        );
+        if (count instanceof ChildNotEligibleError) {
+          return c.json(CHILD_CLAIMED_IMPORT, 422);
+        }
+        return c.json({ count } satisfies ImportAccepted, 200);
+      },
+    )
     .post(
       "/import/internal-id-request",
       requireActiveSession,

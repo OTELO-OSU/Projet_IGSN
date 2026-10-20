@@ -160,6 +160,7 @@ describe("import template route", () => {
   pgTest(
     "should answer the xlsx template numbered up to the import row cap by default",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       const res = await download(db);
       const book = new ExcelJS.Workbook();
       await book.xlsx.load(await res.arrayBuffer());
@@ -199,6 +200,7 @@ describe("import template route", () => {
     "materialPath=rock_and_sediment.nope",
     "manualGroupId=nope",
   ])("should refuse the parameter %s", async (query, { db }) => {
+    await provisionUser(db, "test-token");
     const res = await download(db, `?${query}`);
 
     expect(res.status).toBe(400);
@@ -281,6 +283,7 @@ describe("import template route", () => {
   ])(
     "should answer a customized template with query %j keeping the Parent IGSN column: %s",
     async ([subSamples, isKept], { db }) => {
+      await provisionUser(db, "test-token");
       const res = await download(
         db,
         `?rows=1&provenanceStatus=research_project_sample${subSamples}`,
@@ -296,6 +299,7 @@ describe("import template route", () => {
   pgTest(
     "should answer a template without the Texture column on texture=false",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       const res = await download(db, "?rows=1&texture=false");
 
       expect({
@@ -311,6 +315,7 @@ describe("import template route", () => {
   ])(
     "should keep on %s=false the %s column a provenance status needs to publish on a template without one",
     async ([field, header], { db }) => {
+      await provisionUser(db, "test-token");
       const res = await download(db, `?rows=1&${field}=false`);
 
       expect({
@@ -325,6 +330,7 @@ describe("import template reservation route", () => {
   pgTest(
     "should answer a template of the requested rows, each Sample # holding its reserved internal ID",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       const res = await reserve(db, { count: 3 });
       const book = new ExcelJS.Workbook();
       await book.xlsx.load(await res.arrayBuffer());
@@ -351,6 +357,7 @@ describe("import template reservation route", () => {
   pgTest.for([0, MAX_IMPORT_ROWS + 1])(
     "should refuse reserving %d internal IDs",
     async (count, { db }) => {
+      await provisionUser(db, "test-token");
       const res = await reserve(db, { count });
 
       expect(res.status).toBe(400);
@@ -415,6 +422,7 @@ describe("import template reservation route", () => {
   pgTest(
     "should keep the Parent IGSN column of a reserved customized template expecting sub-samples",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       const res = await reserve(db, {
         count: 1,
         provenanceStatus: "research_project_sample",
@@ -432,6 +440,7 @@ describe("import template reservation route", () => {
   pgTest(
     "should answer a reserved template without the Texture column on texture: false",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       const res = await reserve(db, { count: 1, texture: false });
 
       expect({
@@ -445,6 +454,7 @@ describe("import template reservation route", () => {
   pgTest(
     "should refuse reserving a template pre-filled with a mineral material",
     async ({ db }) => {
+      await provisionUser(db, "test-token");
       const res = await reserve(db, {
         count: 1,
         materialPath: "rock_and_sediment.mineral",

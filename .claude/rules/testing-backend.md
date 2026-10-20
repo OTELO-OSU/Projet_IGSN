@@ -12,6 +12,7 @@ paths:
 
 ```ts
 import { testClient } from "hono/testing";
+
 import app from "./app";
 
 it("should reject an invalid IGSN", async () => {

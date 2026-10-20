@@ -1,7 +1,7 @@
 import { safeReturnPath } from "./safe-return-path.ts";
 
 describe("safeReturnPath", () => {
-  it.each(["/samples/x", "/samples/x?y=1"])(
+  it.each(["/samples/x", "/samples/x?y=1", "/samples/a%20b?q=c%2Fd"])(
     "should return %s, an app-local path, unchanged",
     (path) => {
       expect(safeReturnPath(path)).toBe(path);
@@ -14,6 +14,9 @@ describe("safeReturnPath", () => {
     "/\\evil.com",
     "https://evil.com",
     "/auth/callback",
+    "/\t/evil.com",
+    "/\n/evil.com",
+    "/ok\\evil",
   ])("should fall back to the home page for %s", (urlState) => {
     expect(safeReturnPath(urlState)).toBe("/");
   });

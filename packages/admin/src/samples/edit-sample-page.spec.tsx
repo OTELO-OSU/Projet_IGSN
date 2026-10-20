@@ -573,6 +573,28 @@ describe("EditSamplePage", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should offer no import template to a user who cannot publish", async () => {
+    callerStatus = "pending";
+    const { screen } = await renderEditPage(
+      "published",
+      "rock_and_sediment.rock",
+    );
+    await screen.getByRole("button", { name: "Sample actions" }).click();
+
+    await expect
+      .element(
+        screen.getByRole("menuitem", {
+          name: "Duplicate Basalte du Massif Central",
+        }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("menuitem", { name: "Create an import template" }),
+      )
+      .not.toBeInTheDocument();
+  });
+
   it("should show the parent tab and the location inherited from the parent on a sub sample", async () => {
     sampleParents = [PARENT];
     const { screen } = await renderEditPage();

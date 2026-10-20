@@ -63,48 +63,55 @@ export function createSamplePublicationRoutes({
         return c.body(null, 204);
       },
     )
-    .post("/:id/publish", validateIdParam, unlockedSample, async (c) => {
-      const id = c.req.valid("param").id;
-      const sample = c.get("sample");
-      if (!sample) {
-        return c.json({ error: "Not found" }, 404);
-      }
-      if (!isSampleEditor(c.get("role"))) {
-        return c.json({ error: "Forbidden" }, 403);
-      }
-      const query = publishQuerySchema.safeParse(c.req.query());
-      if (!query.success) {
-        return c.json({ error: "Invalid publish status" }, 400);
-      }
-      const { status, publishedAt } = query.data;
-      if (isPublicationQueued(sample) || hasPermanentIgsn(sample)) {
-        return c.json({ error: "Sample is already published" }, 409);
-      }
-      // ponytail: the guard's read and publish are separate transactions. Read and publish in one txn if that race matters.
-      if (
-        samplePublishBlockers(sample, uploadLimit, c.get("user")).length > 0
-      ) {
-        return c.json({ error: "Sample is not ready to publish" }, 409);
-      }
-      const published = await repository.publish(id, status, publishedAt);
-      if (!published) {
-        return c.json({ error: "Not found" }, 404);
-      }
-      if (mail) {
-        void notifyPublication({
-          event: status === "embargo" ? "embargo_started" : status,
-          userSamples: userSampleRepository,
-          sample: published,
-          actor: c.get("user"),
-          mail,
-        });
-      }
-      return c.json({ data: published });
-    })
+    .post(
+      "/:id/publish",
+      validateIdParam,
+      requireActiveSession,
+      unlockedSample,
+      async (c) => {
+        const id = c.req.valid("param").id;
+        const sample = c.get("sample");
+        if (!sample) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (!isSampleEditor(c.get("role"))) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        const query = publishQuerySchema.safeParse(c.req.query());
+        if (!query.success) {
+          return c.json({ error: "Invalid publish status" }, 400);
+        }
+        const { status, publishedAt } = query.data;
+        if (isPublicationQueued(sample) || hasPermanentIgsn(sample)) {
+          return c.json({ error: "Sample is already published" }, 409);
+        }
+        // ponytail: the guard's read and publish are separate transactions. Read and publish in one txn if that race matters.
+        if (
+          samplePublishBlockers(sample, uploadLimit, c.get("user")).length > 0
+        ) {
+          return c.json({ error: "Sample is not ready to publish" }, 409);
+        }
+        const published = await repository.publish(id, status, publishedAt);
+        if (!published) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (mail) {
+          void notifyPublication({
+            event: status === "embargo" ? "embargo_started" : status,
+            userSamples: userSampleRepository,
+            sample: published,
+            actor: c.get("user"),
+            mail,
+          });
+        }
+        return c.json({ data: published });
+      },
+    )
     .put(
       "/:id/status",
       validateIdParam,
       validateStatusBody,
+      requireActiveSession,
       unlockedSample,
       async (c) => {
         const sample = c.get("sample");

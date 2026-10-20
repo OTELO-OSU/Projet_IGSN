@@ -17,25 +17,25 @@ catalog:
   "@kysely-vitest/postgres": ^0.4.2
   "@maplibre/maplibre-gl-leaflet": ^0.1.4
   "@playwright/mcp": ^0.0.78
-  "@playwright/test": ^1.63.0
+  "@playwright/test": ^1.64.1
   "@tailwindcss/vite": ^4.3.1
   "@tanstack/devtools-vite": ^0.8.1
   "@tanstack/react-form": ^1.33.0
   "@tanstack/react-pacer": ^0.22.1
-  "@tanstack/react-query": ^5.101.2
-  "@tanstack/react-router": ^1.170.16
-  "@tanstack/react-router-ssr-query": ^1.167.1
-  "@tanstack/react-start": ^1.168.26
+  "@tanstack/react-query": ^5.102.0
+  "@tanstack/react-router": ^1.170.44
+  "@tanstack/react-router-ssr-query": ^1.167.3
+  "@tanstack/react-start": ^1.169.2
   "@tanstack/react-table": ^8.21.3
-  "@tanstack/router-cli": ^1.167.17
+  "@tanstack/router-cli": ^1.167.44
   "@tanstack/router-plugin": ^1.168.18
   "@types/leaflet": ^1.9.20
-  "@types/node": ^24.13.1
+  "@types/node": ^24.19.2
   "@types/nodemailer": ^8.0.1
   "@types/react": ^19.2.14
   "@types/react-dom": ^19.2.3
   "@vitejs/plugin-react": ^6.1.1
-  "@vitest/browser-playwright": ^4.1.9
+  "@vitest/browser-playwright": ^4.1.12
   "@xyflow/react": ^12.11.6
   altcha: ^3.3.0
   altcha-lib: ^2.6.0
@@ -44,7 +44,7 @@ catalog:
   clsx: ^2.1.1
   cmdk: ^1.1.1
   exceljs: ^4.4.0
-  hono: ^4.12.26
+  hono: ^4.13.13
   husky: ^9.1.7
   i18next: ^26.3.6
   kysely: ^0.29.4
@@ -54,11 +54,11 @@ catalog:
   maplibre-gl: ^6.14.0
   msw: ^2.15.0
   nitro: 3.0.260610-beta
-  nodemailer: ^9.0.3
+  nodemailer: ^10.1.2
   oidc-client-ts: ^3.5.0
-  oxfmt: ^0.53.0
-  oxlint: ^1.82.0
-  oxlint-tsgolint: ^0.23.0
+  oxfmt: ^0.73.0
+  oxlint: ^1.88.0
+  oxlint-tsgolint: ^7.0.2004
   postgres: ^3.4.9
   qrcode.react: ^4.2.0
   radix-ui: ^1.6.0
@@ -66,7 +66,7 @@ catalog:
   react: ^19.2.7
   react-dom: ^19.2.7
   react-leaflet: ^5.0.0
-  shadcn: ^4.21.0
+  shadcn: ^4.22.0
   react-oidc-context: ^3.3.1
   tailwind-merge: ^3.6.0
   tailwindcss: ^4.3.1
@@ -74,7 +74,7 @@ catalog:
   typescript: ^6.0.3
   uuid: ^14.0.1
   vite: ^8.0.12
-  vitest: ^4.1.9
+  vitest: ^4.1.12
   vitest-browser-react: ^2.2.0
   zod: ^4.4.3
   sonner: ^2.0.7

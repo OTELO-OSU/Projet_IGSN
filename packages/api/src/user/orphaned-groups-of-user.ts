@@ -62,20 +62,20 @@ async function orphanedGroupsOfUser(
     .execute();
 
   return [
-    ...manual.map(
-      ({ id, name }): OrphanedGroup => ({ kind: "manual", id, name }),
-    ),
+    ...manual.map(({ id, name }): OrphanedGroup => ({
+      kind: "manual",
+      id,
+      name,
+    })),
     ...institutional
       .map(({ kind, code }) => ({ kind, code: institutionCodeOf(kind, code) }))
       .toSorted(
         (a, b) => a.kind.localeCompare(b.kind) || a.code.localeCompare(b.code),
       )
-      .map(
-        (ref): OrphanedGroup => ({
-          ...ref,
-          name: institutionalGroupLabel(ref),
-        }),
-      ),
+      .map((ref): OrphanedGroup => ({
+        ...ref,
+        name: institutionalGroupLabel(ref),
+      })),
   ];
 }
 

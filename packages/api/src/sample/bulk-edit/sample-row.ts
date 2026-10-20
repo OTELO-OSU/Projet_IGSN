@@ -31,7 +31,10 @@ function regionPathOf(sample: Sample): string | undefined {
   return code ? `${region.kind}.${code}` : region.kind;
 }
 
-export const valuesOf = (sample: Sample, path: string | undefined): unknown[] =>
+export const valuesOf = (
+  sample: Sample,
+  path: string | undefined,
+): unknown[] =>
   path === undefined
     ? []
     : REGION_PATHS.has(path)

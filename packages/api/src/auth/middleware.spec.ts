@@ -1,7 +1,16 @@
 import type { webcrypto } from "node:crypto";
 
+import { Hono } from "hono";
 import { testClient } from "hono/testing";
-import { afterEach, beforeAll, beforeEach, describe, expect, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import type { createApp } from "../app.ts";
 
@@ -51,6 +60,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
@@ -58,8 +68,9 @@ afterEach(() => {
 async function mint(
   claims: Record<string, unknown>,
   key: webcrypto.CryptoKey = privateKey,
+  kid = KID,
 ): Promise<string> {
-  const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT", kid: KID }));
+  const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT", kid }));
   const payload = b64url(JSON.stringify(claims));
   const signature = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
@@ -194,5 +205,49 @@ describe("requireAuth", () => {
     const res = await getMe(db, await mint(validClaims(), rogue.privateKey));
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe("requireAuth JWKS cache", () => {
+  const getRoot = async () => {
+    vi.resetModules();
+    const { requireAuth } = await import("./middleware.ts");
+    const app = new Hono().get("/", requireAuth, (c) => c.text("ok"));
+    return (bearer: string) =>
+      app.request("/", { headers: { Authorization: `Bearer ${bearer}` } });
+  };
+
+  it("should fetch the JWKS once for two valid requests", async () => {
+    const request = await getRoot();
+    const token = await mint(validClaims());
+
+    expect((await request(token)).status).toBe(200);
+    expect((await request(token)).status).toBe(200);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should refetch once a minute for an unknown kid, verifying a rotated key", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const request = await getRoot();
+    await request(await mint(validClaims()));
+    const rotated = await generateRsaKeyPair();
+    const rotatedJwk = await crypto.subtle.exportKey("jwk", rotated.publicKey);
+    vi.mocked(fetch).mockResolvedValue(
+      Response.json({
+        keys: [...jwks.keys, { ...rotatedJwk, kid: "rotated", alg: "RS256" }],
+      }),
+    );
+    vi.setSystemTime(Date.now() + 61_000);
+
+    const rotatedRes = await request(
+      await mint(validClaims(), rotated.privateKey, "rotated"),
+    );
+    const unknownRes = await request(
+      await mint(validClaims(), rotated.privateKey, "unknown"),
+    );
+
+    expect(rotatedRes.status).toBe(200);
+    expect(unknownRes.status).toBe(401);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

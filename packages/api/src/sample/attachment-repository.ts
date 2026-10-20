@@ -8,7 +8,9 @@ import {
   type SampleAttachment,
   sampleAttachmentSchema,
 } from "@projet-igsn/domain/sample/attachment/model";
-import { readFile, rm } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { rm, stat } from "node:fs/promises";
+import { Readable } from "node:stream";
 
 import type { DB } from "../db.ts";
 
@@ -132,10 +134,12 @@ export function createSampleAttachmentRepository(
           .where("sample_id", "=", sampleId)
           .executeTakeFirst();
         if (!row) return null;
-        const content = await readFile(pathFor(sampleId, row.id, row.name));
+        const path = pathFor(sampleId, row.id, row.name);
+        const { size } = await stat(path);
         return {
           attachment: toAttachment(row),
-          content: new Uint8Array(content),
+          content: Readable.toWeb(createReadStream(path)),
+          size,
         };
       }),
   };

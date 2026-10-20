@@ -127,14 +127,12 @@ const PICKABLE_COLUMNS: readonly PickableColumn[] = [
       internalNumber === null ? null : formatInternalId(internalNumber),
     className: "w-32",
   },
-  ...OPTIONAL_CARD_FIELDS.map(
-    (field): PickableColumn => ({
-      id: field.key,
-      label: field.label,
-      section: field.section,
-      cell: (sample) => <TextCell text={field.get(sample)} />,
-    }),
-  ),
+  ...OPTIONAL_CARD_FIELDS.map((field): PickableColumn => ({
+    id: field.key,
+    label: field.label,
+    section: field.section,
+    cell: (sample) => <TextCell text={field.get(sample)} />,
+  })),
   {
     id: "updatedAt",
     label: m.column_last_modified,

@@ -47,6 +47,19 @@ describe("staged uploads", () => {
     ]);
   });
 
+  it("should fall back to application/octet-stream for a filetype that is no header value", async () => {
+    const id = await seedStagedUpload(storageDir, {
+      ownerId: OWNER,
+      filetype: "text/plain\r\nX-Evil: 1",
+    });
+
+    expect(
+      await createStagedUploads(storageDir).findCompleteOwned([id], OWNER),
+    ).toEqual([
+      { id, name: "report.pdf", mediaType: "application/octet-stream" },
+    ]);
+  });
+
   it.each([
     { kind: "foreign", seed: { ownerId: FOREIGN } },
     { kind: "incomplete", seed: { ownerId: OWNER, written: 2 } },

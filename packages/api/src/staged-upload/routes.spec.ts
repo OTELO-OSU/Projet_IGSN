@@ -13,6 +13,7 @@ import { createApp } from "../app.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { seedStagedUpload } from "../tests/seed-staged-upload.ts";
+import { createStagedUploads } from "./staged-uploads.ts";
 
 const UPLOADS = "/admin/samples/import/uploads/";
 
@@ -179,4 +180,34 @@ describe("staged upload routes", () => {
       }).toEqual({ status: 204, offset: "4" });
     },
   );
+
+  pgTest(
+    "should refuse a request naming an id with no stored upload as 404, keeping upload <id> whole",
+    async ({ db }) => {
+      const owner = await provisionUser(db, "test-token");
+      const id = await createdId(db, 4);
+      await patch(db, id, new Uint8Array(4));
+
+      const res = await tus(db, `${UPLOADS}${id}.json`, { method: "DELETE" });
+      const stagedUploads = createStagedUploads(storageDir);
+
+      expect({
+        status: res.status,
+        quota: await stagedUploads.quotaUsed(owner.id),
+        listed: (await stagedUploads.findCompleteOwned([id], owner.id)).length,
+      }).toEqual({ status: 404, quota: 4, listed: 1 });
+    },
+  );
+
+  pgTest("should let the owner delete their upload", async ({ db }) => {
+    const owner = await provisionUser(db, "test-token");
+    const id = await createdId(db, 4);
+
+    const res = await tus(db, `${UPLOADS}${id}`, { method: "DELETE" });
+
+    expect({
+      status: res.status,
+      quota: await createStagedUploads(storageDir).quotaUsed(owner.id),
+    }).toEqual({ status: 204, quota: 0 });
+  });
 });

@@ -68,11 +68,11 @@ const exportFile = () =>
 function captureSavedFiles() {
   vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
   const savedNames: string[] = [];
-  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
-    function (this: HTMLAnchorElement) {
-      savedNames.push(this.download);
-    },
-  );
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    savedNames.push(this.download);
+  });
   return savedNames;
 }
 

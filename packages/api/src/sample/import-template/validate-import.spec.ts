@@ -2,7 +2,8 @@ import { RESEARCH_PROJECT_SAMPLE } from "@projet-igsn/domain/sample/core/core-sa
 import { MAX_IMPORT_ROWS } from "@projet-igsn/domain/sample/import/max-import-rows";
 import { HEADER_ROW } from "@projet-igsn/domain/sample/import/template-header";
 import ExcelJS from "exceljs";
-import { describe, expect, it } from "vitest";
+import JSZip from "jszip";
+import { describe, expect, it, vi } from "vitest";
 
 import { uploadLimit } from "../upload-limit.ts";
 import { SHEETS } from "./columns.ts";
@@ -131,6 +132,43 @@ describe("validateImport", () => {
       [{ code: "unreadable_file" }],
     );
   });
+
+  it.each([
+    ["honest", false],
+    ["understated", true],
+  ])(
+    "should refuse a workbook inflating past the size budget before exceljs parses it, with %s declared sizes",
+    async (_, understated) => {
+      const zip = await JSZip.loadAsync(await bytesOf(await cleanBook()));
+      zip.file("xl/media/padding.bin", new Uint8Array(100 * 1024 * 1024));
+      const bomb = await zip.generateAsync({
+        type: "arraybuffer",
+        compression: "DEFLATE",
+      });
+      if (understated) {
+        const view = new DataView(bomb);
+        const end = bomb.byteLength - 22;
+        let at = view.getUint32(end + 16, true);
+        for (let left = view.getUint16(end + 10, true); left > 0; left--) {
+          view.setUint32(at + 24, 10, true);
+          at +=
+            46 +
+            view.getUint16(at + 28, true) +
+            view.getUint16(at + 30, true) +
+            view.getUint16(at + 32, true);
+        }
+      }
+
+      const load = vi.spyOn(
+        Object.getPrototypeOf(new ExcelJS.Workbook().xlsx),
+        "load",
+      );
+
+      expect(await issuesOf(bomb)).toEqual([{ code: "unreadable_file" }]);
+      expect(load).not.toHaveBeenCalled();
+    },
+    15_000,
+  );
 
   it("should stop at a structural issue before reading any row", async () => {
     const book = await templateBook();

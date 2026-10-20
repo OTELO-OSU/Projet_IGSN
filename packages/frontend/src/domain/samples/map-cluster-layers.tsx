@@ -57,13 +57,11 @@ export function ClusterLayers({
       number === undefined ? [] : [number],
     ),
   );
-  const shown = clusters?.map(
-    (cluster): ShownCluster => ({
-      ...cluster,
-      sample:
-        cluster.number === undefined ? undefined : details.get(cluster.number),
-    }),
-  );
+  const shown = clusters?.map((cluster): ShownCluster => ({
+    ...cluster,
+    sample:
+      cluster.number === undefined ? undefined : details.get(cluster.number),
+  }));
 
   return (
     <>

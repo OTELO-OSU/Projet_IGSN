@@ -3,8 +3,10 @@ import type { z } from "zod";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { sampleStatusSchema } from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
+import { canPublishSamples } from "@projet-igsn/domain/user/can-publish-samples";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
+import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { SelectFilter } from "#/filters/select-filter.tsx";
@@ -52,6 +54,7 @@ function SampleListPage() {
   const selection = useSampleSelection(params, false);
   const { search, ownership } = params;
   const navigate = Route.useNavigate();
+  const { data: currentUser } = useCurrentUser();
 
   const update = (next: Partial<SampleListSearch>) =>
     void navigate({ search: (prev) => ({ ...prev, ...next }) });
@@ -62,8 +65,12 @@ function SampleListPage() {
         title={m.samples_title()}
         action={
           <div className="flex gap-2">
-            <BulkEditDialog exportRequest={selection.exportRequest} />
-            <ImportSamplesDialog />
+            {currentUser !== undefined && canPublishSamples(currentUser) ? (
+              <>
+                <BulkEditDialog exportRequest={selection.exportRequest} />
+                <ImportSamplesDialog />
+              </>
+            ) : null}
             <RetrySynchronizationButton />
             <Button asChild>
               <Link to="/samples/create">{m.action_create()}</Link>

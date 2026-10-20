@@ -7,6 +7,9 @@
 	redir /admin /admin/
 	redir /api /api/
 	handle_path /api/* {
+		request_body {
+			max_size 110MB
+		}
 		reverse_proxy api:3002 {
 			import realip
 		}

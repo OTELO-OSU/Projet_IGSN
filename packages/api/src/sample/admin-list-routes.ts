@@ -7,6 +7,7 @@ import { Hono } from "hono";
 
 import type { SampleAdminDeps, SampleAdminEnv } from "./admin-routes.ts";
 
+import { requireActiveSession } from "../auth/active-session.ts";
 import { getModerationScope } from "../auth/moderation-scope.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import { samplesExportResponse } from "./bulk-edit/export-workbook.ts";
@@ -73,7 +74,7 @@ export function createSampleListRoutes({ repository, users }: SampleAdminDeps) {
       );
       return samplesExportResponse(data);
     })
-    .post("/retry-synchronization", async (c) =>
+    .post("/retry-synchronization", requireActiveSession, async (c) =>
       c.json({
         count: await repository.retryFailedSynchronizations(c.get("user").id),
       }),

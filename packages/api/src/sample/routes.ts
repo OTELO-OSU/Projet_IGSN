@@ -156,7 +156,12 @@ export function createSampleRoutes(
         if (!found) {
           return c.json({ error: "Attachment not found" }, 404);
         }
-        return attachmentDownload(found.attachment, found.content);
+        return attachmentDownload(
+          c.req.raw,
+          found.attachment,
+          found.content,
+          found.size,
+        );
       },
     );
 }

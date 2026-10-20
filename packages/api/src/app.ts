@@ -1,7 +1,10 @@
 import type { Kysely } from "kysely";
 
+import { ATTACHMENT_MAX_BYTES } from "@projet-igsn/domain/sample/attachment/attachment-validator";
+import { IMPORT_MAX_BYTES } from "@projet-igsn/domain/sample/import/import-validator";
 import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { Hono, type MiddlewareHandler } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { randomBytes } from "node:crypto";
@@ -12,6 +15,7 @@ import type { SendMail } from "./mail/send-mail.ts";
 import { attachmentsDir as defaultAttachmentsDir } from "./attachments-dir.ts";
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import { requirePublisher } from "./auth/require-publisher.ts";
 import {
   type CaptchaConfig,
   DEFAULT_CAPTCHA_COST,
@@ -25,6 +29,7 @@ import { createPublicManualGroupRoutes } from "./manual-group/public-routes.ts";
 import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { createManualGroupRoutes } from "./manual-group/routes.ts";
 import {
+  ADMIN_IP_BUDGET,
   CONTACT_MAIL_IP_BUDGET,
   EXPORT_IP_BUDGET,
   MAP_IP_BUDGET,
@@ -61,6 +66,41 @@ import {
   createUserRoutes,
   createUserSearchRoutes,
 } from "./user/routes.ts";
+
+const MIB = 1024 * 1024;
+const IMPORT_PATHS = new Set([
+  "/admin/samples/import",
+  "/admin/samples/import/duplicates",
+  "/admin/samples/bulk-edit",
+  "/service/samples/batch",
+]);
+const limitBody = (maxSize: number) =>
+  bodyLimit({
+    maxSize,
+    onError: (c) => c.json({ error: "Payload too large" }, 413),
+  });
+const attachmentBodyLimit = limitBody(ATTACHMENT_MAX_BYTES + MIB);
+const importBodyLimit = limitBody(IMPORT_MAX_BYTES + MIB);
+const defaultBodyLimit = limitBody(MIB);
+const largeBodyLimit = (path: string) =>
+  path.startsWith("/admin/samples/import/uploads") ||
+  /^\/admin\/samples\/[^/]+\/attachments$/.test(path)
+    ? attachmentBodyLimit
+    : IMPORT_PATHS.has(path)
+      ? importBodyLimit
+      : undefined;
+const routeBodyLimit: MiddlewareHandler = (c, next) => {
+  const limit = largeBodyLimit(c.req.path);
+  if (!limit) return defaultBodyLimit(c, next);
+  const { headers } = c.req.raw;
+  return headers.has("content-length") && !headers.has("transfer-encoding")
+    ? limit(c, next)
+    : next();
+};
+const authenticatedBodyLimit: MiddlewareHandler = (c, next) => {
+  const limit = largeBodyLimit(c.req.path);
+  return limit ? limit(c, next) : next();
+};
 
 export function createApp(
   database: Kysely<DB>,
@@ -197,9 +237,11 @@ export function createApp(
     );
 
   const adminRoutes = new Hono<AuthenticatedEnv>()
+    .use("*", rateLimit(rateLimitConfig, "ip", ADMIN_IP_BUDGET))
     .use("*", requireAuth)
     .use("*", adminRateLimit)
     .use("*", currentUser(userRepository))
+    .use("*", authenticatedBodyLimit)
     .route(
       "/currentUser",
       createCurrentUserRoutes(userRepository, manualGroupRepository, mail),
@@ -229,7 +271,6 @@ export function createApp(
       "/samples/:id/deletion-request",
       rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),
     )
-    .route("/samples/import/uploads", createStagedUploadRoutes(tusServer))
     .use("/samples/import-template", importRateLimit)
     .use("/samples/import-template/reservation", importRateLimit)
     .use("/samples/import", importRateLimit)
@@ -242,6 +283,10 @@ export function createApp(
       "/samples/import/internal-id-request",
       rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),
     )
+    .use("/samples/import-template/*", requirePublisher)
+    .use("/samples/import/*", requirePublisher)
+    .use("/samples/bulk-edit", requirePublisher)
+    .route("/samples/import/uploads", createStagedUploadRoutes(tusServer))
     .use(
       "/samples/export",
       rateLimit(rateLimitConfig, "user", IMPORT_TEMPLATE_USER_BUDGET),
@@ -308,6 +353,7 @@ export function createApp(
         ],
       }),
     )
+    .use("*", routeBodyLimit)
     .onError((error, c) => {
       if (error instanceof HTTPException) {
         return c.json({ error: error.message }, error.status);

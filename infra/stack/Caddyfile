@@ -18,7 +18,7 @@
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 		-Server
 	}
-	# ponytail: no CSP, its nonces have to come from the apps.
+	# ponytail: no CSP on the SSR frontend, its nonces have to come from TanStack Start.
 }
 
 :80 {
@@ -27,11 +27,15 @@
 	redir /admin /admin/
 	redir /api /api/
 	handle_path /api/* {
+		request_body {
+			max_size 110MB
+		}
 		reverse_proxy api:8080 {
 			import realip
 		}
 	}
 	handle /admin/* {
+		header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' {$OIDC_ISSUER}/; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
 		reverse_proxy admin:8080 {
 			import realip
 		}

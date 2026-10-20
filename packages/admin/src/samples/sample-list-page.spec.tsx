@@ -67,6 +67,34 @@ beforeAll(() => page.viewport(1280, 1600));
 type Screen = Awaited<ReturnType<typeof renderRoute>>["screen"];
 
 describe("SampleListPage", () => {
+  it("should hide the bulk edit and import from a user who cannot publish", async () => {
+    fakeApi();
+    fakeCurrentUser({ status: "pending" });
+    const { screen } = await renderRoute("/");
+
+    await expect
+      .element(screen.getByRole("link", { name: "Create" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: "Bulk edit" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Bulk import" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should offer the bulk edit and import to a user who can publish", async () => {
+    fakeApi();
+    const { screen } = await renderRoute("/");
+
+    await expect
+      .element(screen.getByRole("button", { name: "Bulk edit" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: "Bulk import" }))
+      .toBeVisible();
+  });
+
   it("should not offer the tombstone status, never listed among own samples", async () => {
     fakeApi();
     const { screen } = await renderRoute("/");

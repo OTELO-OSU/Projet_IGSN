@@ -2,6 +2,7 @@ import type { Context, MiddlewareHandler } from "hono";
 
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { createMiddleware } from "hono/factory";
+import { isIPv4, isIPv6 } from "node:net";
 import { RateLimiterRes } from "rate-limiter-flexible";
 
 import type { KeycloakClaims } from "../auth/middleware.ts";
@@ -17,6 +18,16 @@ const BUDGET = {
   user: AUTHENTICATED_USER_BUDGET,
 };
 
+function clientKey(address: string): string {
+  if (!isIPv6(address)) return address;
+  const ipv4 = address.replace(/^::ffff:/i, "");
+  if (isIPv4(ipv4)) return ipv4;
+  const [head = "", tail] = address.split("::");
+  const left = head ? head.split(":") : [];
+  const right = tail ? tail.split(":") : [];
+  return `${[...left, ...Array<string>(8 - left.length - right.length).fill("0"), ...right].slice(0, 4).join(":")}::/64`;
+}
+
 function requestKey(
   c: Context<RateLimitEnv>,
   scope: RateLimitScope,
@@ -24,11 +35,9 @@ function requestKey(
 ): string {
   if (scope === "user") return c.get("jwtPayload")?.sub ?? "unknown";
   const forwarded = trustProxyHeaders ? c.req.header("X-Real-IP") : undefined;
-  return (
-    forwarded ??
-    (c.env ? getConnInfo(c).remote.address : undefined) ??
-    "unknown"
-  );
+  const address =
+    forwarded ?? (c.env ? getConnInfo(c).remote.address : undefined);
+  return address === undefined ? "unknown" : clientKey(address);
 }
 
 export function rateLimit(
