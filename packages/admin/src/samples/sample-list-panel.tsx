@@ -45,6 +45,7 @@ export function SampleListPanel({
         <SampleTable
           samples={query.data.data}
           moderated={moderated}
+          query={params.search ?? ""}
           rowSelection={selection.rowSelection}
           onRowSelectionChange={selection.onRowSelectionChange}
           sorting={sorting}

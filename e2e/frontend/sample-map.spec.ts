@@ -21,28 +21,31 @@ test.describe("search results map", () => {
     await map.open();
 
     await map.expectResultCount(LOCATED_ASH);
-    await map.expectMarker("Fuji Ash");
+    await map.expectMarker(fuji.name);
     await map.expectMarkedSampleCount(LOCATED_ASH);
 
-    await map.expectMarkerTooltip("Fuji Ash", fuji.igsn);
-    await map.selectMarker("Fuji Ash");
-    await map.expectSelected("Fuji Ash");
-    const samplePage = await map.openListedInNewTab("Fuji Ash");
+    await map.expectMarkerTooltip(fuji.name, fuji.igsn);
+    await map.selectMarker(fuji.name);
+    await map.expectSelected(fuji.name);
+    const samplePage = await map.openListedInNewTab(fuji.name);
 
-    await sampleDetailPage(samplePage).expectSample("Fuji Ash", fuji.igsn);
+    await sampleDetailPage(samplePage).expectSample(fuji.name, fuji.igsn);
   });
 
   test("a reader maps every published sample from the home page", async ({
     page,
+    samples,
   }) => {
+    const fuji = sampleNamed(samples, "Fuji Ash");
+    const baikal = sampleNamed(samples, "Baikal Marble");
     const home = homePage(page);
     const map = resultsMapPage(page);
     await home.goto();
 
     await home.mapAllSamples();
 
-    await map.expectMarker("Baikal Marble");
-    await map.expectMarker("Fuji Ash");
+    await map.expectMarker(baikal.name);
+    await map.expectMarker(fuji.name);
     await map.expectEveryMarkedSampleCounted();
   });
 });

@@ -25,6 +25,7 @@ import {
   DEMO_SAMPLES,
 } from "./seed-demo-samples.ts";
 import { seedMockUsers } from "./seed-mock-users.ts";
+import { seedSampleName } from "./seed-sample-name.ts";
 
 const listAcceptedOwners = (db: Kysely<DB>): Promise<SampleOwner[]> =>
   db
@@ -65,13 +66,17 @@ const created = await insertSamples(
   db,
   DEMO_SAMPLES.map((row, index) => ({
     ...row,
+    name: seedSampleName(index),
+    specificName: row.name,
     condition: DEMO_CONDITIONS[row.name],
     mineralClassifications: DEMO_MINERAL_CLASSIFICATIONS[row.name],
     owner: owners[index % owners.length]!,
   })),
 );
 
-const idByName = new Map(created.map(({ id, name }) => [name, id]));
+const idByName = new Map(
+  created.map(({ id, specific_name }) => [specific_name, id]),
+);
 const sampleId = (name: string): string => {
   const id = idByName.get(name);
   if (!id) {

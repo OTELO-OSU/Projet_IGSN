@@ -2,7 +2,7 @@ import { expect, sampleNamed, test } from "../support/db";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 
 test.describe("sample list", () => {
-  test("a reader can search for a sample by name and add a field to the result cards", async ({
+  test("a reader can search for a sample by its specific name and add a field to the result cards", async ({
     page,
     samples,
   }) => {
@@ -10,7 +10,7 @@ test.describe("sample list", () => {
 
     const list = sampleListPage(page);
     await list.goto();
-    await list.search(target.name);
+    await list.search("Basalt 42");
 
     await list.expectSampleLink(target.name, target.igsn);
 

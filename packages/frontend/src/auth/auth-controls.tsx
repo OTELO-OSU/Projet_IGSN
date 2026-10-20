@@ -1,4 +1,5 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { NAV_LINK_CLASS } from "@projet-igsn/design-system/lib/nav-link-class";
 import { signIn } from "@projet-igsn/domain/auth/sign-in";
 import {
   broadcastSignOut,
@@ -10,7 +11,6 @@ import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 
 import { ADMIN_URL } from "#/admin-url.ts";
-import { NAV_LINK_CLASS } from "#/header/nav-link-class.ts";
 import { m } from "#/paraglide/messages.js";
 
 export function AuthControls() {

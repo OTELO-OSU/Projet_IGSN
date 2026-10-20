@@ -105,6 +105,9 @@ const clickSelectionCell = (screen: RenderResult) =>
 
 const COLUMNS_KEY = "admin-sample-columns";
 
+const highlighted = () =>
+  [...(CSS.highlights.get("sample-search-match") ?? [])].map(String);
+
 const showColumns = (columns: string) =>
   localStorage.setItem(COLUMNS_KEY, columns);
 
@@ -114,6 +117,7 @@ function renderTable(
   data: AdminSampleListItem[],
   onSortingChange = vi.fn(),
   moderated = false,
+  query = "",
 ) {
   function Harness() {
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -122,6 +126,7 @@ function renderTable(
       <SampleTable
         samples={data}
         moderated={moderated}
+        query={query}
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
         sorting={sorting}
@@ -252,6 +257,70 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByRole("columnheader", { name: "Published" }))
       .not.toBeInTheDocument();
+  });
+
+  it("should show the specific name of a row once its column is picked", async () => {
+    const screen = await renderTable([
+      { ...sample, material: "rock_and_sediment.rock" },
+    ]);
+
+    await screen.getByRole("button", { name: "Columns" }).click();
+    await screen.getByRole("checkbox", { name: "Specific name" }).click();
+
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Specific name" }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("cell", { name: "MC-2026-007", exact: true }))
+      .toBeInTheDocument();
+  });
+
+  it.each<[string, string, string, string[]]>([
+    ["the name", "", "basalte", ["Basalte"]],
+    ["the material", "material", "sediment", ["sediment"]],
+    ["the specific name", "specificName", "olivine", ["Olivine"]],
+    ["the whole IGSN", "", PUBLISHED.igsn ?? "", [PUBLISHED.igsn ?? ""]],
+    ["no partial IGSN", "", "01K072", []],
+  ])(
+    "should highlight a search match in %s",
+    async (_, columns, query, expected) => {
+      showColumns(columns);
+      const screen = await renderTable(
+        [
+          {
+            ...PUBLISHED,
+            material: "rock_and_sediment.rock",
+            specificName: "Olivine rich",
+          },
+        ],
+        vi.fn(),
+        false,
+        query,
+      );
+
+      await expect
+        .element(screen.getByRole("columnheader", { name: "IGSN" }))
+        .toBeInTheDocument();
+      await expect.poll(highlighted).toEqual(expected);
+    },
+  );
+
+  it("should highlight a search match in a column picked after the search", async () => {
+    showColumns("");
+    const screen = await renderTable(
+      [{ ...sample, specificName: "Olivine rich" }],
+      vi.fn(),
+      false,
+      "olivine",
+    );
+
+    await screen.getByRole("button", { name: "Columns" }).click();
+    await screen.getByRole("checkbox", { name: "Specific name" }).click();
+
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Specific name" }))
+      .toBeInTheDocument();
+    await expect.poll(highlighted).toEqual(["Olivine"]);
   });
 
   it("should hide the synchronization column once unticked", async () => {

@@ -11,6 +11,7 @@ import { createDb } from "../src/db.ts";
 import { insertSamples } from "./insert-samples.ts";
 import { MOCK_RESEARCHERS } from "./seed-mock-researchers.ts";
 import { seedMockUsers } from "./seed-mock-users.ts";
+import { seedSampleName } from "./seed-sample-name.ts";
 import { SEED_SAMPLES } from "./seed-samples.ts";
 
 export async function seed(
@@ -25,8 +26,10 @@ export async function seed(
   const ownerIds = await seedMockUsers(db);
   const created = await insertSamples(
     db,
-    samples.map(({ owner, collaborators, ...row }) => ({
+    samples.map(({ owner, collaborators, ...row }, index) => ({
       ...row,
+      name: seedSampleName(index),
+      specificName: row.name,
       owner: { ...MOCK_RESEARCHERS[owner], id: ownerIds[owner] },
       collaborators: collaborators?.map(({ researcher, role }) => ({
         userId: ownerIds[researcher],

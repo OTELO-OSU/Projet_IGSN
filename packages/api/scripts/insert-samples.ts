@@ -81,7 +81,7 @@ export async function insertSamples(
         },
       ),
     )
-    .returning(["id", "name", "nature", "igsn", "status"])
+    .returning(["id", "name", "specific_name", "nature", "igsn", "status"])
     .execute();
 
   await db

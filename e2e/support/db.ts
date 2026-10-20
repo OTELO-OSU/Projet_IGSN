@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 export type SeededSample = {
   id: string;
   name: string;
+  specific_name: string | null;
   nature: string;
   igsn: string | null;
   status: "draft" | "published" | "withdrawn" | "tombstone";
@@ -23,9 +24,9 @@ function resetAndSeed(): SeededSample[] {
   return JSON.parse(lastLine) as SeededSample[];
 }
 
-export function sampleNamed(samples: SeededSample[], name: string) {
-  const sample = samples.find((s) => s.name === name);
-  if (!sample?.igsn) throw new Error(`seed must publish "${name}"`);
+export function sampleNamed(samples: SeededSample[], specificName: string) {
+  const sample = samples.find((s) => s.specific_name === specificName);
+  if (!sample?.igsn) throw new Error(`seed must publish "${specificName}"`);
   return { ...sample, igsn: sample.igsn };
 }
 

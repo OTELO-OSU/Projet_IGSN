@@ -1,41 +1,58 @@
 import type { LinkProps } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 
+import { NAV_LINK_CLASS } from "@projet-igsn/design-system/lib/nav-link-class";
+import { cn } from "@projet-igsn/design-system/lib/utils";
 import { Link } from "@tanstack/react-router";
 
-const navLinkClass =
-  "text-primary hover:bg-primary/5 aria-[current=page]:bg-primary/10 flex items-center gap-2 overflow-hidden rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap [&>svg]:size-4 [&>svg]:shrink-0";
+const navItemClass = cn(
+  NAV_LINK_CLASS,
+  "gap-2 overflow-hidden px-3 py-2 text-sm whitespace-nowrap [&>svg]:size-4 [&>svg]:shrink-0",
+);
 
 export function NavItem({
   to,
   search,
+  href,
   Icon,
   label,
-  isCurrent,
+  isCurrent = false,
   isCollapsed,
 }: {
-  to: LinkProps["to"];
+  to?: LinkProps["to"];
   search?: LinkProps["search"];
+  href?: string;
   Icon: LucideIcon;
   label: string;
-  isCurrent: boolean;
+  isCurrent?: boolean;
   isCollapsed: boolean;
 }) {
+  const content = (
+    <>
+      <Icon />
+      <span
+        className={`transition-opacity motion-reduce:transition-none ${isCollapsed ? "md:opacity-0" : ""}`}
+      >
+        {label}
+      </span>
+    </>
+  );
   return (
     <li>
-      <Link
-        to={to}
-        search={search}
-        className={navLinkClass}
-        aria-current={isCurrent ? "page" : undefined}
-      >
-        <Icon />
-        <span
-          className={`transition-opacity motion-reduce:transition-none ${isCollapsed ? "md:opacity-0" : ""}`}
+      {href ? (
+        <a href={href} className={navItemClass}>
+          {content}
+        </a>
+      ) : (
+        <Link
+          to={to}
+          search={search}
+          className={navItemClass}
+          aria-current={isCurrent ? "page" : undefined}
         >
-          {label}
-        </span>
-      </Link>
+          {content}
+        </Link>
+      )}
     </li>
   );
 }

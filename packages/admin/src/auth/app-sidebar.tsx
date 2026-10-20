@@ -10,6 +10,7 @@ import {
   Building2Icon,
   ChevronsLeftIcon,
   FlaskConicalIcon,
+  GlobeIcon,
   MountainIcon,
   ShieldCheckIcon,
   TelescopeIcon,
@@ -17,8 +18,10 @@ import {
   UsersRoundIcon,
 } from "lucide-react";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 
+import { isSamplesSection } from "./is-samples-section.ts";
 import { NavItem } from "./nav-item.tsx";
 
 const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
@@ -57,10 +60,9 @@ export function AppSidebar({
   const pathname = useLocation({ select: (location) => location.pathname });
   const isUsersSection = pathname.startsWith("/users");
   const isSampleModerationSection = pathname.startsWith(SAMPLE_MODERATION_PATH);
-  const isSamplesSection = pathname === "/" || pathname === "/samples/create";
 
   return (
-    <aside className="flex flex-col gap-2 border-b p-2 motion-reduce:transition-none md:w-(--sidebar-width) md:shrink-0 md:overflow-hidden md:border-r md:border-b-0 md:transition-[width] md:duration-500 md:ease-in-out">
+    <aside className="flex flex-col gap-2 border-b p-2 motion-reduce:transition-none md:sticky md:top-24 md:h-[calc(100vh-96px)] md:w-(--sidebar-width) md:shrink-0 md:overflow-hidden md:border-r md:border-b-0 md:transition-[width] md:duration-500 md:ease-in-out">
       <Button
         variant="ghost"
         size="icon"
@@ -74,14 +76,17 @@ export function AppSidebar({
           className={`transition-transform duration-500 ease-in-out ${isCollapsed ? "rotate-180" : ""}`}
         />
       </Button>
-      <nav id={SIDEBAR_NAV_ID}>
+      <nav
+        id={SIDEBAR_NAV_ID}
+        className="flex flex-wrap gap-1 md:flex-1 md:flex-col md:flex-nowrap"
+      >
         <ul className="flex flex-wrap gap-1 md:flex-col md:flex-nowrap">
           <NavItem
             to="/"
             search={listSearch}
             Icon={MountainIcon}
             label={m.nav_samples()}
-            isCurrent={isSamplesSection}
+            isCurrent={isSamplesSection(pathname)}
             isCollapsed={isCollapsed}
           />
           <NavItem
@@ -147,6 +152,14 @@ export function AppSidebar({
               isCollapsed={isCollapsed}
             />
           )}
+        </ul>
+        <ul className="md:mt-auto">
+          <NavItem
+            href={FRONTEND_URL}
+            Icon={GlobeIcon}
+            label={m.nav_public_site()}
+            isCollapsed={isCollapsed}
+          />
         </ul>
       </nav>
     </aside>

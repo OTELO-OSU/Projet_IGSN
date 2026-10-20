@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
 import logoIgsnUrl from "@projet-igsn/design-system/assets/logo-igsn.svg";
-import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { NAV_LINK_CLASS } from "@projet-igsn/design-system/lib/nav-link-class";
 import { cn } from "@projet-igsn/design-system/lib/utils";
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-samples";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { GlobeIcon, MountainIcon } from "lucide-react";
 
 import { FRONTEND_URL } from "#/frontend-url.ts";
@@ -13,10 +13,13 @@ import { m } from "#/paraglide/messages.js";
 
 import { UserMenu } from "../user-menu.tsx";
 import { AppSidebar } from "./app-sidebar.tsx";
+import { isSamplesSection } from "./is-samples-section.ts";
 import { useCurrentUser } from "./use-current-user.ts";
 import { useSidebarCollapsed } from "./use-sidebar-collapsed.ts";
 
 const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
+
+const headerLinkClass = cn(NAV_LINK_CLASS, "gap-2 [&>svg]:size-4");
 
 export function AppLayout({
   onSignOut,
@@ -26,6 +29,7 @@ export function AppLayout({
   children?: ReactNode;
 }) {
   const { data: me } = useCurrentUser();
+  const pathname = useLocation({ select: (location) => location.pathname });
 
   const [isCollapsed, toggleCollapsed] = useSidebarCollapsed();
   const hasSidebar = me !== undefined && canModerateSamples(me);
@@ -41,21 +45,24 @@ export function AppLayout({
               className="h-12 w-auto sm:h-16"
             />
           </Link>
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-x-6 gap-y-2">
             {!hasSidebar && (
-              <Button asChild variant="secondary">
-                <Link to="/" search={listSearch}>
+              <nav className="flex flex-wrap items-center gap-x-6">
+                <Link
+                  to="/"
+                  search={listSearch}
+                  className={headerLinkClass}
+                  aria-current={isSamplesSection(pathname) ? "page" : undefined}
+                >
                   <MountainIcon />
                   {m.nav_samples()}
                 </Link>
-              </Button>
+                <a href={FRONTEND_URL} className={headerLinkClass}>
+                  <GlobeIcon />
+                  {m.nav_public_site()}
+                </a>
+              </nav>
             )}
-            <Button asChild variant="secondary">
-              <a href={FRONTEND_URL}>
-                <GlobeIcon />
-                {m.nav_public_site()}
-              </a>
-            </Button>
             <UserMenu onSignOut={onSignOut} />
           </div>
         </div>

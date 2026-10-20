@@ -115,6 +115,14 @@ Once per environment:
   UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>';
   ```
 
+## Emptying preprod's samples
+
+- To start over with no sample, open Portainer's console on the stack's `api` container (working dir `/app/packages/api`) and run `pnpm clear-samples --yes`.
+- It deletes every sample with its locations, attachments (rows and files) and batch items and webhooks, and restarts the internal number sequence so the next published sample is `sample-1`.
+- It keeps users, groups, manual groups and service accounts, and does not reseed.
+- It never touches DataCite, so already registered DOIs stay.
+- It refuses without `--yes` and whenever `DATACITE_API_HOST` is `https://api.datacite.org`, production's value.
+
 ## Storage
 
 Every preproduction deploy pushes four new `preprod-<short sha>` images, which pile up in the registry and on the Portainer host until something removes them.
