@@ -12,6 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { TruncatedText } from "@projet-igsn/design-system/components/ui/truncated-text";
 import { useSearchHighlight } from "@projet-igsn/design-system/lib/use-search-highlight";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
@@ -117,7 +118,17 @@ const PICKABLE_COLUMNS: readonly PickableColumn[] = [
     id: "material",
     label: m.sample_field_material,
     section: m.sample_section_sample,
-    cell: (sample) => <TextCell text={materialText(sample)} highlight />,
+    cell: (sample) => {
+      const text = materialText(sample);
+      return (
+        text && (
+          <TruncatedText truncate="start" highlight side="top">
+            {text}
+          </TruncatedText>
+        )
+      );
+    },
+    className: "w-60",
   },
   {
     id: "specificName",

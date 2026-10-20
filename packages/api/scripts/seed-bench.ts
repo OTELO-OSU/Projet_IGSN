@@ -11,8 +11,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import { createDb } from "../src/db.ts";
 import { FACET_VALUES } from "./bench-lib.ts";
-import { seedMockUsers } from "./seed-mock-users.ts";
-import { seedSampleName } from "./seed-sample-name.ts";
+import { scatteredSeedSampleName } from "./seed-sample-name.ts";
 
 const BATCH_SIZE = 1000;
 const CONCURRENCY = 8;
@@ -39,7 +38,16 @@ const randomPath = (key: string) =>
   faker.helpers.arrayElement(FACET_VALUES[key]!);
 
 const db = createDb();
-const ownerIds = Object.values(await seedMockUsers(db));
+const ownerIds = (
+  await db
+    .selectFrom("user")
+    .select("id")
+    .where("status", "=", "accepted")
+    .execute()
+).map((user) => user.id);
+if (ownerIds.length === 0) {
+  throw new Error("no accepted user to own the bench samples");
+}
 const groupIds = (
   await db.selectFrom("manual_group").select("id").execute()
 ).map((group) => group.id);
@@ -53,7 +61,7 @@ function benchSample(id: string, position: number) {
     igsn: generateIgsnSuffix(id),
     published_at: sql<Date>`now()`,
     internal_number: sql<number>`nextval('sample_internal_number_seq')`,
-    name: seedSampleName(position),
+    name: scatteredSeedSampleName(position),
     specific_name: `${faker.helpers.arrayElement(ROCK_NAMES)} ${faker.location.city()}`,
     nature: faker.helpers.arrayElement(NATURES),
     texture: faker.helpers.arrayElement(TEXTURES),

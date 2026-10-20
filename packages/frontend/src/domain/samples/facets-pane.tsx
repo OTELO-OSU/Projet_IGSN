@@ -37,7 +37,8 @@ export function FacetsPane({
 
   return (
     <div
-      className={`relative grid gap-8 ${isCollapsed ? "lg:grid-cols-[3rem_minmax(0,1fr)]" : "lg:grid-cols-[24rem_minmax(0,1fr)]"} ${isAnimated ? "transition-[grid-template-columns] duration-300 ease-in-out motion-reduce:transition-none" : ""}`}
+      data-collapsed={isCollapsed || undefined}
+      className={`group/facets relative grid gap-8 ${isCollapsed ? "lg:grid-cols-[3rem_minmax(0,1fr)]" : "lg:grid-cols-[24rem_minmax(0,1fr)]"} ${isAnimated ? "transition-[grid-template-columns] duration-300 ease-in-out motion-reduce:transition-none" : ""}`}
     >
       <div className="hidden overflow-x-clip lg:grid">
         <div

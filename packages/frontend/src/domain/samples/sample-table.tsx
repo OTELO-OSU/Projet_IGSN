@@ -62,6 +62,7 @@ const CARD_COLUMNS: readonly TextColumn[] = [
     text: materialText,
     truncate: "start",
     highlight: true,
+    className: "w-60 group-data-[collapsed]/facets:w-80",
   },
   {
     id: "location",
@@ -90,7 +91,7 @@ function textColumn({
       const value = text(row.original);
       return (
         value !== null && (
-          <TruncatedText truncate={truncate} highlight={highlight}>
+          <TruncatedText truncate={truncate} highlight={highlight} side="top">
             {value}
           </TruncatedText>
         )
@@ -150,7 +151,9 @@ function sampleColumns(
           className="text-primary block font-semibold hover:underline"
           onClick={(event) => event.stopPropagation()}
         >
-          <TruncatedText highlight>{row.original.name}</TruncatedText>
+          <TruncatedText highlight side="top">
+            {row.original.name}
+          </TruncatedText>
         </Link>
       ),
       meta: { className: `sticky left-10 w-48 ${STICKY_CELL_BACKGROUND}` },
@@ -159,7 +162,7 @@ function sampleColumns(
       id: "igsn",
       header: () => m.card_field_igsn(),
       cell: ({ row }) => (
-        <TruncatedText truncate="start" highlight="exact">
+        <TruncatedText truncate="start" highlight="exact" side="top">
           {row.original.igsn}
         </TruncatedText>
       ),

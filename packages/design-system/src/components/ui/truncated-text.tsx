@@ -13,11 +13,13 @@ export function TruncatedText({
   children,
   truncate = "end",
   highlight,
+  side = "right",
   className,
 }: {
   children: string;
   truncate?: "start" | "end";
   highlight?: true | "exact";
+  side?: "top" | "right";
   className?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,7 +54,7 @@ export function TruncatedText({
             )}
           </span>
         </TooltipTrigger>
-        <TooltipContent side="right">{children}</TooltipContent>
+        <TooltipContent side={side}>{children}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
