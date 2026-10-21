@@ -6,7 +6,7 @@ import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
-import { paraglideOptions } from "./src/i18n/paraglide";
+import { paraglideOptions } from "./src/i18n/paraglide.ts";
 
 const config = defineConfig({
   server: {

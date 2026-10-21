@@ -4,7 +4,7 @@ import { playwright } from "@vitest/browser-playwright";
 import path from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
 
-import { paraglideOptions } from "./src/i18n/paraglide";
+import { paraglideOptions } from "./src/i18n/paraglide.ts";
 
 export default defineConfig({
   plugins: [
