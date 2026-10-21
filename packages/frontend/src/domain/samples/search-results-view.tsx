@@ -160,6 +160,7 @@ export function SearchResultsView({
           <div className="phone:hidden">
             <SampleTable
               samples={samples}
+              query={query}
               fields={fields ?? []}
               selection={selection}
               onSelectionChange={onSelectionChange}

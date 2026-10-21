@@ -2,13 +2,17 @@ import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-vali
 import type { ReactNode } from "react";
 
 import { Checkbox } from "@projet-igsn/design-system/components/ui/checkbox";
-import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
+import {
+  DataTable,
+  STICKY_CELL_BACKGROUND,
+} from "@projet-igsn/design-system/components/ui/data-table";
 import { FieldPicker } from "@projet-igsn/design-system/components/ui/field-picker";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { TruncatedText } from "@projet-igsn/design-system/components/ui/truncated-text";
 import { useSearchHighlight } from "@projet-igsn/design-system/lib/use-search-highlight";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
@@ -114,7 +118,17 @@ const PICKABLE_COLUMNS: readonly PickableColumn[] = [
     id: "material",
     label: m.sample_field_material,
     section: m.sample_section_sample,
-    cell: (sample) => <TextCell text={materialText(sample)} highlight />,
+    cell: (sample) => {
+      const text = materialText(sample);
+      return (
+        text && (
+          <TruncatedText truncate="start" highlight side="top">
+            {text}
+          </TruncatedText>
+        )
+      );
+    },
+    className: "w-60",
   },
   {
     id: "specificName",
@@ -291,8 +305,7 @@ function sampleColumns(
         />
       ),
       meta: {
-        className:
-          "sticky right-0 w-20 bg-background [tr:hover_&]:bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-background))]",
+        className: `sticky right-0 w-20 ${STICKY_CELL_BACKGROUND}`,
       },
     },
   ];

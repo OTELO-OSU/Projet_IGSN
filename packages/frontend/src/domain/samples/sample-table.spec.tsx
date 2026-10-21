@@ -11,6 +11,7 @@ const basalt = {
   igsn: "0123456789ABCDEFGHJKMNPQRS",
   name: "Basalt 42",
   internalNumber: 7,
+  material: "rock_and_sediment.rock.igneous",
 } as unknown as PublicListedSample;
 
 const granite = {
@@ -20,9 +21,11 @@ const granite = {
 } as unknown as PublicListedSample;
 
 function Harness({
+  query,
   fields = [],
   maxSelected = 10,
 }: {
+  query?: string;
   fields?: string[];
   maxSelected?: number;
 }) {
@@ -30,6 +33,7 @@ function Harness({
   return (
     <SampleTable
       samples={[basalt, granite]}
+      query={query}
       fields={fields}
       selection={selection}
       onSelectionChange={setSelection}
@@ -77,6 +81,21 @@ describe("SampleTable", () => {
     await expect
       .element(page.getByRole("link", { name: "Basalt 42" }))
       .toHaveAttribute("href", `/samples/${basalt.igsn}`);
+  });
+
+  it.each<[string, string, string[]]>([
+    ["the name", "basalt", ["Basalt"]],
+    ["the material", "igneous", ["Igneous"]],
+    ["the whole IGSN", basalt.igsn ?? "", [basalt.igsn ?? ""]],
+    ["no partial IGSN", "0123456789", []],
+  ])("should highlight a search match in %s", async (_, query, expected) => {
+    await renderTable({ query });
+
+    await expect
+      .poll(() =>
+        [...(CSS.highlights.get("sample-search-match") ?? [])].map(String),
+      )
+      .toEqual(expected);
   });
 
   it("should check a row through the checkbox labelled by its sample name", async () => {

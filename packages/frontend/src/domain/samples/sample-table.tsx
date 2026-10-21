@@ -1,8 +1,12 @@
 import type { PublicListedSample } from "@projet-igsn/domain/sample/sample-validator";
 
 import { Checkbox } from "@projet-igsn/design-system/components/ui/checkbox";
-import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
+import {
+  DataTable,
+  STICKY_CELL_BACKGROUND,
+} from "@projet-igsn/design-system/components/ui/data-table";
 import { TruncatedText } from "@projet-igsn/design-system/components/ui/truncated-text";
+import { useSearchHighlight } from "@projet-igsn/design-system/lib/use-search-highlight";
 import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -13,6 +17,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useRef } from "react";
 
 import {
   collectorText,
@@ -25,8 +30,6 @@ import { m } from "#/paraglide/messages.js";
 
 type TableSample = PublicListedSample & { igsn: string };
 
-const WRAPPING = { className: "whitespace-normal" };
-
 const hasIgsn = (sample: PublicListedSample): sample is TableSample =>
   sample.igsn !== null;
 
@@ -34,6 +37,9 @@ type TextColumn = {
   id: string;
   label: () => string;
   text: (sample: TableSample) => string | null;
+  truncate?: "start";
+  highlight?: true;
+  className?: string;
 };
 
 const INTERNAL_NUMBER_COLUMN: TextColumn = {
@@ -41,6 +47,7 @@ const INTERNAL_NUMBER_COLUMN: TextColumn = {
   label: m.card_field_internal_id,
   text: ({ internalNumber }) =>
     internalNumber === null ? null : formatInternalId(internalNumber),
+  className: "w-32",
 };
 
 const CARD_COLUMNS: readonly TextColumn[] = [
@@ -49,7 +56,14 @@ const CARD_COLUMNS: readonly TextColumn[] = [
     label: m.card_field_type_nature,
     text: typeNatureText,
   },
-  { id: "material", label: m.sample_field_material, text: materialText },
+  {
+    id: "material",
+    label: m.sample_field_material,
+    text: materialText,
+    truncate: "start",
+    highlight: true,
+    className: "w-60 group-data-[collapsed]/facets:w-80",
+  },
   {
     id: "location",
     label: m.card_field_location,
@@ -62,12 +76,28 @@ const CARD_COLUMNS: readonly TextColumn[] = [
   },
 ];
 
-function textColumn({ id, label, text }: TextColumn): ColumnDef<TableSample> {
+function textColumn({
+  id,
+  label,
+  text,
+  truncate,
+  highlight,
+  className,
+}: TextColumn): ColumnDef<TableSample> {
   return {
     id,
     header: () => label(),
-    cell: ({ row }) => text(row.original),
-    meta: WRAPPING,
+    cell: ({ row }) => {
+      const value = text(row.original);
+      return (
+        value !== null && (
+          <TruncatedText truncate={truncate} highlight={highlight} side="top">
+            {value}
+          </TruncatedText>
+        )
+      );
+    },
+    meta: { className: `${className ?? "w-40"} truncate` },
   };
 }
 
@@ -109,7 +139,7 @@ function sampleColumns(
           />
         </label>
       ),
-      meta: { className: "relative w-10" },
+      meta: { className: `sticky left-0 w-10 ${STICKY_CELL_BACKGROUND}` },
     },
     {
       id: "name",
@@ -118,22 +148,25 @@ function sampleColumns(
         <Link
           to="/samples/$igsn"
           params={{ igsn: row.original.igsn }}
-          className="text-primary font-semibold hover:underline"
+          className="text-primary block font-semibold hover:underline"
           onClick={(event) => event.stopPropagation()}
         >
-          {row.original.name}
+          <TruncatedText highlight side="top">
+            {row.original.name}
+          </TruncatedText>
         </Link>
       ),
-      meta: WRAPPING,
+      meta: { className: `sticky left-10 w-48 ${STICKY_CELL_BACKGROUND}` },
     },
     {
       id: "igsn",
       header: () => m.card_field_igsn(),
       cell: ({ row }) => (
-        <TruncatedText truncate="start" className="max-w-28">
+        <TruncatedText truncate="start" highlight="exact" side="top">
           {row.original.igsn}
         </TruncatedText>
       ),
+      meta: { className: "w-28" },
     },
     ...[
       ...(fields.includes("internalNumber") ? [INTERNAL_NUMBER_COLUMN] : []),
@@ -149,12 +182,14 @@ function sampleColumns(
 
 export function SampleTable({
   samples,
+  query = "",
   fields,
   selection,
   onSelectionChange,
   maxSelected,
 }: {
   samples: PublicListedSample[];
+  query?: string;
   fields: string[];
   selection: RowSelectionState;
   onSelectionChange: OnChangeFn<RowSelectionState>;
@@ -172,14 +207,19 @@ export function SampleTable({
     state: { rowSelection: selection },
     onRowSelectionChange: onSelectionChange,
   });
+  const tableRef = useRef<HTMLDivElement>(null);
+  useSearchHighlight(tableRef, query, [samples, fields]);
 
   return (
-    <DataTable
-      table={table}
-      emptyLabel=""
-      onRowClick={({ igsn }) =>
-        void navigate({ to: "/samples/$igsn", params: { igsn } })
-      }
-    />
+    <div ref={tableRef}>
+      <DataTable
+        table={table}
+        className="table-fixed"
+        emptyLabel=""
+        onRowClick={({ igsn }) =>
+          void navigate({ to: "/samples/$igsn", params: { igsn } })
+        }
+      />
+    </div>
   );
 }

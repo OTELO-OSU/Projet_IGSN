@@ -29,6 +29,9 @@ function ariaSort<T>(column: Column<T, unknown>) {
   return "none";
 }
 
+export const STICKY_CELL_BACKGROUND =
+  "bg-background [tr:hover_&]:bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-background))]";
+
 type DataTableProps<T> = {
   table: TableInstance<T>;
   emptyLabel: string;

@@ -33,22 +33,20 @@ export function useSearchHighlight(
 ): void {
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !("highlights" in CSS)) {
-      return;
-    }
     const trimmed = query.trim();
-    if (!trimmed) {
-      CSS.highlights.delete(SEARCH_HIGHLIGHT);
+    if (!container || !trimmed || !("highlights" in CSS)) {
       return;
     }
 
     const ranges = [...container.querySelectorAll("[data-highlight]")].flatMap(
       (element) => elementRanges(element, trimmed),
     );
-    CSS.highlights.set(SEARCH_HIGHLIGHT, new Highlight(...ranges));
+    const highlight = CSS.highlights.get(SEARCH_HIGHLIGHT) ?? new Highlight();
+    CSS.highlights.set(SEARCH_HIGHLIGHT, highlight);
+    ranges.forEach((range) => highlight.add(range));
 
     return () => {
-      CSS.highlights.delete(SEARCH_HIGHLIGHT);
+      ranges.forEach((range) => highlight.delete(range));
     };
   }, [containerRef, query, ...rendered]);
 }
