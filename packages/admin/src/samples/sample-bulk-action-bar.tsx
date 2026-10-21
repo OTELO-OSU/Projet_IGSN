@@ -1,18 +1,18 @@
 import type { ExportSamplesRequest } from "@projet-igsn/domain/sample/export/export-validator";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { FileDownIcon, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 
 import type { LabelledSample } from "#/samples/label-sheet.tsx";
 
 import { m } from "#/paraglide/messages.js";
+import { ExportSamplesButton } from "#/samples/export-samples-button.tsx";
 import { PrintLabelsMenu } from "#/samples/print-labels-menu.tsx";
-import { useExportSamples } from "#/samples/use-export-samples.ts";
 
 type SampleBulkActionBarProps = {
   count: number;
   isAllSelected: boolean;
-  exportRequest: ExportSamplesRequest;
+  exportRequest: ExportSamplesRequest | null;
   labels: LabelledSample[];
   onSelectAll: () => void;
   onClear: () => void;
@@ -26,8 +26,6 @@ export function SampleBulkActionBar({
   onSelectAll,
   onClear,
 }: SampleBulkActionBarProps) {
-  const exportSamples = useExportSamples();
-
   return (
     <section
       aria-label={m.samples_bulk_actions()}
@@ -40,14 +38,9 @@ export function SampleBulkActionBar({
         </Button>
       )}
       {isAllSelected ? null : <PrintLabelsMenu samples={labels} />}
-      <Button
-        type="button"
-        disabled={exportSamples.isPending}
-        onClick={() => exportSamples.mutate(exportRequest)}
-      >
-        <FileDownIcon aria-hidden />
+      <ExportSamplesButton exportRequest={exportRequest}>
         {m.action_export()}
-      </Button>
+      </ExportSamplesButton>
       <Button
         type="button"
         variant="ghost"

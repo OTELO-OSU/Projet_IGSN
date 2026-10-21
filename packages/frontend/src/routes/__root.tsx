@@ -95,7 +95,15 @@ function RootLayout() {
               />
             </ExternalLink>
             <span aria-hidden className="bg-border h-px self-end" />
-            <OpenDataLink className="text-primary col-span-3 self-start text-sm font-medium no-underline underline-offset-4 hover:underline lg:col-span-1 lg:col-start-1 lg:row-start-2" />
+            <div className="col-span-3 flex flex-col items-start gap-2 self-start lg:col-span-1 lg:col-start-1 lg:row-start-2 lg:flex-row lg:flex-wrap lg:gap-x-4">
+              <OpenDataLink className="text-primary text-sm font-medium no-underline underline-offset-4 hover:underline" />
+              <Link
+                to="/contact"
+                className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+              >
+                {m.footer_contact()}
+              </Link>
+            </div>
             <div className="col-span-3 flex flex-col items-start gap-2 self-start lg:col-span-1 lg:col-start-3 lg:row-start-2 lg:flex-row lg:flex-wrap lg:justify-end lg:gap-x-4 lg:pe-2">
               <Link
                 to="/legal-notice"
@@ -114,12 +122,6 @@ function RootLayout() {
                 className="text-primary text-sm font-medium underline-offset-4 hover:underline"
               >
                 {m.footer_terms_of_use()}
-              </Link>
-              <Link
-                to="/contact"
-                className="text-primary text-sm font-medium underline-offset-4 hover:underline"
-              >
-                {m.footer_contact()}
               </Link>
             </div>
           </div>

@@ -18,6 +18,11 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
+const UNEXPORTABLE_MATERIALS: Record<number, string> = {
+  3: "rock_and_sediment.synthetic_rock_mineral",
+  4: "rock_and_sediment.mineral",
+};
+
 const SAMPLES = Array.from({ length: 12 }, (_, i) => ({
   ...fakeSample,
   owner: null,
@@ -25,6 +30,7 @@ const SAMPLES = Array.from({ length: 12 }, (_, i) => ({
   name: `Sample ${i + 1}`,
   status: "published",
   igsn: `01K072TVWVFK5A1RRZ5MY4PP${String(i + 1).padStart(2, "0")}`,
+  material: UNEXPORTABLE_MATERIALS[i + 1] ?? null,
 }));
 
 const EXPORT_FILENAME = "igsn-samples-export-2026-09-28.xlsx";
@@ -130,6 +136,40 @@ describe("SampleBulkActionBar", () => {
     expect(posted).toEqual([
       { mode: "ids", moderated: false, ids: [SAMPLES[0]!.id, SAMPLES[1]!.id] },
     ]);
+  });
+
+  it("should refuse to export when only synthetic and mineral samples are checked, explaining why", async () => {
+    fakeApi();
+    const { screen } = await renderRoute("/?perPage=10");
+    await check(screen, "Sample 3");
+    await check(screen, "Sample 4");
+
+    const exportButton = bar(screen).getByRole("button", { name: "Export" });
+    await expect.element(exportButton).toBeDisabled();
+    await exportButton.hover();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Synthetic and mineral samples cannot be exported.");
+  });
+
+  it("should export a mixed selection holding at least one exportable sample", async () => {
+    const { posted } = fakeApi();
+    captureSavedFiles();
+    const { screen } = await renderRoute("/?perPage=10");
+    await check(screen, "Sample 1");
+    await check(screen, "Sample 3");
+
+    await bar(screen).getByRole("button", { name: "Export" }).click();
+
+    await expect
+      .poll(() => posted)
+      .toEqual([
+        {
+          mode: "ids",
+          moderated: false,
+          ids: [SAMPLES[0]!.id, SAMPLES[2]!.id],
+        },
+      ]);
   });
 
   it("should export the checked samples from the Bulk edit dialog", async () => {

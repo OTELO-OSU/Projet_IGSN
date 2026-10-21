@@ -1,9 +1,10 @@
 import type { ExportSamplesRequest } from "@projet-igsn/domain/sample/export/export-validator";
 import type { OnChangeFn, RowSelectionState } from "@tanstack/react-table";
 
+import { isMassImportableMaterial } from "@projet-igsn/domain/sample/import/is-mass-importable-material";
 import { useState } from "react";
 
-import type { SampleListParams } from "#/samples/use-samples.ts";
+import { type SampleListParams, useSamples } from "#/samples/use-samples.ts";
 
 type Selection = {
   listKey: string;
@@ -23,6 +24,7 @@ export function useSampleSelection(
   params: SampleListParams,
   moderated: boolean,
 ) {
+  const { data } = useSamples(params, moderated);
   const listKey = JSON.stringify({ moderated, ...params });
   const [storedSelection, setSelection] = useState(() =>
     emptySelection(listKey),
@@ -49,10 +51,18 @@ export function useSampleSelection(
           : updater,
     });
 
-  const exportRequest: ExportSamplesRequest =
-    ids.length > 0 && !selection.isAllSelected
-      ? { mode: "ids", moderated, ids }
-      : { mode: "filters", moderated, query };
+  const isExportable = (data?.data ?? []).some(
+    ({ id, material }) =>
+      selection.rowSelection[id] &&
+      (material === null || isMassImportableMaterial(material)),
+  );
+
+  const exportRequest: ExportSamplesRequest | null =
+    ids.length === 0 || selection.isAllSelected
+      ? { mode: "filters", moderated, query }
+      : isExportable
+        ? { mode: "ids", moderated, ids }
+        : null;
 
   return {
     rowSelection: selection.rowSelection,

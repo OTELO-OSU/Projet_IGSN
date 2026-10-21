@@ -131,6 +131,7 @@
   "sample_field_chemical_risk": "Risque chimique",
   "sample_field_chemical_risk_explanation": "Précisions sur le risque chimique",
   "sample_field_collection_date": "Date de collecte",
+  "sample_field_collection_date_unknown": "La date de collecte n'est pas connue",
   "sample_field_oriented": "Orienté",
   "sample_oriented_yes": "Oui",
   "sample_oriented_no": "Non",
