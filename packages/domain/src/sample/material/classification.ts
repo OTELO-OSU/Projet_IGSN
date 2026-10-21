@@ -38,6 +38,7 @@ const materialTree = {
       "biogenic",
       "physico_chemical",
       "unknown",
+      "other",
     ],
   },
   extraterrestrial_rock: {

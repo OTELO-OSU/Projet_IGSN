@@ -1,6 +1,7 @@
 import { type TreeNode } from "../../path/tree-node.ts";
 
 export const sedimentTree = {
+  "sediment.other": { optional: true, frozenWhenPublished: false },
   exogenous_detritic: {
     optional: true,
     frozenWhenPublished: false,
