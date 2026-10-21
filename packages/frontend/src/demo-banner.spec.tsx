@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
-import { DemoBanner } from "./demo-banner.tsx";
+import { DemoBanner, DemoRibbon } from "./demo-banner.tsx";
 
 describe("DemoBanner", () => {
   afterEach(() => {
@@ -19,11 +19,25 @@ describe("DemoBanner", () => {
       );
   });
 
+  it("should mark the logo with a Demo ribbon when the demo flag is on", async () => {
+    vi.stubEnv("VITE_DEMO_BANNER", "true");
+    const screen = await render(<DemoRibbon />);
+
+    await expect
+      .element(screen.getByText("Demo", { exact: true }))
+      .toBeVisible();
+  });
+
   it.each([undefined, "false"])(
     "should render nothing when the demo flag is %s",
     async (flag) => {
       vi.stubEnv("VITE_DEMO_BANNER", flag);
-      const screen = await render(<DemoBanner />);
+      const screen = await render(
+        <>
+          <DemoBanner />
+          <DemoRibbon />
+        </>,
+      );
 
       expect(screen.container).toBeEmptyDOMElement();
     },

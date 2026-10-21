@@ -4,6 +4,7 @@
   "action_sign_out": "Sign out",
   "auth_loading": "Loading…",
   "demo_banner": "You are browsing the IGSN demo site. Its content may be reset at any time, and its samples and IGSNs are not real.",
+  "demo_ribbon": "Demo",
   "auth_error": "Authentication error: {message}",
   "auth_welcome": "Welcome. Sign in to manage IGSN records.",
   "auth_sign_in": "Sign in",

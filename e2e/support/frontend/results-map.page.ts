@@ -41,7 +41,7 @@ export function resultsMapPage(page: Page) {
   return {
     open: async () => {
       const loaded = waitForMap();
-      await page.getByRole("button", { name: "See on map" }).click();
+      await page.getByRole("radio", { name: "See on map" }).click();
       await loaded;
       await page.waitForURL(/[?&]map=true/);
       await expect(map.getByRole("button", { name: "Zoom in" })).toBeVisible();

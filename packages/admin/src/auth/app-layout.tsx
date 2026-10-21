@@ -8,6 +8,7 @@ import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-sample
 import { Link, useLocation } from "@tanstack/react-router";
 import { GlobeIcon, MountainIcon } from "lucide-react";
 
+import { DemoRibbon } from "#/demo-banner.tsx";
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 
@@ -38,12 +39,17 @@ export function AppLayout({
     <div className="flex min-h-screen w-full flex-col">
       <header className="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
         <div className="flex h-20 items-center gap-3 px-6 sm:h-24 sm:gap-6">
-          <Link to="/" search={listSearch} className="shrink-0">
+          <Link
+            to="/"
+            search={listSearch}
+            className="relative shrink-0 overflow-hidden"
+          >
             <img
               src={logoIgsnUrl}
               alt={m.app_title()}
               className="h-12 w-auto sm:h-16"
             />
+            <DemoRibbon />
           </Link>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-x-6 gap-y-2">
             {!hasSidebar && (

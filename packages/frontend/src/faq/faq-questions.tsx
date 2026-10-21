@@ -27,7 +27,7 @@ export function FaqQuestions({
           <AccordionTrigger className="text-primary text-lg font-semibold">
             {title}
           </AccordionTrigger>
-          <AccordionContent className="space-y-3 text-base">
+          <AccordionContent className="space-y-3 text-base leading-loose">
             {answer.map((block) => {
               if (typeof block === "string") {
                 return <p key={block}>{block}</p>;

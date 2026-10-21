@@ -10,11 +10,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
-import { LayoutGridIcon, TableIcon } from "lucide-react";
+import { LayoutGridIcon, MapIcon, TableIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 
 const TABLE = "table";
+
+const MAP = "map";
 
 function ViewItem({
   value,
@@ -44,9 +46,11 @@ function ViewItem({
 export function ResultsViewToggle({
   isTableView,
   onTableViewChange,
+  onMapOpen,
 }: {
   isTableView: boolean;
   onTableViewChange: (isTableView: boolean) => void;
+  onMapOpen: () => void;
 }) {
   return (
     <TooltipProvider>
@@ -56,10 +60,12 @@ export function ResultsViewToggle({
         aria-label={m.results_view()}
         value={isTableView ? TABLE : "cards"}
         onValueChange={(value) => {
-          if (value) onTableViewChange(value === TABLE);
+          if (value === MAP) onMapOpen();
+          else if (value) onTableViewChange(value === TABLE);
         }}
         className="phone:hidden"
       >
+        <ViewItem value={MAP} label={m.results_map_open()} Icon={MapIcon} />
         <ViewItem
           value="cards"
           label={m.results_card_view()}

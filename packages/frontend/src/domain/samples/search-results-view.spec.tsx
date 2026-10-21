@@ -20,7 +20,7 @@ type ViewProps = Parameters<typeof SearchResultsView>[0];
 
 type GivenProps = Omit<
   ViewProps,
-  "onFieldsChange" | "selection" | "onSelectionChange"
+  "onFieldsChange" | "selection" | "onSelectionChange" | "onMapOpen"
 > &
   Partial<ViewProps>;
 
@@ -29,6 +29,7 @@ function renderView(given: GivenProps) {
     onFieldsChange: vi.fn(),
     selection: {},
     onSelectionChange: vi.fn(),
+    onMapOpen: vi.fn(),
     ...given,
   };
   return renderWithRouter(<SearchResultsView {...props} />, ["/samples/$igsn"]);
@@ -53,6 +54,7 @@ function SelectableView() {
       onFieldsChange={vi.fn()}
       selection={selection}
       onSelectionChange={setSelection}
+      onMapOpen={vi.fn()}
     />
   );
 }
@@ -89,6 +91,18 @@ describe("SearchResultsView", () => {
       .element(page.getByRole("radio", { name: "Table view" }))
       .toBeChecked();
     await expect.element(page.getByRole("table")).toBeVisible();
+  });
+
+  it("should ask to open the map from the view toggle, keeping the current view", async () => {
+    const onMapOpen = vi.fn();
+    await renderView({ ...onePage, onMapOpen });
+
+    await page.getByRole("radio", { name: "See on map" }).click();
+
+    expect(onMapOpen).toHaveBeenCalledOnce();
+    await expect
+      .element(page.getByRole("radio", { name: "Card view" }))
+      .toBeChecked();
   });
 
   it("should count the checked samples and clear them", async () => {

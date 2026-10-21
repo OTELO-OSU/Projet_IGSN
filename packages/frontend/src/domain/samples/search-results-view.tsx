@@ -14,6 +14,7 @@ import {
   PICKABLE_FIELDS,
   pickedCardFieldKeys,
 } from "#/domain/samples/card-fields.ts";
+import { ResultsMapButton } from "#/domain/samples/results-map-dialog.tsx";
 import { ResultsViewToggle } from "#/domain/samples/results-view-toggle.tsx";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
 import { SampleTable } from "#/domain/samples/sample-table.tsx";
@@ -98,7 +99,7 @@ export function SearchResultsView({
   selection,
   onSelectionChange,
   download,
-  actions,
+  onMapOpen,
 }: {
   samples: PublicListedSample[];
   total: number;
@@ -114,7 +115,7 @@ export function SearchResultsView({
   selection: RowSelectionState;
   onSelectionChange: OnChangeFn<RowSelectionState>;
   download?: ReactNode;
-  actions?: ReactNode;
+  onMapOpen: () => void;
 }) {
   const [isTableView, saveTableView] = useStoredFlag(TABLE_VIEW_KEY);
 
@@ -124,7 +125,7 @@ export function SearchResultsView({
         <p role="status" className="text-muted-foreground text-center">
           {emptyMessage}
         </p>
-        {actions}
+        <ResultsMapButton onClick={onMapOpen} />
       </div>
     );
   }
@@ -144,10 +145,10 @@ export function SearchResultsView({
         <div className="flex flex-wrap items-center justify-end gap-4">
           {download}
           <CardFieldPicker fields={fields} onFieldsChange={onFieldsChange} />
-          {actions}
           <ResultsViewToggle
             isTableView={isTableView}
             onTableViewChange={saveTableView}
+            onMapOpen={onMapOpen}
           />
         </div>
         <SelectionLine
