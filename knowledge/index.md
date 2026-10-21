@@ -52,6 +52,7 @@ okf_version: "0.2"
 # guide
 
 - [Importing a new institution export](sync-institutions-import.md) - Four CSVs in sync-data/ regenerate osu.ts and laboratory.ts, plus a migration clearing any code that disappeared.
+- [Updating the Excel import template](excel-import-template-guide.md) - One column registry builds the template, parses the upload and drives the bulk-edit export; type, marker, dropdowns and conditions derive from the domain, so a change is one line plus its Core slot.
 - [Updating the sample declaration form](sample-form-update-guide.md) - Every form change starts in domain: a vocabulary value, a characteristic sub-schema, or a display condition, then admin, i18n and the publish decision.
 
 # infrastructure
