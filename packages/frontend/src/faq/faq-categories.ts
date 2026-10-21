@@ -109,6 +109,16 @@ export function faqCategories(): FaqCategory[] {
           ],
         },
         {
+          value: "unknown-location",
+          title: m.faq_unknown_location_title(),
+          answer: [m.faq_unknown_location_answer()],
+        },
+        {
+          value: "unknown-collection-date",
+          title: m.faq_unknown_collection_date_title(),
+          answer: [m.faq_unknown_collection_date_answer()],
+        },
+        {
           value: "batch-import",
           title: m.faq_batch_import_title(),
           answer: [m.faq_batch_import_answer()],
