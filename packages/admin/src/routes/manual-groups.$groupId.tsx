@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
-import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
+import { ADMIN_DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
 import { createFileRoute } from "@tanstack/react-router";
 import { Trash2Icon } from "lucide-react";
@@ -90,7 +90,7 @@ function ManualGroupDetailPage() {
                       onSuccess: () =>
                         void navigate({
                           to: "/manual-groups",
-                          search: { page: 1, perPage: DEFAULT_PAGE_SIZE },
+                          search: { page: 1, perPage: ADMIN_DEFAULT_PAGE_SIZE },
                         }),
                     })
                   }

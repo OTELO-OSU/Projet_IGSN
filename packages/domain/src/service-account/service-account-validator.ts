@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import {
-  DEFAULT_PAGE_SIZE,
+  ADMIN_DEFAULT_PAGE_SIZE,
+  ADMIN_PAGE_SIZES,
   pageSchema,
   pageSizeSchema,
   requestReasonSchema,
@@ -61,7 +62,7 @@ export type ServiceAccountDraft = z.infer<typeof serviceAccountDraftSchema>;
 
 export const listServiceAccountsQuerySchema = z.object({
   page: pageSchema,
-  perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
+  perPage: pageSizeSchema(ADMIN_DEFAULT_PAGE_SIZE, ADMIN_PAGE_SIZES),
 });
 
 export type ListServiceAccountsQuery = z.infer<

@@ -10,6 +10,7 @@ import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { SelectFilter } from "#/filters/select-filter.tsx";
+import { useSavedListSearch } from "#/filters/use-saved-list-search.ts";
 import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx";
 import { m } from "#/paraglide/messages.js";
 import { BulkEditDialog } from "#/samples/bulk-edit-dialog.tsx";
@@ -50,6 +51,11 @@ const OWNERSHIP_LABEL: Record<Ownership, () => string> = {
 };
 
 function SampleListPage() {
+  const { isRestoring, reset } = useSavedListSearch("samples", searchSchema);
+  return isRestoring ? null : <SampleList onReset={reset} />;
+}
+
+function SampleList({ onReset }: { onReset?: () => Promise<void> }) {
   const params = Route.useSearch();
   const selection = useSampleSelection(params, false);
   const { search, ownership } = params;
@@ -62,6 +68,7 @@ function SampleListPage() {
   return (
     <>
       <ListHeader
+        onReset={onReset}
         title={m.samples_title()}
         action={
           <div className="flex gap-2">

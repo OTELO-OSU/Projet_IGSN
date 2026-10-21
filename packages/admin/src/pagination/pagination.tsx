@@ -2,7 +2,7 @@ import {
   Pager,
   PageSizeSelect,
 } from "@projet-igsn/design-system/components/ui/pagination";
-import { PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
+import { ADMIN_PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
 
 import { m } from "#/paraglide/messages.js";
 
@@ -25,7 +25,7 @@ export function Pagination({
     <div className="flex items-center justify-end gap-4">
       <PageSizeSelect
         perPage={perPage}
-        pageSizes={PAGE_SIZES}
+        pageSizes={ADMIN_PAGE_SIZES}
         label={m.page_size_label()}
         hideLabel
         onPerPageChange={onPerPageChange}
@@ -37,6 +37,10 @@ export function Pagination({
           pageCount={pageCount}
           previousLabel={m.pagination_previous()}
           nextLabel={m.pagination_next()}
+          pageLabel={m.pagination_page_label()}
+          firstLabel={m.pagination_first()}
+          lastLabel={m.pagination_last()}
+          isIconOnly
           onPageChange={onPageChange}
         />
       </div>

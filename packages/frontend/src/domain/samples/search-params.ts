@@ -21,7 +21,7 @@ import {
   searchEngineSchema,
 } from "#/domain/samples/search-engine.ts";
 
-export const PER_PAGE = 10;
+export const PER_PAGE = 50;
 
 export const searchParamsSchema = z.object({
   q: searchTermSchema,

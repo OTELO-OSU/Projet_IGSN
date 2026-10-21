@@ -76,7 +76,9 @@ export const duplicateConflictSchema = z.object({
 export type DuplicateConflict = z.infer<typeof duplicateConflictSchema>;
 
 export const PAGE_SIZES = [10, 25, 50] as const;
+export const ADMIN_PAGE_SIZES = [10, 25, 50, 100] as const;
 export const DEFAULT_PAGE_SIZE = 25;
+export const ADMIN_DEFAULT_PAGE_SIZE = 50;
 export const MAP_LIST_PAGE_SIZE = 20;
 
 export const bboxSchema = z.string().transform((value, ctx) => {
@@ -136,7 +138,7 @@ export const pageSizeSchema = (
 
 export const listSamplesQuerySchema = z.object({
   page: pageSchema,
-  perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
+  perPage: pageSizeSchema(ADMIN_DEFAULT_PAGE_SIZE, ADMIN_PAGE_SIZES),
   sort: z.enum(["status", "igsn"]).optional().catch(undefined),
   order: z.enum(["asc", "desc"]).optional().catch(undefined),
   search: searchTermSchema,

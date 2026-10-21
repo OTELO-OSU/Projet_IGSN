@@ -1,6 +1,15 @@
-import { useId } from "react";
+import type { LucideIcon } from "lucide-react";
+
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
+} from "lucide-react";
+import { useId, useState } from "react";
 
 import { Button } from "./button.tsx";
+import { Input } from "./input.tsx";
 import { Label } from "./label.tsx";
 import {
   Select,
@@ -9,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./select.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip.tsx";
 
 export function PageSizeSelect({
   perPage,
@@ -48,6 +58,90 @@ export function PageSizeSelect({
   );
 }
 
+function PageInput({
+  page,
+  pageCount,
+  label,
+  onPageChange,
+}: {
+  page: number;
+  pageCount: number;
+  label: string;
+  onPageChange: (page: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(page));
+  const [shownPage, setShownPage] = useState(page);
+  if (shownPage !== page) {
+    setShownPage(page);
+    setDraft(String(page));
+  }
+
+  const commit = () => {
+    const typed = Number(draft);
+    if (draft.trim() === "" || !Number.isInteger(typed)) {
+      setDraft(String(page));
+      return;
+    }
+    const next = Math.min(Math.max(typed, 1), pageCount);
+    setDraft(String(next));
+    if (next !== page) onPageChange(next);
+  };
+
+  return (
+    <>
+      <Input
+        aria-label={label}
+        inputMode="numeric"
+        className="w-16 text-center"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") commit();
+        }}
+      />
+      <span>/ {pageCount}</span>
+    </>
+  );
+}
+
+function PagerButton({
+  label,
+  Icon,
+  isIconOnly,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  Icon: LucideIcon;
+  isIconOnly: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  if (!isIconOnly)
+    return (
+      <Button variant="outline" disabled={disabled} onClick={onClick}>
+        {label}
+      </Button>
+    );
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={label}
+          disabled={disabled}
+          onClick={onClick}
+        >
+          <Icon />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 // A fragment, so each caller keeps its own wrapper (a right-aligned toolbar in
 // admin, a centered nav landmark in frontend).
 export function Pager({
@@ -55,33 +149,68 @@ export function Pager({
   pageCount,
   previousLabel,
   nextLabel,
+  pageLabel,
+  firstLabel,
+  lastLabel,
+  isIconOnly = false,
   onPageChange,
 }: {
   page: number;
   pageCount: number;
   previousLabel: string;
   nextLabel: string;
+  pageLabel?: string;
+  firstLabel?: string;
+  lastLabel?: string;
+  isIconOnly?: boolean;
   onPageChange: (page: number) => void;
 }) {
   return (
     <>
-      <Button
-        variant="outline"
+      {firstLabel === undefined ? null : (
+        <PagerButton
+          label={firstLabel}
+          Icon={ChevronsLeftIcon}
+          isIconOnly={isIconOnly}
+          disabled={page <= 1}
+          onClick={() => onPageChange(1)}
+        />
+      )}
+      <PagerButton
+        label={previousLabel}
+        Icon={ChevronLeftIcon}
+        isIconOnly={isIconOnly}
         disabled={page <= 1}
         onClick={() => onPageChange(page - 1)}
-      >
-        {previousLabel}
-      </Button>
-      <span aria-live="polite">
-        {page} / {pageCount}
-      </span>
-      <Button
-        variant="outline"
+      />
+      {pageLabel === undefined ? (
+        <span aria-live="polite">
+          {page} / {pageCount}
+        </span>
+      ) : (
+        <PageInput
+          page={page}
+          pageCount={pageCount}
+          label={pageLabel}
+          onPageChange={onPageChange}
+        />
+      )}
+      <PagerButton
+        label={nextLabel}
+        Icon={ChevronRightIcon}
+        isIconOnly={isIconOnly}
         disabled={page >= pageCount}
         onClick={() => onPageChange(page + 1)}
-      >
-        {nextLabel}
-      </Button>
+      />
+      {lastLabel === undefined ? null : (
+        <PagerButton
+          label={lastLabel}
+          Icon={ChevronsRightIcon}
+          isIconOnly={isIconOnly}
+          disabled={page >= pageCount}
+          onClick={() => onPageChange(pageCount)}
+        />
+      )}
     </>
   );
 }

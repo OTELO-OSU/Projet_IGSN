@@ -4,6 +4,7 @@ import { listUsersQuerySchema } from "@projet-igsn/domain/user/user-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
+import { useSavedListSearch } from "#/filters/use-saved-list-search.ts";
 import { GroupMembers } from "#/institutional-groups/group-members.tsx";
 import { InstitutionalGroupManagers } from "#/institutional-groups/institutional-group-managers.tsx";
 import { m } from "#/paraglide/messages.js";
@@ -18,6 +19,14 @@ export const Route = createFileRoute("/institutional-groups/osus/$code")({
 });
 
 function OsuDetailPage() {
+  const { isRestoring } = useSavedListSearch(
+    "institutional-group-members",
+    listUsersQuerySchema.pick({ page: true, perPage: true }),
+  );
+  return isRestoring ? null : <OsuDetail />;
+}
+
+function OsuDetail() {
   const { code } = Route.useParams();
   const { page, perPage } = Route.useSearch();
   const navigate = Route.useNavigate();

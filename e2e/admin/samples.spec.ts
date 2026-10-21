@@ -1,12 +1,55 @@
+import { adminPage } from "../support/admin/admin.page";
 import { printSampleLabelPage } from "../support/admin/print-sample-label.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
-import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
+import {
+  RESEARCHERS,
+  completeIdpLogin,
+  signInAsResearcher,
+} from "../support/admin/sign-in";
 import { sampleNamed, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { maildev } from "../support/maildev";
 
 test.describe("samples", () => {
+  test("a researcher's list filter survives navigation and a new session until they reset it", async ({
+    page,
+    samples,
+  }) => {
+    const draft = samples.find(
+      (sample) => sample.status === "draft" && sample.owner === "jean",
+    );
+    if (!draft) {
+      throw new Error("seed must give jean a draft sample");
+    }
+    const published = sampleNamed(samples, "Basalt 42");
+
+    await signInAsResearcher(page, RESEARCHERS.jean);
+    const list = sampleListPage(page);
+    await list.filterByStatus("Draft");
+    await list.expectNoSampleRow(published.name);
+
+    await list.openSample(draft.name);
+    await sampleEditPage(page).expectVisible();
+    await list.openFromSidebar();
+    await list.expectStatusFilter("Draft");
+    await list.expectSampleRow(draft.name);
+    await list.expectNoSampleRow(published.name);
+
+    const admin = adminPage(page);
+    await admin.signOut();
+    await completeIdpLogin(page, RESEARCHERS.jean);
+    await admin.expectSignedIn();
+    await list.expectStatusFilter("Draft");
+    await list.expectNoSampleRow(published.name);
+
+    await list.resetFilters();
+    await list.expectSampleRow(published.name);
+    await page.reload();
+    await list.expectSampleRow(published.name);
+    await list.expectNoStatusFilter();
+  });
+
   test("an owner prints a published sample's label, withdraws it, readers see its reduced page, then the owner republishes it", async ({
     page,
     samples,

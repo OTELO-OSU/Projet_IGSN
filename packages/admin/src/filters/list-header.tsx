@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@projet-igsn/design-system/components/ui/popover";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, RotateCcwIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
@@ -57,15 +57,31 @@ function AddFilter({
   );
 }
 
-export function ListHeader({
-  title,
-  action,
-  filters = [],
-}: {
+type ListHeaderProps = {
   title: string;
   action?: ReactNode;
   filters?: FilterEntry[];
-}) {
+  onReset?: () => unknown;
+};
+
+export function ListHeader(props: ListHeaderProps) {
+  const [generation, setGeneration] = useState(0);
+  const onReset =
+    props.onReset &&
+    (async () => {
+      await props.onReset?.();
+      setGeneration((previous) => previous + 1);
+    });
+
+  return <ListHeaderBody key={generation} {...props} onReset={onReset} />;
+}
+
+function ListHeaderBody({
+  title,
+  action,
+  filters = [],
+  onReset,
+}: ListHeaderProps) {
   const [added, setAdded] = useState<ReadonlySet<string>>(
     () =>
       new Set(
@@ -114,14 +130,27 @@ export function ListHeader({
             ) : null}
           </div>
         ))}
-        {hidden.length > 0 ? (
-          <div className="col-end-[-1] row-start-1 flex justify-end">
-            <AddFilter
-              filters={hidden}
-              onAdd={(name) =>
-                setAdded((previous) => new Set(previous).add(name))
-              }
-            />
+        {hidden.length > 0 || onReset ? (
+          <div className="col-end-[-1] row-start-1 flex justify-end gap-2">
+            {onReset ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-fit"
+                onClick={() => void onReset()}
+              >
+                <RotateCcwIcon className="size-4" />
+                {m.filter_reset()}
+              </Button>
+            ) : null}
+            {hidden.length > 0 ? (
+              <AddFilter
+                filters={hidden}
+                onAdd={(name) =>
+                  setAdded((previous) => new Set(previous).add(name))
+                }
+              />
+            ) : null}
           </div>
         ) : null}
       </div>

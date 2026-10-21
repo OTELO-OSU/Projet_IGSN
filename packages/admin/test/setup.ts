@@ -7,6 +7,7 @@ vi.mock("react-oidc-context", () => ({
 beforeAll(() => worker.start({ quiet: true }));
 
 afterEach(() => {
+  localStorage.clear();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });

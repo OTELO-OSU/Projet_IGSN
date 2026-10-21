@@ -7,17 +7,20 @@ import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { matchesSearch } from "#/filters/matches-search.ts";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
+import { useSavedListSearch } from "#/filters/use-saved-list-search.ts";
 import { OrganizationTable } from "#/institutional-groups/organization-table.tsx";
 import { useInstitutionalGroupManagerCounts } from "#/institutional-groups/use-institutional-group-manager-counts.ts";
 import { noManagerFilterEntry } from "#/managers/no-manager-filter-entry.tsx";
 import { m } from "#/paraglide/messages.js";
 import { useGetInstitutionalGroupCounts } from "#/users/use-get-institutional-group-counts.ts";
 
+const searchSchema = z.object({
+  search: z.string().optional().catch(undefined),
+  noManager: z.boolean().optional().catch(undefined),
+});
+
 export const Route = createFileRoute("/institutional-groups/organizations/")({
-  validateSearch: z.object({
-    search: z.string().optional().catch(undefined),
-    noManager: z.boolean().optional().catch(undefined),
-  }),
+  validateSearch: searchSchema,
   component: () => (
     <SuperAdminOnly>
       <OrganizationsPage />
@@ -26,6 +29,14 @@ export const Route = createFileRoute("/institutional-groups/organizations/")({
 });
 
 function OrganizationsPage() {
+  const { isRestoring, reset } = useSavedListSearch(
+    "organizations",
+    searchSchema,
+  );
+  return isRestoring ? null : <OrganizationsList onReset={reset} />;
+}
+
+function OrganizationsList({ onReset }: { onReset?: () => Promise<void> }) {
   const { search, noManager } = Route.useSearch();
   const navigate = Route.useNavigate();
   const counts = useGetInstitutionalGroupCounts();
@@ -44,6 +55,7 @@ function OrganizationsPage() {
   return (
     <>
       <ListHeader
+        onReset={onReset}
         title={m.group_organizations_title()}
         filters={[
           searchFilterEntry({

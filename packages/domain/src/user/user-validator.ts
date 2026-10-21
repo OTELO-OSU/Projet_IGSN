@@ -6,7 +6,8 @@ import { organizationRorSchema } from "../institutional-group/organization.ts";
 import { osuCodeSchema } from "../institutional-group/osu.ts";
 import { manualGroupSchema } from "../manual-group/model.ts";
 import {
-  DEFAULT_PAGE_SIZE,
+  ADMIN_DEFAULT_PAGE_SIZE,
+  ADMIN_PAGE_SIZES,
   pageSchema,
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
@@ -66,7 +67,7 @@ export const listPublicUsersQuerySchema = z.object({
 
 export const listUsersQuerySchema = z.object({
   page: pageSchema,
-  perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
+  perPage: pageSizeSchema(ADMIN_DEFAULT_PAGE_SIZE, ADMIN_PAGE_SIZES),
   status: userStatusSchema.optional().catch(undefined),
   search: z
     .string()

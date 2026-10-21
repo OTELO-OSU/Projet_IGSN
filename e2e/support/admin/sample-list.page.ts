@@ -1,11 +1,17 @@
 import { expect, type Page } from "@playwright/test";
 
+import { chooseOption } from "./choose-option";
+
 export const sampleRow = (page: Page, name: string) =>
   page
     .getByRole("row")
     .filter({ has: page.getByRole("cell", { name, exact: true }) });
 
 export function sampleListPage(page: Page) {
+  const statusFilter = page.getByRole("combobox", {
+    name: "Status",
+    exact: true,
+  });
   const openRowMenu = (name: string) =>
     page.getByRole("button", { name: `Actions for ${name}` }).click();
 
@@ -46,6 +52,21 @@ export function sampleListPage(page: Page) {
       await page.getByRole("combobox", { name: "Ownership" }).click();
       await page.getByRole("option", { name: choice }).click();
     },
+    openFromSidebar: () =>
+      page.getByRole("link", { name: "My samples", exact: true }).click(),
+    filterByStatus: async (status: string) => {
+      await page.getByRole("button", { name: "Add a filter" }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "Status", exact: true })
+        .click();
+      await chooseOption(page)(/^Status$/, status);
+    },
+    expectStatusFilter: (status: string) =>
+      expect(statusFilter).toHaveText(status),
+    expectNoStatusFilter: () => expect(statusFilter).toBeHidden(),
+    resetFilters: () =>
+      page.getByRole("button", { name: "Reset filters" }).click(),
     stubPrint: () =>
       page.addInitScript(() => {
         window.print = () => {};
