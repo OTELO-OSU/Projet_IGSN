@@ -14,6 +14,7 @@ import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { SelectFilter } from "#/filters/select-filter.tsx";
+import { useSavedListSearch } from "#/filters/use-saved-list-search.ts";
 import { institutionFilterEntry } from "#/institutional-groups/institution-tree-filter.tsx";
 import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx";
 import { Pagination } from "#/pagination/pagination.tsx";
@@ -45,6 +46,11 @@ const ROLE_LABELS: Record<UserRole, () => string> = {
 };
 
 function UsersPage() {
+  const { isRestoring, reset } = useSavedListSearch("users", searchSchema);
+  return isRestoring ? null : <UsersList onReset={reset} />;
+}
+
+function UsersList({ onReset }: { onReset?: () => Promise<void> }) {
   const { page, perPage, status, search, institution, manualGroup, roles } =
     Route.useSearch();
   const navigate = Route.useNavigate();
@@ -68,6 +74,7 @@ function UsersPage() {
   return (
     <>
       <ListHeader
+        onReset={onReset}
         title={m.users_title()}
         filters={[
           searchFilterEntry({

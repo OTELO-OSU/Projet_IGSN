@@ -1,6 +1,9 @@
+import { listManualGroupsQuerySchema } from "../manual-group/manual-group-validator.ts";
+import { listServiceAccountsQuerySchema } from "../service-account/service-account-validator.ts";
+import { listUsersQuerySchema } from "../user/user-validator.ts";
 import { earliestEmbargoPublicationDate } from "./publication/embargo-publication-date";
 import {
-  DEFAULT_PAGE_SIZE,
+  ADMIN_DEFAULT_PAGE_SIZE,
   listSamplesQuerySchema,
   pageSizeSchema,
   publishQuerySchema,
@@ -82,11 +85,20 @@ describe("pageSizeSchema", () => {
   });
 });
 
+it.each([
+  ["listSamplesQuerySchema", listSamplesQuerySchema],
+  ["listUsersQuerySchema", listUsersQuerySchema],
+  ["listManualGroupsQuerySchema", listManualGroupsQuerySchema],
+  ["listServiceAccountsQuerySchema", listServiceAccountsQuerySchema],
+])("%s should accept 100 rows per page on admin lists", (_, schema) => {
+  expect(schema.parse({ perPage: "100" }).perPage).toBe(100);
+});
+
 describe("listSamplesQuerySchema", () => {
   it("should default page and perPage when absent", () => {
     expect(listSamplesQuerySchema.parse({})).toEqual({
       page: 1,
-      perPage: DEFAULT_PAGE_SIZE,
+      perPage: ADMIN_DEFAULT_PAGE_SIZE,
     });
   });
 
@@ -96,7 +108,7 @@ describe("listSamplesQuerySchema", () => {
 
   it("should fall back to the default perPage for an off-preset one", () => {
     expect(listSamplesQuerySchema.parse({ perPage: 999 }).perPage).toBe(
-      DEFAULT_PAGE_SIZE,
+      ADMIN_DEFAULT_PAGE_SIZE,
     );
   });
 
@@ -116,7 +128,7 @@ describe("listSamplesQuerySchema", () => {
     (order) => {
       expect(listSamplesQuerySchema.parse({ sort: "status", order })).toEqual({
         page: 1,
-        perPage: DEFAULT_PAGE_SIZE,
+        perPage: ADMIN_DEFAULT_PAGE_SIZE,
         sort: "status",
         order,
       });
@@ -195,7 +207,7 @@ describe("listSamplesQuerySchema", () => {
       }),
     ).toEqual({
       page: 1,
-      perPage: DEFAULT_PAGE_SIZE,
+      perPage: ADMIN_DEFAULT_PAGE_SIZE,
       type: "core.section",
       material: "rock_and_sediment.rock.igneous.plutonic",
       nature: "powder",
@@ -212,7 +224,7 @@ describe("listSamplesQuerySchema", () => {
       nature: "not_a_nature",
       ageUnit: "century",
     });
-    expect(result).toEqual({ page: 1, perPage: DEFAULT_PAGE_SIZE });
+    expect(result).toEqual({ page: 1, perPage: ADMIN_DEFAULT_PAGE_SIZE });
   });
 
   it("should parse a valid bbox string into degrees", () => {
@@ -280,7 +292,7 @@ describe("listSamplesQuerySchema", () => {
       }),
     ).toEqual({
       page: 2,
-      perPage: DEFAULT_PAGE_SIZE,
+      perPage: ADMIN_DEFAULT_PAGE_SIZE,
       search: "gres",
       bbox: { west: -10, south: 40, east: 10, north: 50 },
     });

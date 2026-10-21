@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import logoIgsnUrl from "@projet-igsn/design-system/assets/logo-igsn.svg";
 import { NAV_LINK_CLASS } from "@projet-igsn/design-system/lib/nav-link-class";
 import { cn } from "@projet-igsn/design-system/lib/utils";
-import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
+import { ADMIN_DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-samples";
 import { Link, useLocation } from "@tanstack/react-router";
 import { GlobeIcon, MountainIcon } from "lucide-react";
@@ -17,7 +17,7 @@ import { isSamplesSection } from "./is-samples-section.ts";
 import { useCurrentUser } from "./use-current-user.ts";
 import { useSidebarCollapsed } from "./use-sidebar-collapsed.ts";
 
-const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
+const listSearch = { page: 1, perPage: ADMIN_DEFAULT_PAGE_SIZE };
 
 const headerLinkClass = cn(NAV_LINK_CLASS, "gap-2 [&>svg]:size-4");
 

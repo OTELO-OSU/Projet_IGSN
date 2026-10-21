@@ -1,7 +1,7 @@
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
+import { ADMIN_DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canAdminManualGroups } from "@projet-igsn/domain/user/can-admin-manual-groups";
 import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { useLocation } from "@tanstack/react-router";
@@ -24,7 +24,7 @@ import { m } from "#/paraglide/messages.js";
 import { isSamplesSection } from "./is-samples-section.ts";
 import { NavItem } from "./nav-item.tsx";
 
-const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
+const listSearch = { page: 1, perPage: ADMIN_DEFAULT_PAGE_SIZE };
 
 const SAMPLE_MODERATION_PATH = "/samples/moderation";
 
@@ -152,8 +152,6 @@ export function AppSidebar({
               isCollapsed={isCollapsed}
             />
           )}
-        </ul>
-        <ul className="md:mt-auto">
           <NavItem
             href={FRONTEND_URL}
             Icon={GlobeIcon}

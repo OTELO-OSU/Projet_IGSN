@@ -4,6 +4,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { ListHeader } from "#/filters/list-header.tsx";
+import { useSavedListSearch } from "#/filters/use-saved-list-search.ts";
 import { Pagination } from "#/pagination/pagination.tsx";
 import { m } from "#/paraglide/messages.js";
 import { ServiceAccountTable } from "#/service-accounts/service-account-table.tsx";
@@ -19,6 +20,14 @@ export const Route = createFileRoute("/service-accounts/")({
 });
 
 function ServiceAccountsPage() {
+  const { isRestoring } = useSavedListSearch(
+    "service-accounts",
+    listServiceAccountsQuerySchema,
+  );
+  return isRestoring ? null : <ServiceAccountsList />;
+}
+
+function ServiceAccountsList() {
   const { page, perPage } = Route.useSearch();
   const navigate = Route.useNavigate();
   const query = useListServiceAccounts({ page, perPage });

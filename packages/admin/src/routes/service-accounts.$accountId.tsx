@@ -1,4 +1,4 @@
-import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
+import { ADMIN_DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
@@ -50,7 +50,7 @@ function ServiceAccountDetailPage() {
               onSuccess: () =>
                 void navigate({
                   to: "/service-accounts",
-                  search: { page: 1, perPage: DEFAULT_PAGE_SIZE },
+                  search: { page: 1, perPage: ADMIN_DEFAULT_PAGE_SIZE },
                 }),
             })
           }

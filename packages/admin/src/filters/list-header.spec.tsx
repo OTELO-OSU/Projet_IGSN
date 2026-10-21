@@ -134,6 +134,65 @@ describe("ListHeader", () => {
       .toBeVisible();
   });
 
+  it("should offer no Reset filters button without onReset", async () => {
+    const screen = await render(
+      <ListHeader title={TITLE} filters={[search, status()]} />,
+    );
+
+    await expect.element(screen.getByLabelText("Search")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Reset filters" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should call onReset from the Reset filters button", async () => {
+    const onReset = vi.fn();
+    const screen = await render(
+      <ListHeader
+        title={TITLE}
+        filters={[search, status()]}
+        onReset={onReset}
+      />,
+    );
+
+    await screen.getByRole("button", { name: "Reset filters" }).click();
+
+    expect(onReset).toHaveBeenCalled();
+  });
+
+  it("should collapse an optional filter back once a reset clears it", async () => {
+    function ResettableStatus() {
+      const [value, setValue] = useState("draft");
+      return (
+        <ListHeader
+          title={TITLE}
+          onReset={() => setValue("")}
+          filters={[
+            search,
+            nature,
+            {
+              name: "status",
+              label: "Status",
+              active: value !== "",
+              onRemove: () => setValue(""),
+              cell: <input aria-label="Status" value={value} readOnly />,
+            },
+          ]}
+        />
+      );
+    }
+
+    const screen = await render(<ResettableStatus />);
+    await screen.getByRole("button", { name: "Reset filters" }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: ADD }))
+      .toBeVisible();
+    expect(
+      screen.getByLabelText("Status", { exact: true }).elements(),
+    ).toHaveLength(0);
+  });
+
   it("should end the filter bar with the add-filter button, the action staying on the heading row", async () => {
     const screen = await render(
       <ListHeader

@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import {
-  DEFAULT_PAGE_SIZE,
+  ADMIN_DEFAULT_PAGE_SIZE,
+  ADMIN_PAGE_SIZES,
   pageSchema,
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
@@ -38,7 +39,7 @@ export const addManualGroupMemberBodySchema = z.strictObject({
 
 export const listManualGroupsQuerySchema = z.object({
   page: pageSchema,
-  perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
+  perPage: pageSizeSchema(ADMIN_DEFAULT_PAGE_SIZE, ADMIN_PAGE_SIZES),
   search: searchTermSchema,
   noManager: z.stringbool().optional().catch(undefined),
 });

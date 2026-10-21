@@ -7,6 +7,7 @@ import { RouteGuard } from "#/auth/route-guard.tsx";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
+import { useSavedListSearch } from "#/filters/use-saved-list-search.ts";
 import { noManagerFilterEntry } from "#/managers/no-manager-filter-entry.tsx";
 import { CreateManualGroupDialog } from "#/manual-groups/create-manual-group-dialog.tsx";
 import { ManualGroupTable } from "#/manual-groups/manual-group-table.tsx";
@@ -37,6 +38,17 @@ export const Route = createFileRoute("/manual-groups/")({
 });
 
 function ManualGroupsPage() {
+  const { isRestoring, reset } = useSavedListSearch(
+    "manual-groups",
+    manualGroupsSearchSchema,
+    {
+      unsaved: ["requestedName", "requestedManagerIds"],
+    },
+  );
+  return isRestoring ? null : <ManualGroupsList onReset={reset} />;
+}
+
+function ManualGroupsList({ onReset }: { onReset?: () => Promise<void> }) {
   const { data: me } = useCurrentUser();
   const {
     page,
@@ -60,6 +72,7 @@ function ManualGroupsPage() {
   return (
     <>
       <ListHeader
+        onReset={onReset}
         title={m.manual_groups_title()}
         action={
           me?.superAdmin ? (

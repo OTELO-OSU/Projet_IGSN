@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_PAGE_SIZE } from "../sample/sample-validator.ts";
+import { ADMIN_DEFAULT_PAGE_SIZE } from "../sample/sample-validator.ts";
 import { NO_MANAGED_GROUPS } from "./managed-groups.ts";
 import { listUsersQuerySchema, updateUserSchema } from "./user-validator.ts";
 
@@ -14,7 +14,7 @@ describe("listUsersQuerySchema", () => {
   ])("should fall back to the defaults on %s", (_case, query) => {
     expect(listUsersQuerySchema.parse(query)).toEqual({
       page: 1,
-      perPage: DEFAULT_PAGE_SIZE,
+      perPage: ADMIN_DEFAULT_PAGE_SIZE,
       status: undefined,
     });
   });
@@ -22,7 +22,7 @@ describe("listUsersQuerySchema", () => {
   it("should coerce a page and keep a known status filter", () => {
     expect(
       listUsersQuerySchema.parse({ page: "3", status: "pending" }),
-    ).toEqual({ page: 3, perPage: DEFAULT_PAGE_SIZE, status: "pending" });
+    ).toEqual({ page: 3, perPage: ADMIN_DEFAULT_PAGE_SIZE, status: "pending" });
   });
 
   it.each([
@@ -51,7 +51,7 @@ describe("listUsersQuerySchema", () => {
       }),
     ).toStrictEqual({
       page: 1,
-      perPage: DEFAULT_PAGE_SIZE,
+      perPage: ADMIN_DEFAULT_PAGE_SIZE,
       institutionalOrganization: undefined,
       institutionalOsu: undefined,
       institutionalLaboratory: undefined,

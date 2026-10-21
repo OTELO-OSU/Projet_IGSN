@@ -9,6 +9,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { RouteGuard } from "#/auth/route-guard.tsx";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
+import { useSavedListSearch } from "#/filters/use-saved-list-search.ts";
 import { institutionFilterEntry } from "#/institutional-groups/institution-tree-filter.tsx";
 import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx";
 import { m } from "#/paraglide/messages.js";
@@ -48,6 +49,11 @@ export const Route = createFileRoute("/samples/moderation")({
 type SampleModerationSearch = z.infer<typeof searchSchema>;
 
 function SampleModerationPage() {
+  const { isRestoring, reset } = useSavedListSearch("moderation", searchSchema);
+  return isRestoring ? null : <SampleModerationList onReset={reset} />;
+}
+
+function SampleModerationList({ onReset }: { onReset?: () => Promise<void> }) {
   const params = Route.useSearch();
   const selection = useSampleSelection(params, true);
   const navigate = Route.useNavigate();
@@ -58,6 +64,7 @@ function SampleModerationPage() {
   return (
     <>
       <ListHeader
+        onReset={onReset}
         title={m.sample_moderation_title()}
         action={<BulkEditDialog exportRequest={selection.exportRequest} />}
         filters={[

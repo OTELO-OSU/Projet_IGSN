@@ -10,20 +10,21 @@ import {
 } from "@tanstack/react-router";
 import { render as renderComponent } from "vitest-browser-react";
 
-export const render = (ui: ReactNode) =>
-  renderComponent(
-    <RouterContextProvider
-      router={createRouter({
-        routeTree: createRootRoute(),
-        history: createMemoryHistory(),
-      })}
-    >
-      <QueryClientProvider
-        client={
-          new QueryClient({ defaultOptions: { queries: { retry: false } } })
-        }
-      >
-        <TooltipProvider>{ui}</TooltipProvider>
-      </QueryClientProvider>
-    </RouterContextProvider>,
-  );
+export const render = (ui: ReactNode) => {
+  const router = createRouter({
+    routeTree: createRootRoute(),
+    history: createMemoryHistory(),
+  });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return renderComponent(ui, {
+    wrapper: ({ children }) => (
+      <RouterContextProvider router={router}>
+        <QueryClientProvider client={client}>
+          <TooltipProvider>{children}</TooltipProvider>
+        </QueryClientProvider>
+      </RouterContextProvider>
+    ),
+  });
+};
