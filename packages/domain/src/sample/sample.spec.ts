@@ -350,6 +350,8 @@ describe("createSampleSchema", () => {
   it.each([
     ["rock_and_sediment.rock.unknown", null],
     ["rock_and_sediment.rock.other", "Basalte du Massif Central"],
+    ["rock_and_sediment.sediment.unknown", null],
+    ["rock_and_sediment.sediment.other", "Varves du lac du Bourget"],
     [
       "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       "Granite rose de Bretagne",
@@ -646,16 +648,34 @@ describe("the write schemas", () => {
   );
 
   it.each([
-    ["createSampleSchema", createSampleSchema],
-    ["updateSampleSchema", updateSampleSchema],
+    [
+      "createSampleSchema",
+      "rock_and_sediment.rock.unknown",
+      createSampleSchema,
+    ],
+    [
+      "updateSampleSchema",
+      "rock_and_sediment.rock.unknown",
+      updateSampleSchema,
+    ],
+    [
+      "createSampleSchema",
+      "rock_and_sediment.sediment.unknown",
+      createSampleSchema,
+    ],
+    [
+      "updateSampleSchema",
+      "rock_and_sediment.sediment.unknown",
+      updateSampleSchema,
+    ],
   ])(
-    "should reject on %s a specific name on an unknown rock",
-    (_name, schema) => {
+    "should reject on %s a specific name on the unknown material %s",
+    (_name, material, schema) => {
       // Arrange / Act
       const result = schema.safeParse({
         name: "Basalte du Massif Central",
         nature: "hand_sample",
-        material: "rock_and_sediment.rock.unknown",
+        material,
         specificName: "Granite rose de Bretagne",
       });
       // Assert

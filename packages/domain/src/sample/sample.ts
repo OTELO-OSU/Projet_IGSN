@@ -209,7 +209,7 @@ const checkSample = (
     ctx.addIssue({
       code: "custom",
       path: ["specificName"],
-      message: "an unknown rock carries no specific name",
+      message: "an unknown material carries no specific name",
     });
   }
   if (

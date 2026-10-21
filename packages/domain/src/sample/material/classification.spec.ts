@@ -17,6 +17,7 @@ describe("materialPathSchema", () => {
     "rock_and_sediment.rock.igneous.volcanic.exotic.carbonatite",
     "rock_and_sediment.rock.other",
     "rock_and_sediment.sediment.unknown",
+    "rock_and_sediment.sediment.other",
     "rock_and_sediment.rock.sedimentary.microbialite",
     "rock_and_sediment.rock.sedimentary.clastic_sedimentary_rock.other",
     "rock_and_sediment.rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.limestone",
