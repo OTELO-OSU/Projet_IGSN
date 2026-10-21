@@ -21,10 +21,7 @@ import {
   listSamplesQueryOptions,
   useListSamples,
 } from "#/domain/samples/hook/list-samples.ts";
-import {
-  ResultsMapButton,
-  ResultsMapDialog,
-} from "#/domain/samples/results-map-dialog.tsx";
+import { ResultsMapDialog } from "#/domain/samples/results-map-dialog.tsx";
 import { SampleFacets } from "#/domain/samples/sample-facets.tsx";
 import { SearchBanner } from "#/domain/samples/search-banner.tsx";
 import { SearchCompose } from "#/domain/samples/search-compose.tsx";
@@ -144,7 +141,7 @@ function SearchPage() {
               params={params}
               selection={selection}
               onSelectionChange={setSelection}
-              actions={<ResultsMapButton onClick={() => setMap(true)} />}
+              onMapOpen={() => setMap(true)}
             />
           ) : null}
           {params ? (
@@ -165,12 +162,12 @@ function Results({
   params,
   selection,
   onSelectionChange,
-  actions,
+  onMapOpen,
 }: {
   params: ListSamplesParams;
   selection: RowSelectionState;
   onSelectionChange: OnChangeFn<RowSelectionState>;
-  actions?: ReactNode;
+  onMapOpen: () => void;
 }) {
   const navigate = Route.useNavigate();
   const { data } = useListSamples(params);
@@ -204,7 +201,7 @@ function Results({
           selected={Object.keys(selection)}
         />
       }
-      actions={actions}
+      onMapOpen={onMapOpen}
     />
   );
 }

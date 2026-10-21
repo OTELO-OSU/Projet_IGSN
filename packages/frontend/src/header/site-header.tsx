@@ -6,6 +6,7 @@ import { MenuIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { AuthControls } from "#/auth/auth-controls.tsx";
+import { DemoRibbon } from "#/demo-banner.tsx";
 import { LocaleSwitch } from "#/i18n/locale-switch.tsx";
 import { m } from "#/paraglide/messages.js";
 
@@ -45,8 +46,13 @@ export function SiteHeader() {
   return (
     <header className="bg-background/80 phone:relative sticky top-0 z-40 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-6xl items-center gap-3 px-6 sm:h-32 sm:gap-6">
-        <Link to="/" aria-label={m.app_title()} className="shrink-0">
+        <Link
+          to="/"
+          aria-label={m.app_title()}
+          className="relative shrink-0 overflow-hidden"
+        >
           <img src={logoIgsnUrl} alt="" className="h-12 w-auto sm:h-22" />
+          <DemoRibbon />
         </Link>
         <Button
           ref={menuButtonRef}

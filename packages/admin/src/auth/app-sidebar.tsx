@@ -108,6 +108,16 @@ export function AppSidebar({
             />
           )}
           {me.superAdmin && (
+            <NavItem
+              to={SERVICE_ACCOUNTS_PATH}
+              search={listSearch}
+              Icon={BotIcon}
+              label={m.nav_service_accounts()}
+              isCurrent={pathname.startsWith(SERVICE_ACCOUNTS_PATH)}
+              isCollapsed={isCollapsed}
+            />
+          )}
+          {me.superAdmin && (
             <li>
               <p
                 id={GROUPS_NAV_ID}
@@ -131,16 +141,6 @@ export function AppSidebar({
                 ))}
               </ul>
             </li>
-          )}
-          {me.superAdmin && (
-            <NavItem
-              to={SERVICE_ACCOUNTS_PATH}
-              search={listSearch}
-              Icon={BotIcon}
-              label={m.nav_service_accounts()}
-              isCurrent={pathname.startsWith(SERVICE_ACCOUNTS_PATH)}
-              isCollapsed={isCollapsed}
-            />
           )}
           {canAdminManualGroups(me) && (
             <NavItem
