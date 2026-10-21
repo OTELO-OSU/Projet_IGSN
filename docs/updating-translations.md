@@ -4,11 +4,11 @@ This guide is about the texts the public site shows in English and French.
 
 ## Where the texts live
 
-| File                                                         | Texts                                                                         | Languages            |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------- | -------------------- |
-| [packages/frontend/messages/](../packages/frontend/messages) | The public site: home, search, sample page, FAQ, legal pages                  | `en.json`, `fr.json` |
-| [packages/domain/messages/](../packages/domain/messages)     | Vocabulary labels shared by both apps: materials, sample types, oceans, ages… | `en.json`, `fr.json` |
-| [packages/admin/messages/](../packages/admin/messages)       | The admin app                                                                 | `en.json` only       |
+| File                                                         | Texts                                                                                                                                                        | Languages            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
+| [packages/frontend/messages/](../packages/frontend/messages) | The public site: home, search, sample page, FAQ, legal pages                                                                                                 | `en.json`, `fr.json` |
+| [packages/domain/messages/](../packages/domain/messages)     | Vocabulary labels shared by both apps: materials, sample types, oceans, ages, and the sample form's placeholders and hints, also read by the import template | `en.json`, `fr.json` |
+| [packages/admin/messages/](../packages/admin/messages)       | The admin app                                                                                                                                                | `en.json` only       |
 
 The admin app reads only the English vocabulary labels.
 

@@ -94,8 +94,13 @@ describe("import template customization", () => {
     ]);
   });
 
-  it("should treat the default existence and availability statuses as pre-filled in an uncustomized file", () => {
+  it("should treat the admin form's defaults as pre-filled in an uncustomized file", () => {
     expect([...prefilledHeaderLabelsOf(undefined)]).toEqual([
+      ["Nature", "Hand sample"],
+      ["Oriented sample", "No"],
+      ["Radioactivity", "No"],
+      ["Asbestos-rich", "No"],
+      ["Chemical risk", "No"],
       ["Existence status", "Exists"],
       ["Availability status", "Available"],
     ]);

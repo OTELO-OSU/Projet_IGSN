@@ -3,7 +3,7 @@ import type ExcelJS from "exceljs";
 import type { LayoutColumn, TemplateLayout } from "./template-layout.ts";
 
 import { plainHeader, SAMPLE_KEY_HEADER, SHEETS } from "./columns.ts";
-import { FIRST_DATA_ROW } from "./data-range.ts";
+import { EXAMPLE_KEY, FIRST_DATA_ROW } from "./data-range.ts";
 
 export type Cell = string | Date;
 
@@ -76,7 +76,9 @@ export function readRows(
   const samples = sheetRows(
     worksheetOf(book, samplesSheet.name),
     samplesSheet.columns,
-  ).map((row): ParsedSample => ({ ...row, children: [] }));
+  )
+    .filter(({ cells }) => cells[SAMPLE_KEY_HEADER] !== EXAMPLE_KEY)
+    .map((row): ParsedSample => ({ ...row, children: [] }));
   const byKey = new Map<Cell, ParsedSample>();
   for (const sample of samples) {
     const key = sample.cells[SAMPLE_KEY_HEADER];

@@ -97,7 +97,7 @@ describe("samples export workbook", () => {
         ),
       ),
     }).toEqual({
-      leading: ["Sample #", "Name", "IGSN", "Parent IGSN"],
+      leading: ["Sample #", "Sample name", "IGSN", "Parent IGSN"],
       metadata: [],
     });
   });
@@ -106,7 +106,7 @@ describe("samples export workbook", () => {
     expect(rowOf(SHEETS.samples, FIRST_DATA_ROW)).toMatchObject({
       "Sample #": "sample-7",
       IGSN: RESEARCH_PROJECT_SAMPLE.igsn,
-      Name: RESEARCH_PROJECT_SAMPLE.name,
+      "Sample name": RESEARCH_PROJECT_SAMPLE.name,
       "Parent IGSN": RESEARCH_PROJECT_SAMPLE.parents[0]?.igsn,
       Nature: "Hand sample",
       "Material (level 1)": "Rock and sediment",

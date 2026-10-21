@@ -6,9 +6,8 @@ import { REQUIRED_SAMPLE_COLUMNS } from "./required-columns.ts";
 describe("REQUIRED_SAMPLE_COLUMNS", () => {
   it("should require what every published sample fills, hierarchies down to their publish frontier, conditional fields left out", () => {
     expect(REQUIRED_SAMPLE_COLUMNS.map(plainHeader)).toEqual([
-      "Name",
+      "Sample name",
       "Sample type (level 1)",
-      "Nature",
       "Provenance status",
       "Material (level 1)",
       "Material (level 2)",

@@ -5,10 +5,7 @@ import {
   type TestInfo,
 } from "@playwright/test";
 
-import {
-  FIRST_DATA_ROW,
-  openSamplesSheet,
-} from "../admin/template-workbook.ts";
+import { HEADER_ROW, openSamplesSheet } from "../admin/template-workbook.ts";
 import { withOptionalCount } from "../pick-hierarchy.ts";
 import { frontendUrl } from "../urls";
 
@@ -131,7 +128,7 @@ export function sampleListPage(page: Page) {
       const { sheet, columnOf } = await openSamplesSheet(path);
       return sheet
         .getColumn(columnOf("IGSN"))
-        .values.slice(FIRST_DATA_ROW)
+        .values.slice(HEADER_ROW + 1)
         .filter(Boolean);
     },
     expectLanding: () =>

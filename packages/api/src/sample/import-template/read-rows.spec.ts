@@ -8,6 +8,7 @@ import {
   cleanBook,
   deleteColumn,
   fill,
+  FIRST_SAMPLE_ROW,
   swapColumns,
   templateBook,
   filledRowsOf,
@@ -15,7 +16,16 @@ import {
 
 const read = (book: ExcelJS.Workbook) => filledRowsOf(book);
 
+const HAZARDS = {
+  Radioactivity: "No",
+  "Asbestos-rich": "No",
+  "Chemical risk": "No",
+};
+
 const DEFAULTED = {
+  Nature: "Hand sample",
+  "Oriented sample": "No",
+  ...HAZARDS,
   "Existence status": "Exists",
   "Availability status": "Available",
 };
@@ -23,11 +33,12 @@ const DEFAULTED = {
 const CLEAN = {
   samples: [
     {
-      row: 3,
+      row: FIRST_SAMPLE_ROW,
       cells: {
         ...CLEAN_SAMPLE,
+        ...HAZARDS,
         "Sample #": "1",
-        "Local name": "123",
+        "Local ID": "123",
         Longitude: "2.35",
       },
       children: [
@@ -73,28 +84,34 @@ describe("readRows", () => {
 
   it("should read the same cells from reordered columns and a deleted optional one", async () => {
     const book = await cleanBook();
-    swapColumns(book, SHEETS.samples, "Name", "Latitude");
+    swapColumns(book, SHEETS.samples, "Sample name", "Latitude");
     swapColumns(book, SHEETS.relations, "Identifier", "Resource type");
-    deleteColumn(book, SHEETS.samples, "Local name description");
+    deleteColumn(book, SHEETS.samples, "Local ID description");
 
     expect(read(book)).toEqual(CLEAN);
   });
 
   it("should carry bad values, bad keys and dangling child rows as they are", async () => {
     const book = await templateBook();
-    fill(book, SHEETS.samples, 3, {
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
       Nature: "Big rock",
       Latitude: "abc",
       "Collection date start": "demain",
     });
-    fill(book, SHEETS.samples, 4, { "Sample #": 1, Name: "Twin" });
-    fill(book, SHEETS.samples, 5, { "Sample #": null, Name: "Keyless" });
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
+      "Sample #": 1,
+      "Sample name": "Twin",
+    });
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 2, {
+      "Sample #": null,
+      "Sample name": "Keyless",
+    });
     fill(book, SHEETS.relations, 3, { "Sample #": 7, Identifier: "x" });
 
     expect(read(book)).toEqual({
       samples: [
         {
-          row: 3,
+          row: FIRST_SAMPLE_ROW,
           cells: {
             ...DEFAULTED,
             "Sample #": "1",
@@ -105,11 +122,15 @@ describe("readRows", () => {
           children: [],
         },
         {
-          row: 4,
-          cells: { ...DEFAULTED, "Sample #": "1", Name: "Twin" },
+          row: FIRST_SAMPLE_ROW + 1,
+          cells: { ...DEFAULTED, "Sample #": "1", "Sample name": "Twin" },
           children: [],
         },
-        { row: 5, cells: { ...DEFAULTED, Name: "Keyless" }, children: [] },
+        {
+          row: FIRST_SAMPLE_ROW + 2,
+          cells: { ...DEFAULTED, "Sample name": "Keyless" },
+          children: [],
+        },
       ],
       orphans: [
         {
@@ -119,5 +140,9 @@ describe("readRows", () => {
         },
       ],
     });
+  });
+
+  it("should skip the greyed example row", async () => {
+    expect(read(await templateBook()).samples).toEqual([]);
   });
 });

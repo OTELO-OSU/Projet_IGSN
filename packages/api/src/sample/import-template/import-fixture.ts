@@ -15,6 +15,8 @@ import { importTemplateWorkbook } from "./workbook.ts";
 
 type Cells = Record<string, ExcelJS.CellValue>;
 
+export const FIRST_SAMPLE_ROW = HEADER_ROW + 2;
+
 let template: ReturnType<typeof importTemplateWorkbook> | undefined;
 
 export async function templateBook(): Promise<ExcelJS.Workbook> {
@@ -84,8 +86,8 @@ export function swapColumns(
 }
 
 export const CLEAN_SAMPLE: Cells = {
-  Name: "Basalt 1",
-  "Local name": 123,
+  "Sample name": "Basalt 1",
+  "Local ID": 123,
   "Sample type (level 1)": "Individual sample",
   Nature: "Hand sample",
   "Material (level 1)": "Rock and sediment",
@@ -130,6 +132,7 @@ export const CLEAN_INPUT = {
     oriented: true,
     orientationExplanation: "North arrow",
   },
+  security: { radioactivity: false, asbestosRich: false, chemicalRisk: false },
   location: {
     position: { type: "point", longitude: 2.35, latitude: 45.2 },
     region: { kind: "country", country: "FR" },
@@ -176,7 +179,7 @@ export const CLEAN_ROWS_BY_PATH = {
 
 export async function cleanBook(): Promise<ExcelJS.Workbook> {
   const book = await templateBook();
-  fill(book, SHEETS.samples, 3, CLEAN_SAMPLE);
+  fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, CLEAN_SAMPLE);
   fill(book, SHEETS.relations, 3, {
     "Sample #": 1,
     "Identifier type": "DOI",
@@ -213,7 +216,7 @@ export async function parentedBook(
   cells: Cells = {},
 ): Promise<ExcelJS.Workbook> {
   const book = await cleanBook();
-  fill(book, SHEETS.samples, 3, {
+  fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
     ...Object.fromEntries(INHERITED_CELLS.map((header) => [header, null])),
     "Parent IGSN": parentIgsn,
     ...cells,

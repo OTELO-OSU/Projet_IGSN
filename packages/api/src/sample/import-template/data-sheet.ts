@@ -30,6 +30,7 @@ export function addDataSheet(
   rows: number,
   prefill?: (column: Column) => string | undefined,
   placements: Placements = BLOCK_PLACEMENTS,
+  sampleColumns: readonly Column[] = columns,
 ) {
   const sheet = book.addWorksheet(name);
   sheet.columns = columns.map((column) => ({
@@ -49,13 +50,19 @@ export function addDataSheet(
       }
       continue;
     }
-    const validation = validationOf(sheet, columns, column, placements);
+    const validation = validationOf(
+      sheet,
+      columns,
+      column,
+      placements,
+      sampleColumns,
+    );
     if (validation === undefined) continue;
     sheetValidations(sheet).add(
       dataRange(columnLetter(sheet, index), rows),
       validation,
     );
   }
-  addGreyRules(sheet, columns, rows);
+  addGreyRules(sheet, columns, rows, placements);
   return sheet;
 }

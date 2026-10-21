@@ -13,6 +13,7 @@ import {
   CLEAN_SAMPLE,
   cleanBook,
   fill,
+  FIRST_SAMPLE_ROW,
 } from "./import-fixture.ts";
 
 const bytesOf = async (book: ExcelJS.Workbook) =>
@@ -26,7 +27,10 @@ describe("findImportDuplicates", () => {
       const created = await insertSample(db, CLEAN_DUPLICATE);
       const published = (await publishSample(db, created.id))!;
       const book = await cleanBook();
-      fill(book, SHEETS.samples, 4, { ...CLEAN_SAMPLE, Name: "Basalt 2" });
+      fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
+        ...CLEAN_SAMPLE,
+        "Sample name": "Basalt 2",
+      });
       // Act
       const duplicates = await findImportDuplicates(
         await bytesOf(book),
@@ -35,7 +39,7 @@ describe("findImportDuplicates", () => {
       // Assert
       expect(duplicates).toEqual([
         {
-          row: 3,
+          row: FIRST_SAMPLE_ROW,
           duplicates: [
             { id: published.id, igsn: published.igsn, name: published.name },
           ],

@@ -7,6 +7,7 @@ import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import {
   FIRST_DATA_ROW,
+  HEADER_ROW,
   fillTemplateSample,
   openSamplesSheet,
 } from "../support/admin/template-workbook";
@@ -57,7 +58,7 @@ async function fillTemplateAttachments(
   const { book } = await openSamplesSheet(file);
   const sheet = book.getWorksheet("Attachments");
   if (!sheet) throw new Error("the template must hold an Attachments sheet");
-  const headers = sheet.getRow(FIRST_DATA_ROW - 1).values;
+  const headers = sheet.getRow(HEADER_ROW).values;
   for (const [index, cells] of rows.entries()) {
     for (const [header, value] of Object.entries(cells)) {
       const column = headers.indexOf(header);
@@ -123,7 +124,7 @@ test.describe("sample import", () => {
       page,
       testInfo,
       {
-        Name: name,
+        "Sample name": name,
         "Name of the research programme": "MAR-12",
       },
       [NOTES, PHOTO],

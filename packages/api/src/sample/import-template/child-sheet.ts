@@ -38,7 +38,15 @@ export function addChildSheet(
   sampleColumns: readonly Column[],
   sampleRows = rows,
 ) {
-  const sheet = addDataSheet(book, name, columns, rows);
+  const sheet = addDataSheet(
+    book,
+    name,
+    columns,
+    rows,
+    undefined,
+    undefined,
+    sampleColumns,
+  );
   const specificNameIndex = sampleColumns.findIndex(
     ({ path }) => path === "specificName",
   );

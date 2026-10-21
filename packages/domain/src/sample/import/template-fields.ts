@@ -301,4 +301,7 @@ export const TEMPLATE_FIELD_DRIVERS: Partial<
   navigationType: "position",
   verticalPositions: "position",
   specificConditions: "storageConditions",
+  collectionMethodDescription: "collectionMethod",
+  depositDescription: "depositName",
+  researchProgramDescription: "researchProgramName",
 };

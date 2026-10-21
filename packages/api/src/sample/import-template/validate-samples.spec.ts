@@ -10,6 +10,7 @@ import {
   deleteColumn,
   fill,
   filledRowsOf,
+  FIRST_SAMPLE_ROW,
 } from "./import-fixture.ts";
 import { validateSamples } from "./validate-samples.ts";
 
@@ -19,7 +20,7 @@ const validated = (book: ExcelJS.Workbook) =>
 const issuesOf = (book: ExcelJS.Workbook) => validated(book).issues;
 
 const COLLECTION_SPECIMEN = {
-  Name: "Specimen 2",
+  "Sample name": "Specimen 2",
   "Sample type (level 1)": "Individual sample",
   Nature: "Hand sample",
   "Material (level 1)": "Rock and sediment",
@@ -40,25 +41,28 @@ describe("validateSamples", () => {
 
   it("should keep the parsed input of each sample with no issue alone", async () => {
     const book = await cleanBook();
-    fill(book, SHEETS.samples, 4, {
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
       ...CLEAN_SAMPLE,
-      Name: "Basalt 2",
+      "Sample name": "Basalt 2",
       "Existence status": null,
     });
 
     expect(validated(book).samples.map(({ input }) => input.name)).toEqual([
-      CLEAN_SAMPLE.Name,
+      CLEAN_SAMPLE["Sample name"],
     ]);
   });
 
   it.each<[string, (book: ExcelJS.Workbook) => void, object[]]>([
     [
       "a publish blocker on the column that clears it",
-      (book) => fill(book, SHEETS.samples, 3, { "Existence status": null }),
+      (book) =>
+        fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
+          "Existence status": null,
+        }),
       [
         {
           sheet: SHEETS.samples,
-          row: 3,
+          row: FIRST_SAMPLE_ROW,
           column: "Existence status",
           code: "existence_status_missing",
         },
@@ -67,13 +71,13 @@ describe("validateSamples", () => {
     [
       "a deleted conditional column on the only row that needs it",
       (book) => {
-        fill(book, SHEETS.samples, 4, COLLECTION_SPECIMEN);
+        fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, COLLECTION_SPECIMEN);
         deleteColumn(book, SHEETS.samples, "Collection origin");
       },
       [
         {
           sheet: SHEETS.samples,
-          row: 4,
+          row: FIRST_SAMPLE_ROW + 1,
           column: "Collection origin",
           code: "collection_origin_missing",
         },
@@ -95,7 +99,7 @@ describe("validateSamples", () => {
     [
       "a filled cell the sample's provenance branch drops",
       (book) => {
-        fill(book, SHEETS.samples, 4, {
+        fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
           ...COLLECTION_SPECIMEN,
           "Collection origin": "scientific_expedition",
         });
@@ -116,7 +120,7 @@ describe("validateSamples", () => {
     [
       "each filled cell of a child row the provenance branch drops",
       (book) => {
-        fill(book, SHEETS.samples, 4, {
+        fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
           ...COLLECTION_SPECIMEN,
           "Collection origin": "scientific_expedition",
         });
@@ -166,11 +170,11 @@ describe("validateSamples", () => {
     ],
     [
       "a schema check with its message",
-      (book) => fill(book, SHEETS.samples, 3, { Latitude: 95 }),
+      (book) => fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, { Latitude: 95 }),
       [
         {
           sheet: SHEETS.samples,
-          row: 3,
+          row: FIRST_SAMPLE_ROW,
           column: "Latitude",
           code: "too_big",
           message: expect.any(String),
@@ -180,18 +184,21 @@ describe("validateSamples", () => {
     [
       "a publish blocker behind a schema error that aborts the sample",
       (book) =>
-        fill(book, SHEETS.samples, 3, { Name: null, "Existence status": null }),
+        fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
+          "Sample name": null,
+          "Existence status": null,
+        }),
       [
         {
           sheet: SHEETS.samples,
-          row: 3,
-          column: "Name",
+          row: FIRST_SAMPLE_ROW,
+          column: "Sample name",
           code: "invalid_type",
           message: expect.any(String),
         },
         {
           sheet: SHEETS.samples,
-          row: 3,
+          row: FIRST_SAMPLE_ROW,
           column: "Existence status",
           code: "existence_status_missing",
         },
@@ -199,18 +206,22 @@ describe("validateSamples", () => {
     ],
     [
       "no publish blocker on a field a schema error already names",
-      (book) => fill(book, SHEETS.samples, 3, { Name: null, Latitude: 95 }),
+      (book) =>
+        fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
+          "Sample name": null,
+          Latitude: 95,
+        }),
       [
         {
           sheet: SHEETS.samples,
-          row: 3,
-          column: "Name",
+          row: FIRST_SAMPLE_ROW,
+          column: "Sample name",
           code: "invalid_type",
           message: expect.any(String),
         },
         {
           sheet: SHEETS.samples,
-          row: 3,
+          row: FIRST_SAMPLE_ROW,
           column: "Latitude",
           code: "too_big",
           message: expect.any(String),

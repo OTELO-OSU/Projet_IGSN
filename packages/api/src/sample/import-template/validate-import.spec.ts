@@ -12,6 +12,7 @@ import {
   cleanBook,
   deleteColumn,
   fill,
+  FIRST_SAMPLE_ROW,
   parentedBook,
   sheetOf,
   templateBook,
@@ -109,7 +110,7 @@ const withKey = (book: ExcelJS.Workbook, row: number, key: string) =>
 describe("validateImport", () => {
   it("should answer the parsed samples of a publishable file", async () => {
     const book = await cleanBook();
-    withKey(book, 4, "sample-8");
+    withKey(book, FIRST_SAMPLE_ROW + 1, "sample-8");
     const { issues, samples } = await validate(await bytesOf(book));
 
     expect({
@@ -121,8 +122,8 @@ describe("validateImport", () => {
     }).toEqual({
       issues: [],
       samples: [
-        { name: CLEAN_SAMPLE.Name, internalNumber: null },
-        { name: CLEAN_SAMPLE.Name, internalNumber: 8 },
+        { name: CLEAN_SAMPLE["Sample name"], internalNumber: null },
+        { name: CLEAN_SAMPLE["Sample name"], internalNumber: 8 },
       ],
     });
   });
@@ -172,10 +173,10 @@ describe("validateImport", () => {
 
   it("should stop at a structural issue before reading any row", async () => {
     const book = await templateBook();
-    deleteColumn(book, SHEETS.samples, "Nature");
+    deleteColumn(book, SHEETS.samples, "Sample name");
 
     expect(await issuesOf(await bytesOf(book))).toEqual([
-      { sheet: SHEETS.samples, column: "Nature", code: "missing_column" },
+      { sheet: SHEETS.samples, column: "Sample name", code: "missing_column" },
     ]);
   });
 
@@ -184,8 +185,8 @@ describe("validateImport", () => {
     ["past the import row cap", MAX_IMPORT_ROWS + 1, "too_many_rows"],
   ])("should stop at the row count when %s", async (_, count, code) => {
     const book = await templateBook();
-    for (let row = 3; row < 3 + count; row++) {
-      fill(book, SHEETS.samples, row, { Name: `Sample ${row}` });
+    for (let row = FIRST_SAMPLE_ROW; row < FIRST_SAMPLE_ROW + count; row++) {
+      fill(book, SHEETS.samples, row, { "Sample name": `Sample ${row}` });
     }
 
     expect(await issuesOf(await bytesOf(book))).toEqual([
@@ -205,15 +206,37 @@ describe("validateImport", () => {
       "Collection date start": start,
       "Collection date end": end,
     });
-    fill(book, SHEETS.samples, 3, { "Material (level 4)": "Basalte" });
-    fill(book, SHEETS.samples, 4, {
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
+      "Material (level 4)": "Basalte",
+    });
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
       ...dated(2, null, null),
       "Collection date precision": null,
     });
-    fill(book, SHEETS.samples, 5, dated(3, "2999-01-01", "2999-01-02"));
-    fill(book, SHEETS.samples, 6, dated(4, "2024-01-20", "2024-01-15"));
-    fill(book, SHEETS.samples, 7, dated(5, "demain", "demain"));
-    fill(book, SHEETS.samples, 8, dated(6, "02/29/2030", "02/29/2030"));
+    fill(
+      book,
+      SHEETS.samples,
+      FIRST_SAMPLE_ROW + 2,
+      dated(3, "2999-01-01", "2999-01-02"),
+    );
+    fill(
+      book,
+      SHEETS.samples,
+      FIRST_SAMPLE_ROW + 3,
+      dated(4, "2024-01-20", "2024-01-15"),
+    );
+    fill(
+      book,
+      SHEETS.samples,
+      FIRST_SAMPLE_ROW + 4,
+      dated(5, "demain", "demain"),
+    );
+    fill(
+      book,
+      SHEETS.samples,
+      FIRST_SAMPLE_ROW + 5,
+      dated(6, "02/29/2030", "02/29/2030"),
+    );
 
     const at = (row: number, column: string, value: string) => ({
       sheet: SHEETS.samples,
@@ -225,43 +248,61 @@ describe("validateImport", () => {
     const format = { code: "invalid_format", message: expect.any(String) };
     expect(await issuesOf(await bytesOf(book))).toEqual([
       {
-        ...at(3, "Material (level 1)", "Rock and sediment"),
+        ...at(FIRST_SAMPLE_ROW, "Material (level 1)", "Rock and sediment"),
         code: "custom",
         message: expect.any(String),
       },
       {
-        ...at(3, "Material (level 1)", "Rock and sediment"),
+        ...at(FIRST_SAMPLE_ROW, "Material (level 1)", "Rock and sediment"),
         code: "material_incomplete",
       },
       {
         sheet: SHEETS.samples,
-        row: 4,
+        row: FIRST_SAMPLE_ROW + 1,
         column: "Collection date precision",
         code: "collection_date_missing",
       },
-      { ...at(5, "Collection date start", "2999-01-01"), ...future },
-      { ...at(5, "Collection date end", "2999-01-02"), ...future },
       {
-        ...at(6, "Collection date start", "2024-01-20"),
+        ...at(FIRST_SAMPLE_ROW + 2, "Collection date start", "2999-01-01"),
+        ...future,
+      },
+      {
+        ...at(FIRST_SAMPLE_ROW + 2, "Collection date end", "2999-01-02"),
+        ...future,
+      },
+      {
+        ...at(FIRST_SAMPLE_ROW + 3, "Collection date start", "2024-01-20"),
         code: "collection_date_order",
         message: ORDER,
       },
-      { ...at(7, "Collection date start", "demain"), ...format },
-      { ...at(7, "Collection date end", "demain"), ...format },
-      { ...at(8, "Collection date start", "02/29/2030"), ...format },
-      { ...at(8, "Collection date end", "02/29/2030"), ...format },
+      {
+        ...at(FIRST_SAMPLE_ROW + 4, "Collection date start", "demain"),
+        ...format,
+      },
+      {
+        ...at(FIRST_SAMPLE_ROW + 4, "Collection date end", "demain"),
+        ...format,
+      },
+      {
+        ...at(FIRST_SAMPLE_ROW + 5, "Collection date start", "02/29/2030"),
+        ...format,
+      },
+      {
+        ...at(FIRST_SAMPLE_ROW + 5, "Collection date end", "02/29/2030"),
+        ...format,
+      },
     ]);
   });
 
   it("should report a dangling child Sample # together with the samples' errors", async () => {
     const book = await cleanBook();
     fill(book, SHEETS.relations, 4, { "Sample #": 7, Title: "Paper" });
-    fill(book, SHEETS.samples, 3, { Latitude: 95 });
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, { Latitude: 95 });
 
     expect(await issuesOf(await bytesOf(book))).toEqual([
       {
         sheet: SHEETS.samples,
-        row: 3,
+        row: FIRST_SAMPLE_ROW,
         column: "Latitude",
         value: "95",
         code: "too_big",
@@ -279,18 +320,18 @@ describe("validateImport", () => {
 
   it("should list issues by sheet, row, then template column", async () => {
     const book = await cleanBook();
-    fill(book, SHEETS.samples, 3, { Latitude: 95 });
-    fill(book, SHEETS.samples, 4, {
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, { Latitude: 95 });
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW + 1, {
       ...CLEAN_SAMPLE,
       "Sample #": 2,
-      Name: null,
+      "Sample name": null,
       Longitude: "east",
     });
 
     expect(await issuesOf(await bytesOf(book))).toEqual([
       {
         sheet: SHEETS.samples,
-        row: 3,
+        row: FIRST_SAMPLE_ROW,
         column: "Latitude",
         value: "95",
         code: "too_big",
@@ -298,14 +339,14 @@ describe("validateImport", () => {
       },
       {
         sheet: SHEETS.samples,
-        row: 4,
-        column: "Name",
+        row: FIRST_SAMPLE_ROW + 1,
+        column: "Sample name",
         code: "invalid_type",
         message: expect.any(String),
       },
       {
         sheet: SHEETS.samples,
-        row: 4,
+        row: FIRST_SAMPLE_ROW + 1,
         column: "Longitude",
         value: "east",
         code: "invalid_type",
@@ -321,12 +362,12 @@ describe("validateImport", () => {
     "should carry the text typed in %s as the issue value",
     async (column, value, code) => {
       const book = await cleanBook();
-      fill(book, SHEETS.samples, 3, { [column]: ` ${value} ` });
+      fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, { [column]: ` ${value} ` });
 
       expect(await issuesOf(await bytesOf(book))).toEqual([
         {
           sheet: SHEETS.samples,
-          row: 3,
+          row: FIRST_SAMPLE_ROW,
           column,
           value,
           code,
@@ -355,7 +396,7 @@ describe("validateImport", () => {
     "should carry a date cell at %s precision as its displayed text",
     async (precision, start, end, value, timeZone) => {
       const book = await cleanBook();
-      fill(book, SHEETS.samples, 3, {
+      fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, {
         "Collection date precision": precision,
         "Collection date start": start,
         "Collection date end": end,
@@ -365,7 +406,7 @@ describe("validateImport", () => {
       expect(await issuesOf(await bytesOf(book))).toEqual([
         {
           sheet: SHEETS.samples,
-          row: 3,
+          row: FIRST_SAMPLE_ROW,
           column: "Collection date start",
           value,
           code: "collection_date_order",
@@ -375,31 +416,33 @@ describe("validateImport", () => {
     },
   );
 
-  it("should default the existence and availability status of a template without their columns", async () => {
+  it("should default the defaulted fields of a template without their columns", async () => {
     const book = await cleanBook();
     deleteColumn(book, SHEETS.samples, "Existence status");
     deleteColumn(book, SHEETS.samples, "Availability status");
+    deleteColumn(book, SHEETS.samples, "Radioactivity");
     const { issues, samples } = await validate(await bytesOf(book));
 
     expect({
       issues,
-      statuses: samples.map(({ input }) => [
+      defaults: samples.map(({ input }) => [
         input.existenceStatus,
         input.availabilityStatus,
+        input.security?.radioactivity,
       ]),
-    }).toEqual({ issues: [], statuses: [["exists", "available"]] });
+    }).toEqual({ issues: [], defaults: [["exists", "available", false]] });
   });
 
   it.each([`sample-${UNAVAILABLE}`, `Sample-${UNAVAILABLE}`])(
     "should report a Sample # holding an unavailable internal ID, whatever its case (%s)",
     async (key) => {
       const book = await cleanBook();
-      withKey(book, 4, key);
+      withKey(book, FIRST_SAMPLE_ROW + 1, key);
 
       expect(await issuesOf(await bytesOf(book))).toEqual([
         {
           sheet: SHEETS.samples,
-          row: 4,
+          row: FIRST_SAMPLE_ROW + 1,
           column: "Sample #",
           value: key,
           code: "unavailable_internal_id",
@@ -413,7 +456,7 @@ describe("validateImport", () => {
     fill(
       book,
       SHEETS.samples,
-      3,
+      FIRST_SAMPLE_ROW,
       Object.fromEntries(
         Object.entries(CLEAN_SAMPLE).filter(
           ([header]) => !PREFILLED_HEADERS.includes(header),
@@ -436,7 +479,7 @@ describe("validateImport", () => {
 
   it("should report a child row picking a row left at its pre-fill as dangling", async () => {
     const book = await customizedBook();
-    fill(book, SHEETS.samples, 3, { Name: "Basalt 1" });
+    fill(book, SHEETS.samples, FIRST_SAMPLE_ROW, { "Sample name": "Basalt 1" });
     fill(book, SHEETS.relations, 3, { "Sample #": 2, Title: "Paper" });
 
     expect(
@@ -513,7 +556,7 @@ describe("validateImport", () => {
       const book = await subSampleBook(cells);
 
       expect(await issuesOf(await bytesOf(book))).toEqual([
-        { sheet: SHEETS.samples, row: 3, column, value, code },
+        { sheet: SHEETS.samples, row: FIRST_SAMPLE_ROW, column, value, code },
       ]);
     },
   );
