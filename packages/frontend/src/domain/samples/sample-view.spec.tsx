@@ -520,6 +520,14 @@ describe("SampleView", () => {
       },
       expected: "2024-03-05 14:30 - 2024-03-06 09:05 (Pacific/Auckland)",
     },
+    {
+      collectionDate: {
+        precision: "day",
+        start: "0001-01-01",
+        end: "2024-04-01",
+      },
+      expected: "0001-01-01 - 2024-04-01",
+    },
   ] as const)(
     "should show the collection date in Identity as $expected",
     async ({ collectionDate, expected }) => {
@@ -532,6 +540,28 @@ describe("SampleView", () => {
         .toBeInTheDocument();
     },
   );
+
+  it("should show the legacy 0001-01-01 collection date of a parentless sample as unknown", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          description: {
+            collectionDate: {
+              precision: "day",
+              start: "0001-01-01",
+              end: "0001-01-01",
+            },
+          },
+        })}
+      />,
+    );
+
+    await expect
+      .element(
+        region(screen, "Identity").getByText("The collection date is unknown"),
+      )
+      .toBeInTheDocument();
+  });
 
   it.each<[string, Partial<PublishedSample>, string, string]>([
     ["Type", { type: "core.half_round" }, "Core", "Core Half round"],

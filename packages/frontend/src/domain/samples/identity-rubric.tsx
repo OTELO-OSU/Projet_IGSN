@@ -15,6 +15,9 @@ import {
 import { SubSection } from "#/domain/samples/sub-section.tsx";
 import { m } from "#/paraglide/messages.js";
 
+// The legacy registry recorded an unknown collection date as 0001-01-01.
+const UNKNOWN_COLLECTION_DATE = "0001-01-01";
+
 export function identityRubric({
   localId,
   localIdDescription,
@@ -69,7 +72,12 @@ export function identityRubric({
           // A sub-sample's collection date is its parents', not information about itself (ADR 0045).
           parents.length === 0 &&
           description?.collectionDate &&
-          dateRangeText(description.collectionDate)
+          (description.collectionDate.start.startsWith(
+            UNKNOWN_COLLECTION_DATE,
+          ) &&
+          description.collectionDate.end.startsWith(UNKNOWN_COLLECTION_DATE)
+            ? m.sample_field_collection_date_unknown()
+            : dateRangeText(description.collectionDate))
         }
       />
       <FieldRow

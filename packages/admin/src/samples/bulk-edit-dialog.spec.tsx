@@ -1,3 +1,5 @@
+import type { ExportSamplesRequest } from "@projet-igsn/domain/sample/export/export-validator";
+
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { XLSX_MEDIA_TYPE } from "@projet-igsn/domain/sample/import/import-validator";
@@ -10,15 +12,19 @@ import { BulkEditDialog } from "./bulk-edit-dialog.tsx";
 
 const SAMPLE_LIST_KEY = ["samples", { moderated: false }];
 
-async function openDialog() {
+async function openDialog(
+  exportRequest: ExportSamplesRequest | null = {
+    mode: "filters",
+    moderated: false,
+    query: {},
+  },
+) {
   const queryClient = new QueryClient();
   queryClient.setQueryData(SAMPLE_LIST_KEY, { data: [], meta: { total: 0 } });
   const screen = await render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <BulkEditDialog
-          exportRequest={{ mode: "filters", moderated: false, query: {} }}
-        />
+        <BulkEditDialog exportRequest={exportRequest} />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>,
@@ -34,6 +40,17 @@ async function openDialog() {
 }
 
 describe("BulkEditDialog", () => {
+  it("should refuse to export only synthetic and mineral samples, explaining why", async () => {
+    const { screen, dialog } = await openDialog(null);
+
+    const exportButton = dialog.getByRole("button", { name: "Export samples" });
+    await expect.element(exportButton).toBeDisabled();
+    await exportButton.hover();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Synthetic and mineral samples cannot be exported.");
+  });
+
   it("should state the format and maximum size of the workbook", async () => {
     const { dialog } = await openDialog();
 

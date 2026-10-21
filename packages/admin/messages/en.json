@@ -1052,6 +1052,7 @@
   "samples_select_page": "Select all samples on this page",
   "export_samples_too_many": "Too many samples to export: narrow the selection.",
   "export_samples_error": "The samples could not be exported.",
+  "export_samples_unexportable": "Synthetic and mineral samples cannot be exported.",
   "import_report_intro": "The file was not imported and nothing was saved. Fix the problems below, then upload it again.",
   "import_report_row": "Row",
   "import_report_column": "Column",

@@ -131,6 +131,7 @@
   "sample_field_chemical_risk": "Chemical risk",
   "sample_field_chemical_risk_explanation": "Chemical risk explanation",
   "sample_field_collection_date": "Collection date",
+  "sample_field_collection_date_unknown": "The collection date is unknown",
   "sample_field_oriented": "Oriented",
   "sample_oriented_yes": "Yes",
   "sample_oriented_no": "No",

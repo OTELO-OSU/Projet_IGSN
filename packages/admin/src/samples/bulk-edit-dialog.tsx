@@ -9,21 +9,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@projet-igsn/design-system/components/ui/dialog";
-import { FileDownIcon } from "lucide-react";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
+import { ExportSamplesButton } from "#/samples/export-samples-button.tsx";
 import { ImportFileUpload } from "#/samples/import-file-upload.tsx";
 import { useBulkEditSamples } from "#/samples/use-bulk-edit-samples.ts";
-import { useExportSamples } from "#/samples/use-export-samples.ts";
 
 export function BulkEditDialog({
   exportRequest,
 }: {
-  exportRequest: ExportSamplesRequest;
+  exportRequest: ExportSamplesRequest | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const exportSamples = useExportSamples();
   const bulkEdit = useBulkEditSamples();
   const [file, setFile] = useState<File | null>(null);
 
@@ -51,15 +49,9 @@ export function BulkEditDialog({
         </DialogHeader>
         <div className="grid gap-4">
           <DialogDescription>{m.bulk_edit_description()}</DialogDescription>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={exportSamples.isPending}
-            onClick={() => exportSamples.mutate(exportRequest)}
-          >
-            <FileDownIcon aria-hidden />
+          <ExportSamplesButton exportRequest={exportRequest} variant="outline">
             {m.action_export_samples()}
-          </Button>
+          </ExportSamplesButton>
         </div>
         <ImportFileUpload
           dropZone={{

@@ -346,3 +346,7 @@ export function faqCategories(): FaqCategory[] {
     },
   ];
 }
+
+export function faqCategory(slug: string): FaqCategory | undefined {
+  return faqCategories().find((category) => category.slug === slug);
+}
