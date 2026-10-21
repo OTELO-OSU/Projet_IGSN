@@ -49,6 +49,7 @@ import {
   updateUnchangedSample,
 } from "./service/queue-publication.ts";
 import { releaseEditLock } from "./service/release-edit-lock.ts";
+import { requeueFailedSynchronizations } from "./service/requeue-failed-synchronizations.ts";
 import { reserveInternalNumbers } from "./service/reserve-internal-numbers.ts";
 import { searchEligibleChildren } from "./service/search-eligible-children.ts";
 import { searchEligibleParents } from "./service/search-eligible-parents.ts";
@@ -134,31 +135,22 @@ export function createSampleRepository(
         return samples.length;
       }),
     retryFailedSynchronizations: (userId) =>
-      withTransaction(db, async (trx) => {
-        const retried = await trx
-          .updateTable("sample")
-          .set({ synchronization_status: "pending" })
-          .where("synchronization_status", "=", "failed")
-          .where((eb) =>
-            eb.exists(
-              eb
-                .selectFrom("user_sample")
-                .select("user_sample.sample_id")
-                .whereRef("user_sample.sample_id", "=", "sample.id")
-                .where("user_sample.user_id", "=", userId)
-                .where("user_sample.role", "in", ["owner", "editor"]),
-            ),
-          )
-          .returning(["id", "status"])
-          .execute();
-        await markParentsForSynchronization(
-          trx,
-          retried
-            .filter(({ status }) => status === "draft")
-            .map(({ id }) => id),
-        );
-        return retried.length;
-      }),
+      withTransaction(db, (trx) =>
+        requeueFailedSynchronizations(trx, (eb) =>
+          eb.exists(
+            eb
+              .selectFrom("user_sample")
+              .select("user_sample.sample_id")
+              .whereRef("user_sample.sample_id", "=", "sample.id")
+              .where("user_sample.user_id", "=", userId)
+              .where("user_sample.role", "in", ["owner", "editor"]),
+          ),
+        ),
+      ),
+    retryFailedSynchronization: (id) =>
+      withTransaction(db, (trx) =>
+        requeueFailedSynchronizations(trx, (eb) => eb("sample.id", "=", id)),
+      ),
     createPublished: (input, ownerId, groups) =>
       withTransaction(db, async (trx) => {
         const id = await insertOwnedSample(trx, input, ownerId, groups);

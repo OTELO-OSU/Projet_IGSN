@@ -119,3 +119,91 @@ describe("POST /admin/samples/retry-synchronization", () => {
     },
   );
 });
+
+const retrySampleSynchronization = (
+  db: Kysely<DB>,
+  id: string,
+  headers: Record<string, string> = { Authorization: "Bearer test-token" },
+) =>
+  createApp(db).app.request(`/admin/samples/${id}/retry-synchronization`, {
+    method: "POST",
+    headers,
+  });
+
+describe("POST /admin/samples/:id/retry-synchronization", () => {
+  pgTest(
+    "should requeue the sample alone and queue the published parent of a failed draft",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const parent = await insertParent(db, caller.id, "published", "Parent");
+      const child = await insertOwned(
+        db,
+        caller.id,
+        { name: "Child", parentIds: [parent.id] },
+        false,
+      );
+      await db
+        .updateTable("sample")
+        .set({ synchronization_status: "failed" })
+        .where("id", "=", child.id)
+        .execute();
+      const otherFailed = await insertParent(db, caller.id, "failed", "Other");
+
+      const res = await retrySampleSynchronization(db, child.id);
+
+      expect(res.status).toBe(204);
+      const ids = [parent.id, child.id, otherFailed.id];
+      expect(await statusesOf(db, ids)).toEqual(
+        [
+          { id: parent.id, synchronization_status: "pending" },
+          { id: child.id, synchronization_status: "pending" },
+          { id: otherFailed.id, synchronization_status: "failed" },
+        ].sort((a, b) => a.id.localeCompare(b.id)),
+      );
+    },
+  );
+
+  pgTest("should refuse a contributor as 403", async ({ db }) => {
+    const caller = await provisionUser(db, "test-token");
+    const owner = await provisionUser(db, "owner");
+    const sample = await insertParent(db, owner.id, "failed");
+    await db
+      .insertInto("user_sample")
+      .values({ sample_id: sample.id, user_id: caller.id, role: "contributor" })
+      .execute();
+
+    const res = await retrySampleSynchronization(db, sample.id);
+
+    expect({ status: res.status, body: await res.json() }).toEqual({
+      status: 403,
+      body: { error: "Forbidden" },
+    });
+    expect(await statusesOf(db, [sample.id])).toEqual([
+      { id: sample.id, synchronization_status: "failed" },
+    ]);
+  });
+
+  pgTest(
+    "should refuse a sample whose synchronization has not failed as 409",
+    async ({ db }) => {
+      const caller = await provisionUser(db, "test-token");
+      const sample = await insertParent(db, caller.id, "published");
+
+      const res = await retrySampleSynchronization(db, sample.id);
+
+      expect({ status: res.status, body: await res.json() }).toEqual({
+        status: 409,
+        body: { error: "Sample synchronization has not failed" },
+      });
+    },
+  );
+
+  pgTest("should refuse an anonymous retry as 401", async ({ db }) => {
+    const caller = await provisionUser(db, "test-token");
+    const sample = await insertParent(db, caller.id, "failed");
+
+    const res = await retrySampleSynchronization(db, sample.id, {});
+
+    expect(res.status).toBe(401);
+  });
+});

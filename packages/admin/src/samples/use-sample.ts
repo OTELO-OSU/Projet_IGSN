@@ -3,6 +3,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
+import { SYNCHRONIZATION_POLL_INTERVAL_MS } from "#/samples/synchronization-poll-interval.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export class ForbiddenError extends HttpError {
@@ -53,6 +54,10 @@ export function sampleQueryOptions(
         await apiFetch(new URL(`admin/samples/${id}`, API_URL)),
       ),
     enabled: id !== undefined,
+    refetchInterval: (query) =>
+      query.state.data?.synchronizationStatus === "pending"
+        ? SYNCHRONIZATION_POLL_INTERVAL_MS
+        : false,
   });
 }
 

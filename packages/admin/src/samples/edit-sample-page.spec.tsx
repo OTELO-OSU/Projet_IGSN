@@ -815,6 +815,13 @@ describe("EditSamplePage", () => {
         `DataCite registration failed: ${DATACITE_ERROR}. Publish to try again.`,
       );
     await expect
+      .element(
+        screen
+          .getByRole("alert")
+          .getByRole("button", { name: "Retry synchronization" }),
+      )
+      .toBeEnabled();
+    await expect
       .element(screen.getByText("Synchronization failed", { exact: true }))
       .toBeVisible();
     await expect
@@ -831,6 +838,25 @@ describe("EditSamplePage", () => {
       .toHaveTextContent(
         `DataCite synchronization failed: ${DATACITE_ERROR}. Save the sample to queue it again.`,
       );
+    await expect
+      .element(
+        screen
+          .getByRole("alert")
+          .getByRole("button", { name: "Retry synchronization" }),
+      )
+      .toBeEnabled();
+  });
+
+  it("should offer a contributor no synchronization retry on a failed sample", async () => {
+    sampleSynchronizationStatus = "failed";
+    const { screen } = await renderEditPageAsContributor("published");
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(`DataCite synchronization failed: ${DATACITE_ERROR}.`);
+    expect(
+      screen.getByRole("button", { name: "Retry synchronization" }).elements(),
+    ).toHaveLength(0);
   });
 
   it("should hold a draft read-only while its publication is queued", async () => {

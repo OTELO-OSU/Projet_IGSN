@@ -5,9 +5,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
 import { apiJson } from "#/http-error.ts";
+import { SYNCHRONIZATION_POLL_INTERVAL_MS } from "#/samples/synchronization-poll-interval.ts";
 import { useApiClient } from "#/use-api-client.ts";
-
-const SYNCHRONIZATION_POLL_INTERVAL_MS = 5_000;
 
 export type SampleListParams = Pick<
   ListSamplesQuery,
