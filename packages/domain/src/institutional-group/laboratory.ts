@@ -556,6 +556,14 @@ export const LABORATORIES: readonly Laboratory[] = [
     replacedBy: "200812294H",
   },
   {
+    id: "202123702B",
+    code: "UMR7063",
+    acronym: "ITES",
+    name: "Institut Terre et Environnement de Strasbourg",
+    osu: "EOST",
+    organizationRors: ["02feahw73", "00pg6eq24"],
+  },
+  {
     id: "200112481S",
     code: "UMR7093",
     acronym: "LOV",
