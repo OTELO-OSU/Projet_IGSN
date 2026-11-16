@@ -1,10 +1,23 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { Slot } from "radix-ui";
+import {
+  createContext,
+  useContext,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip.tsx";
 
 const PlaceholderTooltipContext = createContext(false);
 
 export const PlaceholderTooltipProvider = PlaceholderTooltipContext.Provider;
+
+function UndescribedTrigger({
+  "aria-describedby": _tooltipId,
+  ...props
+}: ComponentProps<typeof Slot.Root>): ReactNode {
+  return <Slot.Root {...props} />;
+}
 
 type PlaceholderTooltipProps = {
   placeholder?: string;
@@ -21,8 +34,8 @@ export function PlaceholderTooltip({
   if (!isEnabled || !placeholder) return children;
   return (
     <Tooltip open={disabled ? false : undefined}>
-      <TooltipTrigger asChild aria-describedby={undefined}>
-        {children}
+      <TooltipTrigger asChild>
+        <UndescribedTrigger>{children}</UndescribedTrigger>
       </TooltipTrigger>
       <TooltipContent className="max-w-[var(--radix-tooltip-trigger-width)]">
         {placeholder}
